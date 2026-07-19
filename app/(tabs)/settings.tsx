@@ -40,13 +40,13 @@ function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: 
     >
       <View style={styles.settingLeft}>
         <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
-          <Ionicons name={icon as any} size={16} color={danger ? Colors.textPrimary : Colors.textTertiary} />
+          <Ionicons name={icon as any} size={18} color={danger ? Colors.textPrimary : Colors.textTertiary} />
         </View>
         <Text style={[styles.settingLabel, danger && styles.settingLabelDanger]}>{label}</Text>
       </View>
       <View style={styles.settingRight}>
         {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
-        {showArrow && <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />}
+        {showArrow && <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />}
       </View>
     </Pressable>
   );
@@ -148,7 +148,7 @@ export default function SettingsScreen() {
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <View style={styles.settingIcon}>
-                <Ionicons name="moon-outline" size={16} color={Colors.textTertiary} />
+                <Ionicons name="moon-outline" size={18} color={Colors.textTertiary} />
               </View>
               <Text style={styles.settingLabel}>Dark Mode</Text>
             </View>
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     marginHorizontal: Spacing.base,
     overflow: 'hidden',
   },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.base,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.borderSubtle,
   },
@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.sm,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
     alignItems: 'center',
     justifyContent: 'center',

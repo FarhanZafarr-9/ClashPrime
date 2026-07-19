@@ -90,7 +90,12 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
               {availableLevels.length > 0 ? `  · ${levelsToShow.length} models` : ''}
             </Text>
           </View>
-          <Text style={styles.expandArrow}>{expanded ? '▾' : '▸'}</Text>
+          <Ionicons
+            name={expanded ? 'chevron-down' : 'chevron-forward'}
+            size={18}
+            color={Colors.textTertiary}
+            style={styles.expandArrow}
+          />
         </View>
       </Pressable>
 
@@ -181,18 +186,21 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.base,
+    borderRadius: Radius.lg,
     overflow: 'hidden',
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.base,
   },
   itemIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.sm,
+    width: 52,
+    height: 52,
+    borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
     overflow: 'hidden',
   },
@@ -201,7 +209,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 44,
+    lineHeight: 52,
   },
   itemInfo: {
     flex: 1,
@@ -217,10 +225,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   expandArrow: {
-    ...Typography.body,
-    color: Colors.textTertiary,
-    fontSize: 14,
-    width: 20,
+    width: 24,
     textAlign: 'center',
   },
   levelStrip: {
