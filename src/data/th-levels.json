@@ -1,0 +1,7592 @@
+{
+  "source_url": "https://www.clash.ninja/guides/max-levels-for-each-th",
+  "scraped_at": "2026-07-19T11:29:26.002Z",
+  "categories": {
+    "Defenses": {
+      "Cannon": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 19,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 20,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 21,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 21,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 21,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 21,
+          "isMaxLevel": true
+        }
+      },
+      "Archer Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 19,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 20,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 21,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 21,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 21,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 21,
+          "isMaxLevel": true
+        }
+      },
+      "Mortar": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 18,
+          "isMaxLevel": true
+        }
+      },
+      "Air Defense": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 16,
+          "isMaxLevel": true
+        }
+      },
+      "Wizard Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 17,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 17,
+          "isMaxLevel": true
+        }
+      },
+      "Air Sweeper": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "15": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 7,
+          "isMaxLevel": true
+        }
+      },
+      "Hidden Tesla": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 17,
+          "isMaxLevel": true
+        }
+      },
+      "Bomb Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "X-Bow": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Inferno Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Eagle Artillery": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": null,
+          "isMaxLevel": false
+        }
+      },
+      "Scattershot": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 7,
+          "isMaxLevel": true
+        }
+      },
+      "Builder Hut": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Monolith": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Spell Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Multi-Archer Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Ricochet Cannon": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Firespitter": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 3,
+          "isMaxLevel": true
+        }
+      },
+      "Multi-Gear Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 3,
+          "isMaxLevel": true
+        }
+      },
+      "Inferno Artillery": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": null,
+          "isMaxLevel": false
+        }
+      },
+      "Revenge Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 2,
+          "isMaxLevel": true
+        }
+      },
+      "Super Wizard Tower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 2,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Traps": {
+      "Bomb": {
+        "3": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Spring Trap": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Air Bomb": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Giant Bomb": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Seeking Air Mine": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Skeleton Trap": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Tornado Trap": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": true
+        },
+        "13": {
+          "level": 3,
+          "isMaxLevel": true
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": true
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 3,
+          "isMaxLevel": true
+        }
+      },
+      "Giga Bomb": {
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Army": {
+      "Army Camp": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Barracks": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 18,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 19,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 19,
+          "isMaxLevel": true
+        }
+      },
+      "Clan Castle": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Lab": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 16,
+          "isMaxLevel": true
+        }
+      },
+      "Hero Hall": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Spell Factory": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 9,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 9,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 9,
+          "isMaxLevel": true
+        }
+      },
+      "Dark Barracks": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 13,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Dark Spell Factory": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 8,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 8,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Blacksmith": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Workshop": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 9,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 9,
+          "isMaxLevel": true
+        }
+      },
+      "Pet House": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Resources": {
+      "Gold Mine": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 17,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 17,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 17,
+          "isMaxLevel": true
+        }
+      },
+      "Elixir Collector": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 17,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 17,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 17,
+          "isMaxLevel": true
+        }
+      },
+      "Gold Storage": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 18,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 19,
+          "isMaxLevel": true
+        }
+      },
+      "Elixir Storage": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 18,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 19,
+          "isMaxLevel": true
+        }
+      },
+      "Dark Elixir Drill": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 11,
+          "isMaxLevel": true
+        }
+      },
+      "Dark Elixir Storage": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Helper Hut": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "10": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "11": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "12": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "13": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "14": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "15": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 1,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 1,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Walls": {
+      "Walls": {
+        "2": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 16,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 17,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 18,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 19,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Troops": {
+      "Barbarian": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Archer": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Giant": {
+        "1": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Goblin": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Wall Breaker": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Balloon": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Wizard": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Healer": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 11,
+          "isMaxLevel": true
+        }
+      },
+      "Dragon": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "P.E.K.K.A": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Baby Dragon": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Miner": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Electro Dragon": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 9,
+          "isMaxLevel": true
+        }
+      },
+      "Yeti": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Dragon Rider": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Electro Titan": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Root Rider": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Thrower": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Meteor Golem": {
+        "1": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "2": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "3": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 3,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Dark Troops": {
+      "Minion": {
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 14,
+          "isMaxLevel": true
+        }
+      },
+      "Hog Rider": {
+        "7": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Valkyrie": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Golem": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 13,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 14,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Witch": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Lava Hound": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Bowler": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Ice Golem": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 9,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 9,
+          "isMaxLevel": true
+        }
+      },
+      "Headhunter": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Apprentice Warden": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Druid": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Furnace": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Ruin Witch": {
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Spells": {
+      "Lightning Spell": {
+        "5": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 12,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 13,
+          "isMaxLevel": true
+        }
+      },
+      "Healing Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Rage Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 7,
+          "isMaxLevel": true
+        }
+      },
+      "Poison Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 9,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 11,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 12,
+          "isMaxLevel": true
+        }
+      },
+      "Earthquake Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Jump Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Freeze Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Haste Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 7,
+          "isMaxLevel": true
+        }
+      },
+      "Skeleton Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 8,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 8,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Clone Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 8,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 9,
+          "isMaxLevel": true
+        }
+      },
+      "Bat Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 7,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 8,
+          "isMaxLevel": true
+        }
+      },
+      "Invisibility Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Overgrowth Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Recall Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 6,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 7,
+          "isMaxLevel": true
+        }
+      },
+      "Ice Block Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Revive Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Angry Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Totem Spell": {
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Siege Machines": {
+      "Wall Wrecker": {
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Battle Blimp": {
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Stone Slammer": {
+        "12": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Siege Barracks": {
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Log Launcher": {
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Flame Flinger": {
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 5,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 5,
+          "isMaxLevel": true
+        }
+      },
+      "Battle Drill": {
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 4,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 5,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 6,
+          "isMaxLevel": true
+        }
+      },
+      "Troop Launcher": {
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 3,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 4,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      },
+      "Sky Wagon": {
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 2,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 4,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Heroes": {
+      "Barbarian King": {
+        "4": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": 1,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 20,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 30,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 40,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 50,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 65,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 75,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 85,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 90,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 95,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 100,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 110,
+          "isMaxLevel": true
+        }
+      },
+      "Archer Queen": {
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 30,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 40,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 50,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 65,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 75,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 85,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 90,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 95,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 100,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 110,
+          "isMaxLevel": true
+        }
+      },
+      "Minion Prince": {
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": 20,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 30,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 40,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 50,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 60,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 70,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 80,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 90,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 95,
+          "isMaxLevel": true
+        }
+      },
+      "Grand Warden": {
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": 20,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": 40,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 50,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 60,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 65,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 70,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 75,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 85,
+          "isMaxLevel": true
+        }
+      },
+      "Royal Champion": {
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": 25,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": 30,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 40,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 45,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 50,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 55,
+          "isMaxLevel": true
+        }
+      },
+      "Dragon Duke": {
+        "4": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "5": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "6": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "7": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "8": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "9": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "10": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "11": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "12": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "13": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 15,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 20,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 25,
+          "isMaxLevel": true
+        }
+      }
+    },
+    "Pets": {
+      "L.A.S.S.I": {
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Electro Owl": {
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Mighty Yak": {
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Unicorn": {
+        "14": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Frosty": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Diggy": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Poison Lizard": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 15,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 15,
+          "isMaxLevel": true
+        }
+      },
+      "Phoenix": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Spirit Fox": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Angry Jelly": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Sneezy": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": 10,
+          "isMaxLevel": true
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      },
+      "Greedy Raven": {
+        "14": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "15": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "16": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "17": {
+          "level": null,
+          "isMaxLevel": false
+        },
+        "18": {
+          "level": 10,
+          "isMaxLevel": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,3402 @@
+{
+  "images": [
+    {
+      "name": "Elixir Collector",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fe/Elixir_Collector1_Animation.gif/revision/latest/scale-to-width-down/112?cb=20200903084630",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5e/Elixir_Collector1.png/revision/latest?cb=20180109122134"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/05/Elixir_Collector2.png/revision/latest?cb=20180109122118"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6d/Elixir_Collector3.png/revision/latest?cb=20180109122147"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/95/Elixir_Collector4.png/revision/latest?cb=20180109122200"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/44/Elixir_Collector5.png/revision/latest?cb=20180109122215"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/07/Elixir_Collector6.png/revision/latest?cb=20180109122232"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/35/Elixir_Collector7.png/revision/latest?cb=20180109122255"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fc/Elixir_Collector8.png/revision/latest?cb=20180109122310"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/79/Elixir_Collector9.png/revision/latest?cb=20180109122324"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Elixir_Collector10.png/revision/latest?cb=20180109122349"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9f/Elixir_Collector11.png/revision/latest?cb=20180109122406"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Elixir_Collector12.png/revision/latest?cb=20180109122421"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/12/Elixir_Collector13.png/revision/latest?cb=20200902075904"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/49/Elixir_Collector14.png/revision/latest?cb=20210113220549"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7f/Elixir_Collector15.png/revision/latest?cb=20211209201554"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b9/Elixir_Collector16.png/revision/latest?cb=20251027021007"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/03/Elixir_Collector17.png/revision/latest?cb=20251118165724"
+        }
+      ]
+    },
+    {
+      "name": "Mortar",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Mortar_level3_info.png/revision/latest/scale-to-width-down/128?cb=20250316151117",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7a/Mortar1.png/revision/latest?cb=20240718092847"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Mortar2.png/revision/latest?cb=20230522073638"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Mortar3.png/revision/latest?cb=20230522073648"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4e/Mortar4.png/revision/latest?cb=20211106234145"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e7/Mortar5.png/revision/latest?cb=20211106234157"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/42/Mortar6.png/revision/latest?cb=20211106234217"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4b/Mortar7.png/revision/latest?cb=20211106234234"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0e/Mortar8.png/revision/latest?cb=20211106234245"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/12/Mortar9.png/revision/latest?cb=20211106234359"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/87/Mortar10.png/revision/latest?cb=20211106234449"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/ba/Mortar11.png/revision/latest?cb=20211106234536"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d5/Mortar12.png/revision/latest?cb=20211106234559"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2a/Mortar13.png/revision/latest?cb=20211106234639"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f7/Mortar14.png/revision/latest?cb=20211106234713"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/23/Mortar15.png/revision/latest?cb=20230522074902"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/04/Mortar16.png/revision/latest?cb=20231213083653"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/01/Mortar17.png/revision/latest?cb=20250905170313"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/69/Mortar18.png/revision/latest?cb=20260225092946"
+        }
+      ]
+    },
+    {
+      "name": "Cannon",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ce/Cannon_level6_info.png/revision/latest/scale-to-width-down/128?cb=20250318143532",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a1/Cannon1.png/revision/latest?cb=20230521100552"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dc/Cannon2.png/revision/latest?cb=20230521100606"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Cannon3.png/revision/latest?cb=20230521100615"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a5/Cannon4.png/revision/latest?cb=20230521100624"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ea/Cannon5.png/revision/latest?cb=20230521100633"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/93/Cannon6.png/revision/latest?cb=20230521100644"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/60/Cannon7.png/revision/latest?cb=20230521100654"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/27/Cannon8.png/revision/latest?cb=20230521100715"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/36/Cannon9.png/revision/latest?cb=20230521100737"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/48/Cannon10.png/revision/latest?cb=20230521100759"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d2/Cannon11.png/revision/latest?cb=20230521100825"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/20/Cannon12.png/revision/latest?cb=20230521100841"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fe/Cannon13.png/revision/latest?cb=20230521100901"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5e/Cannon14.png/revision/latest?cb=20230521100922"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8d/Cannon15.png/revision/latest?cb=20230521100937"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/09/Cannon16.png/revision/latest?cb=20230521100951"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/86/Cannon17.png/revision/latest?cb=20230521101011"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/40/Cannon18.png/revision/latest?cb=20230521101020"
+        },
+        {
+          "level": 19,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/23/Cannon19.png/revision/latest?cb=20230521101033"
+        },
+        {
+          "level": 20,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Cannon20.png/revision/latest?cb=20230521101050"
+        },
+        {
+          "level": 21,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8d/Cannon21.png/revision/latest?cb=20230521101110"
+        }
+      ]
+    },
+    {
+      "name": "Archer Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/79/Archer_Tower_level5_info.png/revision/latest/scale-to-width-down/128?cb=20250318143236",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6e/Archer_Tower1.png/revision/latest?cb=20221223035901"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e0/Archer_Tower2.png/revision/latest?cb=20221223035914"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9e/Archer_Tower3.png/revision/latest?cb=20221223035926"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b8/Archer_Tower4.png/revision/latest?cb=20221223035936"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e8/Archer_Tower5.png/revision/latest?cb=20221223035947"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/70/Archer_Tower6.png/revision/latest?cb=20221223035958"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1f/Archer_Tower7.png/revision/latest?cb=20221223040010"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Archer_Tower8.png/revision/latest?cb=20221223040025"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4a/Archer_Tower9.png/revision/latest?cb=20221223040036"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/45/Archer_Tower10.png/revision/latest?cb=20221223040047"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/03/Archer_Tower11.png/revision/latest?cb=20221223040107"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Archer_Tower12.png/revision/latest?cb=20221223040130"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/Archer_Tower13.png/revision/latest?cb=20221223040151"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2c/Archer_Tower14.png/revision/latest?cb=20221223040215"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/44/Archer_Tower15.png/revision/latest?cb=20221223040236"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/73/Archer_Tower16.png/revision/latest?cb=20221223040301"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fd/Archer_Tower17.png/revision/latest?cb=20221223040314"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6f/Archer_Tower18.png/revision/latest?cb=20221223040329"
+        },
+        {
+          "level": 19,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/49/Archer_Tower19.png/revision/latest?cb=20221223040350"
+        },
+        {
+          "level": 20,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/34/Archer_Tower20.png/revision/latest?cb=20221223040402"
+        },
+        {
+          "level": 21,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fa/Archer_Tower21.png/revision/latest?cb=20221223040422"
+        }
+      ]
+    },
+    {
+      "name": "Army Camp",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c6/Army_Camp14.png/revision/latest/scale-to-width-down/128?cb=20260425143241",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/79/Army_Camp1.png/revision/latest?cb=20171221130243"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/92/Army_Camp2.png/revision/latest?cb=20171221130257"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ce/Army_Camp3.png/revision/latest?cb=20171221130313"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e0/Army_Camp4.png/revision/latest?cb=20171221130327"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dc/Army_Camp5.png/revision/latest?cb=20171221130341"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/68/Army_Camp6.png/revision/latest?cb=20171221130400"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/Army_Camp7.png/revision/latest?cb=20171221130415"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Army_Camp8.png/revision/latest?cb=20171221130431"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7d/Army_Camp9.png/revision/latest?cb=20171221130455"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1d/Army_Camp10.png/revision/latest?cb=20180604160829"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/21/Army_Camp11.png/revision/latest?cb=20201012183216"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/19/Army_Camp12.png/revision/latest?cb=20221011075437"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d3/Army_Camp13.png/revision/latest?cb=20260102090129"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c6/Army_Camp14.png/revision/latest?cb=20260425143241"
+        }
+      ]
+    },
+    {
+      "name": "Laboratory",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/04/Laboratory1_ChiefJourney.png/revision/latest/scale-to-width-down/128?cb=20250604094404",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/36/Laboratory1.png/revision/latest?cb=20221125084348"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/49/Laboratory2.png/revision/latest?cb=20221125084354"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/63/Laboratory3.png/revision/latest?cb=20221125084401"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/43/Laboratory4.png/revision/latest?cb=20221125084408"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d6/Laboratory5.png/revision/latest?cb=20221125084422"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Laboratory6.png/revision/latest?cb=20221125084430"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f1/Laboratory7.png/revision/latest?cb=20221125084439"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b8/Laboratory8.png/revision/latest?cb=20221125084453"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/58/Laboratory9.png/revision/latest?cb=20221125084509"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a7/Laboratory10.png/revision/latest?cb=20221125084528"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a2/Laboratory11.png/revision/latest?cb=20221125084543"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/27/Laboratory12.png/revision/latest?cb=20221125084550"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Laboratory13.png/revision/latest?cb=20221125084602"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9b/Laboratory14.png/revision/latest?cb=20231213083349"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7a/Laboratory15.png/revision/latest?cb=20241122153138"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7d/Laboratory16.png/revision/latest?cb=20260222204504"
+        }
+      ]
+    },
+    {
+      "name": "Spell Factory",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1c/Spell_Factory_Sabotage.png/revision/latest/scale-to-width-down/127?cb=20171224074126",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ca/Spell_Factory1.png/revision/latest?cb=20210116211444"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/07/Spell_Factory2.png/revision/latest?cb=20210116211512"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/af/Spell_Factory3.png/revision/latest?cb=20210116211541"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/42/Spell_Factory4.png/revision/latest?cb=20210116211640"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Spell_Factory5.png/revision/latest?cb=20201208061541"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c1/Spell_Factory6.png/revision/latest?cb=20201208033430"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/aa/Spell_Factory7.png/revision/latest?cb=20221125050011"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b7/Spell_Factory8.png/revision/latest?cb=20241129150915"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Spell_Factory9.png/revision/latest?cb=20251120005042"
+        }
+      ]
+    },
+    {
+      "name": "Wizard Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/34/Wizard_Tower_level5_info.png/revision/latest/scale-to-width-down/128?cb=20250318150142",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e5/Wizard_Tower1.png/revision/latest?cb=20230521052614"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8e/Wizard_Tower2.png/revision/latest?cb=20230521052621"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a5/Wizard_Tower3.png/revision/latest?cb=20230521052628"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/55/Wizard_Tower4.png/revision/latest?cb=20230521052634"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6e/Wizard_Tower5.png/revision/latest?cb=20230521052641"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c6/Wizard_Tower6.png/revision/latest?cb=20230521052648"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3f/Wizard_Tower7.png/revision/latest?cb=20230521052655"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ad/Wizard_Tower8.png/revision/latest?cb=20230521052705"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f7/Wizard_Tower9.png/revision/latest?cb=20230521052717"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c0/Wizard_Tower10.png/revision/latest?cb=20230521052724"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Wizard_Tower11.png/revision/latest?cb=20230521052735"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b4/Wizard_Tower12.png/revision/latest?cb=20230521052739"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3c/Wizard_Tower13.png/revision/latest?cb=20230521052746"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/24/Wizard_Tower14.png/revision/latest?cb=20230521052756"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a4/Wizard_Tower15.png/revision/latest?cb=20230521052811"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Wizard_Tower16.png/revision/latest?cb=20231213084004"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Wizard_Tower17.png/revision/latest?cb=20241122153142"
+        }
+      ]
+    },
+    {
+      "name": "Gold Mine",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/76/Gold_Mine_level5_info.png/revision/latest/scale-to-width-down/128?cb=20260105014345",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bf/Gold_Mine1.png/revision/latest?cb=20180110120430"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/55/Gold_Mine2.png/revision/latest?cb=20180110120444"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e4/Gold_Mine3.png/revision/latest?cb=20180110120457"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/97/Gold_Mine4.png/revision/latest?cb=20180110120510"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1a/Gold_Mine5.png/revision/latest?cb=20180110120533"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/86/Gold_Mine6.png/revision/latest?cb=20180110120552"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/11/Gold_Mine7.png/revision/latest?cb=20180110120611"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/52/Gold_Mine8.png/revision/latest?cb=20180110120627"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bf/Gold_Mine9.png/revision/latest?cb=20180110120642"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/eb/Gold_Mine10.png/revision/latest?cb=20180110120703"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0d/Gold_Mine11.png/revision/latest?cb=20180110120719"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4d/Gold_Mine12.png/revision/latest?cb=20180110120732"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b9/Gold_Mine13.png/revision/latest?cb=20181023115050"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bd/Gold_Mine14.png/revision/latest?cb=20200829215835"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8c/Gold_Mine15.png/revision/latest?cb=20211209202156"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/58/Gold_Mine16.png/revision/latest?cb=20251027021112"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Gold_Mine17.png/revision/latest?cb=20251118165804"
+        }
+      ]
+    },
+    {
+      "name": "Clan Castle",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c4/Clan_Castle_level2_info.png/revision/latest/scale-to-width-down/128?cb=20251217141610",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Clan_Castle1.png/revision/latest?cb=20171027141101"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/40/Clan_Castle2.png/revision/latest?cb=20171027141101"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/14/Clan_Castle3.png/revision/latest?cb=20171027141102"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Clan_Castle4.png/revision/latest?cb=20171027141102"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/11/Clan_Castle5.png/revision/latest?cb=20171027141103"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/59/Clan_Castle6.png/revision/latest?cb=20171027141103"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/92/Clan_Castle7.png/revision/latest?cb=20171027141103"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5e/Clan_Castle8.png/revision/latest?cb=20180604165227"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5d/Clan_Castle9.png/revision/latest?cb=20200906004338"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5a/Clan_Castle10.png/revision/latest?cb=20210412214515"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4a/Clan_Castle11.png/revision/latest?cb=20221011064716"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0b/Clan_Castle12.png/revision/latest?cb=20240414154015"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/72/Clan_Castle13.png/revision/latest?cb=20241122153136"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/db/Clan_Castle14.png/revision/latest?cb=20251115150133"
+        }
+      ]
+    },
+    {
+      "name": "Gold Storage",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d8/Gold_Storage_level8_info.png/revision/latest/scale-to-width-down/128?cb=20250318144108",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Gold_Storage1.png/revision/latest?cb=20171106180731"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Gold_Storage2.png/revision/latest?cb=20171106180732"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/09/Gold_Storage3.png/revision/latest?cb=20171106180732"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Gold_Storage4.png/revision/latest?cb=20171106180732"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Gold_Storage5.png/revision/latest?cb=20171106180733"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/36/Gold_Storage6.png/revision/latest?cb=20171106180733"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bd/Gold_Storage7.png/revision/latest?cb=20171106180734"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/05/Gold_Storage8.png/revision/latest?cb=20171106180734"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/86/Gold_Storage9.png/revision/latest?cb=20171106180734"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c2/Gold_Storage10.png/revision/latest?cb=20171106180735"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5f/Gold_Storage11.png/revision/latest?cb=20171106180751"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8b/Gold_Storage12.png/revision/latest?cb=20171106180751"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/15/Gold_Storage13.png/revision/latest?cb=20180604172806"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/67/Gold_Storage14.png/revision/latest?cb=20191211212341"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Gold_Storage15.png/revision/latest?cb=20210413013738"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2f/Gold_Storage16.png/revision/latest?cb=20221011063952"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Gold_Storage17.png/revision/latest?cb=20231213084853"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b7/Gold_Storage18.png/revision/latest?cb=20241124022808"
+        },
+        {
+          "level": 19,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Gold_Storage19.png/revision/latest?cb=20251125103535"
+        }
+      ]
+    },
+    {
+      "name": "Hidden Tesla",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/88/Hidden_Tesla_level2_info.png/revision/latest/scale-to-width-down/128?cb=20250318145406",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Hidden_Tesla1.png/revision/latest?cb=20180606190107"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e4/Hidden_Tesla2.png/revision/latest?cb=20180606190121"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/Hidden_Tesla3.png/revision/latest?cb=20180606190137"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Hidden_Tesla4.png/revision/latest?cb=20180606190150"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e9/Hidden_Tesla5.png/revision/latest?cb=20180606190204"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d7/Hidden_Tesla6.png/revision/latest?cb=20180606190216"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/79/Hidden_Tesla7.png/revision/latest?cb=20180606190230"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Hidden_Tesla8.png/revision/latest?cb=20180606190243"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e3/Hidden_Tesla9.png/revision/latest?cb=20180606190256"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/37/Hidden_Tesla10.png/revision/latest?cb=20180604161808"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b9/Hidden_Tesla11.png/revision/latest?cb=20191210175655"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/05/Hidden_Tesla12.png/revision/latest?cb=20201013041040"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/78/Hidden_Tesla13.png/revision/latest?cb=20210412214948"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f1/Hidden_Tesla14.png/revision/latest?cb=20230613002325"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9e/Hidden_Tesla15.png/revision/latest?cb=20240303014818"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/32/Hidden_Tesla16.png/revision/latest?cb=20250216090235"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/Hidden_Tesla17.png/revision/latest?cb=20260220165129"
+        }
+      ]
+    },
+    {
+      "name": "Elixir Storage",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/08/Elixir_Storage19.png/revision/latest/scale-to-width-down/126?cb=20251125103510",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f6/Elixir_Storage1.png/revision/latest?cb=20230515070132"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/38/Elixir_Storage2.png/revision/latest?cb=20230515070153"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Elixir_Storage3.png/revision/latest?cb=20230515070211"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Elixir_Storage4.png/revision/latest?cb=20230515070221"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ce/Elixir_Storage5.png/revision/latest?cb=20230515070234"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/eb/Elixir_Storage6.png/revision/latest?cb=20230515070247"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8c/Elixir_Storage7.png/revision/latest?cb=20230515070303"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Elixir_Storage8.png/revision/latest?cb=20230515070315"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/65/Elixir_Storage9.png/revision/latest?cb=20230515070327"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2c/Elixir_Storage10.png/revision/latest?cb=20230515070347"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3b/Elixir_Storage11.png/revision/latest?cb=20230515070356"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2b/Elixir_Storage12.png/revision/latest?cb=20230515070411"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cb/Elixir_Storage13.png/revision/latest?cb=20230515070420"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Elixir_Storage14.png/revision/latest?cb=20230515070430"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6a/Elixir_Storage15.png/revision/latest?cb=20230515070438"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a0/Elixir_Storage16.png/revision/latest?cb=20230515070453"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/94/Elixir_Storage17.png/revision/latest?cb=20231213084959"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cc/Elixir_Storage18.png/revision/latest?cb=20241124022807"
+        },
+        {
+          "level": 19,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/08/Elixir_Storage19.png/revision/latest?cb=20251125103510"
+        }
+      ]
+    },
+    {
+      "name": "Builder's Hut",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ac/BuilderHut4_ChiefJourney.png/revision/latest/scale-to-width-down/101?cb=20250604094448",
+      "levels": [
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a0/Builders_Hut2.png/revision/latest?cb=20230613001440"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f9/Builders_Hut3.png/revision/latest?cb=20230613001445"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b4/Builders_Hut4.png/revision/latest?cb=20230613001500"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e7/Builders_Hut5.png/revision/latest?cb=20230613001516"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0b/Builders_Hut6.png/revision/latest?cb=20240418094935"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8c/Builders_Hut7.png/revision/latest?cb=20250528163313"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/78/Builders_Hut8.png/revision/latest?cb=20260613130250"
+        }
+      ]
+    },
+    {
+      "name": "Air Defense",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/02/Air_Defence_level3_info.png/revision/latest/scale-to-width-down/128?cb=20250316151153",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6f/Air_Defense1.png/revision/latest?cb=20221222212032"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Air_Defense2.png/revision/latest?cb=20221222212040"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0a/Air_Defense3.png/revision/latest?cb=20221222212048"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/48/Air_Defense4.png/revision/latest?cb=20221222212058"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7e/Air_Defense5.png/revision/latest?cb=20221222212110"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/39/Air_Defense6.png/revision/latest?cb=20221222212123"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ca/Air_Defense7.png/revision/latest?cb=20221222212136"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/03/Air_Defense8.png/revision/latest?cb=20221222212150"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/45/Air_Defense9.png/revision/latest?cb=20221222212202"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/34/Air_Defense10.png/revision/latest?cb=20221222212214"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/ba/Air_Defense11.png/revision/latest?cb=20221222212227"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c3/Air_Defense12.png/revision/latest?cb=20221222212238"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d9/Air_Defense13.png/revision/latest?cb=20221222212249"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cf/Air_Defense14.png/revision/latest?cb=20231213083904"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7d/Air_Defense15.png/revision/latest?cb=20241122153132"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/00/Air_Defense16.png/revision/latest?cb=20251115171820"
+        }
+      ]
+    },
+    {
+      "name": "X-Bow",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1a/X-Bow_Run_Out_of_Ammo.gif/revision/latest/scale-to-width-down/128?cb=20250424122427",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cc/X-Bow1_Air.png/revision/latest?cb=20200907094921"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/51/X-Bow2_Air.png/revision/latest?cb=20200907094840"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/17/X-Bow3_Air.png/revision/latest?cb=20200907094729"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7f/X-Bow4_Air.png/revision/latest?cb=20200907094647"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/87/X-Bow5_Air.png/revision/latest?cb=20200907094551"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/83/X-Bow6_Air.png/revision/latest?cb=20200907094450"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/aa/X-Bow7_Air.png/revision/latest?cb=20200907094200"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f7/X-Bow8_Air.png/revision/latest?cb=20201208041613"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/13/X-Bow9_Air.png/revision/latest?cb=20210927180650"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/X-Bow10_Air.png/revision/latest?cb=20221121044824"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/50/X-Bow11_Air.png/revision/latest?cb=20231213084623"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/18/X-Bow12_Air.png/revision/latest?cb=20250212071104"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/X-Bow13_Air.png/revision/latest?cb=20260503162938"
+        }
+      ]
+    },
+    {
+      "name": "Dark Elixir Storage",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/Dark_Elixir_Storage13.png/revision/latest/scale-to-width-down/114?cb=20251125032910",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1a/Dark_Elixir_Storage1.png/revision/latest?cb=20180112123343"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cd/Dark_Elixir_Storage2.png/revision/latest?cb=20180112123328"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c1/Dark_Elixir_Storage3.png/revision/latest?cb=20180112123314"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Dark_Elixir_Storage4.png/revision/latest?cb=20180112123301"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/07/Dark_Elixir_Storage5.png/revision/latest?cb=20180112123244"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4b/Dark_Elixir_Storage6.png/revision/latest?cb=20180112123228"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/90/Dark_Elixir_Storage7.png/revision/latest?cb=20180604173248"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1d/Dark_Elixir_Storage8.png/revision/latest?cb=20191211221907"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/96/Dark_Elixir_Storage9.png/revision/latest?cb=20210413012243"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/Dark_Elixir_Storage10.png/revision/latest?cb=20221011063950"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Dark_Elixir_Storage11.png/revision/latest?cb=20231213085310"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/41/Dark_Elixir_Storage12.png/revision/latest?cb=20241124022806"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/Dark_Elixir_Storage13.png/revision/latest?cb=20251125032910"
+        }
+      ]
+    },
+    {
+      "name": "Dark Elixir Drill",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bc/ChallengesIcon_Dark_Elixir_Drilling.png/revision/latest/scale-to-width-down/114?cb=20210509092139",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d9/Dark_Elixir_Drill1.png/revision/latest?cb=20180219150352"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7f/Dark_Elixir_Drill2.png/revision/latest?cb=20180219150405"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f2/Dark_Elixir_Drill3.png/revision/latest?cb=20180219150417"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cc/Dark_Elixir_Drill4.png/revision/latest?cb=20180219150430"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a0/Dark_Elixir_Drill5.png/revision/latest?cb=20180219150445"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d8/Dark_Elixir_Drill6.png/revision/latest?cb=20180219150459"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d7/Dark_Elixir_Drill7.png/revision/latest?cb=20181023120211"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Dark_Elixir_Drill8.png/revision/latest?cb=20210113213742"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/58/Dark_Elixir_Drill9.png/revision/latest?cb=20211209102821"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Dark_Elixir_Drill10.png/revision/latest?cb=20251118170248"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b8/Dark_Elixir_Drill11.png/revision/latest?cb=20251118170058"
+        }
+      ]
+    },
+    {
+      "name": "Dark Barracks",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Dark_Barracks13.png/revision/latest/scale-to-width-down/107?cb=20260614153906",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ca/DarkBarracksXmasLvL1Jap.png/revision/latest?cb=20141215154922"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dd/Dark_Barracks2.png/revision/latest?cb=20230105081814"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Dark_Barracks3.png/revision/latest?cb=20230105081822"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Dark_Barracks4.png/revision/latest?cb=20230105081828"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/60/Dark_Barracks5.png/revision/latest?cb=20230105081835"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Dark_Barracks6.png/revision/latest?cb=20230105081843"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b4/Dark_Barracks7.png/revision/latest?cb=20230105081849"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/30/Dark_Barracks8.png/revision/latest?cb=20230105081902"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c5/Dark_Barracks9.png/revision/latest?cb=20230105081917"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c9/Dark_Barracks10.png/revision/latest?cb=20230613000755"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b1/Dark_Barracks11.png/revision/latest?cb=20240621142254"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/04/Dark_Barracks12.png/revision/latest?cb=20260222201236"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Dark_Barracks13.png/revision/latest?cb=20260614153906"
+        }
+      ]
+    },
+    {
+      "name": "Barracks",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/25/Barracks_level3_info.png/revision/latest/scale-to-width-down/128?cb=20250318150026",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2c/Barracks1.png/revision/latest?cb=20230105080228"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Barracks2.png/revision/latest?cb=20230105080243"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Barracks3.png/revision/latest?cb=20230105080258"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/84/Barracks4.png/revision/latest?cb=20230105080307"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/66/Barracks5.png/revision/latest?cb=20230105080316"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Barracks6.png/revision/latest?cb=20230105080325"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/29/Barracks7.png/revision/latest?cb=20230105080333"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/85/Barracks8.png/revision/latest?cb=20230105080339"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/39/Barracks9.png/revision/latest?cb=20230105080349"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6a/Barracks10.png/revision/latest?cb=20230105080358"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/89/Barracks11.png/revision/latest?cb=20230105080412"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f4/Barracks12.png/revision/latest?cb=20230105080418"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d5/Barracks13.png/revision/latest?cb=20230105080430"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/41/Barracks14.png/revision/latest?cb=20230105080437"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0c/Barracks15.png/revision/latest?cb=20230105080448"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/21/Barracks16.png/revision/latest?cb=20230105080503"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4e/Barracks17.png/revision/latest?cb=20231211073653"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b5/Barracks18.png/revision/latest?cb=20241123131517"
+        },
+        {
+          "level": 19,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/41/Barracks19.png/revision/latest?cb=20260222202424"
+        }
+      ]
+    },
+    {
+      "name": "Inferno Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/43/Multi_Inferno_run_out_of_fuel.gif/revision/latest/scale-to-width-down/128?cb=20250619062026",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fa/Inferno_Tower1_Multi.png/revision/latest?cb=20221122065029"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/85/Inferno_Tower2_Multi.png/revision/latest?cb=20221122065133"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/51/Inferno_Tower3_Multi.png/revision/latest?cb=20221122065241"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Inferno_Tower4_Multi.png/revision/latest?cb=20221122065349"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d0/Inferno_Tower5_Multi.png/revision/latest?cb=20221122065451"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/43/Inferno_Tower6_Multi.png/revision/latest?cb=20221122065553"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fe/Inferno_Tower7_Multi.png/revision/latest?cb=20221122065709"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Inferno_Tower8_Multi.png/revision/latest?cb=20221122065805"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ca/Inferno_Tower9_Multi.png/revision/latest?cb=20221122065939"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2b/Inferno_Tower10_Multi.png/revision/latest?cb=20250624082400"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/26/Inferno_Tower11_Multi.png/revision/latest?cb=20250624082517"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b5/Inferno_Tower12_Multi.png/revision/latest?cb=20260224123503"
+        }
+      ]
+    },
+    {
+      "name": "Bomb",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/24/Bomb_info.png/revision/latest/scale-to-width-down/128?cb=20221122073915",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Bomb1.png/revision/latest?cb=20210213070620"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Bomb1.png/revision/latest?cb=20210213070620"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0a/Bomb3.png/revision/latest?cb=20210213070653"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0a/Bomb3.png/revision/latest?cb=20210213070653"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Bomb5.png/revision/latest?cb=20210213070719"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Bomb5.png/revision/latest?cb=20210213070719"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Bomb7.png/revision/latest?cb=20210213070737"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Bomb7.png/revision/latest?cb=20210213070737"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5d/Bomb9.png/revision/latest?cb=20210213070754"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5d/Bomb9.png/revision/latest?cb=20210213070754"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/78/Bomb11.png/revision/latest?cb=20221012074258"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/78/Bomb11.png/revision/latest?cb=20221012074258"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9a/Bomb13.png/revision/latest?cb=20241127134105"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9a/Bomb13.png/revision/latest?cb=20241127134105"
+        }
+      ]
+    },
+    {
+      "name": "Spring Trap",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c2/Spring_Trap_info.png/revision/latest/scale-to-width-down/128?cb=20171130161342",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Spring_Trap1.png/revision/latest?cb=20221218092202"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Spring_Trap1.png/revision/latest?cb=20221218092202"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Spring_Trap3.png/revision/latest?cb=20221218092328"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Spring_Trap3.png/revision/latest?cb=20221218092328"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d5/Spring_Trap5.png/revision/latest?cb=20221218092228"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d5/Spring_Trap5.png/revision/latest?cb=20221218092228"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dc/Spring_Trap7.png/revision/latest?cb=20251008002947"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dc/Spring_Trap7.png/revision/latest?cb=20251008002947"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fe/Spring_Trap9.png/revision/latest?cb=20251008003009"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fe/Spring_Trap9.png/revision/latest?cb=20251008003009"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/07/Spring_Trap11.png/revision/latest?cb=20251008003034"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/07/Spring_Trap11.png/revision/latest?cb=20251008003034"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Spring_Trap13.png/revision/latest?cb=20251115151732"
+        }
+      ]
+    },
+    {
+      "name": "Giant Bomb",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/89/Giant_Bomb_info.png/revision/latest/scale-to-width-down/128?cb=20171009065411",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7b/Giant_Bomb1.png/revision/latest?cb=20230613001712"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7b/Giant_Bomb1.png/revision/latest?cb=20230613001712"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/31/Giant_Bomb3.png/revision/latest?cb=20230613001720"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/31/Giant_Bomb3.png/revision/latest?cb=20230613001720"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a4/Giant_Bomb5.png/revision/latest?cb=20230613001727"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a4/Giant_Bomb5.png/revision/latest?cb=20230613001727"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5e/Giant_Bomb7.png/revision/latest?cb=20230613001734"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5e/Giant_Bomb7.png/revision/latest?cb=20230613001734"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d8/Giant_Bomb9.png/revision/latest?cb=20230613001740"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d8/Giant_Bomb9.png/revision/latest?cb=20230613001740"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f3/Giant_Bomb11.png/revision/latest?cb=20241122153137"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f3/Giant_Bomb11.png/revision/latest?cb=20241122153137"
+        }
+      ]
+    },
+    {
+      "name": "Air Bomb",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ed/Air_Bomb_info.png/revision/latest/scale-to-width-down/111?cb=20171009072655",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Air_Bomb1.png/revision/latest?cb=20231213085607"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Air_Bomb1.png/revision/latest?cb=20231213085607"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5c/Air_Bomb3.png/revision/latest?cb=20231213085557"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5c/Air_Bomb3.png/revision/latest?cb=20231213085557"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/99/Air_Bomb5.png/revision/latest?cb=20231213085548"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/99/Air_Bomb5.png/revision/latest?cb=20231213085548"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/15/Air_Bomb7.png/revision/latest?cb=20231213085536"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/15/Air_Bomb7.png/revision/latest?cb=20231213085536"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b1/Air_Bomb9.png/revision/latest?cb=20231213085519"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b1/Air_Bomb9.png/revision/latest?cb=20231213085519"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Air_Bomb11.png/revision/latest?cb=20231213085327"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Air_Bomb11.png/revision/latest?cb=20231213085327"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/91/Air_Bomb13.png/revision/latest?cb=20251120062204"
+        }
+      ]
+    },
+    {
+      "name": "Seeking Air Mine",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e8/Seeking_Air_Mine_info.png/revision/latest/scale-to-width-down/111?cb=20171009071330",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Seeking_Air_Mine1.png/revision/latest?cb=20230613002136"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Seeking_Air_Mine1.png/revision/latest?cb=20230613002136"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/88/Seeking_Air_Mine3.png/revision/latest?cb=20230613002140"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/88/Seeking_Air_Mine3.png/revision/latest?cb=20230613002140"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6b/Seeking_Air_Mine5.png/revision/latest?cb=20230613002144"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6b/Seeking_Air_Mine5.png/revision/latest?cb=20230613002144"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/51/Seeking_Air_Mine7.png/revision/latest?cb=20241124152736"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/51/Seeking_Air_Mine7.png/revision/latest?cb=20241124152736"
+        }
+      ]
+    },
+    {
+      "name": "Skeleton Trap",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/58/Skeleton_Trap_info.png/revision/latest/scale-to-width-down/122?cb=20171008091122",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0c/SkeletonTrap1_Ground.png/revision/latest?cb=20170828102715"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0c/SkeletonTrap1_Ground.png/revision/latest?cb=20170828102715"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/SkeletonTrap3_Ground.png/revision/latest?cb=20170828102728"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/SkeletonTrap3_Ground.png/revision/latest?cb=20170828102728"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c8/SkeletonTrap5.png/revision/latest?cb=20251120011150"
+        }
+      ]
+    },
+    {
+      "name": "Air Sweeper",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a0/Destroy_Air_Sweepers.png/revision/latest/scale-to-width-down/127?cb=20171224073749",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ec/Air_Sweeper1.png/revision/latest?cb=20180115153131"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Air_Sweeper2.png/revision/latest?cb=20180115153146"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0d/Air_Sweeper3.png/revision/latest?cb=20180115153200"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b6/Air_Sweeper4.png/revision/latest?cb=20180115153214"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c3/Air_Sweeper5.png/revision/latest?cb=20180115153229"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Air_Sweeper6.png/revision/latest?cb=20180115153243"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Air_Sweeper7.png/revision/latest?cb=20180115153257"
+        }
+      ]
+    },
+    {
+      "name": "Dark Spell Factory",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/93/Dark_Spell_Factory8.png/revision/latest/scale-to-width-down/124?cb=20260613130339",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3e/Dark_Spell_Factory1.png/revision/latest?cb=20200925094341"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9a/Dark_Spell_Factory2.png/revision/latest?cb=20200925094432"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/91/Dark_Spell_Factory3.png/revision/latest?cb=20200925094452"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cf/Dark_Spell_Factory4.png/revision/latest?cb=20200925094521"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/27/Dark_Spell_Factory5.png/revision/latest?cb=20200925095051"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/06/Dark_Spell_Factory6.png/revision/latest?cb=20241016171000"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Dark_Spell_Factory7.png/revision/latest?cb=20250623094811"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/93/Dark_Spell_Factory8.png/revision/latest?cb=20260613130339"
+        }
+      ]
+    },
+    {
+      "name": "Eagle Artillery",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/36/Eagle_Artillery7.png/revision/latest/scale-to-width-down/106?cb=20240418091823",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/EagleArtillery_PreActivate1.ogg/revision/latest?cb=20250328095220"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0f/EagleArtillery_PreActivate2.ogg/revision/latest?cb=20250328095313"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c0/EagleArtillery_PreActivate3.ogg/revision/latest?cb=20250328095400"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/65/Eagle_Artillery4.png/revision/latest?cb=20200906055404"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/78/Eagle_Artillery5.png/revision/latest?cb=20210412222407"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ab/Eagle_Artillery6.png/revision/latest?cb=20230613000944"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/36/Eagle_Artillery7.png/revision/latest?cb=20240418091823"
+        }
+      ]
+    },
+    {
+      "name": "Bomb Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a8/Bomb_tower.png/revision/latest/scale-to-width-down/128?cb=20260209205228",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/68/Bomb_Tower1.png/revision/latest?cb=20231213084104"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c9/Bomb_Tower2.png/revision/latest?cb=20231213084115"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/46/Bomb_Tower3.png/revision/latest?cb=20231213084123"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/75/Bomb_Tower4.png/revision/latest?cb=20231213084129"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d2/Bomb_Tower5.png/revision/latest?cb=20231213084135"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/83/Bomb_Tower6.png/revision/latest?cb=20231213084308"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/59/Bomb_Tower7.png/revision/latest?cb=20231213084325"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bc/Bomb_Tower8.png/revision/latest?cb=20231213084338"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b3/Bomb_Tower9.png/revision/latest?cb=20231213084352"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/07/Bomb_Tower10.png/revision/latest?cb=20231213084402"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/70/Bomb_Tower11.png/revision/latest?cb=20231213084415"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/66/Bomb_Tower12.png/revision/latest?cb=20241122153133"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3b/Bomb_Tower13.png/revision/latest?cb=20251115143618"
+        }
+      ]
+    },
+    {
+      "name": "Double Cannon",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/df/Double_Cannon10.png/revision/latest/scale-to-width-down/128?cb=20230516071432",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cc/Double_Cannon1.png/revision/latest?cb=20171108155759"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0c/Double_Cannon2.png/revision/latest?cb=20171108155800"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/98/Double_Cannon3.png/revision/latest?cb=20171108155801"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/63/Double_Cannon4.png/revision/latest?cb=20171108155801"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/de/Double_Cannon5.png/revision/latest?cb=20171108155801"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/75/Double_Cannon6.png/revision/latest?cb=20171108155802"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bd/Double_Cannon7.png/revision/latest?cb=20171108155802"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/Double_Cannon8.png/revision/latest?cb=20171108155802"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ee/Double_Cannon9.png/revision/latest?cb=20190616215121"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/df/Double_Cannon10.png/revision/latest?cb=20230516071432"
+        }
+      ]
+    },
+    {
+      "name": "BB Cannon",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Cannon10B.png/revision/latest/scale-to-width-down/128?cb=20230521100811",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a1/Cannon1.png/revision/latest?cb=20230521100552"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dc/Cannon2.png/revision/latest?cb=20230521100606"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Cannon3.png/revision/latest?cb=20230521100615"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a5/Cannon4.png/revision/latest?cb=20230521100624"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ea/Cannon5.png/revision/latest?cb=20230521100633"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/93/Cannon6.png/revision/latest?cb=20230521100644"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/16/Cannon7B.png/revision/latest?cb=20230521100706"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Cannon8B.png/revision/latest?cb=20230521100727"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9b/Cannon9B.png/revision/latest?cb=20230521100746"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Cannon10B.png/revision/latest?cb=20230521100811"
+        }
+      ]
+    },
+    {
+      "name": "Wall",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f9/Wall5C.png/revision/latest/scale-to-width-down/128?cb=20220504055858",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Wall1.png/revision/latest?cb=20171205125404"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/97/Wall2.png/revision/latest?cb=20171205125418"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f5/Wall3.png/revision/latest?cb=20171205125432"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Wall4.png/revision/latest?cb=20171205125448"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c4/Wall5.png/revision/latest?cb=20171205125503"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c7/Wall6.png/revision/latest?cb=20171205125519"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Wall7.png/revision/latest?cb=20171205125539"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/06/Wall8.png/revision/latest?cb=20171205125553"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/93/Wall9.png/revision/latest?cb=20171205125607"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8b/Wall10.png/revision/latest?cb=20171205125626"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/86/Wall11.png/revision/latest?cb=20171205125639"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/41/Wall12.png/revision/latest?cb=20171205125655"
+        },
+        {
+          "level": 13,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/23/Wall13.png/revision/latest?cb=20180604155743"
+        },
+        {
+          "level": 14,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/53/Wall14.png/revision/latest?cb=20201023201151"
+        },
+        {
+          "level": 15,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/61/Wall15.png/revision/latest?cb=20210413212225"
+        },
+        {
+          "level": 16,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Wall16.png/revision/latest?cb=20221010075457"
+        },
+        {
+          "level": 17,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/Wall17.png/revision/latest?cb=20251209003136"
+        },
+        {
+          "level": 18,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/02/Wall18.png/revision/latest?cb=20251211120721"
+        },
+        {
+          "level": 19,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4d/Wall19.png/revision/latest?cb=20260226043604"
+        }
+      ]
+    },
+    {
+      "name": "Workshop",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8c/Workshop9.png/revision/latest/scale-to-width-down/127?cb=20260426165656",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/84/Workshop1.png/revision/latest?cb=20221125080815"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e1/Workshop2.png/revision/latest?cb=20221125080821"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/28/Workshop3.png/revision/latest?cb=20221125080828"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ec/Workshop4.png/revision/latest?cb=20221125080844"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1b/Workshop5.png/revision/latest?cb=20221125080855"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/18/Workshop6.png/revision/latest?cb=20221125080905"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Workshop7.png/revision/latest?cb=20221125080915"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6d/Workshop8.png/revision/latest?cb=20250208165059"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8c/Workshop9.png/revision/latest?cb=20260426165656"
+        }
+      ]
+    },
+    {
+      "name": "Tornado Trap",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4e/TornadoTrap_In_Action.mp4/revision/latest?cb=20241206000851",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Tornado_Trap1.png/revision/latest?cb=20181022220244"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ab/Tornado_Trap2.png/revision/latest?cb=20181022220256"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ab/Tornado_Trap2.png/revision/latest?cb=20181022220256"
+        }
+      ]
+    },
+    {
+      "name": "Scattershot",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0f/Scattershot_level2_info.png/revision/latest/scale-to-width-down/128?cb=20250316151923",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/67/Scattershot1.png/revision/latest?cb=20200921071952"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Scattershot2.png/revision/latest?cb=20200921072106"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Scattershot3.png/revision/latest?cb=20210412215426"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/38/Scattershot4.png/revision/latest?cb=20230613001159"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d9/Scattershot5.png/revision/latest?cb=20240303013949"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6d/Scattershot6.png/revision/latest?cb=20250208165156"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/37/Scattershot7.png/revision/latest?cb=20260709205916"
+        }
+      ]
+    },
+    {
+      "name": "Pet House",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Pet_House12.png/revision/latest/scale-to-width-down/119?cb=20260224195852",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/21/Pet_House1.png/revision/latest?cb=20210412213218"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9d/Pet_House2.png/revision/latest?cb=20210412213219"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c5/Pet_House3.png/revision/latest?cb=20210412213220"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/34/Pet_House4.png/revision/latest?cb=20210412213221"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c2/Pet_House5.png/revision/latest?cb=20221124093007"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1b/Pet_House6.png/revision/latest?cb=20221124093035"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d4/Pet_House7.png/revision/latest?cb=20221124093045"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2d/Pet_House8.png/revision/latest?cb=20221124093059"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6e/Pet_House9.png/revision/latest?cb=20231213083040"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/60/Pet_House10.png/revision/latest?cb=20251119155431"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bf/Pet_House11.png/revision/latest?cb=20260530205018"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Pet_House12.png/revision/latest?cb=20260224195852"
+        }
+      ]
+    },
+    {
+      "name": "Spell Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/33/Spell_Tower4_Rage.png/revision/latest/scale-to-width-down/115?cb=20260224143517",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8e/Spell_Tower1_Rage.png/revision/latest?cb=20221120080125"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e4/Spell_Tower2_Poison.png/revision/latest?cb=20221120080210"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Spell_Tower3_Invisibility.png/revision/latest?cb=20221120080246"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/00/Spell_Tower4_Earthquake.png/revision/latest?cb=20260224143548"
+        }
+      ]
+    },
+    {
+      "name": "Monolith",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/66/Monolith_level1_info.png/revision/latest/scale-to-width-down/91?cb=20250318143104",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9a/Monolith1.png/revision/latest?cb=20221120072556"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/95/Monolith2.png/revision/latest?cb=20221120072613"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a2/Monolith3.png/revision/latest?cb=20240414154019"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/62/Monolith4.png/revision/latest?cb=20260222191124"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/96/Monolith5.png/revision/latest?cb=20260613130105"
+        }
+      ]
+    },
+    {
+      "name": "Blacksmith",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ae/Blacksmith_level1_info.png/revision/latest/scale-to-width-down/128?cb=20250318143705",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/18/Blacksmith1.png/revision/latest?cb=20231213085709"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/18/Blacksmith1.png/revision/latest?cb=20231213085709"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Blacksmith3.png/revision/latest?cb=20231213085710"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Blacksmith3.png/revision/latest?cb=20231213085710"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9d/Blacksmith5.png/revision/latest?cb=20231213085711"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9d/Blacksmith5.png/revision/latest?cb=20231213085711"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/73/Blacksmith7.png/revision/latest?cb=20231213085712"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/73/Blacksmith7.png/revision/latest?cb=20231213085712"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e8/Blacksmith9.png/revision/latest?cb=20231213085713"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e8/Blacksmith9.png/revision/latest?cb=20231213085713"
+        }
+      ]
+    },
+    {
+      "name": "Ricochet Cannon",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d0/Ricochet_Cannon_level1_info.png/revision/latest/scale-to-width-down/128?cb=20251217141159",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Ricochet_Cannon1.png/revision/latest?cb=20231213205828"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9e/Ricochet_Cannon2.png/revision/latest?cb=20231213205828"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/77/Ricochet_Cannon3.png/revision/latest?cb=20241122153140"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/76/Ricochet_Cannon4.png/revision/latest?cb=20251123143847"
+        }
+      ]
+    },
+    {
+      "name": "Multi-Archer Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Multi-Archer_Tower_level1_info.png/revision/latest/scale-to-width-down/128?cb=20251217141306",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/31/Multi-Archer_Tower1.png/revision/latest?cb=20231213213611"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/29/Multi-Archer_Tower2.png/revision/latest?cb=20231213213624"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/14/Multi-Archer_Tower3.png/revision/latest?cb=20241122153139"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f7/Multi-Archer_Tower4.png/revision/latest?cb=20251123100320"
+        }
+      ]
+    },
+    {
+      "name": "Giga Bomb",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cf/Giga_Bomb_info.png/revision/latest/scale-to-width-down/128?cb=20260225070456",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b7/Giga_Bomb1.png/revision/latest?cb=20241122154922"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7e/Giga_Bomb2.png/revision/latest?cb=20241122155021"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/72/Giga_Bomb3.png/revision/latest?cb=20241122154958"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/aa/Giga_Bomb4.png/revision/latest?cb=20260225010120"
+        }
+      ]
+    },
+    {
+      "name": "Firespitter",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e5/Firespitter_Concept_Art1.jpg/revision/latest/scale-to-width-down/128?cb=20250826063616",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/59/Firespitter1.png/revision/latest?cb=20241123131419"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/59/Firespitter2.png/revision/latest?cb=20241123131420"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/eb/Firespitter3.png/revision/latest?cb=20260224151021"
+        }
+      ]
+    },
+    {
+      "name": "Hero Hall",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/32/Hero_Hall_Inside.webp/revision/latest/scale-to-width-down/128?cb=20241125071739",
+      "levels": [
+        {
+          "level": 0,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/02/Hero_Hall0.png/revision/latest?cb=20260526163457"
+        },
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/57/Hero_Hall1.png/revision/latest?cb=20241124131309"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/49/Hero_Hall2.png/revision/latest?cb=20241124131310"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/48/Hero_Hall3.png/revision/latest?cb=20241124131311"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ca/Hero_Hall4.png/revision/latest?cb=20241124131312"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3c/Hero_Hall5.png/revision/latest?cb=20241124131313"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1b/Hero_Hall6.png/revision/latest?cb=20241124131314"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6f/Hero_Hall7.png/revision/latest?cb=20241124131315"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/df/Hero_Hall8.png/revision/latest?cb=20241124131316"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4d/Hero_Hall9.png/revision/latest?cb=20241124131317"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Hero_Hall10.png/revision/latest?cb=20241124131318"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/eb/Hero_Hall11.png/revision/latest?cb=20241124131319"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ed/Hero_Hall12.png/revision/latest?cb=20251115150216"
+        }
+      ]
+    },
+    {
+      "name": "Multi-Gear Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/Multi-Gear_Tower3_LongRange.png/revision/latest/scale-to-width-down/91?cb=20251217133940",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/89/Multi-Gear_Tower1_FastAttack.png/revision/latest?cb=20250208162225"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6e/Multi-Gear_Tower2_FastAttack.png/revision/latest?cb=20250208162226"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/86/Multi-Gear_Tower3_FastAttack.png/revision/latest?cb=20260105012017"
+        }
+      ]
+    },
+    {
+      "name": "Super Wizard Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d9/HV_Super_Wizard_Tower2_Beta.png/revision/latest/scale-to-width-down/124?cb=20251123041902",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/68/Super_Wizard_Tower1.png/revision/latest?cb=20260108162938"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/98/Super_Wizard_Tower2.png/revision/latest?cb=20260108163002"
+        }
+      ]
+    },
+    {
+      "name": "Revenge Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d5/RevengeTowerBuildup.gif/revision/latest/scale-to-width-down/128?cb=20251120043757",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/88/Revenge_Tower1_Dormant.png/revision/latest?cb=20251116161739"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/65/Revenge_Tower2_Dormant.png/revision/latest?cb=20251116161905"
+        }
+      ]
+    },
+    {
+      "name": "Firecrackers",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/95/Firecrackers_level8_info.png/revision/latest/scale-to-width-down/106?cb=20250320141136",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b7/Firecrackers1.png/revision/latest?cb=20230516073633"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/40/Firecrackers2.png/revision/latest?cb=20230516073642"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c3/Firecrackers3.png/revision/latest?cb=20230516073647"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/06/Firecrackers4.png/revision/latest?cb=20230516073652"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c6/Firecrackers5.png/revision/latest?cb=20230516073659"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/97/Firecrackers6.png/revision/latest?cb=20230516073704"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fa/Firecrackers7.png/revision/latest?cb=20230516073710"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/94/Firecrackers8.png/revision/latest?cb=20230516073718"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/88/Firecrackers9.png/revision/latest?cb=20230516073723"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Firecrackers10.png/revision/latest?cb=20230516073609"
+        }
+      ]
+    },
+    {
+      "name": "BB Air Bombs",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3c/Air_Bombs10.png/revision/latest/scale-to-width-down/117?cb=20230517042314",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/96/Air_Bombs1.png/revision/latest?cb=20171109192339"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f0/Air_Bombs2.png/revision/latest?cb=20171109192340"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/01/Air_Bombs3.png/revision/latest?cb=20171109192340"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/26/Air_Bombs4.png/revision/latest?cb=20171109192340"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b4/Air_Bombs5.png/revision/latest?cb=20171109192341"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/02/Air_Bombs6.png/revision/latest?cb=20171109192341"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/51/Air_Bombs7.png/revision/latest?cb=20171109192342"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Air_Bombs8.png/revision/latest?cb=20171109192342"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e4/Air_Bombs9.png/revision/latest?cb=20190616223138"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3c/Air_Bombs10.png/revision/latest?cb=20230517042314"
+        }
+      ]
+    },
+    {
+      "name": "Gem Mine",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0f/Gem_Mine10.png/revision/latest/scale-to-width-down/128?cb=20230518054357",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ae/Gem_Mine1.png/revision/latest?cb=20170830100532"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/96/Gem_Mine2.png/revision/latest?cb=20170830100551"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b0/Gem_Mine3.png/revision/latest?cb=20170830100614"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/25/Gem_Mine4.png/revision/latest?cb=20170830100632"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f9/Gem_Mine5.png/revision/latest?cb=20170830100652"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/ff/Gem_Mine6.png/revision/latest?cb=20170830100710"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9f/Gem_Mine7.png/revision/latest?cb=20170927112119"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a8/Gem_Mine8.png/revision/latest?cb=20170927112823"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Gem_Mine9.png/revision/latest?cb=20200901052741"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0f/Gem_Mine10.png/revision/latest?cb=20230518054357"
+        }
+      ]
+    },
+    {
+      "name": "Builder Hall",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Builder_Hall_level9_info.png/revision/latest/scale-to-width-down/128?cb=20250318144724",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/19/Builder_Hall1.png/revision/latest?cb=20260124185607"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/03/Builder_Hall2.png/revision/latest?cb=20260124185646"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/38/Builder_Hall3.png/revision/latest?cb=20260124185706"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Builder_Hall4.png/revision/latest?cb=20260124185726"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/22/Builder_Hall5.png/revision/latest?cb=20260124185756"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/29/Builder_Hall6.png/revision/latest?cb=20260124185815"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7f/Builder_Hall7.png/revision/latest?cb=20260124185837"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0e/Builder_Hall8.png/revision/latest?cb=20260124185902"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/43/Builder_Hall9.png/revision/latest?cb=20230516070619"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/87/Builder_Hall10.png/revision/latest?cb=20230516070454"
+        }
+      ]
+    },
+    {
+      "name": "Crusher",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b8/Crusher_level4_info.png/revision/latest/scale-to-width-down/126?cb=20250320140936",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8d/Crusher1.png/revision/latest?cb=20221211231023"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a5/Crusher2.png/revision/latest?cb=20171109174506"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/27/Crusher3.png/revision/latest?cb=20171109174447"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/de/Crusher4.png/revision/latest?cb=20171109174431"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ce/Crusher5.png/revision/latest?cb=20171109174413"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/95/Crusher6.png/revision/latest?cb=20171109174357"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/48/Crusher7.png/revision/latest?cb=20171109174340"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e5/Crusher8.png/revision/latest?cb=20171109174325"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/70/Crusher9.png/revision/latest?cb=20190616222005"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c7/Crusher10.png/revision/latest?cb=20230516085136"
+        }
+      ]
+    },
+    {
+      "name": "BB Elixir Collector",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/32/Elixir_Collector10B.png/revision/latest/scale-to-width-down/97?cb=20230518051323",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c4/Elixir_Collector1B.png/revision/latest?cb=20180109122754"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/19/Elixir_Collector2B.png/revision/latest?cb=20180109122754"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a7/Elixir_Collector3B.png/revision/latest?cb=20180109122755"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Elixir_Collector4B.png/revision/latest?cb=20180109122755"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ef/Elixir_Collector5B.png/revision/latest?cb=20180109122756"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d4/Elixir_Collector6B.png/revision/latest?cb=20180109122756"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8e/Elixir_Collector7B.png/revision/latest?cb=20180109122757"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/15/Elixir_Collector8B.png/revision/latest?cb=20180109122757"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3b/Elixir_Collector9B.png/revision/latest?cb=20190616211335"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/32/Elixir_Collector10B.png/revision/latest?cb=20230518051323"
+        }
+      ]
+    },
+    {
+      "name": "Guard Post",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0f/Guard_Post_level5_info.png/revision/latest/scale-to-width-down/128?cb=20250320141049",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/63/Guard_Post1.png/revision/latest?cb=20171109182016"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/ba/Guard_Post2.png/revision/latest?cb=20171109182017"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cd/Guard_Post3.png/revision/latest?cb=20171109182017"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c5/Guard_Post4.png/revision/latest?cb=20171109182017"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Guard_Post5.png/revision/latest?cb=20171109182018"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/21/Guard_Post6.png/revision/latest?cb=20171109182018"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/28/Guard_Post7.png/revision/latest?cb=20171109182018"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/35/Guard_Post8.png/revision/latest?cb=20171109182019"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/ff/Guard_Post9.png/revision/latest?cb=20190616222444"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f7/Guard_Post10.png/revision/latest?cb=20230517041059"
+        }
+      ]
+    },
+    {
+      "name": "Multi Mortar",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1b/Multi_Mortar10.png/revision/latest/scale-to-width-down/128?cb=20230517035445",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cc/Multi_Mortar1.png/revision/latest?cb=20171109200531"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/55/Multi_Mortar2.png/revision/latest?cb=20171109200532"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Multi_Mortar3.png/revision/latest?cb=20171109200532"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/be/Multi_Mortar4.png/revision/latest?cb=20171109200533"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/65/Multi_Mortar5.png/revision/latest?cb=20171109200533"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/38/Multi_Mortar6.png/revision/latest?cb=20171109200533"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/60/Multi_Mortar7.png/revision/latest?cb=20171109200534"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9b/Multi_Mortar8.png/revision/latest?cb=20171109200534"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/df/Multi_Mortar9.png/revision/latest?cb=20190616223802"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1b/Multi_Mortar10.png/revision/latest?cb=20230517035445"
+        }
+      ]
+    },
+    {
+      "name": "BB Roaster",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/69/Roaster10.png/revision/latest/scale-to-width-down/128?cb=20230517044108",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/30/Roaster1.png/revision/latest?cb=20200902074125"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f2/Roaster2.png/revision/latest?cb=20200902074057"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/72/Roaster3.png/revision/latest?cb=20200902074023"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4e/Roaster4.png/revision/latest?cb=20200902073956"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/70/Roaster5.png/revision/latest?cb=20200902073859"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c7/Roaster6.png/revision/latest?cb=20200902073836"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/97/Roaster7.png/revision/latest?cb=20200902073750"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/82/Roaster8.png/revision/latest?cb=20200902073711"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b6/Roaster9.png/revision/latest?cb=20200902073520"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/69/Roaster10.png/revision/latest?cb=20230517044108"
+        }
+      ]
+    },
+    {
+      "name": "BB Archer Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Archer_Tower10B.png/revision/latest/scale-to-width-down/107?cb=20230516045047",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cd/Archer_Tower1B.png/revision/latest?cb=20171108194356"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e9/Archer_Tower2B.png/revision/latest?cb=20171108194356"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/51/Archer_Tower3B.png/revision/latest?cb=20171108194357"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ed/Archer_Tower4B.png/revision/latest?cb=20171108194357"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8d/Archer_Tower5B.png/revision/latest?cb=20171108194357"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1d/Archer_Tower6B.png/revision/latest?cb=20171108194358"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/44/Archer_Tower7B.png/revision/latest?cb=20171108194358"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/28/Archer_Tower8B.png/revision/latest?cb=20171108194359"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/0c/Archer_Tower9B.png/revision/latest?cb=20190616220059"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Archer_Tower10B.png/revision/latest?cb=20230516045047"
+        }
+      ]
+    },
+    {
+      "name": "Clock Tower",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fd/Clock_Tower10.png/revision/latest/scale-to-width-down/112?cb=20230518073813",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ee/Clock_Tower1.png/revision/latest?cb=20180512121553"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2b/Clock_Tower2.png/revision/latest?cb=20180512121605"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Clock_Tower3.png/revision/latest?cb=20180512121620"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Clock_Tower4.png/revision/latest?cb=20180512121635"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1f/Clock_Tower5.png/revision/latest?cb=20180512121647"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/37/Clock_Tower6.png/revision/latest?cb=20180512121704"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/92/Clock_Tower7.png/revision/latest?cb=20170927114354"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c9/Clock_Tower8.png/revision/latest?cb=20170927114413"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dd/Clock_Tower9.png/revision/latest?cb=20190617025510"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fd/Clock_Tower10.png/revision/latest?cb=20230518073813"
+        }
+      ]
+    },
+    {
+      "name": "Giant Cannon",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/65/Giant_Cannon10.png/revision/latest/scale-to-width-down/120?cb=20230517045117",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/29/Giant_Cannon1.png/revision/latest?cb=20190616233921"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cf/Giant_Cannon2.png/revision/latest?cb=20190616233937"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/72/Giant_Cannon3.png/revision/latest?cb=20190616233954"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/09/Giant_Cannon4.png/revision/latest?cb=20190616234009"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8b/Giant_Cannon5.png/revision/latest?cb=20190616234026"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/77/Giant_Cannon6.png/revision/latest?cb=20190616234044"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6a/Giant_Cannon7.png/revision/latest?cb=20190616234105"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9a/Giant_Cannon8.png/revision/latest?cb=20190616234124"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/63/Giant_Cannon9.png/revision/latest?cb=20190621202618"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/65/Giant_Cannon10.png/revision/latest?cb=20230517045117"
+        }
+      ]
+    },
+    {
+      "name": "Mega Tesla",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/41/Mega_Tesla_level8_info.png/revision/latest/scale-to-width-down/128?cb=20250316151239",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ed/Mega_Tesla1.png/revision/latest?cb=20170527182000"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fd/Mega_Tesla2.png/revision/latest?cb=20180929013650"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ed/Mega_Tesla3.png/revision/latest?cb=20170527182001"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/43/Mega_Tesla4.png/revision/latest?cb=20170527182001"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Mega_Tesla5.png/revision/latest?cb=20180929013702"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/42/Mega_Tesla6.png/revision/latest?cb=20170527182002"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c6/Mega_Tesla7.png/revision/latest?cb=20180929013713"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/32/Mega_Tesla8.png/revision/latest?cb=20180929013724"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/39/Mega_Tesla9.png/revision/latest?cb=20190616234612"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/42/Mega_Tesla10.png/revision/latest?cb=20230517050242"
+        }
+      ]
+    },
+    {
+      "name": "Mega Mine",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/70/Mega_Mine10_Ground.png/revision/latest/scale-to-width-down/128?cb=20230520053506",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/64/Mega_Mine1_Air.png/revision/latest?cb=20171130180410"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/29/Mega_Mine2_Air.png/revision/latest?cb=20171130180410"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2e/Mega_Mine3_Air.png/revision/latest?cb=20171130180411"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d6/Mega_Mine4_Air.png/revision/latest?cb=20171130180411"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cf/Mega_Mine5_Air.png/revision/latest?cb=20171130180411"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Mega_Mine6_Air.png/revision/latest?cb=20171130180412"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/13/Mega_Mine7_Air.png/revision/latest?cb=20171130180412"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a4/Mega_Mine8_Air.png/revision/latest?cb=20171130180412"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Mega_Mine9_Air.png/revision/latest?cb=20190617034052"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Mega_Mine10_Air.png/revision/latest?cb=20230520053506"
+        }
+      ]
+    },
+    {
+      "name": "BB Spring Trap",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c2/Spring_Trap_info.png/revision/latest/scale-to-width-down/128?cb=20171130161342",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Spring_Trap1.png/revision/latest?cb=20221218092202"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Spring_Trap3.png/revision/latest?cb=20221218092328"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d5/Spring_Trap5.png/revision/latest?cb=20221218092228"
+        }
+      ]
+    },
+    {
+      "name": "Push Trap",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2e/Push_Trap_info.png/revision/latest/scale-to-width-down/128?cb=20250329132906",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/77/Push_Trap1.png/revision/latest?cb=20171130154513"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/25/Push_Trap2.png/revision/latest?cb=20171130154513"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1a/Push_Trap3.png/revision/latest?cb=20171130154514"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/33/Push_Trap4.png/revision/latest?cb=20171130154514"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cb/Push_Trap5.png/revision/latest?cb=20171130154515"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8c/Push_Trap6.png/revision/latest?cb=20171130154515"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/29/Push_Trap7.png/revision/latest?cb=20171130154515"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a1/Push_Trap8.png/revision/latest?cb=20171130154516"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/67/Push_Trap9.png/revision/latest?cb=20190617033045"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Push_Trap10.png/revision/latest?cb=20230517082021"
+        }
+      ]
+    },
+    {
+      "name": "BB Gold Storage",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Gold_Storage10B.png/revision/latest/scale-to-width-down/122?cb=20230518052405",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/16/Gold_Storage1B.png/revision/latest?cb=20171031120205"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/de/Gold_Storage2B.png/revision/latest?cb=20171031120206"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c8/Gold_Storage3B.png/revision/latest?cb=20171031120207"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Gold_Storage4B.png/revision/latest?cb=20171031120207"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/27/Gold_Storage5B.png/revision/latest?cb=20171031120207"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/84/Gold_Storage6B.png/revision/latest?cb=20171031120208"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/31/Gold_Storage7B.png/revision/latest?cb=20171031120208"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Gold_Storage8B.png/revision/latest?cb=20180307123736"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/49/Gold_Storage9B.png/revision/latest?cb=20190616213038"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e6/Gold_Storage10B.png/revision/latest?cb=20230518052405"
+        }
+      ]
+    },
+    {
+      "name": "BB Elixir Storage",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Elixir_Storage10B.png/revision/latest/scale-to-width-down/128?cb=20230515070355",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/92/Elixir_Storage1B.png/revision/latest?cb=20230515070145"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d2/Elixir_Storage2B.png/revision/latest?cb=20230515070207"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/38/Elixir_Storage3B.png/revision/latest?cb=20230515070217"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1a/Elixir_Storage4B.png/revision/latest?cb=20230515070230"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5a/Elixir_Storage5B.png/revision/latest?cb=20230515070243"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c9/Elixir_Storage6B.png/revision/latest?cb=20230515070259"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4c/Elixir_Storage7B.png/revision/latest?cb=20230515070311"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bb/Elixir_Storage8B.png/revision/latest?cb=20230515070322"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/3f/Elixir_Storage9B.png/revision/latest?cb=20230515070333"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Elixir_Storage10B.png/revision/latest?cb=20230515070355"
+        }
+      ]
+    },
+    {
+      "name": "Battle Machine Altar",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/BattleMachineAltar1.png/revision/latest/scale-to-width-down/127?cb=20170603193138",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a6/BattleMachineAltar1.png/revision/latest?cb=20170603193138"
+        }
+      ]
+    },
+    {
+      "name": "BB Lava Launcher",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2c/Lava_Launcher10.png/revision/latest/scale-to-width-down/123?cb=20230517051511",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dd/Lava_Launcher1.png/revision/latest?cb=20190618174155"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/47/Lava_Launcher3.png/revision/latest?cb=20190618174156"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a5/Lava_Launcher5.png/revision/latest?cb=20190618174156"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/43/Lava_Launcher6.png/revision/latest?cb=20190618174157"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4b/Lava_Launcher7.png/revision/latest?cb=20190618174157"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/96/Lava_Launcher9.png/revision/latest?cb=20190618174157"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2c/Lava_Launcher10.png/revision/latest?cb=20230517051511"
+        }
+      ]
+    },
+    {
+      "name": "O.T.T.O's Outpost",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/41/Outpost_level10_info.png/revision/latest/scale-to-width-down/128?cb=20250318144336"
+    },
+    {
+      "name": "BB X-Bow",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8a/X-Bow5B_Ground.png/revision/latest/scale-to-width-down/113?cb=20230516212133",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ad/X-Bow1B_Air.png/revision/latest?cb=20230516212125"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6c/X-Bow2B_Air.png/revision/latest?cb=20230516212126"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/01/X-Bow3B_Air.png/revision/latest?cb=20230516212128"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fe/X-Bow4B_Air.png/revision/latest?cb=20230516212130"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7a/X-Bow5B_Air.png/revision/latest?cb=20230516212132"
+        }
+      ]
+    },
+    {
+      "name": "Healing Hut",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Healing_Hut6.png/revision/latest/scale-to-width-down/128?cb=20230517101255",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fd/Healing_Hut1.png/revision/latest?cb=20230517101251"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/2/2d/Healing_Hut2.png/revision/latest?cb=20230517101251"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/da/Healing_Hut3.png/revision/latest?cb=20230517101252"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e8/Healing_Hut4.png/revision/latest?cb=20230517101253"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f8/Healing_Hut5.png/revision/latest?cb=20230517101254"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b2/Healing_Hut6.png/revision/latest?cb=20230517101255"
+        }
+      ]
+    },
+    {
+      "name": "Battle Copter Altar",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/71/Battle_Copter_Altar.png/revision/latest/scale-to-width-down/128?cb=20230518081135"
+    },
+    {
+      "name": "Elixir Cart",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/aa/Elixir_Cart_info.png/revision/latest/scale-to-width-down/128?cb=20230519223921"
+    },
+    {
+      "name": "B.O.T.O's Shack",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c8/B.O.T.O%27s_Shack.png/revision/latest/scale-to-width-down/96?cb=20260530204949"
+    }
+  ]
+}
