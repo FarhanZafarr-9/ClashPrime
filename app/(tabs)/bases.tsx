@@ -22,12 +22,15 @@ import { useDialog } from '../../src/components/AlertDialog';
 
 const CATEGORY_MAP: Record<string, string> = {
   war: 'War',
-  farm: 'Farming',
-  defence: 'Defence',
-  troll: 'Troll',
+  trophy: 'Trophy',
+  farming: 'Farming',
+  hybrid: 'Hybrid',
+  cwl: 'CWL',
+  funny: 'Funny',
+  builder: 'Builder',
 };
 
-const CATEGORIES = ['All', 'Defence', 'War', 'Farming'];
+const CATEGORIES = ['All', 'War', 'Trophy', 'Farming', 'Hybrid', 'CWL'];
 
 export default function BaseLibraryScreen() {
   const { player, refresh: refreshPlayer } = usePlayer();
@@ -107,7 +110,7 @@ export default function BaseLibraryScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
-          <Text style={styles.subtitle}>TH{thLevel} layouts from clashofclans-layouts.com</Text>
+          <Text style={styles.subtitle}>TH{thLevel} layouts from ClashLy</Text>
         </View>
         <Pressable onPress={fetchBases} style={styles.refreshBtn}>
           <Ionicons name="refresh" size={18} color={Colors.textPrimary} />
@@ -117,7 +120,7 @@ export default function BaseLibraryScreen() {
       {loadingBases ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.textPrimary} />
-          <Text style={styles.loadingText}>Scraping TH{thLevel} bases…</Text>
+          <Text style={styles.loadingText}>Loading TH{thLevel} bases…</Text>
         </View>
       ) : scrapeError ? (
         <View style={styles.loadingContainer}>
@@ -192,6 +195,7 @@ export default function BaseLibraryScreen() {
                   tags={base.tags}
                   previewImage={base.preview_image_url}
                   views={base.views_raw}
+                  downloads={base.votes}
                   year={base.year}
                   updated={base.updated}
                   hasLink={base.has_link}

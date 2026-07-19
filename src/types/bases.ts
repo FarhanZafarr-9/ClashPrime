@@ -1,5 +1,5 @@
 export interface ScrapedBase {
-  id: number;
+  id: string | number;
   type: string;
   th_level: number;
   title: string;
@@ -14,6 +14,9 @@ export interface ScrapedBase {
   views: number;
   views_raw: string;
   tags: string[];
+  votes?: number;
+  hotScore?: number;
+  recentDownloads?: number;
 }
 
 export interface ScrapeResult {

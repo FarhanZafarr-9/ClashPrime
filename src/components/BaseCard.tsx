@@ -11,6 +11,7 @@ interface Props {
   tags: string[];
   previewImage?: string;
   views?: string;
+  downloads?: number;
   year?: number | null;
   updated?: boolean;
   isFavorite?: boolean;
@@ -27,6 +28,7 @@ export function BaseCard({
   tags = [],
   previewImage,
   views,
+  downloads,
   year,
   updated,
   isFavorite,
@@ -49,14 +51,22 @@ export function BaseCard({
         ) : (
           <Text style={styles.thText}>TH{townHallLevel}</Text>
         )}
-        <View style={styles.ratingBadge}>
-          <Ionicons name="star" size={10} color={Colors.textPrimary} />
-          <Text style={styles.ratingText}>{safeRating.toFixed(1)}</Text>
-        </View>
+        {safeRating > 0 && (
+          <View style={styles.ratingBadge}>
+            <Ionicons name="star" size={10} color={Colors.textPrimary} />
+            <Text style={styles.ratingText}>{safeRating.toFixed(1)}</Text>
+          </View>
+        )}
         {views ? (
           <View style={styles.viewsBadge}>
             <Ionicons name="eye" size={10} color={Colors.textTertiary} />
             <Text style={styles.viewsText}>{views}</Text>
+          </View>
+        ) : null}
+        {downloads && downloads > 0 ? (
+          <View style={styles.votesBadge}>
+            <Ionicons name="arrow-up" size={10} color={Colors.textTertiary} />
+            <Text style={styles.viewsText}>{downloads}</Text>
           </View>
         ) : null}
         {year ? (
@@ -155,6 +165,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: Spacing.sm,
     left: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: Colors.bgCard,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  votesBadge: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    left: 64,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
