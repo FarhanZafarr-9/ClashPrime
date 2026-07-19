@@ -9,7 +9,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 ## Features
 
 - **Home Dashboard** — overview of your village with progress rings, resource counters, and building stats
-- **Base Library** — scrape and browse TH-level base layouts from clashofclans-layouts.com
+- **Base Library** — browse TH-level base layouts with community ratings from ClashLy
 - **Player Profile** — troops, heroes, spells, pets, equipment with images and level progress
 - **Buildings** — expandable cards showing all 75+ buildings with level model progression (Home Village + Builder Base)
 - **Events** — upcoming in-game events with countdown timers and progress bars
@@ -43,8 +43,8 @@ Uses the official Clash of Clans API:
 
 | Data | Source | Method |
 |------|--------|--------|
-| Player data | CoC API | REST fetch |
-| Base layouts | clashofclans-layouts.com | Runtime regex scraper |
+| Player data | CoC API | REST fetch (Bearer token) |
+| Base layouts | ClashLy API | REST fetch (Parse server) |
 | TH max levels | clash.ninja | CLI scraper → static JSON |
 | Troop list | coc.guide | CLI scraper → static JSON |
 | Troop details | coc.guide | On-demand fetch with cache |
@@ -69,7 +69,7 @@ ClashPrime/
 ├── src/
 │   ├── api/                # API clients and scrapers
 │   │   ├── clash.ts        # CoC API client
-│   │   ├── baseScraper.ts  # Runtime base layout scraper
+│   │   ├── baseScraper.ts  # ClashLy API base layout fetcher
 │   │   ├── troopDetail.ts  # On-demand troop detail fetcher
 │   │   └── eventsScraper.ts# Events scraper
 │   ├── components/         # Shared UI components
@@ -107,9 +107,6 @@ npx expo start --ios
 ## Scraper Scripts
 
 ```bash
-# Scrape base layouts for all TH levels
-npx tsx scraper/run.ts
-
 # Scrape TH max levels from clash.ninja
 npx tsx scraper/run-th-levels.ts
 
@@ -117,7 +114,7 @@ npx tsx scraper/run-th-levels.ts
 npx tsx scraper/run-troops.ts
 
 # Scrape building images from Fandom wiki
-npx tsx scraper/run-building-images.ts
+npx tsx scraper/fandom-buildings.ts
 
 # Re-download building images + regenerate asset mapping
 npx tsx scraper/download-building-images.ts

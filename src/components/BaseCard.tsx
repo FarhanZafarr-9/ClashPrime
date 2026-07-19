@@ -22,10 +22,8 @@ interface Props {
 
 export function BaseCard({
   name,
-  category,
   townHallLevel,
   rating = 0,
-  tags = [],
   previewImage,
   views,
   downloads,
@@ -37,7 +35,6 @@ export function BaseCard({
   onFavorite,
 }: Props) {
   const safeRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
-  const safeTags = Array.isArray(tags) ? tags : [];
 
   return (
     <View style={styles.card}>
@@ -85,8 +82,7 @@ export function BaseCard({
       <View style={styles.content}>
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.name} numberOfLines={2}>{name}</Text>
-            <Text style={styles.category}>{category.toUpperCase()}</Text>
+            <Text style={styles.name} numberOfLines={1}>{name}</Text>
           </View>
           <Pressable onPress={onFavorite} hitSlop={8} style={styles.favBtn}>
             <Ionicons
@@ -96,15 +92,6 @@ export function BaseCard({
             />
           </Pressable>
         </View>
-        {safeTags.length > 0 && (
-          <View style={styles.tags}>
-            {safeTags.slice(0, 3).map((tag) => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        )}
         {hasLink ? (
           <Pressable onPress={onCopy} style={styles.copyBtn}>
             <Ionicons name="copy-outline" size={14} color={Colors.bg} />
@@ -131,7 +118,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
   },
   thumbnail: {
-    height: 100,
+    width: '100%',
+    aspectRatio: 1,
     backgroundColor: Colors.bgSubtle,
     position: 'relative',
     overflow: 'hidden',
@@ -222,30 +210,8 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 20,
   },
-  category: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 3,
-    letterSpacing: 0.8,
-  },
   favBtn: {
     padding: Spacing.xs,
-  },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  tag: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    backgroundColor: Colors.accentSubtle,
-    borderRadius: Radius.full,
-  },
-  tagText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
   },
   copyBtn: {
     flexDirection: 'row',

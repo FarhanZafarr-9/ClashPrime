@@ -200,7 +200,7 @@ export default function SettingsScreen() {
             label="Credits"
             onPress={() => showDialog({
               title: 'Credits',
-              message: 'Built by @FarhanZafarr-9 on GitHub.',
+              message: 'Built by @FarhanZafarr-9 on GitHub.\n\nData Sources:\n\nCoC API — Player stats & progress\nclashofclans-layouts.com — Base layouts\nclash.ninja — TH max levels, Events\ncoc.guide — Troop list & details\nFandom Wiki — Building images\nClashLy API — Base layout previews',
               actions: [
                 { label: 'Visit GitHub', onPress: () => {
                   import('expo-linking').then(({ openURL }) => {
