@@ -8,6 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../src/utils/buildingImages';
@@ -17,13 +18,13 @@ import thLevelsData from '../../src/data/th-levels.json';
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Siege Machines', 'Walls'];
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'Defenses': '🛡️',
-  'Resources': '💰',
-  'Traps': '💣',
-  'Army': '⚔️',
-  'Siege Machines': '🏰',
-  'Walls': '🧱',
+const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  'Defenses': 'shield-checkmark-outline',
+  'Resources': 'wallet-outline',
+  'Traps': 'warning-outline',
+  'Army': 'people-outline',
+  'Siege Machines': 'construct-outline',
+  'Walls': 'grid-outline',
 };
 
 const NAME_FIX: Record<string, string> = {
@@ -130,7 +131,7 @@ export default function BuildingsScreen() {
 
           return (
             <View key={cat}>
-              <SectionHeader title={`${CATEGORY_ICONS[cat] ?? ''} ${cat}`} />
+              <SectionHeader icon={CATEGORY_ICONS[cat]} title={cat} />
               {entries.map(([name, thData]) => {
                 const thEntry = thData[String(th)];
                 const maxLvl = thEntry?.level ?? 0;
