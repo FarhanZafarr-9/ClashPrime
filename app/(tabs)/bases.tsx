@@ -187,7 +187,7 @@ export default function BaseLibraryScreen() {
             ) : (
               filtered.map((base) => (
                 <BaseCard
-                  key={base.detail_url}
+                  key={String(base.id)}
                   name={base.title}
                   category={CATEGORY_MAP[base.type] || base.type}
                   townHallLevel={base.th_level}

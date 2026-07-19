@@ -57,18 +57,22 @@ export function BaseCard({
             <Text style={styles.ratingText}>{safeRating.toFixed(1)}</Text>
           </View>
         )}
-        {views ? (
-          <View style={styles.viewsBadge}>
-            <Ionicons name="eye" size={10} color={Colors.textTertiary} />
-            <Text style={styles.viewsText}>{views}</Text>
+        {(views || (downloads && downloads > 0)) && (
+          <View style={styles.bottomBadges}>
+            {views ? (
+              <View style={styles.badge}>
+                <Ionicons name="eye" size={10} color={Colors.textTertiary} />
+                <Text style={styles.viewsText}>{views}</Text>
+              </View>
+            ) : null}
+            {downloads && downloads > 0 ? (
+              <View style={styles.badge}>
+                <Ionicons name="arrow-up" size={10} color={Colors.textTertiary} />
+                <Text style={styles.viewsText}>{downloads}</Text>
+              </View>
+            ) : null}
           </View>
-        ) : null}
-        {downloads && downloads > 0 ? (
-          <View style={styles.votesBadge}>
-            <Ionicons name="arrow-up" size={10} color={Colors.textTertiary} />
-            <Text style={styles.viewsText}>{downloads}</Text>
-          </View>
-        ) : null}
+        )}
         {year ? (
           <View style={[styles.yearBadge, updated && styles.yearBadgeUpdated]}>
             {updated ? (
@@ -127,10 +131,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
   },
   thumbnail: {
-    height: 140,
+    height: 100,
     backgroundColor: Colors.bgSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -161,24 +163,14 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  viewsBadge: {
+  bottomBadges: {
     position: 'absolute',
     bottom: Spacing.sm,
     left: Spacing.sm,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: Colors.bgCard,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    gap: 4,
   },
-  votesBadge: {
-    position: 'absolute',
-    bottom: Spacing.sm,
-    left: 64,
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
