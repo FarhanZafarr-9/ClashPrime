@@ -50,7 +50,8 @@ Uses the official Clash of Clans API:
 | Base layouts | ClashLy API | REST fetch (Parse server) |
 | TH max levels | clash.ninja | CLI scraper → static JSON |
 | Troop list | coc.guide | CLI scraper → static JSON |
-| Troop details | coc.guide | On-demand fetch with cache |
+| Troop details (images + descriptions + stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
+| Hero details | coc.guide | On-demand JSON API fetch |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
 | Events | clash.ninja | Runtime HTML scraper |
 
