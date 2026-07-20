@@ -73,7 +73,7 @@ export default function PlayerProfileScreen() {
           currentLevel: match?.level,
           maxLevel: match?.maxLevel,
           levels: match ? [{ level: match.level, dps: 0, damagePerHit: 0, hitpoints: 0, upgradeCost: '', upgradeTime: '', xp: 0, labLevel: null, thRequired: null }] : [],
-          info: { trainingTime: '', range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' },
+          info: { range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' },
         };
       }
     }
