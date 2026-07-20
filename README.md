@@ -13,7 +13,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Player Profile** — troops, heroes, spells, pets, equipment with images and level progress
 - **Buildings** — expandable cards showing all 75+ buildings with level model progression (Home Village + Builder Base)
 - **Events** — upcoming in-game events with countdown timers and progress bars
-- **Settings** — API token configuration, dark mode toggle, credits
+- **Settings** — API token & dark mode, plus Credits, Privacy Policy and Feedback (reach us at farhanzafarr.9@gmail.com)
 - **Onboarding** — guided first-run flow for entering API token and player tag
 
 ## Design
@@ -51,7 +51,8 @@ Uses the official Clash of Clans API:
 | TH max levels | clash.ninja | CLI scraper → static JSON |
 | Troop list | coc.guide | CLI scraper → static JSON |
 | Troop details (images + descriptions + stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
-| Hero details | coc.guide | On-demand JSON API fetch |
+| Hero details (portraits) | coc.guide | On-demand JSON/static image fetch |
+| Hero & troop descriptions, infobox images | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
 | Events | clash.ninja | Runtime HTML scraper |
 
