@@ -167,7 +167,7 @@ export default function PlayerProfileScreen() {
   }, [visibleTabs, activeTab]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={
