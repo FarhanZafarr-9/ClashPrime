@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { Card } from '../../src/components/Card';
 import { fetchEvents, ClashEvent, formatCountdown } from '../../src/api/eventsScraper';
+import { EventsScreenSkeleton } from '../../src/components/SkeletonScreens';
 
 const EVENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   'Raid Weekend': 'skull-outline',
@@ -81,14 +82,7 @@ export default function EventsScreen() {
   const endedEvents = events.filter((e) => e.remainingSeconds <= 0 && !e.isActive);
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.textPrimary} />
-          <Text style={styles.loadingText}>Loading events…</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <EventsScreenSkeleton />;
   }
 
   return (
@@ -312,8 +306,8 @@ const styles = StyleSheet.create({
     padding: Spacing.base,
   },
   eventCardFeatured: {
-    backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
+    borderColor: Colors.accent,
+    borderWidth: 1.5,
   },
   eventCardEnded: {
     opacity: 0.5,
@@ -335,8 +329,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   eventIconWrapActive: {
-    backgroundColor: 'rgba(0,0,0,0.15)',
-    borderColor: 'transparent',
+    backgroundColor: Colors.accentSubtle,
+    borderColor: Colors.accent,
   },
   eventIconWrapEnded: {
     backgroundColor: Colors.bgSubtle,
@@ -350,42 +344,44 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   eventNameFeatured: {
-    color: Colors.bg,
+    color: Colors.textPrimary,
+    fontWeight: '700',
   },
   eventNameEnded: {
     color: Colors.textTertiary,
   },
   eventStatus: {
     ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 1,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   eventStatusActive: {
-    color: 'rgba(0,0,0,0.5)',
+    color: Colors.accent,
+    fontWeight: '600',
   },
   eventStatusEnded: {
     color: Colors.textMuted,
   },
   countdownBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 1,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   countdownBadgeFeatured: {
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: Colors.accentSubtle,
+    borderColor: Colors.accent,
   },
   countdownText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
     fontWeight: '600',
+    color: Colors.textSecondary,
     fontVariant: ['tabular-nums'],
   },
   countdownTextActive: {
-    color: Colors.bg,
+    color: Colors.textPrimary,
   },
   eventDesc: {
     ...Typography.caption,

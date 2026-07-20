@@ -8,7 +8,9 @@ import {
   Pressable,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
+import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
@@ -23,6 +25,12 @@ export default function HomeScreen() {
   const { player, loading, error, lastSync, refresh } = usePlayer();
   const [refreshing, setRefreshing] = useState(false);
 
+  React.useEffect(() => {
+    if (error && player) {
+      Alert.alert('Sync Error', error, [{ text: 'OK' }]);
+    }
+  }, [error, player]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refresh();
@@ -30,14 +38,7 @@ export default function HomeScreen() {
   }, [refresh]);
 
   if (loading && !player) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.textPrimary} />
-          <Text style={styles.loadingText}>Loading profile…</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <HomeScreenSkeleton />;
   }
 
   if (error && !player) {
@@ -59,7 +60,7 @@ export default function HomeScreen() {
 
   const homeHeroes = player.heroes.filter((h: { village: string }) => h.village === 'home');
   const homeTroops = filterHomeTroops(player.troops);
-  const homeSpells = player.spells.filter((s: { village: string }) => s.village === 'home');
+  const homeSpells = player.spells.filter((s: { village?: string }) => s.village === 'home' || !s.village);
   const th = player.townHallLevel;
 
   const heroesMaxed = homeHeroes.filter((h) => {
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: Radius.lg,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
     borderColor: Colors.border,

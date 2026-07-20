@@ -92,7 +92,7 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
           </View>
           <Ionicons
             name={expanded ? 'chevron-down' : 'chevron-forward'}
-            size={18}
+            size={16}
             color={Colors.textTertiary}
             style={styles.expandArrow}
           />
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   title: {
     ...Typography.largeTitle,
@@ -186,20 +186,20 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.md,
-    paddingVertical: Spacing.base,
-    paddingHorizontal: Spacing.base,
-    borderRadius: Radius.lg,
+    marginBottom: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
     overflow: 'hidden',
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.base,
+    gap: Spacing.md,
   },
   itemIcon: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
     overflow: 'hidden',
@@ -215,24 +215,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemName: {
-    ...Typography.body,
+    ...Typography.subhead,
     color: Colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   itemLevel: {
-    ...Typography.caption,
+    ...Typography.footnote,
     color: Colors.textTertiary,
-    marginTop: 2,
+    marginTop: 1,
   },
   expandArrow: {
     width: 24,
     textAlign: 'center',
   },
   levelStrip: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.sm,
   },
   levelStripContent: {
     paddingHorizontal: Spacing.xs,
@@ -246,8 +246,8 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   levelThumbImg: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
   },

@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TextInput,
   Pressable,
   Linking,
   ActivityIndicator,
@@ -19,6 +18,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import type { ScrapedBase, ScrapeResult } from '../../src/types/bases';
 import { scrapeBasesForTH } from '../../src/api/baseScraper';
 import { useDialog } from '../../src/components/AlertDialog';
+import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
 
 const CATEGORY_MAP: Record<string, string> = {
   war: 'War',
@@ -36,7 +36,6 @@ export default function BaseLibraryScreen() {
   const { player, refresh: refreshPlayer } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [search, setSearch] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [baseData, setBaseData] = useState<ScrapeResult | null>(null);
   const [loadingBases, setLoadingBases] = useState(true);
@@ -76,17 +75,9 @@ export default function BaseLibraryScreen() {
       if (selectedCategory !== 'All') {
         if (b.type !== catLower && CATEGORY_MAP[b.type] !== selectedCategory) return false;
       }
-      if (search) {
-        const q = search.toLowerCase();
-        return (
-          b.title.toLowerCase().includes(q) ||
-          (Array.isArray(b.tags) && b.tags.some((t) => t.toLowerCase().includes(q))) ||
-          b.type.toLowerCase().includes(q)
-        );
-      }
       return true;
     });
-  }, [allBases, selectedCategory, search]);
+  }, [allBases, selectedCategory]);
 
   const handleFavorite = (detailUrl: string) => {
     setFavorites((prev) => {
@@ -104,6 +95,10 @@ export default function BaseLibraryScreen() {
       showDialog({ title: 'No Copy Link', message: 'This base does not have an in-game copy link.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
     }
   };
+
+  if (loadingBases) {
+    return <BasesScreenSkeleton />;
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -136,34 +131,16 @@ export default function BaseLibraryScreen() {
             <Text style={styles.countText}>
               {filtered.length} base{filtered.length !== 1 ? 's' : ''}
             </Text>
-            <Text style={styles.countSubtext}>
-              {baseData?.total_bases || 0} total
-            </Text>
+            {(baseData?.total_bases || 0) !== filtered.length && (
+              <Text style={styles.countSubtext}>
+                {baseData?.total_bases || 0} total
+              </Text>
+            )}
           </View>
 
-          <View style={styles.searchContainer}>
-            <View style={styles.searchBar}>
-              <Ionicons name="search" size={16} color={Colors.textTertiary} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search bases..."
-                placeholderTextColor={Colors.textMuted}
-                value={search}
-                onChangeText={setSearch}
-              />
-              {search.length > 0 && (
-                <Pressable onPress={() => setSearch('')}>
-                  <Ionicons name="close-circle" size={16} color={Colors.textTertiary} />
-                </Pressable>
-              )}
-            </View>
-          </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsContainer}
-          >
+
+          <View style={styles.chipsContainer}>
             {CATEGORIES.map((cat) => (
               <Chip
                 key={cat}
@@ -172,7 +149,7 @@ export default function BaseLibraryScreen() {
                 onPress={() => setSelectedCategory(cat)}
               />
             ))}
-          </ScrollView>
+          </View>
 
           <ScrollView
             contentContainerStyle={styles.list}
@@ -223,6 +200,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    flexShrink: 0,
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
@@ -306,8 +284,10 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.base,
+    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   list: {

@@ -12,22 +12,24 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
-import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
+import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { Card } from '../../src/components/Card';
 import { ItemCard } from '../../src/components/ItemCard';
 import { ProgressRing } from '../../src/components/ProgressRing';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
+import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
 
 type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment' | 'achievements';
 
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
+  const { isDark, colors } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('heroes');
   const [refreshing, setRefreshing] = useState(false);
   const [detailModal, setDetailModal] = useState<TroopDetail | null>(null);
@@ -71,7 +73,7 @@ export default function PlayerProfileScreen() {
           currentLevel: match?.level,
           maxLevel: match?.maxLevel,
           levels: match ? [{ level: match.level, dps: 0, damagePerHit: 0, hitpoints: 0, upgradeCost: '', upgradeTime: '', xp: 0, labLevel: null, thRequired: null }] : [],
-          info: { trainingTime: '', range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '' },
+          info: { trainingTime: '', range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' },
         };
       }
     }
@@ -87,14 +89,7 @@ export default function PlayerProfileScreen() {
   }, [refresh]);
 
   if (loading && !player) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.textPrimary} />
-          <Text style={styles.loadingText}>Loading profile…</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <ProfileScreenSkeleton />;
   }
 
   if (!player) return null;
@@ -104,14 +99,14 @@ export default function PlayerProfileScreen() {
   const builderHeroes = player.heroes.filter((h) => h.village === 'builderBase');
   const homeTroops = filterHomeTroops(player.troops);
   const builderTroops = player.troops.filter((t) => t.village === 'builderBase');
-  const homePets = (player.pets ?? []).filter((p) => p.village === 'home');
+  const homePets = (player.pets ?? []).filter((p) => p.village === 'home' || !p.village);
   const homeAchievements = player.achievements.filter((a) => a.village === 'home');
 
   const overallProgress = (() => {
     const th = player.townHallLevel;
     const all = [
       ...filterHomeTroops(player.troops),
-      ...player.spells.filter((s) => s.village === 'home'),
+      ...player.spells.filter((s) => s.village === 'home' || !s.village),
       ...player.heroes.filter((h) => h.village === 'home'),
       ...player.heroEquipment,
     ];
@@ -122,6 +117,23 @@ export default function PlayerProfileScreen() {
     return all.length > 0 ? maxed / all.length : 0;
   })();
 
+  const laboratoryMaxLevel = getMaxLevelAtTH('Lab', player.townHallLevel) ?? 0;
+  const heroHallMaxLevel = getMaxLevelAtTH('Hero Hall', player.townHallLevel) ?? 0;
+  const isHeroDetail = detailModal ? !!getHeroSlug(detailModal.name) : false;
+  const maxHeroLevel = detailModal && isHeroDetail ? getMaxLevelAtTH(detailModal.name, player.townHallLevel) : null;
+
+  const visibleDetailLevels = detailModal
+    ? detailModal.levels.filter((l) => {
+        if (isHeroDetail) {
+          if (maxHeroLevel !== null) {
+            return l.level <= maxHeroLevel;
+          }
+          return l.labLevel == null || l.labLevel <= heroHallMaxLevel;
+        }
+        return l.labLevel == null || l.labLevel <= laboratoryMaxLevel;
+      })
+    : [];
+
   const TABS: { key: Tab; label: string }[] = [
     { key: 'heroes', label: 'Heroes' },
     { key: 'pets', label: 'Pets' },
@@ -130,6 +142,29 @@ export default function PlayerProfileScreen() {
     { key: 'equipment', label: 'Gear' },
     { key: 'achievements', label: 'Awards' },
   ];
+
+  const hasHeroes = homeHeroes.length + builderHeroes.length > 0;
+  const hasPets = homePets.length > 0;
+  const hasTroops = homeTroops.length + builderTroops.length > 0;
+  const hasSpells = player.spells.filter((s) => s.village === 'home' || !s.village).length > 0;
+  const hasEquipment = player.heroEquipment.length > 0;
+  const hasAchievements = homeAchievements.length > 0;
+
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab.key === 'heroes') return hasHeroes;
+    if (tab.key === 'pets') return hasPets;
+    if (tab.key === 'troops') return hasTroops;
+    if (tab.key === 'spells') return hasSpells;
+    if (tab.key === 'equipment') return hasEquipment;
+    if (tab.key === 'achievements') return hasAchievements;
+    return true;
+  });
+
+  React.useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.key === activeTab)) {
+      setActiveTab(visibleTabs[0].key);
+    }
+  }, [visibleTabs, activeTab]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -188,7 +223,7 @@ export default function PlayerProfileScreen() {
                   const th = player.townHallLevel;
                   const all = [
                     ...filterHomeTroops(player.troops),
-                    ...player.spells.filter((s) => s.village === 'home'),
+                    ...player.spells.filter((s) => s.village === 'home' || !s.village),
                     ...player.heroes.filter((h) => h.village === 'home'),
                     ...player.heroEquipment,
                   ];
@@ -225,25 +260,40 @@ export default function PlayerProfileScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabsContainer}
         >
-          {TABS.map((tab) => (
-            <Pressable
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key)}
-              style={[
-                styles.tab,
-                activeTab === tab.key && styles.tabActive,
-              ]}
-            >
-              <Text
+          {visibleTabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
                 style={[
-                  styles.tabText,
-                  activeTab === tab.key && styles.tabTextActive,
+                  styles.tab,
+                  {
+                    backgroundColor: isActive 
+                      ? (isDark ? colors.accent : colors.accentSubtle)
+                      : colors.bgCard,
+                    borderColor: isActive
+                      ? (isDark ? colors.accent : colors.accentSubtle)
+                      : colors.border,
+                  }
                 ]}
               >
-                {tab.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: isActive
+                        ? (isDark ? colors.bg : colors.textPrimary)
+                        : colors.textSecondary,
+                      fontWeight: isActive ? '700' : '600',
+                    }
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         <View style={styles.tabContent}>
@@ -365,7 +415,7 @@ export default function PlayerProfileScreen() {
 
           {activeTab === 'spells' && (
             <>
-              {player.spells.filter((s) => s.village === 'home').length === 0 ? (
+              {player.spells.filter((s) => s.village === 'home' || !s.village).length === 0 ? (
                 <EmptyState
                   icon="✨"
                   title="No spells yet"
@@ -374,7 +424,7 @@ export default function PlayerProfileScreen() {
               ) : (
                 <>
                   <SectionHeader title="Spells" />
-                  {player.spells.filter((s) => s.village === 'home').map((s) => (
+                  {player.spells.filter((s) => s.village === 'home' || !s.village).map((s) => (
                     <ItemCard
                       key={s.name}
                       name={s.name}
@@ -429,6 +479,9 @@ export default function PlayerProfileScreen() {
                   <SectionHeader title={`Achievements (${homeAchievements.length})`} />
                   {homeAchievements.map((a, idx) => (
                     <View key={`${a.name}-${a.village}-${idx}`} style={styles.achievementCard}>
+                      <View style={styles.achievementIcon}>
+                        <Ionicons name="trophy-outline" size={16} color={Colors.textSecondary} />
+                      </View>
                       <View style={styles.achieveLeft}>
                         <Text style={styles.achieveName}>{a.name}</Text>
                         <Text style={styles.achieveInfo} numberOfLines={1}>
@@ -446,6 +499,7 @@ export default function PlayerProfileScreen() {
                             />
                           ))}
                         </View>
+                        <Text style={styles.achieveBadge}>{a.stars}/3</Text>
                       </View>
                     </View>
                   ))}
@@ -464,73 +518,114 @@ export default function PlayerProfileScreen() {
         animationType="fade"
         onRequestClose={() => { setDetailModal(null); setDetailLoading(false); }}
       >
-        <Pressable style={styles.detailOverlay} onPress={() => { setDetailModal(null); setDetailLoading(false); }}>
-          <Pressable style={styles.detailContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={[styles.detailOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.4)' }]}
+          onPress={() => { setDetailModal(null); setDetailLoading(false); }}
+        >
+          <Pressable style={[styles.detailContent, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={(e) => e.stopPropagation()}>
             {detailLoading ? (
               <View style={styles.detailLoading}>
-                <ActivityIndicator size="large" color={Colors.textPrimary} />
-                <Text style={styles.detailLoadingText}>Loading stats…</Text>
+                <ActivityIndicator size="large" color={colors.textPrimary} />
+                <Text style={[styles.detailLoadingText, { color: colors.textTertiary }]}>Loading stats…</Text>
               </View>
             ) : detailModal ? (
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.detailHeader}>
                   {detailModal.imageUrl ? (
-                    <Image source={{ uri: detailModal.imageUrl }} style={styles.detailImage} />
+                    <Image source={{ uri: detailModal.imageUrl }} style={[styles.detailImage, { backgroundColor: colors.bgSubtle }]} />
                   ) : null}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.detailName}>{detailModal.name}</Text>
-                    <Text style={styles.detailDesc} numberOfLines={3}>{detailModal.description}</Text>
+                    <Text style={[styles.detailName, { color: colors.textPrimary }]}>{detailModal.name}</Text>
+                    <Text style={[styles.detailDesc, { color: colors.textTertiary }]} numberOfLines={3}>{detailModal.description}</Text>
                   </View>
                 </View>
 
-                {detailModal.info.housingSpace > 0 && (
-                  <View style={styles.detailInfoRow}>
-                    <View style={styles.detailInfoItem}>
-                      <Text style={styles.detailInfoLabel}>Housing</Text>
-                      <Text style={styles.detailInfoValue}>{detailModal.info.housingSpace}</Text>
-                    </View>
-                    <View style={styles.detailInfoItem}>
-                      <Text style={styles.detailInfoLabel}>Speed</Text>
-                      <Text style={styles.detailInfoValue}>{detailModal.info.attackSpeed}</Text>
-                    </View>
-                    <View style={styles.detailInfoItem}>
-                      <Text style={styles.detailInfoLabel}>Range</Text>
-                      <Text style={styles.detailInfoValue}>{detailModal.info.range}</Text>
-                    </View>
-                    <View style={[styles.detailInfoItem, { flex: 1.4 }]}>
-                      <Text style={styles.detailInfoLabel}>Target</Text>
-                      <Text style={styles.detailInfoValue}>{detailModal.info.targetType}</Text>
-                    </View>
-                  </View>
-                )}
+                {(() => {
+                  const infoItems: { label: string; value: string }[] = [];
+                  if (detailModal.info.housingSpace > 0) {
+                    infoItems.push({ label: 'Housing', value: String(detailModal.info.housingSpace) });
+                  }
+                  if (detailModal.info.attackSpeed) {
+                    infoItems.push({ label: 'Speed', value: detailModal.info.attackSpeed });
+                  }
+                  if (detailModal.info.targetType) {
+                    infoItems.push({ label: 'Target', value: detailModal.info.targetType });
+                  }
+                  if (detailModal.info.range) {
+                    infoItems.push({ label: 'Range', value: detailModal.info.range });
+                  }
+                  if (detailModal.info.favoriteTarget) {
+                    infoItems.push({ label: 'Fav. Target', value: detailModal.info.favoriteTarget });
+                  }
+                  if (detailModal.info.damageType) {
+                    infoItems.push({ label: 'Damage Type', value: detailModal.info.damageType });
+                  }
+                  if (detailModal.info.trainingTime) {
+                    infoItems.push({ label: 'Training', value: detailModal.info.trainingTime });
+                  }
 
-                {detailModal.levels.length > 0 && (
-                  <>
-                    <Text style={styles.detailSectionTitle}>Level Stats</Text>
-                    <View style={styles.detailTable}>
-                      <View style={styles.detailTableRow}>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader]}>Lvl</Text>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader]}>DPS</Text>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader]}>HP</Text>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader]}>TH</Text>
-                      </View>
-                      {detailModal.levels
-                        .filter((l) => l.thRequired == null || l.thRequired <= player!.townHallLevel)
-                        .map((l) => (
-                          <View key={l.level} style={styles.detailTableRow}>
-                            <Text style={styles.detailTableCell}>{l.level}</Text>
-                            <Text style={styles.detailTableCell}>{l.dps}</Text>
-                            <Text style={styles.detailTableCell}>{l.hitpoints}</Text>
-                            <Text style={styles.detailTableCell}>{l.thRequired ?? '—'}</Text>
-                          </View>
-                        ))}
+                  if (infoItems.length === 0) return null;
+
+                  const chunkedInfoItems: typeof infoItems[] = [];
+                  for (let i = 0; i < infoItems.length; i += 2) {
+                    chunkedInfoItems.push(infoItems.slice(i, i + 2));
+                  }
+
+                  const getFlex = (item: { label: string; value: string }) => {
+                    const textLength = item.label.length + item.value.length;
+                    return textLength > 12 ? 2 : 1;
+                  };
+
+                  return (
+                    <View style={styles.detailStatsGrid}>
+                      {chunkedInfoItems.map((chunk, rowIdx) => (
+                        <View key={rowIdx} style={styles.detailInfoRow}>
+                          {chunk.map((item) => (
+                            <View key={item.label} style={[styles.detailInfoItem, { flex: getFlex(item), backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
+                              <Text style={[styles.detailInfoLabel, { color: colors.textMuted }]}>{item.label}</Text>
+                              <Text style={[styles.detailInfoValue, { color: colors.textPrimary }]}>{item.value}</Text>
+                            </View>
+                          ))}
+                          {chunk.length === 1 && (
+                            <View style={{ flex: 1 }} />
+                          )}
+                        </View>
+                      ))}
                     </View>
-                    <Text style={styles.detailThNote}>Showing levels up to TH{player!.townHallLevel}</Text>
+                  );
+                })()}
+
+                {visibleDetailLevels.length > 0 && (
+                  <>
+                    <Text style={[styles.detailSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
+                    <View style={[styles.detailTable, { borderColor: colors.border }]}>
+                      <View style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>Lvl</Text>
+                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>DPS</Text>
+                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>HP</Text>
+                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>{isHeroDetail ? 'Hall' : 'Lab'}</Text>
+                      </View>
+                      {visibleDetailLevels.map((l) => (
+                        <View key={l.level} style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
+                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
+                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
+                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
+                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    <Text style={[styles.detailThNote, { color: colors.textMuted }]}>
+                      {isHeroDetail
+                        ? maxHeroLevel !== null
+                          ? `Showing all hero levels that are reachable at TH ${player.townHallLevel} (Max Lv${maxHeroLevel})`
+                          : `Showing all hero levels that are reachable with Hero Hall Lv${heroHallMaxLevel}`
+                        : `Showing all troop levels that are reachable with Lab Lv${laboratoryMaxLevel}`}
+                    </Text>
                   </>
                 )}
 
-                <Pressable style={styles.detailCloseBtn} onPress={() => { setDetailModal(null); setDetailLoading(false); }}>
-                  <Text style={styles.detailCloseText}>Close</Text>
+                <Pressable style={[styles.detailCloseBtn, { backgroundColor: colors.textPrimary }]} onPress={() => { setDetailModal(null); setDetailLoading(false); }}>
+                  <Text style={[styles.detailCloseText, { color: colors.bgElevated }]}>Close</Text>
                 </Pressable>
               </ScrollView>
             ) : null}
@@ -580,7 +675,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: Radius.xl,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -671,25 +766,25 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.base,
   },
   tab: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   tabActive: {
-    backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
   },
   tabText: {
-    ...Typography.subhead,
+    ...Typography.footnote,
     color: Colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   tabTextActive: {
-    color: Colors.bg,
-    fontWeight: '600',
+    color: Colors.bgElevated,
+    fontWeight: '700',
   },
   tabContent: {
     paddingHorizontal: Spacing.base,
@@ -698,35 +793,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
+  },
+  achievementIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   achieveLeft: {
     flex: 1,
-    marginRight: Spacing.md,
+    marginRight: Spacing.sm,
   },
   achieveName: {
-    ...Typography.body,
+    ...Typography.subhead,
     color: Colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   achieveInfo: {
-    ...Typography.caption,
+    ...Typography.footnote,
     color: Colors.textTertiary,
     marginTop: 2,
   },
   achieveRight: {
     alignItems: 'flex-end',
+    gap: 4,
   },
   starsRow: {
     flexDirection: 'row',
     gap: 2,
   },
+  achieveBadge: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
   detailOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -778,19 +893,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 16,
   },
-  detailInfoRow: {
-    flexDirection: 'row',
+  detailStatsGrid: {
     gap: Spacing.sm,
     marginBottom: Spacing.base,
   },
+  detailInfoRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
   detailInfoItem: {
-    flex: 1,
     alignItems: 'center',
     backgroundColor: Colors.bgSubtle,
     borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingVertical: Spacing.sm,
+  },
+  detailInfoItemSmall: {
+    flex: 1,
+  },
+  detailInfoItemLarge: {
+    flex: 2,
   },
   detailInfoLabel: {
     ...Typography.caption,

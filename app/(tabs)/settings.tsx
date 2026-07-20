@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import {
   getPlayerTag,
   setPlayerTag,
@@ -71,17 +71,19 @@ export default function SettingsScreen() {
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
-  const [isDark, setIsDark] = useState(true);
+  const { isDark, setThemeMode } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalValue, setModalValue] = useState('');
   const [modalPlaceholder, setModalPlaceholder] = useState('');
-  const [modalOnSave, setModalOnSave] = useState<(text: string) => void>(() => {});
+  const [modalOnSave, setModalOnSave] = useState<(text: string) => void>(() => { });
+
+  const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
   useEffect(() => {
     getPlayerTag().then(setPlayerTagState);
     getApiToken().then((t) => {
-      setApiTokenState(t.substring(0, 20) + '…');
+      setApiTokenState(maskSecret(t));
     });
   }, []);
 
@@ -107,7 +109,7 @@ export default function SettingsScreen() {
     openModal('API Token', 'Paste your API token', '', async (text) => {
       if (text) {
         await setApiToken(text);
-        setApiTokenState(text.substring(0, 20) + '…');
+        setApiTokenState(maskSecret(text));
         bumpTagVersion();
       }
     });
@@ -132,14 +134,13 @@ export default function SettingsScreen() {
             label="API Token"
             value={apiToken}
             onPress={handleEditToken}
-            showArrow={false}
           />
           <SettingItem
             icon="sync-outline"
             label="Sync Now"
             onPress={() => {
               bumpTagVersion();
-              showDialog({ title: 'Sync', message: 'Data will refresh now.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+              showDialog({ title: 'Sync', message: 'Data will refresh now.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
             }}
           />
         </SettingGroup>
@@ -155,14 +156,7 @@ export default function SettingsScreen() {
             <Switch
               value={isDark}
               onValueChange={(v) => {
-                if (!v) {
-                  showDialog({
-                    title: 'Dark Mode',
-                    message: 'ClashPrime is designed for dark mode. Light mode coming soon.',
-                    actions: [{ label: 'OK', primary: true, onPress: () => {} }],
-                  });
-                }
-                setIsDark(true);
+                setThemeMode(v);
               }}
               trackColor={{ false: Colors.border, true: Colors.textMuted }}
               thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
@@ -174,12 +168,12 @@ export default function SettingsScreen() {
           <SettingItem
             icon="cloud-download-outline"
             label="Clear Cache"
-            onPress={() => showDialog({ title: 'Cleared', message: 'Local cache cleared.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
+            onPress={() => showDialog({ title: 'Cleared', message: 'Local cache cleared.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
           />
           <SettingItem
             icon="download-outline"
             label="Export Data"
-            onPress={() => showDialog({ title: 'Export', message: 'Feature coming soon.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
+            onPress={() => showDialog({ title: 'Export', message: 'Feature coming soon.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
           />
         </SettingGroup>
 
@@ -188,12 +182,12 @@ export default function SettingsScreen() {
             icon="information-circle-outline"
             label="About ClashPrime"
             value="v1.0.0"
-            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
+            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
           />
           <SettingItem
             icon="document-text-outline"
             label="Privacy Policy"
-            onPress={() => {}}
+            onPress={() => { }}
           />
           <SettingItem
             icon="heart-outline"
@@ -202,19 +196,21 @@ export default function SettingsScreen() {
               title: 'Credits',
               message: 'Built by @FarhanZafarr-9 on GitHub.\n\nData Sources:\n\nCoC API — Player stats & progress\nclashofclans-layouts.com — Base layouts\nclash.ninja — TH max levels, Events\ncoc.guide — Troop list & details\nFandom Wiki — Building images\nClashLy API — Base layout previews',
               actions: [
-                { label: 'Visit GitHub', onPress: () => {
-                  import('expo-linking').then(({ openURL }) => {
-                    openURL('https://github.com/FarhanZafarr-9');
-                  });
-                }},
-                { label: 'Close', primary: true, onPress: () => {} },
+                {
+                  label: 'Visit GitHub', onPress: () => {
+                    import('expo-linking').then(({ openURL }) => {
+                      openURL('https://github.com/FarhanZafarr-9');
+                    });
+                  }
+                },
+                { label: 'Close', primary: true, onPress: () => { } },
               ],
             })}
           />
           <SettingItem
             icon="chatbubble-outline"
             label="Send Feedback"
-            onPress={() => {}}
+            onPress={() => { }}
           />
         </SettingGroup>
 
@@ -313,13 +309,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderSubtle,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    minHeight: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   settingPressed: {
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgSubtle,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -331,7 +328,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -354,7 +351,7 @@ const styles = StyleSheet.create({
   },
   settingValue: {
     ...Typography.subhead,
-    color: Colors.textTertiary,
+    color: Colors.textSecondary,
     flexShrink: 1,
   },
   footer: {
