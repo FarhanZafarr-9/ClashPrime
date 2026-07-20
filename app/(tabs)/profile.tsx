@@ -96,9 +96,9 @@ export default function PlayerProfileScreen() {
 
   const th = player.townHallLevel;
   const homeHeroes = player.heroes.filter((h) => h.village === 'home');
-  const builderHeroes = player.heroes.filter((h) => h.village === 'builderBase');
+  const builderHeroes = th >= 6 ? player.heroes.filter((h) => h.village === 'builderBase') : [];
   const homeTroops = filterHomeTroops(player.troops);
-  const builderTroops = player.troops.filter((t) => t.village === 'builderBase');
+  const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
   const homePets = (player.pets ?? []).filter((p) => p.village === 'home' || !p.village);
   const homeAchievements = player.achievements.filter((a) => a.village === 'home');
 
@@ -559,9 +559,6 @@ export default function PlayerProfileScreen() {
                   }
                   if (detailModal.info.damageType) {
                     infoItems.push({ label: 'Damage Type', value: detailModal.info.damageType });
-                  }
-                  if (detailModal.info.trainingTime) {
-                    infoItems.push({ label: 'Training', value: detailModal.info.trainingTime });
                   }
 
                   if (infoItems.length === 0) return null;
