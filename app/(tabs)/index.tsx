@@ -17,9 +17,9 @@ import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
+import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
-import { StatRow } from '../../src/components/StatRow';
 
 export default function HomeScreen() {
   const { player, loading, error, lastSync, refresh } = usePlayer();
@@ -103,7 +103,15 @@ export default function HomeScreen() {
         <Card style={styles.playerCard}>
           <View style={styles.playerRow}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+              {getTownHallImageUrl(player.townHallLevel) ? (
+                <Image
+                  source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
+                  style={styles.avatarImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+              )}
             </View>
             <View style={styles.playerInfo}>
               <Text style={styles.playerName}>{player.name}</Text>
@@ -181,17 +189,38 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Quick Stats</Text>
         </View>
 
-        <Card style={styles.statsCard}>
-          <StatRow label="Trophies" value={player.trophies} />
-          <StatRow label="Best Trophies" value={player.bestTrophies} />
-          <StatRow label="War Stars" value={player.warStars} />
-          <StatRow label="Donations" value={player.donations} />
-          <StatRow label="Received" value={player.donationsReceived} />
-          <StatRow label="Capital Gold" value={player.clanCapitalContributions} />
-          {player.builderBaseTrophies !== undefined && (
-            <StatRow label="Builder Trophies" value={player.builderBaseTrophies} />
-          )}
-        </Card>
+        <View style={styles.statsTable}>
+          <View style={styles.statsRow}>
+            <Text style={[styles.statsCell, styles.statsHeader]}>Stat</Text>
+            <Text style={[styles.statsCell, styles.statsHeader, { textAlign: 'right' }]}>Value</Text>
+          </View>
+          {[
+            { label: 'Trophies', value: player.trophies },
+            { label: 'Best Trophies', value: player.bestTrophies },
+            { label: 'War Stars', value: player.warStars },
+            { label: 'Donations', value: player.donations },
+            { label: 'Received', value: player.donationsReceived },
+            { label: 'Capital Gold', value: player.clanCapitalContributions },
+            ...(player.builderBaseTrophies !== undefined
+              ? [{ label: 'Builder Trophies', value: player.builderBaseTrophies }]
+              : []),
+          ].map((s) => (
+            <View
+              key={s.label}
+              style={[styles.statsRow, { backgroundColor: Colors.bgCard }]}
+            >
+              <Text style={[styles.statsCell, { color: Colors.textSecondary, textAlign: 'left' }]}>{s.label}</Text>
+              <Text
+                style={[
+                  styles.statsCell,
+                  { color: Colors.textPrimary, fontWeight: '600', textAlign: 'right', fontVariant: ['tabular-nums'] },
+                ]}
+              >
+                {typeof s.value === 'number' ? s.value.toLocaleString() : s.value}
+              </Text>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.sectionLabel}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -201,10 +230,6 @@ export default function HomeScreen() {
           <Pressable style={styles.actionBtn}>
             <Ionicons name="grid-outline" size={20} color={Colors.textPrimary} />
             <Text style={styles.actionText}>View Bases</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn}>
-            <Ionicons name="copy-outline" size={20} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Copy Army</Text>
           </Pressable>
           <Pressable style={styles.actionBtn} onPress={onRefresh}>
             <Ionicons name="refresh-outline" size={20} color={Colors.textPrimary} />
@@ -286,12 +311,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 52,
     height: 52,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
-    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: Radius.lg,
   },
   avatarText: {
     ...Typography.title2,
@@ -380,8 +406,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
   },
-  statsCard: {
+  statsTable: {
     marginHorizontal: Spacing.base,
+    marginBottom: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  statsCell: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    ...Typography.caption,
+  },
+  statsHeader: {
+    backgroundColor: Colors.bgSubtle,
+    color: Colors.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   actionsRow: {
     flexDirection: 'row',
