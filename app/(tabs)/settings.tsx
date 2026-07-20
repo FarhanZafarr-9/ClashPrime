@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { openURL } from 'expo-linking';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import {
   getPlayerTag,
@@ -66,6 +67,49 @@ function SettingGroup({ title, children }: SettingGroupProps) {
   );
 }
 
+interface ContentAction {
+  label: string;
+  onPress?: () => void;
+  primary?: boolean;
+}
+
+const DATA_SOURCES: { name: string; use: string }[] = [
+  { name: 'Clash of Clans API', use: 'Player stats & progress' },
+  { name: 'ClashLy', use: 'Base layout library & ratings' },
+  { name: 'clash.ninja', use: 'TH max levels & in-game events' },
+  { name: 'coc.guide', use: 'Troop, hero & pet image list' },
+  { name: 'Fandom Wiki', use: 'Building images, troop & hero details' },
+];
+
+const PRIVACY_SECTIONS: { title: string; body: string }[] = [
+  {
+    title: 'Overview',
+    body: 'ClashPrime is an unofficial Clash of Clans companion app. This privacy policy explains what data the app handles and how it is used.',
+  },
+  {
+    title: 'Data We Access',
+    body: 'To show your village progress, the app stores the Clash of Clans player tag and API token you provide, along with cached player data. This information stays on your device and is only sent directly to the official Clash of Clans API to fetch your profile.',
+  },
+  {
+    title: 'Third-Party Services',
+    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building images, troop details and events is fetched from public sources including ClashLy, clash.ninja, coc.guide and the Fandom Wiki.',
+  },
+  {
+    title: 'Local Storage',
+    body: 'Your player tag, API token and downloaded content are stored locally on your device using AsyncStorage. We do not operate servers that collect, transmit or sell your personal information.',
+  },
+  {
+    title: 'Your Control',
+    body: 'You can update or remove your player tag and API token at any time in Settings, and clear the local cache from the Data section. Uninstalling the app removes all locally stored data.',
+  },
+  {
+    title: 'Contact',
+    body: 'Questions about this policy can be sent to farhanzafarr.9@gmail.com.',
+  },
+];
+
+const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
+
 export default function SettingsScreen() {
   const { bumpTagVersion } = usePlayerActions();
   const { show: showDialog, Dialog } = useDialog();
@@ -77,6 +121,11 @@ export default function SettingsScreen() {
   const [modalValue, setModalValue] = useState('');
   const [modalPlaceholder, setModalPlaceholder] = useState('');
   const [modalOnSave, setModalOnSave] = useState<(text: string) => void>(() => { });
+
+  const [contentVisible, setContentVisible] = useState(false);
+  const [contentTitle, setContentTitle] = useState('');
+  const [contentBody, setContentBody] = useState<React.ReactNode>(null);
+  const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
@@ -93,6 +142,13 @@ export default function SettingsScreen() {
     setModalPlaceholder(placeholder);
     setModalOnSave(() => onSave);
     setModalVisible(true);
+  };
+
+  const showContent = (title: string, body: React.ReactNode, actions: ContentAction[]) => {
+    setContentTitle(title);
+    setContentBody(body);
+    setContentActions(actions.length ? actions : [{ label: 'Close' }]);
+    setContentVisible(true);
   };
 
   const handleEditTag = () => {
@@ -113,6 +169,91 @@ export default function SettingsScreen() {
         bumpTagVersion();
       }
     });
+  };
+
+  const openCredits = () => {
+    showContent(
+      'Credits',
+      (
+        <View>
+          <View style={styles.creditHero}>
+            <View style={styles.creditAvatar}>
+              <Ionicons name="logo-github" size={26} color={Colors.textPrimary} />
+            </View>
+            <View style={styles.creditHeroText}>
+              <Text style={styles.creditName}>Farhan Zafar</Text>
+              <Text style={styles.creditHandle}>@FarhanZafarr-9</Text>
+            </View>
+          </View>
+          <Text style={styles.creditBlurb}>
+            ClashPrime is an unofficial Clash of Clans companion, built to give players a clean, fast way to track progress and discover bases.
+          </Text>
+          <Text style={styles.creditSectionTitle}>Data Sources</Text>
+          {DATA_SOURCES.map((s) => (
+            <View style={styles.creditSourceRow} key={s.name}>
+              <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+              <View style={styles.creditSourceText}>
+                <Text style={styles.creditSourceName}>{s.name}</Text>
+                <Text style={styles.creditSourceUse}>{s.use}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ),
+      [
+        {
+          label: 'View on GitHub',
+          primary: true,
+          onPress: () => openURL('https://github.com/FarhanZafarr-9'),
+        },
+        { label: 'Close' },
+      ],
+    );
+  };
+
+  const openPrivacy = () => {
+    showContent(
+      'Privacy Policy',
+      (
+        <View>
+          {PRIVACY_SECTIONS.map((s) => (
+            <View style={styles.policyBlock} key={s.title}>
+              <Text style={styles.policyTitle}>{s.title}</Text>
+              <Text style={styles.policyBody}>{s.body}</Text>
+            </View>
+          ))}
+        </View>
+      ),
+      [{ label: 'Close', primary: true }],
+    );
+  };
+
+  const openFeedback = () => {
+    showContent(
+      'Send Feedback',
+      (
+        <View>
+          <Text style={styles.feedbackText}>
+            We'd love to hear from you — bug reports, feature ideas, or just a hello.
+          </Text>
+          <View style={styles.feedbackEmailRow}>
+            <Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />
+            <Text style={styles.feedbackEmail}>{FEEDBACK_EMAIL}</Text>
+          </View>
+          <Text style={styles.feedbackNote}>
+            Tap "Email Us" to open your mail app, or copy the address above.
+          </Text>
+        </View>
+      ),
+      [
+        {
+          label: 'Email Us',
+          primary: true,
+          onPress: () => openURL(`mailto:${FEEDBACK_EMAIL}`),
+        },
+        { label: 'Close' },
+      ],
+    );
   };
 
   return (
@@ -187,30 +328,17 @@ export default function SettingsScreen() {
           <SettingItem
             icon="document-text-outline"
             label="Privacy Policy"
-            onPress={() => { }}
+            onPress={openPrivacy}
           />
           <SettingItem
             icon="heart-outline"
             label="Credits"
-            onPress={() => showDialog({
-              title: 'Credits',
-              message: 'Built by @FarhanZafarr-9 on GitHub.\n\nData Sources:\n\nCoC API — Player stats & progress\nclashofclans-layouts.com — Base layouts\nclash.ninja — TH max levels, Events\ncoc.guide — Troop list & details\nFandom Wiki — Building images\nClashLy API — Base layout previews',
-              actions: [
-                {
-                  label: 'Visit GitHub', onPress: () => {
-                    import('expo-linking').then(({ openURL }) => {
-                      openURL('https://github.com/FarhanZafarr-9');
-                    });
-                  }
-                },
-                { label: 'Close', primary: true, onPress: () => { } },
-              ],
-            })}
+            onPress={openCredits}
           />
           <SettingItem
             icon="chatbubble-outline"
             label="Send Feedback"
-            onPress={() => { }}
+            onPress={openFeedback}
           />
         </SettingGroup>
 
@@ -260,6 +388,51 @@ export default function SettingsScreen() {
               >
                 <Text style={styles.modalSaveText}>Save</Text>
               </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={contentVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setContentVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.contentOverlay}
+        >
+          <Pressable style={styles.contentBackdrop} onPress={() => setContentVisible(false)} />
+          <View style={styles.contentCard}>
+            <View style={styles.contentHeader}>
+              <Text style={styles.contentTitle}>{contentTitle}</Text>
+              <Pressable onPress={() => setContentVisible(false)} style={styles.contentClose} hitSlop={8}>
+                <Ionicons name="close" size={20} color={Colors.textTertiary} />
+              </Pressable>
+            </View>
+            <ScrollView
+              style={styles.contentBody}
+              contentContainerStyle={styles.contentBodyInner}
+              showsVerticalScrollIndicator={false}
+            >
+              {contentBody}
+            </ScrollView>
+            <View style={styles.contentActions}>
+              {contentActions.map((a, i) => (
+                <Pressable
+                  key={`${a.label}-${i}`}
+                  style={[styles.contentBtn, a.primary && styles.contentBtnPrimary]}
+                  onPress={() => {
+                    a.onPress?.();
+                    setContentVisible(false);
+                  }}
+                >
+                  <Text style={[styles.contentBtnText, a.primary && styles.contentBtnTextPrimary]}>
+                    {a.label}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -430,5 +603,174 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '600',
+  },
+  contentOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  contentCard: {
+    width: '88%',
+    maxHeight: '80%',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  contentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.base,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  contentTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+  },
+  contentClose: {
+    padding: Spacing.xs,
+  },
+  contentBody: {
+    maxHeight: 360,
+  },
+  contentBodyInner: {
+    padding: Spacing.lg,
+    gap: Spacing.base,
+  },
+  contentActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    justifyContent: 'flex-end',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.base,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  contentBtn: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+  },
+  contentBtnPrimary: {
+    backgroundColor: Colors.textPrimary,
+  },
+  contentBtnText: {
+    ...Typography.subhead,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  contentBtnTextPrimary: {
+    color: Colors.bg,
+  },
+  creditHero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  creditAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  creditHeroText: {
+    gap: 2,
+  },
+  creditName: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
+  },
+  creditHandle: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+  },
+  creditBlurb: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    marginTop: Spacing.base,
+    marginBottom: Spacing.lg,
+  },
+  creditSectionTitle: {
+    ...Typography.callout,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    marginTop: Spacing.sm,
+  },
+  creditSourceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+  },
+  creditSourceIcon: {
+    marginTop: 2,
+  },
+  creditSourceText: {
+    flex: 1,
+    gap: 2,
+  },
+  creditSourceName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+  creditSourceUse: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+  },
+  policyBlock: {
+    gap: Spacing.xs,
+  },
+  policyTitle: {
+    ...Typography.callout,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  policyBody: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: Spacing.base,
+  },
+  feedbackText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  feedbackEmailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    marginVertical: Spacing.lg,
+  },
+  feedbackEmail: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+  feedbackNote: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
   },
 });
