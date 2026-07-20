@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getHeroSlug, getHeroImageUrl } from '../utils/troopImages';
 
-const CACHE_PREFIX = 'troop_detail_v4_';
+const CACHE_PREFIX = 'troop_detail_v6_';
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const FANDOM_BASE = 'https://clashofclans.fandom.com';
@@ -38,6 +38,19 @@ function formatCost(cost: number): string {
   if (cost >= 1_000_000) return `${(cost / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
   if (cost >= 1_000) return `${(cost / 1_000).toFixed(0)}K`;
   return String(cost);
+}
+
+// Abbreviate a raw cost string (e.g. from Fandom tables: "130,000" → "130K",
+// "24,000,000" → "24M"). Unit suffix only — the value itself is preserved.
+function formatCostString(raw: string): string {
+  const trimmed = (raw || '').trim();
+  const t = trimmed.toLowerCase().replace(/\s+/g, '');
+  if (!t || ['-', '—', 'none', 'free', 'n/a', 'na'].includes(t)) return trimmed || '—';
+  const num = parseInt(trimmed.replace(/[^0-9]/g, ''), 10);
+  if (!num) return trimmed;
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (num >= 1_000) return `${Math.round(num / 1_000)}K`;
+  return String(num);
 }
 
 async function getHeroDetailFromJson(name: string): Promise<TroopDetail | null> {
@@ -109,6 +122,8 @@ export interface TroopDetailLevel {
   xp: number;
   labLevel: number | null;
   thRequired: number | null;
+  // Generic per-level stat columns (spells, equipment, etc.) that don't map to dps/hitpoints.
+  extra?: { label: string; value: string }[];
 }
 
 export interface TroopDetail {
@@ -127,6 +142,8 @@ export interface TroopDetail {
     targetType: string;
     favoriteTarget: string;
   };
+  // Generic label/value pairs for the info section (spells, equipment, etc.).
+  infoPairs?: { label: string; value: string }[];
 }
 
 interface CacheEntry {
@@ -251,6 +268,14 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   // Hero Equipment
   // ---------------------------------------------------------------------------
   'Dragon Duke': 'Dragon_Duke',
+  // ---------------------------------------------------------------------------
+  // Heroes (Home Village + Builder Base)
+  // ---------------------------------------------------------------------------
+  'Barbarian King': 'Barbarian_King',
+  'Archer Queen': 'Archer_Queen',
+  'Grand Warden': 'Grand_Warden',
+  'Royal Champion': 'Royal_Champion',
+  'Minion Prince': 'Minion_Prince',
   'Action Figure': 'Action_Figure',
   'Eternal Tome': 'Eternal_Tome',
   'Flame Blower': 'Flame_Blower',
@@ -350,29 +375,24 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
   const pageTitle = getFandomPageTitle(name);
   const imageFile = getFandomInfoImageFile(name);
 
-  // Fetch parsed HTML and image URL in parallel
-  const [html, imageUrl] = await Promise.all([
-    fetchFandomHtml(pageTitle),
-    fetchFandomImageUrl(imageFile),
-  ]);
+  const html = await fetchFandomHtml(pageTitle);
 
   if (!html) {
     console.warn('[troopDetail] No wikitext from Fandom for', { name, pageTitle });
     return null;
   }
 
-  // Parse description: look for center italic quote, or first paragraph
-  let description = '';
-  const quoteMatch = html.match(/<i><b>\s*["“'\s]*([^"”'\n]+)["”'\s]*\s*<\/b><\/i>/i) || 
-                     html.match(/<center><i>\s*["“'\s]*([^"”'\n]{20,200})["”'\s]*\s*<\/i><\/center>/i);
-  if (quoteMatch) {
-    description = quoteMatch[1].trim();
-  } else {
-    const pMatch = html.match(/<p>([\s\S]*?)<\/p>/i);
-    if (pMatch) {
-      description = pMatch[1].replace(/<[^>]+>/g, '').trim();
-    }
+  // Prefer the portable-infobox image (correct for troops, spells and equipment alike).
+  let imageUrl: string | null = extractInfoboxImage(html);
+  // Hero pages put a small *badge* in the infobox; reuse the proper coc.guide portrait instead.
+  if (HERO_JSON_KEYS[name]) {
+    imageUrl = getHeroImageUrl(name) ?? imageUrl;
   }
+  if (!imageUrl) imageUrl = await fetchFandomImageUrl(imageFile);
+
+  // Parse description: a flavor "quote" (often <center><i><b>"…"</b></i></center>,
+  // with nested <a>/<b> markup) or, failing that, the first paragraph.
+  const description = extractDescription(html);
 
   // Extract stat levels using the robust HTML table parser
   const levels: TroopDetailLevel[] = [];
@@ -382,9 +402,23 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
     const headers = getTableHeaders(statTableMatch);
     const bodyRows = getBodyRows(statTableMatch);
 
+    // Headers we already handle explicitly (so we don't also dump them into "extra").
+    const knownHeaderPatterns = [
+      /^level$/i,
+      /damage per second|dps/i,
+      /damage per hit|damage when destroyed/i,
+      /hitpoints|health|hp/i,
+      /upgrade|elixir|gold|dark elixir|gem|cost/i,
+      /clock|training time|time/i,
+      /xp/i,
+      /laboratory|lab|blacksmith|hero hall/i,
+      /town hall/i,
+    ];
+
     for (const row of bodyRows) {
       const cells = extractTableCells(row).map((cell) => cell.text);
-      if (!cells.length) continue;
+      // Skip partial rows (e.g. hero recovery sub-rows) that lack the full header width.
+      if (cells.length < headers.length) continue;
 
       const level = parseNumeric(getCellByHeader(cells, headers, [/^level$/i], 0));
       if (!level) continue;
@@ -392,11 +426,20 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
       const dps = parseNumeric(pickHeaderValue(cells, headers, [/damage per second|dps/i]));
       const damagePerHit = parseNumeric(pickHeaderValue(cells, headers, [/damage per hit|damage when destroyed/i]));
       const hitpoints = parseNumeric(pickHeaderValue(cells, headers, [/hitpoints|health|hp/i]));
-      const upgradeCost = pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost/i]) || '';
+      const upgradeCost = formatCostString(pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost/i]) || '');
       const upgradeTime = pickHeaderValue(cells, headers, [/clock|training time|time/i]) || '';
       const xp = parseNumeric(pickHeaderValue(cells, headers, [/xp/i]));
-      const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab|blacksmith/i]) || '';
+      const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab|blacksmith|hero hall/i]) || '';
       const labLevel = parseNumeric(labLevelValue) || null;
+      const thRequired = parseNumeric(pickHeaderValue(cells, headers, [/town hall/i])) || null;
+
+      // Any column we don't map explicitly (e.g. spell Damage / Healing, equipment Ability stats).
+      const extra: { label: string; value: string }[] = [];
+      headers.forEach((h, idx) => {
+        if (knownHeaderPatterns.some((p) => p.test(h))) return;
+        const v = (cells[idx] || '').trim();
+        if (v) extra.push({ label: h, value: v });
+      });
 
       levels.push({
         level,
@@ -407,35 +450,42 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
         upgradeTime,
         xp,
         labLevel,
-        thRequired: null
+        thRequired,
+        extra: extra.length ? extra : undefined,
       });
     }
   }
 
-  // Parse info table
+  // Parse the info table generically into label/value pairs (works for troops, spells, equipment).
   const info = { range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' };
-  const infoTableMatch = html.match(/<table[^>]*class="[^"]*info-table[^"]*"[^>]*>([\s\S]*?)<\/table>/i) ||
-                         html.match(/<table[^>]*>([\s\S]*?)<\/table>/i); // fallback to first table if it contains Housing Space
-  
-  if (infoTableMatch) {
-    const tableHtml = infoTableMatch[1];
-    const infoHeaders = getTableHeaders(tableHtml);
-    const cleanHtml = tableHtml.replace(/<thead>[\s\S]*?<\/thead>/i, '');
-    const infoRows = [...cleanHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((match) => match[1]);
-    const infoRow = infoRows[0];
-    if (infoRow) {
-      const cells = extractTableCells(infoRow).map((cell) => cell.text);
-      info.range = getCellByHeader(cells, infoHeaders, [/range/i], -1) || '';
-      info.housingSpace = parseNumeric(getCellByHeader(cells, infoHeaders, [/housing|troop/i], -1));
-      info.attackSpeed = getCellByHeader(cells, infoHeaders, [/attack speed|attack/i], -1) || '';
-      info.damageType = getCellByHeader(cells, infoHeaders, [/damage type|attack type/i], -1) || '';
-      info.targetType = getCellByHeader(cells, infoHeaders, [/^target$/i], -1) || '';
-      info.favoriteTarget = getCellByHeader(cells, infoHeaders, [/favorite target/i], -1) || '';
-    }
+  const infoPairs: { label: string; value: string }[] = [];
+
+  const allTables = [...html.matchAll(/<table[^>]*>([\s\S]*?)<\/table>/g)].map((match) => match[1]);
+  for (const t of allTables) {
+    const hRow = getHeaderRowHtml(t);
+    if (!hRow) continue;
+    const hCells = [...hRow.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]/g)].map((m) => normalizeCellText(m[1])).filter(Boolean);
+    if (hCells.some((h) => /^level$/i.test(h))) continue; // skip stat tables
+    if (!hCells.some((h) => /housing|preferred target|target|attack type|range|movement|training|spell factory|blacksmith|ability type|user|radius|favorite|damage type/i.test(h))) continue;
+
+    const tbody = t.match(/<tbody>([\s\S]*?)<\/tbody>/i)?.[1] ?? t;
+    const dataRows = [...tbody.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((m) => m[1]).filter((r) => /<td/i.test(r));
+    const cells = dataRows[0] ? [...dataRows[0].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]/g)].map((m) => normalizeCellText(m[1])) : [];
+
+    infoPairs.push(...hCells.map((h, i) => ({ label: h, value: (cells[i] || '').trim() })).filter((p) => p.value));
+
+    // Structured mapping kept for troops (used by the existing panel fallback).
+    info.range = getCellByHeader(cells, hCells, [/range/i], -1) || '';
+    info.housingSpace = parseNumeric(getCellByHeader(cells, hCells, [/housing|troop/i], -1));
+    info.attackSpeed = getCellByHeader(cells, hCells, [/attack speed|attack/i], -1) || '';
+    info.damageType = getCellByHeader(cells, hCells, [/damage type|attack type/i], -1) || '';
+    info.targetType = getCellByHeader(cells, hCells, [/^target$/i], -1) || '';
+    info.favoriteTarget = getCellByHeader(cells, hCells, [/favorite target/i], -1) || '';
+    break;
   }
 
   if (levels.length === 0) {
-    console.warn('[troopDetail] No stat levels parsed from Fandom for', { name, pageTitle });
+    console.debug('[troopDetail] No stat levels parsed from Fandom for', { name, pageTitle });
     return null;
   }
 
@@ -448,28 +498,96 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
     imageUrl: imageUrl ?? '',
     levels,
     info,
+    infoPairs: infoPairs.length ? infoPairs : undefined,
   };
 }
 
-// ---------------------------------------------------------------------------
+// Pull the unit image straight from the portable infobox <aside> (most reliable across categories).
+function extractInfoboxImage(html: string): string {
+  // Prefer the lazy-loaded data-src (the real URL) over the base64 placeholder src.
+  const imgSrc = (s: string): string =>
+    s.match(/<img[^>]*data-src="([^"]+)"/i)?.[1] ||
+    s.match(/<img[^>]*src="([^"]+)"/i)?.[1] ||
+    '';
+  // Skip decorative icons (protection/lock) and embedded placeholders.
+  const isJunk = (s: string) => /protection|lock|base64|wikia\.nocookie\.net.*\/Protection/i.test(s);
+
+  // 1) Portable-infobox image (troops, spells, equipment).
+  const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/i);
+  if (aside) {
+    const src = imgSrc(aside[1]);
+    if (src && !isJunk(src)) return src;
+  }
+
+  // 2) Fallback: scan <figure> images. Hero pages have no <aside>; their portrait
+  //    is usually a "Name info.png" figure (e.g. "Dragon Duke info.png").
+  const figures = [...html.matchAll(/<figure[^>]*>([\s\S]*?)<\/figure>/gi)];
+  let best = '';
+  for (const f of figures) {
+    const inner = f[1];
+    const src = imgSrc(inner);
+    if (!src || isJunk(src)) continue;
+    const dataName = (inner.match(/data-image-name="([^"]*)"/i)?.[1] || '').toLowerCase();
+    if (/info/.test(dataName)) return src; // portrait image
+    if (!best) best = src;
+  }
+  return best;
+}
+
+function extractDescription(html: string): string {
+  const clean = (s: string) => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const trimQuotes = (s: string) => s.replace(/^["“'\s]+|["”'\s]+$/g, '');
+
+  // Flavor quotes live in <center><i><b>"…"</b></i></center> (nested <a>/<b> allowed).
+  const center = html.match(/<center>\s*<i>(?:<b>)?([\s\S]*?)(?:<\/b>)?\s*<\/i>\s*<\/center>/i);
+  if (center) {
+    const txt = trimQuotes(clean(center[1]));
+    if (txt.length >= 12) return txt;
+  }
+  // Or a plain <i><b>"…"</b></i> quote.
+  const iQuote = html.match(/<i><b>([\s\S]*?)<\/b><\/i>/i);
+  if (iQuote) {
+    const txt = trimQuotes(clean(iQuote[1]));
+    if (txt.length >= 12) return txt;
+  }
+  // Otherwise use the first real paragraph.
+  const p = html.match(/<p>([\s\S]*?)<\/p>/i);
+  if (p) {
+    const txt = clean(p[1]);
+    if (txt.length >= 12) return txt;
+  }
+  return '';
+}
 // Fallback: coc.guide HTML scraper (kept for troop types that may not be on Fandom)
 // ---------------------------------------------------------------------------
 
 function normalizeCellText(input: string): string {
-  const withImageLabels = input.replace(/<img\b[^>]*>/gi, (tag: string) => {
-    const altMatch = tag.match(/alt=["']([^"']*)['"]/i);
-    const srcMatch = tag.match(/src=["']([^"']+)['"]/i);
-    const alt = altMatch?.[1]?.trim() || '';
-    const src = srcMatch?.[1] || '';
-    if (alt) return alt;
-    const fileName = src.split('/').pop() || '';
-    return fileName.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
-  });
-
-  return withImageLabels
+  // Drop <img> tags entirely. Fandom header/body cells embed icon images whose
+  // alt text duplicates the visible label (e.g. <img alt="Level"> inside the
+  // "Level" header), and injecting that alt text corrupts header matching.
+  return String(input)
+    .replace(/<img\b[^>]*>/gi, '')
     .replace(/<[^>]+>/g, ' ')
+    // Decode HTML entities (Fandom emits numeric refs like &#160; for nbsp, plus named ones).
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(parseInt(d, 10)))
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&ndash;/gi, '–')
+    .replace(/&mdash;/gi, '—')
+    .replace(/&hellip;/gi, '…')
+    .replace(/&times;/gi, '×')
+    .replace(/&rsquo;/gi, '’')
+    .replace(/&lsquo;/gi, '‘')
+    .replace(/&rdquo;/gi, '”')
+    .replace(/&ldquo;/gi, '“')
+    .replace(/&bull;/gi, '•')
+    // Drop any other leftover named entities so raw &xyz; never reaches the UI.
+    .replace(/&[a-zA-Z]+;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -489,11 +607,30 @@ function extractTableCells(rowHtml: string): Array<{ text: string; className: st
   return cells;
 }
 
+// Locate the header row of a wiki table. The Fandom `parse` API output usually has
+// no <thead> — the header is simply the first <tr> that contains <th> cells. When a
+// sticky/floating-header clone is present we prefer the "Original" copy.
+function findHeaderRow(tableHtml: string): string | null {
+  const floatingOriginal = tableHtml.match(/<thead class="tableFloatingHeaderOriginal">([\s\S]*?)<\/thead>/i);
+  const headerSource = floatingOriginal
+    ? floatingOriginal[1]
+    : (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i)?.[1] ?? tableHtml);
+  const rows = [...headerSource.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((m) => m[1]);
+  return rows.find((row) => /<th/i.test(row)) ?? null;
+}
+
 function getTableHeaders(tableHtml: string): string[] {
-  const source = tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i)?.[1] ?? tableHtml;
-  return [...source.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)]
+  const headerRow = findHeaderRow(tableHtml);
+  if (!headerRow) return [];
+  return [...headerRow.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)]
     .map((match) => normalizeCellText(match[1]))
-    .filter((header) => header.length > 0);
+    // Drop stray purely-numeric headers (e.g. a trailing "1" in some hero tables).
+    .filter((header) => header.length > 0 && !/^\d+$/.test(header));
+}
+
+// Returns the first <tr> that contains <th> cells (the real header row), or null.
+function getHeaderRowHtml(tableHtml: string): string | null {
+  return findHeaderRow(tableHtml);
 }
 
 function findHeaderIndex(headers: string[], patterns: RegExp[]): number {
@@ -516,9 +653,12 @@ function pickHeaderValue(cells: string[], headers: string[], patterns: RegExp[])
 }
 
 function getBodyRows(tableHtml: string): string[] {
-  return [...tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
+  // Restrict to <tbody>; also exclude the header row so it's never treated as data.
+  const headerRow = findHeaderRow(tableHtml);
+  const tbody = tableHtml.match(/<tbody>([\s\S]*?)<\/tbody>/i)?.[1] ?? tableHtml;
+  return [...tbody.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
     .map((match) => match[1])
-    .filter((row) => !/<th/i.test(row) && /<td/i.test(row));
+    .filter((row) => /<td/i.test(row) && row !== headerRow);
 }
 
 function findStatTable(tableHtmls: string[]): string | null {
@@ -534,8 +674,11 @@ function findStatTable(tableHtmls: string[]): string | null {
     })
     .filter(({ headers, bodyRows, maxBodyCells }) => {
       const hasLevelHeader = headers.some((header) => /^level$/i.test(header));
-      const hasStatHeader = headers.some((header) => /damage|health|hitpoints|hp|elixir|xp|laboratory|lab/i.test(header));
-      const hasRealBody = bodyRows.length > 1 && maxBodyCells >= 6;
+      const hasStatHeader = headers.some((header) =>
+        /damage|health|hitpoints|hp|elixir|xp|laboratory|lab|blacksmith|hero hall|research|upgrade|ability|healing|boost|ore|duration/i.test(header),
+      );
+      // Spells/equipment tables have fewer columns (5 or fewer); only require a real multi-row body.
+      const hasRealBody = bodyRows.length > 1 && maxBodyCells >= 4;
       return hasLevelHeader && hasStatHeader && hasRealBody;
     })
     .sort((a, b) => {
@@ -582,7 +725,7 @@ function parseDetailHTML(html: string): TroopDetail {
       const dps = parseNumeric(pickHeaderValue(cells, headers, [/damage per second|dps/i]));
       const damagePerHit = parseNumeric(pickHeaderValue(cells, headers, [/damage per hit|damage when destroyed/i]));
       const hitpoints = parseNumeric(pickHeaderValue(cells, headers, [/hitpoints|health|hp/i]));
-      const upgradeCost = pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost/i]) || '';
+      const upgradeCost = formatCostString(pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost/i]) || '');
       const upgradeTime = pickHeaderValue(cells, headers, [/clock|training time|time/i]) || '';
       const xp = parseNumeric(pickHeaderValue(cells, headers, [/xp/i]));
       const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab/i]) || '';
@@ -635,12 +778,6 @@ function isValidDetailHtml(html: string): boolean {
 // ---------------------------------------------------------------------------
 
 export async function getTroopDetail(name: string, bypassCache: boolean = false): Promise<TroopDetail | null> {
-  // Heroes use dedicated JSON API
-  if (HERO_JSON_KEYS[name]) {
-    const heroDetail = await getHeroDetailFromJson(name);
-    if (heroDetail) return heroDetail;
-  }
-
   const slug = name.replace(/\s+/g, '-').toLowerCase();
   const cacheKey = `${CACHE_PREFIX}${slug}`;
 
@@ -696,6 +833,12 @@ export async function getTroopDetail(name: string, bypassCache: boolean = false)
     } catch (error) {
       console.warn('[troopDetail] Fallback request threw', { name, url, error });
     }
+  }
+
+  // Last-resort fallback for heroes (Fandom parse failed): dedicated coc.guide JSON.
+  if (HERO_JSON_KEYS[name]) {
+    const heroDetail = await getHeroDetailFromJson(name);
+    if (heroDetail) return heroDetail;
   }
 
   return null;
