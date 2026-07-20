@@ -18,7 +18,10 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 
 ## Design
 
-Monochrome palette (`#0A0A0A` → `#FAFAFA`), 8pt spacing system, decreased roundedness, icon-only bottom navigation. All UI components are custom-built with a consistent dark theme.
+Monochrome palette (`#0A0A0A` → `#FAFAFA`), 8pt spacing system, decreased roundedness, and icon-only bottom navigation.
+
+- **Dynamic Theme Engine** — Full runtime support for switching between Dark Mode and Light Mode, utilizing a dynamic StyleSheet proxy that maps color tokens instantly across all components.
+- **Theme-Aware Skeletons** — Custom animated skeleton loaders that mimic tab structures (Home, Profile, Bases, Events) and transition smoothly between themes.
 
 ## Tech Stack
 
