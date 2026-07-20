@@ -1,4 +1,8 @@
-export const Colors = {
+import { useState, useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const DarkColors = {
   bg: '#0A0A0A',
   bgElevated: '#141414',
   bgCard: '#1A1A1A',
@@ -14,10 +18,129 @@ export const Colors = {
   accentSubtle: 'rgba(255,255,255,0.08)',
   accentGhost: 'rgba(255,255,255,0.04)',
   success: '#A0A0A0',
-  warning: '#888888',
+  warning: '#D4A359', // Premium gold theme color
   destructive: '#666666',
   overlay: 'rgba(0,0,0,0.6)',
   shimmer: '#1A1A1A',
+};
+
+export const LightColors = {
+  bg: '#F2F2F7',
+  bgElevated: '#FFFFFF',
+  bgCard: '#FFFFFF',
+  bgCardHover: '#E5E5EA',
+  bgSubtle: '#E5E5EA',
+  border: '#D1D1D6',
+  borderSubtle: '#E5E5EA',
+  textPrimary: '#1C1C1E',
+  textSecondary: '#3A3A3C',
+  textTertiary: '#6C6C70',
+  textMuted: '#AEAEB2',
+  accent: '#1C1C1E',
+  accentSubtle: 'rgba(0,0,0,0.06)',
+  accentGhost: 'rgba(0,0,0,0.03)',
+  success: '#34C759',
+  warning: '#D4A359', // Premium gold theme color
+  destructive: '#FF3B30',
+  overlay: 'rgba(0,0,0,0.4)',
+  shimmer: '#D1D1D6',
+};
+
+// Global theme state
+let isDarkTheme = true;
+const listeners = new Set<() => void>();
+
+export function isDark() {
+  return isDarkTheme;
+}
+
+export async function loadTheme() {
+  try {
+    const val = await AsyncStorage.getItem('clashprime_theme');
+    if (val !== null) {
+      isDarkTheme = val === 'dark';
+      notify();
+    }
+  } catch (e) {
+    console.warn('Failed to load theme preference', e);
+  }
+}
+
+export async function setThemeMode(dark: boolean) {
+  isDarkTheme = dark;
+  try {
+    await AsyncStorage.setItem('clashprime_theme', dark ? 'dark' : 'light');
+  } catch (e) {
+    console.warn('Failed to save theme preference', e);
+  }
+  notify();
+}
+
+function notify() {
+  listeners.forEach((l) => l());
+}
+
+// React Hook for subscription
+export function useTheme() {
+  const [dark, setDark] = useState(isDarkTheme);
+
+  useEffect(() => {
+    const l = () => setDark(isDarkTheme);
+    listeners.add(l);
+    // Sync initial state
+    setDark(isDarkTheme);
+    return () => {
+      listeners.delete(l);
+    };
+  }, []);
+
+  return {
+    isDark: dark,
+    colors: dark ? DarkColors : LightColors,
+    setThemeMode,
+  };
+}
+
+// Proxy for the Colors object to dynamically return values based on current theme state
+export const Colors = new Proxy({}, {
+  get(target, prop) {
+    const activeColors = isDarkTheme ? DarkColors : LightColors;
+    return (activeColors as any)[prop];
+  },
+}) as typeof DarkColors;
+
+// Monkey-patch StyleSheet.create to dynamically resolve colors at render time.
+// React Native's originalCreate returns integer IDs, not style objects — so we
+// keep the raw input styles ourselves and use them for color resolution.
+const originalCreate = StyleSheet.create;
+StyleSheet.create = function <T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(
+  styles: T | StyleSheet.NamedStyles<T>
+): T {
+  const rawStyles = styles as Record<string, Record<string, any>>;
+  // Still call original so RN's internal registry is populated (needed for web / some platforms)
+  originalCreate(styles);
+
+  return new Proxy({} as any, {
+    get(_, propKey: string) {
+      const rawStyle = rawStyles[propKey];
+      if (!rawStyle || typeof rawStyle !== 'object') return undefined;
+
+      // Build a fresh plain object with colors resolved to the current theme
+      const currentColors = isDarkTheme ? DarkColors : LightColors;
+      const resolved: Record<string, any> = {};
+      for (const [k, v] of Object.entries(rawStyle)) {
+        if (typeof v === 'string') {
+          const colorKey = (Object.keys(DarkColors) as (keyof typeof DarkColors)[]).find(
+            (ck) => DarkColors[ck] === v
+          );
+          resolved[k] = colorKey ? currentColors[colorKey] : v;
+        } else {
+          resolved[k] = v;
+        }
+      }
+      return resolved;
+    },
+  }) as T;
 };
 
 export const Spacing = {
