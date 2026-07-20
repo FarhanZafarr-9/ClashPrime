@@ -141,7 +141,10 @@ interface CacheEntry {
 // ---------------------------------------------------------------------------
 
 const FANDOM_PAGE_NAMES: Record<string, string> = {
-  // Home Village troops — page is at /wiki/TroopName/Home_Village
+  // ---------------------------------------------------------------------------
+  // Home Village — Elixir Troops
+  // (many have disambiguation pages, so we route to /Home_Village sub-page)
+  // ---------------------------------------------------------------------------
   'Barbarian': 'Barbarian/Home_Village',
   'Archer': 'Archer/Home_Village',
   'Giant': 'Giant/Home_Village',
@@ -152,7 +155,7 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Healer': 'Healer',
   'Dragon': 'Dragon/Home_Village',
   'P.E.K.K.A': 'P.E.K.K.A',
-  'Baby Dragon': 'Baby_Dragon',
+  'Baby Dragon': 'Baby_Dragon/Home_Village',
   'Miner': 'Miner',
   'Electro Dragon': 'Electro_Dragon',
   'Yeti': 'Yeti',
@@ -160,6 +163,7 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Electro Titan': 'Electro_Titan',
   'Root Rider': 'Root_Rider',
   'Thrower': 'Thrower',
+  // Home Village — Dark Elixir Troops
   'Minion': 'Minion/Home_Village',
   'Hog Rider': 'Hog_Rider',
   'Valkyrie': 'Valkyrie',
@@ -171,6 +175,9 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Headhunter': 'Headhunter',
   'Apprentice Warden': 'Apprentice_Warden',
   'Druid': 'Druid',
+  'Ruin Witch': 'Ruin_Witch',
+  'Furnace': 'Furnace',
+  // Home Village — Siege Machines
   'Wall Wrecker': 'Wall_Wrecker',
   'Battle Blimp': 'Battle_Blimp',
   'Stone Slammer': 'Stone_Slammer',
@@ -178,7 +185,29 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Log Launcher': 'Log_Launcher',
   'Flame Flinger': 'Flame_Flinger',
   'Battle Drill': 'Battle_Drill',
+  // ---------------------------------------------------------------------------
+  // Builder Base Troops
+  // The CoC API returns these under village: 'builderBase'
+  // ---------------------------------------------------------------------------
+  'Raged Barbarian': 'Raged_Barbarian',
+  'Sneaky Archer': 'Sneaky_Archer/Builder_Base',
+  'Boxer Giant': 'Boxer_Giant',
+  'Beta Minion': 'Beta_Minion',
+  'Bomber': 'Bomber',
+  'Cannon Cart': 'Cannon_Cart',
+  'Night Witch': 'Night_Witch',
+  'Drop Ship': 'Drop_Ship',
+  'Super P.E.K.K.A': 'Power_P.E.K.K.A/Builder_Base',
+  'Power P.E.K.K.A': 'Power_P.E.K.K.A/Builder_Base',
+  'Hog Glider': 'Hog_Glider',
+  'Electrofire Wizard': 'Electrofire_Wizard',
+  'Baby Dragon (Builder Base)': 'Baby_Dragon/Builder_Base',
+  // Battle Machine hero (Builder Base hero — shown when TH6+)
+  'Battle Machine': 'Battle_Machine',
+  'Battle Copter': 'Battle_Copter',
+  // ---------------------------------------------------------------------------
   // Super Troops
+  // ---------------------------------------------------------------------------
   'Super Barbarian': 'Super_Barbarian',
   'Super Archer': 'Super_Archer',
   'Super Giant': 'Super_Giant',
@@ -192,10 +221,11 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Super Dragon': 'Super_Dragon',
   'Super Minion': 'Super_Minion',
   'Super Valkyrie': 'Super_Valkyrie',
-  'Super Witch (Dark)': 'Super_Witch',
   'Super Hog Rider': 'Super_Hog_Rider',
   'Super Miner': 'Super_Miner',
+  // ---------------------------------------------------------------------------
   // Spells
+  // ---------------------------------------------------------------------------
   'Lightning Spell': 'Lightning_Spell',
   'Healing Spell': 'Healing_Spell',
   'Rage Spell': 'Rage_Spell',
@@ -212,7 +242,13 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Overgrowth Spell': 'Overgrowth_Spell',
   'Poison Spell': 'Poison_Spell',
   'Darkness Spell': 'Darkness_Spell',
+  // ---------------------------------------------------------------------------
+  // Hero Equipment (some may share wiki pages with hero pages)
+  // ---------------------------------------------------------------------------
+  'Dragon Duke': 'Dragon_Duke',
+  // ---------------------------------------------------------------------------
   // Pets
+  // ---------------------------------------------------------------------------
   'L.A.S.S.I': 'L.A.S.S.I',
   'Electro Owl': 'Electro_Owl',
   'Mighty Yak': 'Mighty_Yak',
@@ -228,9 +264,17 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
 // Image filename overrides: some troops have non-standard info image filenames on Fandom.
 // Key = CoC API name, Value = exact filename (without leading "File:")
 const FANDOM_INFO_IMAGE_OVERRIDES: Record<string, string> = {
+  // Home Village
   'Super Barbarian': 'Super_Barbarian_info_2.png',
   'P.E.K.K.A': 'P.E.K.K.A_info.png',
   'L.A.S.S.I': 'L.A.S.S.I._info.png',
+  // Builder Base — these troops don't have an "_info.png" but use the same name pattern
+  'Power P.E.K.K.A': 'Power_P.E.K.K.A_info.png',
+  'Super P.E.K.K.A': 'Power_P.E.K.K.A_info.png',
+  'Night Witch': 'Night_Witch_info.png',
+  'Drop Ship': 'Drop_Ship_info.png',
+  'Hog Glider': 'Hog_Glider_info.png',
+  'Electrofire Wizard': 'Electrofire_Wizard_info.png',
 };
 
 // ---------------------------------------------------------------------------
@@ -734,7 +778,7 @@ function isValidDetailHtml(html: string): boolean {
 // Main exported function
 // ---------------------------------------------------------------------------
 
-export async function getTroopDetail(name: string): Promise<TroopDetail | null> {
+export async function getTroopDetail(name: string, bypassCache: boolean = false): Promise<TroopDetail | null> {
   // Heroes use dedicated JSON API
   if (HERO_JSON_KEYS[name]) {
     const heroDetail = await getHeroDetailFromJson(name);
@@ -744,17 +788,20 @@ export async function getTroopDetail(name: string): Promise<TroopDetail | null> 
   const slug = name.replace(/\s+/g, '-').toLowerCase();
   const cacheKey = `${CACHE_PREFIX}${slug}`;
 
-  // Check cache
-  try {
-    const raw = await AsyncStorage.getItem(cacheKey);
-    if (raw) {
-      const entry: CacheEntry = JSON.parse(raw as string);
-      if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
-        return entry.data;
+  // Check cache (skip if bypassCache is true)
+  if (!bypassCache) {
+    try {
+      const raw = await AsyncStorage.getItem(cacheKey);
+      if (raw) {
+        const entry: CacheEntry = JSON.parse(raw as string);
+        // Only use cache if it has a valid image and is not expired
+        if (entry.data?.imageUrl && (Date.now() - entry.timestamp < CACHE_TTL_MS)) {
+          return entry.data;
+        }
       }
+    } catch (error) {
+      console.warn('[troopDetail] Cache read failed', { name, error });
     }
-  } catch (error) {
-    console.warn('[troopDetail] Cache read failed', { name, error });
   }
 
   // Primary: Fandom Wiki API

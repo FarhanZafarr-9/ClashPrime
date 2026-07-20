@@ -84,9 +84,27 @@ export default function PlayerProfileScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    // Refresh player first
     await refresh();
+
+    // Re-fetch all troops/spells/heroes/pets/equipment in the background, bypassing the cache
+    // so that previously missing images or details get updated.
+    if (player) {
+      const allItems = [
+        ...player.heroes,
+        ...player.troops,
+        ...player.spells,
+        ...player.heroEquipment,
+        ...(player.pets ?? []),
+      ];
+      // Run background refresh for all items
+      Promise.all(
+        allItems.map(item => getTroopDetail(item.name, true).catch(() => null))
+      ).catch(() => null);
+    }
+
     setRefreshing(false);
-  }, [refresh]);
+  }, [refresh, player]);
 
   if (loading && !player) {
     return <ProfileScreenSkeleton />;
