@@ -3,16 +3,18 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { PlayerProvider } from '../src/hooks/usePlayerContext';
-import { Colors } from '../src/theme';
+import { useTheme, loadTheme } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
 
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [checked, setChecked] = useState(false);
+  const { isDark, colors } = useTheme();
 
   useEffect(() => {
     (async () => {
+      await loadTheme();
       const token = await getApiToken();
       if (!token) {
         router.replace('/onboarding');
@@ -26,11 +28,12 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <PlayerProvider>
-        <StatusBar style="light" hidden />
+        <StatusBar style={isDark ? 'light' : 'dark'} hidden />
         <Stack
+          key={isDark ? 'dark' : 'light'}
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: Colors.bg },
+            contentStyle: { backgroundColor: colors.bg },
             animation: 'fade',
           }}
         />

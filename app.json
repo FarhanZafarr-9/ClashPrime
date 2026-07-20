@@ -13,16 +13,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#000000",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#000000"
       },
       "package": "com.clashprime.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./images/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
