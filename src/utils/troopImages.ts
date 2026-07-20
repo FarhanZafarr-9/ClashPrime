@@ -22,16 +22,6 @@ export function getTroopImageUrl(name: string): string | null {
   return entry?.imageUrl ?? null;
 }
 
-export function getTroopSlug(name: string): string | null {
-  const entry = nameToEntry.get(name.toLowerCase());
-  return entry?.slug ?? null;
-}
-
-export function getTroopVillage(name: string): string | null {
-  const entry = nameToEntry.get(name.toLowerCase());
-  return entry?.village ?? null;
-}
-
 const HERO_SLUGS: Record<string, string> = {
   'Barbarian King': 'barbarian-king',
   'Archer Queen': 'archer-queen',
@@ -91,7 +81,7 @@ function toSlug(name: string): string {
 }
 
 export function getHeroImageUrl(name: string): string | null {
-  const slug = HERO_SLUGS[name] ?? toSlug(name);
+  const slug = HERO_SLUGS[name];
   if (!slug) return null;
   return `https://coc.guide/static/imgs/hero/${slug}.png`;
 }
@@ -105,15 +95,7 @@ export function getPetImageUrl(name: string): string | null {
   return `https://coc.guide/static/imgs/pet/${slug}.png`;
 }
 
-export function getPetSlug(name: string): string | null {
-  return PET_SLUGS[name] ?? toSlug(name);
-}
-
 export function getEquipmentImageUrl(name: string): string | null {
   const slug = EQUIPMENT_SLUGS[name] ?? toSlug(name);
   return `https://coc.guide/static/imgs/equipment/${slug}.png`;
-}
-
-export function getEquipmentSlug(name: string): string | null {
-  return EQUIPMENT_SLUGS[name] ?? toSlug(name);
 }
