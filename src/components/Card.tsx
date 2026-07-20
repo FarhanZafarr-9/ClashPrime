@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { Colors, Radius, Spacing, Typography } from '../theme';
+import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
 interface Props {
   title?: string;
@@ -11,8 +11,19 @@ interface Props {
 }
 
 export function Card({ title, subtitle, children, style, compact }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.card, compact && styles.compact, style]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.bgCard,
+          borderColor: colors.border,
+        },
+        compact && styles.compact,
+        style,
+      ]}
+    >
       {(title || subtitle) && (
         <View style={styles.header}>
           {title && <Text style={styles.title}>{title}</Text>}

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
-import { Colors, Radius, Spacing, Typography } from '../theme';
-import { LevelBadge } from './LevelBadge';
+import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
 interface Props {
   name: string;
@@ -14,13 +13,21 @@ interface Props {
 }
 
 export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, onPress }: Props) {
+  const { colors } = useTheme();
   const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
   const progress = effectiveMax > 0 ? level / effectiveMax : 0;
+  const isMaxed = level >= effectiveMax;
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: pressed ? colors.bgCardHover : colors.bgCard,
+          borderColor: colors.border,
+        },
+      ]}
     >
       <View style={styles.row}>
         {icon ? (
@@ -30,26 +37,40 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           </View>
         )}
-        <View style={styles.info}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>{name}</Text>
-            <LevelBadge level={level} maxLevel={effectiveMax} size="sm" />
+        
+        <View style={styles.middle}>
+          <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          {subtitle ? (
+            <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+          ) : (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(progress, 1) * 100}%`,
+                      backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary, // Goldish color if maxed, secondary gray if not
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.right}>
+          <View style={[
+            styles.levelBadgeContainer,
+            isMaxed && styles.levelBadgeMaxed
+          ]}>
+            <Text style={[
+              styles.levelBadgeText,
+              isMaxed && styles.levelBadgeTextMaxed
+            ]}>
+              {level}/{effectiveMax}
+            </Text>
           </View>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.min(progress, 1) * 100}%`,
-                  backgroundColor:
-                    progress >= 1 ? Colors.textPrimary : Colors.textTertiary,
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.levelText}>
-            {level}/{effectiveMax}
-          </Text>
         </View>
       </View>
     </Pressable>
@@ -59,10 +80,11 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
   },
   pressed: {
@@ -71,54 +93,80 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
   },
   icon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.sm,
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
+    marginRight: Spacing.md,
   },
   iconPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.sm,
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   iconText: {
     ...Typography.headline,
     color: Colors.textTertiary,
   },
-  info: {
+  middle: {
     flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+    justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   name: {
-    ...Typography.body,
+    ...Typography.subhead,
     color: Colors.textPrimary,
-    fontWeight: '500',
-    flex: 1,
+    fontWeight: '600',
+  },
+  subtitle: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  progressContainer: {
+    marginTop: 6,
+    width: '100%',
   },
   progressTrack: {
-    height: 3,
-    backgroundColor: Colors.border,
+    height: 4,
+    backgroundColor: Colors.borderSubtle,
     borderRadius: 2,
-    marginBottom: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 2,
   },
-  levelText: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
+  right: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 50,
+  },
+  levelBadgeContainer: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  levelBadgeMaxed: {
+    backgroundColor: 'rgba(212, 163, 89, 0.08)',
+    borderColor: 'rgba(212, 163, 89, 0.3)',
+  },
+  levelBadgeText: {
+    ...Typography.footnote,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    fontSize: 11,
+  },
+  levelBadgeTextMaxed: {
+    color: Colors.warning,
   },
 });
