@@ -222,23 +222,31 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Super Miner': 'Super_Miner',
   // ---------------------------------------------------------------------------
   // Spells
+  // Canonical lists per Fandom category pages:
+  //   Elixir Spells: https://clashofclans.fandom.com/wiki/Elixir_Spells
+  //   Dark Spells:   https://clashofclans.fandom.com/wiki/Dark_Spells
+  // Each spell resolves to its own Fandom page (the category pages are indexes
+  // with no per-level stat tables).
   // ---------------------------------------------------------------------------
+  // Elixir Spells (Spell Factory)
   'Lightning Spell': 'Lightning_Spell',
   'Healing Spell': 'Healing_Spell',
   'Rage Spell': 'Rage_Spell',
+  'Jump Spell': 'Jump_Spell',
   'Freeze Spell': 'Freeze_Spell',
   'Clone Spell': 'Clone_Spell',
   'Invisibility Spell': 'Invisibility_Spell',
   'Recall Spell': 'Recall_Spell',
   'Revive Spell': 'Revive_Spell',
-  'Bat Spell': 'Bat_Spell',
-  'Skeleton Spell': 'Skeleton_Spell',
-  'Jump Spell': 'Jump_Spell',
+  'Totem Spell': 'Totem_Spell',
+  // Dark Spells (Dark Spell Factory)
+  'Poison Spell': 'Poison_Spell',
   'Earthquake Spell': 'Earthquake_Spell',
   'Haste Spell': 'Haste_Spell',
+  'Skeleton Spell': 'Skeleton_Spell',
+  'Bat Spell': 'Bat_Spell',
   'Overgrowth Spell': 'Overgrowth_Spell',
-  'Poison Spell': 'Poison_Spell',
-  'Darkness Spell': 'Darkness_Spell',
+  'Ice Block Spell': 'Ice_Block_Spell',
   // ---------------------------------------------------------------------------
   // Hero Equipment
   // ---------------------------------------------------------------------------

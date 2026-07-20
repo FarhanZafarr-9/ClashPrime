@@ -4,8 +4,21 @@ const troops = troopListData.troops;
 
 const nameToEntry = new Map(troops.map((t) => [t.name.toLowerCase(), t]));
 
+// Runtime image overrides — populated when a Fandom/coc.guide detail image is
+// fetched (see force-refresh in profile.tsx). Lets spells (which are absent
+// from troop-list.json) and any other item without a static list icon pick up
+// the image that the detail modal already resolved. Keyed by lowercase name.
+const imageUrlOverrides = new Map<string, string>();
+
+export function setTroopImageOverride(name: string, imageUrl: string) {
+  if (name && imageUrl) imageUrlOverrides.set(name.toLowerCase(), imageUrl);
+}
+
 export function getTroopImageUrl(name: string): string | null {
-  const entry = nameToEntry.get(name.toLowerCase());
+  const key = name.toLowerCase();
+  const override = imageUrlOverrides.get(key);
+  if (override) return override;
+  const entry = nameToEntry.get(key);
   return entry?.imageUrl ?? null;
 }
 
