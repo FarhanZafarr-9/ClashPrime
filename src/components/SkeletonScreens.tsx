@@ -35,15 +35,32 @@ export function BasesScreenSkeleton() {
           ))}
         </View>
         <View style={styles.baseGrid}>
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1].map((i) => (
             <View key={i} style={[styles.baseCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Skeleton width="100%" height={140} borderRadius={Radius.lg} />
-              <View style={{ padding: Spacing.sm, gap: 6 }}>
-                <Skeleton width="70%" height={12} borderRadius={4} />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Skeleton width="35%" height={10} borderRadius={3} />
-                  <Skeleton width={60} height={24} borderRadius={12} />
+              {/* Thumbnail block with aspect ratio */}
+              <View style={{ width: '100%', aspectRatio: 1.6, backgroundColor: colors.bgSubtle, position: 'relative', overflow: 'hidden' }}>
+                <Skeleton width="100%" height="100%" borderRadius={0} />
+                
+                {/* Overlay badge placeholders */}
+                <View style={{ position: 'absolute', top: Spacing.sm, left: Spacing.sm }}>
+                  <Skeleton width={38} height={18} borderRadius={9} />
                 </View>
+                <View style={{ position: 'absolute', top: Spacing.sm, right: Spacing.sm }}>
+                  <Skeleton width={42} height={18} borderRadius={9} />
+                </View>
+                <View style={{ position: 'absolute', bottom: Spacing.sm, left: Spacing.sm, flexDirection: 'row', gap: 4 }}>
+                  <Skeleton width={48} height={18} borderRadius={9} />
+                  <Skeleton width={40} height={18} borderRadius={9} />
+                </View>
+              </View>
+              
+              {/* Content area */}
+              <View style={{ padding: Spacing.base, gap: Spacing.md }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Skeleton width="60%" height={16} borderRadius={4} />
+                  <Skeleton width={20} height={20} borderRadius={10} />
+                </View>
+                <Skeleton width="100%" height={38} borderRadius={Radius.lg} />
               </View>
             </View>
           ))}
@@ -296,7 +313,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
   },
   baseCard: {
-    width: '48%',
+    width: '100%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
     borderWidth: 1,
