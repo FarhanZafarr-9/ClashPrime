@@ -34,6 +34,13 @@
           "backgroundColor": "#0A0A0A"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "05158f35-ef70-4899-a1ed-916838720598"
+      }
+    },
+    "owner": "parzival_89"
   }
 }
