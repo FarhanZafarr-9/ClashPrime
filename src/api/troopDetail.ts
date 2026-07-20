@@ -141,21 +141,18 @@ interface CacheEntry {
 // ---------------------------------------------------------------------------
 
 const FANDOM_PAGE_NAMES: Record<string, string> = {
-  // ---------------------------------------------------------------------------
   // Home Village — Elixir Troops
-  // (many have disambiguation pages, so we route to /Home_Village sub-page)
-  // ---------------------------------------------------------------------------
   'Barbarian': 'Barbarian/Home_Village',
-  'Archer': 'Archer/Home_Village',
-  'Giant': 'Giant/Home_Village',
-  'Goblin': 'Goblin/Home_Village',
-  'Wall Breaker': 'Wall_Breaker/Home_Village',
-  'Balloon': 'Balloon/Home_Village',
-  'Wizard': 'Wizard/Home_Village',
+  'Archer': 'Archer',
+  'Giant': 'Giant',
+  'Goblin': 'Goblin',
+  'Wall Breaker': 'Wall_Breaker',
+  'Balloon': 'Balloon',
+  'Wizard': 'Wizard',
   'Healer': 'Healer',
-  'Dragon': 'Dragon/Home_Village',
+  'Dragon': 'Dragon',
   'P.E.K.K.A': 'P.E.K.K.A',
-  'Baby Dragon': 'Baby_Dragon/Home_Village',
+  'Baby Dragon': 'Baby_Dragon',
   'Miner': 'Miner',
   'Electro Dragon': 'Electro_Dragon',
   'Yeti': 'Yeti',
@@ -164,11 +161,11 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Root Rider': 'Root_Rider',
   'Thrower': 'Thrower',
   // Home Village — Dark Elixir Troops
-  'Minion': 'Minion/Home_Village',
+  'Minion': 'Minion',
   'Hog Rider': 'Hog_Rider',
   'Valkyrie': 'Valkyrie',
-  'Golem': 'Golem/Home_Village',
-  'Witch': 'Witch/Home_Village',
+  'Golem': 'Golem',
+  'Witch': 'Witch',
   'Lava Hound': 'Lava_Hound',
   'Bowler': 'Bowler',
   'Ice Golem': 'Ice_Golem',
@@ -243,16 +240,19 @@ const FANDOM_PAGE_NAMES: Record<string, string> = {
   'Poison Spell': 'Poison_Spell',
   'Darkness Spell': 'Darkness_Spell',
   // ---------------------------------------------------------------------------
-  // Hero Equipment (some may share wiki pages with hero pages)
+  // Hero Equipment
   // ---------------------------------------------------------------------------
   'Dragon Duke': 'Dragon_Duke',
+  'Action Figure': 'Action_Figure',
+  'Eternal Tome': 'Eternal_Tome',
+  'Flame Blower': 'Flame_Blower',
   // ---------------------------------------------------------------------------
   // Pets
   // ---------------------------------------------------------------------------
   'L.A.S.S.I': 'L.A.S.S.I',
   'Electro Owl': 'Electro_Owl',
   'Mighty Yak': 'Mighty_Yak',
-  'Unicorn': 'Unicorn/Home_Village',
+  'Unicorn': 'Unicorn',
   'Phoenix': 'Phoenix',
   'Frosty': 'Frosty',
   'Diggy': 'Diggy',
@@ -295,18 +295,18 @@ function getFandomInfoImageFile(name: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Fandom Wiki API: fetch wikitext
+// Fandom Wiki API: fetch parsed HTML
 // ---------------------------------------------------------------------------
 
-async function fetchFandomWikitext(pageTitle: string): Promise<string | null> {
-  const url = `${FANDOM_API}?action=parse&page=${encodeURIComponent(pageTitle)}&prop=wikitext&format=json`;
+async function fetchFandomHtml(pageTitle: string): Promise<string | null> {
+  const url = `${FANDOM_API}?action=parse&page=${encodeURIComponent(pageTitle)}&prop=text&format=json`;
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'ClashPrime/1.0 (React Native App)' },
     });
     if (!res.ok) return null;
     const json = await res.json();
-    return json?.parse?.wikitext?.['*'] ?? null;
+    return json?.parse?.text?.['*'] ?? null;
   } catch {
     return null;
   }
@@ -335,248 +335,96 @@ async function fetchFandomImageUrl(filename: string): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Wikitext parsers
-// ---------------------------------------------------------------------------
-
-/** Extract the description/quote from wikitext. 
- *  Fandom pages typically have it as: '''''\"Quote text\"'''''
- *  or in a <center> block.
- */
-function parseWikitextDescription(wikitext: string): string {
-  // Try center-wrapped italic bold quote: '''''"..."'''''
-  const quoteMatch = wikitext.match(/'''''"?([^'"]+)"?'''''/);
-  if (quoteMatch) return quoteMatch[1].trim().replace(/^["""]+|["""]+$/g, '');
-
-  // Try simpler italic: ''quote text''  
-  const italicMatch = wikitext.match(/''([^'\n]{20,200})''/);
-  if (italicMatch) return italicMatch[1].trim().replace(/^["""]+|["""]+$/g, '');
-
-  return '';
-}
-
-/** Parse a number from wikitext cell (e.g. "1,000,000" or "45") */
-function parseWikitextNum(text: string): number {
-  const clean = text.replace(/,/g, '').replace(/[^\d.]/g, '');
-  const n = parseFloat(clean);
-  return isNaN(n) ? 0 : Math.floor(n);
-}
-
-/** Parse upgrade time from wikitext (e.g. "1d 12h", "30m", "N/A") */
-function parseWikitextTime(text: string): string {
-  const t = text.trim();
-  if (!t || t === 'N/A' || t === '-') return 'None';
-  return t;
-}
-
-/** Parse upgrade cost from wikitext (e.g. "10,000", "N/A") */
-function parseWikitextCost(text: string): string {
-  const t = text.trim();
-  if (!t || t === 'N/A' || t === '-') return 'None';
-  const num = parseWikitextNum(t);
-  if (num === 0) return t; // pass through non-numeric like "N/A"
-  return formatCost(num);
-}
-
-/** Extract rows from a wikitable string. Returns array of cell arrays. */
-function parseWikitableRows(tableText: string): string[][] {
-  const rows: string[][] = [];
-  // Split by |- row separators
-  const rawRows = tableText.split(/\n\s*\|-/);
-  
-  for (const rawRow of rawRows) {
-    const cells: string[] = [];
-    // Match || column separators or leading | cell starters
-    const lines = rawRow.split('\n');
-    
-    for (const line of lines) {
-      // Multi-cell line: | cell1 || cell2 || cell3
-      if (/^\|[^!|{]/.test(line) || /^\|\|/.test(line)) {
-        const parts = line.replace(/^\|/, '').split('||');
-        for (const part of parts) {
-          // Strip class attributes: |class="x"|content → content
-          const cellContent = part.replace(/^[^|]*\|/, '').trim();
-          if (cellContent) cells.push(cellContent);
-        }
-      }
-    }
-    if (cells.length > 0) rows.push(cells);
-  }
-  return rows;
-}
-
-/** Find the statistics wikitable in the wikitext */
-function extractStatsTable(wikitext: string): string | null {
-  // Find the ==Statistics== section
-  const statsMatch = wikitext.match(/==Statistics==([\s\S]*?)(?:==\w|$)/);
-  if (!statsMatch) return null;
-  
-  // Find all wikitables within that section
-  const section = statsMatch[1];
-  
-  // Look for tables with "Level" and stat headers (DPS, Hitpoints, etc.)
-  const tableRegex = /\{[|]([\s\S]*?)\|[}]/g;
-  let match: RegExpExecArray | null;
-  let bestTable: string | null = null;
-  let bestScore = 0;
-  
-  while ((match = tableRegex.exec(section)) !== null) {
-    const tableContent = match[1];
-    const hasLevel = /!Level/i.test(tableContent);
-    const hasDPS = /Damage per Second|DPS/i.test(tableContent);
-    const hasHP = /Hitpoints|HP/i.test(tableContent);
-    const score = (hasLevel ? 2 : 0) + (hasDPS ? 2 : 0) + (hasHP ? 1 : 0);
-    if (score > bestScore) {
-      bestScore = score;
-      bestTable = tableContent;
-    }
-  }
-  
-  return bestTable;
-}
-
-/** Extract info row (housing space, range, attack speed, etc.) from wikitext */
-function extractInfoRow(wikitext: string): {
-  housingSpace: number;
-  range: string;
-  attackSpeed: string;
-  damageType: string;
-  targetType: string;
-  favoriteTarget: string;
-} {
-  const info = {
-    housingSpace: 0,
-    range: '',
-    attackSpeed: '',
-    damageType: '',
-    targetType: '',
-    favoriteTarget: '',
-  };
-
-  // Find the main info table (the one with Housing Space, Movement Speed, etc.)
-  // It's usually right before or after the stats table, in a simple wikitable with single row of values
-  const statsSection = wikitext.match(/==Statistics==([\s\S]*?)(?:==History|==Strategies|==Upgrade|$)/);
-  const section = statsSection ? statsSection[1] : wikitext;
-
-  // Find the first info-like table (with Housing Space header)
-  const infoTableMatch = section.match(/\{[|][\s\S]*?Housing[\s\S]*?\n\|-([\s\S]*?)\n\|[}]/i);
-  if (!infoTableMatch) return info;
-
-  const rowText = infoTableMatch[1];
-  const cells = rowText.split('||').map(c => c.replace(/^\|/, '').replace(/^[^|]*\|/, '').trim());
-
-  // The columns in order tend to be:
-  // Preferred Target | Attack Type | Housing Space | Movement Speed | Attack Speed | Barracks Level | Range
-  if (cells[2]) info.housingSpace = parseWikitextNum(cells[2]);
-  if (cells[4]) info.attackSpeed = cells[4].trim();
-  if (cells[6]) info.range = cells[6].trim();
-  
-  // Parse attack type (Melee/Ground, Ranged/Air, etc.)
-  if (cells[1]) {
-    const at = cells[1].trim();
-    if (/melee/i.test(at)) info.damageType = 'Melee';
-    else if (/ranged/i.test(at)) info.damageType = 'Ranged';
-    else info.damageType = at.replace(/\(.*\)/g, '').trim();
-    
-    if (/ground\s*only/i.test(at)) info.targetType = 'Ground';
-    else if (/air\s*only/i.test(at)) info.targetType = 'Air';
-    else if (/ground.*air|air.*ground/i.test(at)) info.targetType = 'Ground & Air';
-  }
-  
-  // Preferred target
-  if (cells[0]) info.favoriteTarget = cells[0].trim() === 'None' ? '' : cells[0].trim();
-
-  return info;
-}
-
-/** Parse stat levels from the statistics wikitable text */
-function parseStatLevels(tableText: string): TroopDetailLevel[] {
-  const levels: TroopDetailLevel[] = [];
-  
-  // Get headers
-  const headerLines = tableText.split('\n').filter(l => /^!/.test(l.trim()));
-  const headers: string[] = [];
-  for (const hLine of headerLines) {
-    const parts = hLine.replace(/^!/, '').split('!!');
-    for (const p of parts) {
-      const clean = p.replace(/\{\{[^}]+\}\}/g, '')  // remove templates
-                     .replace(/\[\[[^\]]+\]\]/g, '')   // remove wiki links
-                     .replace(/<[^>]+>/g, '')           // remove HTML
-                     .replace(/\s+/g, ' ')
-                     .trim();
-      headers.push(clean.toLowerCase());
-    }
-  }
-
-  // Find column indices
-  const levelIdx = headers.findIndex(h => /^level$/i.test(h));
-  const dpsIdx = headers.findIndex(h => /damage per second/i.test(h));
-  const dphIdx = headers.findIndex(h => /damage per (attack|hit|second when destroyed|when destroyed)/i.test(h) && !/per second$/i.test(h));
-  const hpIdx = headers.findIndex(h => /hitpoint|^hp$/i.test(h));
-  const costIdx = headers.findIndex(h => /research cost|upgrade cost|elixir|dark elixir|gold/i.test(h));
-  const timeIdx = headers.findIndex(h => /research time|upgrade time/i.test(h));
-  const labIdx = headers.findIndex(h => /laboratory.*level|lab.*level/i.test(h));
-
-  // Parse body rows
-  const rows = parseWikitableRows(tableText);
-  
-  for (const row of rows) {
-    // Skip header-like rows 
-    if (row.length < 3) continue;
-    
-    const levelVal = levelIdx >= 0 ? parseWikitextNum(row[levelIdx] ?? row[0]) : parseWikitextNum(row[0]);
-    if (!levelVal || levelVal > 50) continue; // sanity check
-
-    const dps = dpsIdx >= 0 ? parseWikitextNum(row[dpsIdx]) : (dphIdx >= 0 ? 0 : parseWikitextNum(row[1]));
-    const damagePerHit = dphIdx >= 0 ? parseWikitextNum(row[dphIdx]) : dps;
-    const hitpoints = hpIdx >= 0 ? parseWikitextNum(row[hpIdx]) : 0;
-    
-    const rawCost = costIdx >= 0 ? (row[costIdx] ?? '') : (row[4] ?? '');
-    const rawTime = timeIdx >= 0 ? (row[timeIdx] ?? '') : (row[5] ?? '');
-    const rawLab = labIdx >= 0 ? (row[labIdx] ?? '') : (row[6] ?? '');
-
-    const upgradeCost = levelVal === 1 ? 'None' : parseWikitextCost(rawCost);
-    const upgradeTime = levelVal === 1 ? 'None' : parseWikitextTime(rawTime);
-    const labLevel = parseWikitextNum(rawLab) || null;
-
-    levels.push({
-      level: levelVal,
-      dps,
-      damagePerHit,
-      hitpoints,
-      upgradeCost,
-      upgradeTime,
-      xp: 0,
-      labLevel,
-      thRequired: null,
-    });
-  }
-
-  return levels.sort((a, b) => a.level - b.level);
-}
-
-// ---------------------------------------------------------------------------
-// Main Fandom fetcher
+// HTML page parser (uses our clean HTML table parser for robust parsing)
 // ---------------------------------------------------------------------------
 
 async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
   const pageTitle = getFandomPageTitle(name);
   const imageFile = getFandomInfoImageFile(name);
 
-  // Fetch wikitext and image URL in parallel
-  const [wikitext, imageUrl] = await Promise.all([
-    fetchFandomWikitext(pageTitle),
+  // Fetch parsed HTML and image URL in parallel
+  const [html, imageUrl] = await Promise.all([
+    fetchFandomHtml(pageTitle),
     fetchFandomImageUrl(imageFile),
   ]);
 
-  if (!wikitext) {
+  if (!html) {
     console.warn('[troopDetail] No wikitext from Fandom for', { name, pageTitle });
     return null;
   }
 
-  const description = parseWikitextDescription(wikitext);
-  const statsTable = extractStatsTable(wikitext);
-  const levels = statsTable ? parseStatLevels(statsTable) : [];
-  const info = extractInfoRow(wikitext);
+  // Parse description: look for center italic quote, or first paragraph
+  let description = '';
+  const quoteMatch = html.match(/<i><b>\s*["“'\s]*([^"”'\n]+)["”'\s]*\s*<\/b><\/i>/i) || 
+                     html.match(/<center><i>\s*["“'\s]*([^"”'\n]{20,200})["”'\s]*\s*<\/i><\/center>/i);
+  if (quoteMatch) {
+    description = quoteMatch[1].trim();
+  } else {
+    const pMatch = html.match(/<p>([\s\S]*?)<\/p>/i);
+    if (pMatch) {
+      description = pMatch[1].replace(/<[^>]+>/g, '').trim();
+    }
+  }
+
+  // Extract stat levels using the robust HTML table parser
+  const levels: TroopDetailLevel[] = [];
+  const statTableMatch = findStatTable([...html.matchAll(/<table[^>]*>([\s\S]*?)<\/table>/g)].map((match) => match[1]));
+
+  if (statTableMatch) {
+    const headers = getTableHeaders(statTableMatch);
+    const bodyRows = getBodyRows(statTableMatch);
+
+    for (const row of bodyRows) {
+      const cells = extractTableCells(row).map((cell) => cell.text);
+      if (!cells.length) continue;
+
+      const level = parseNumeric(getCellByHeader(cells, headers, [/^level$/i], 0));
+      if (!level) continue;
+
+      const dps = parseNumeric(pickHeaderValue(cells, headers, [/damage per second|dps/i]));
+      const damagePerHit = parseNumeric(pickHeaderValue(cells, headers, [/damage per hit|damage when destroyed/i]));
+      const hitpoints = parseNumeric(pickHeaderValue(cells, headers, [/hitpoints|health|hp/i]));
+      const upgradeCost = pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost/i]) || '';
+      const upgradeTime = pickHeaderValue(cells, headers, [/clock|training time|time/i]) || '';
+      const xp = parseNumeric(pickHeaderValue(cells, headers, [/xp/i]));
+      const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab|blacksmith/i]) || '';
+      const labLevel = parseNumeric(labLevelValue) || null;
+
+      levels.push({
+        level,
+        dps,
+        damagePerHit,
+        hitpoints,
+        upgradeCost,
+        upgradeTime,
+        xp,
+        labLevel,
+        thRequired: null
+      });
+    }
+  }
+
+  // Parse info table
+  const info = { range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' };
+  const infoTableMatch = html.match(/<table[^>]*class="[^"]*info-table[^"]*"[^>]*>([\s\S]*?)<\/table>/i) ||
+                         html.match(/<table[^>]*>([\s\S]*?)<\/table>/i); // fallback to first table if it contains Housing Space
+  
+  if (infoTableMatch) {
+    const tableHtml = infoTableMatch[1];
+    const infoHeaders = getTableHeaders(tableHtml);
+    const cleanHtml = tableHtml.replace(/<thead>[\s\S]*?<\/thead>/i, '');
+    const infoRows = [...cleanHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((match) => match[1]);
+    const infoRow = infoRows[0];
+    if (infoRow) {
+      const cells = extractTableCells(infoRow).map((cell) => cell.text);
+      info.range = getCellByHeader(cells, infoHeaders, [/range/i], -1) || '';
+      info.housingSpace = parseNumeric(getCellByHeader(cells, infoHeaders, [/housing|troop/i], -1));
+      info.attackSpeed = getCellByHeader(cells, infoHeaders, [/attack speed|attack/i], -1) || '';
+      info.damageType = getCellByHeader(cells, infoHeaders, [/damage type|attack type/i], -1) || '';
+      info.targetType = getCellByHeader(cells, infoHeaders, [/^target$/i], -1) || '';
+      info.favoriteTarget = getCellByHeader(cells, infoHeaders, [/favorite target/i], -1) || '';
+    }
+  }
 
   if (levels.length === 0) {
     console.warn('[troopDetail] No stat levels parsed from Fandom for', { name, pageTitle });
