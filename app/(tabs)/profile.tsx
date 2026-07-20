@@ -16,6 +16,7 @@ import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug, setTroopImageOverride } from '../../src/utils/troopImages';
+import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { Card } from '../../src/components/Card';
 import { ItemCard } from '../../src/components/ItemCard';
@@ -25,6 +26,27 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
 
 type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment' | 'achievements';
+
+// Decodes an "Unlock Requirement" value (e.g. "Buy in X event for 3,100 ... or
+// purchasable from the Trader for 1,500") into discrete unlock methods.
+function parseUnlockRequirements(raw: string): { source: string; cost?: string; kind: 'event' | 'shop' | 'other' }[] {
+  const text = (raw || '').trim();
+  if (!text) return [];
+  const items: { source: string; cost?: string; kind: 'event' | 'shop' | 'other' }[] = [];
+  const eventRe = /Buy in\s+([\s\S]+?)\s+event for\s+([\d,]+)/gi;
+  let m: RegExpExecArray | null;
+  let foundEvent = false;
+  while ((m = eventRe.exec(text)) !== null) {
+    items.push({ source: m[1].trim(), cost: m[2].trim(), kind: 'event' });
+    foundEvent = true;
+  }
+  if (foundEvent) {
+    const shop = text.match(/purchasable from the\s+([\s\S]+?)\s+for\s+([\d,]+)/i);
+    if (shop) items.push({ source: shop[1].trim(), cost: shop[2].trim(), kind: 'shop' });
+    return items;
+  }
+  return [{ source: text, kind: 'other' }];
+}
 
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
@@ -50,12 +72,12 @@ export default function PlayerProfileScreen() {
         if (detail.imageUrl) setTroopImageOverride(name, detail.imageUrl);
         const allItems = player
           ? [
-              ...player.heroes,
-              ...player.troops,
-              ...player.spells,
-              ...player.heroEquipment,
-              ...(player.pets ?? []),
-            ]
+            ...player.heroes,
+            ...player.troops,
+            ...player.spells,
+            ...player.heroEquipment,
+            ...(player.pets ?? []),
+          ]
           : [];
         const match = allItems.find((i) => i.name === name);
         if (match) {
@@ -162,6 +184,9 @@ export default function PlayerProfileScreen() {
     const isHero = !!getHeroSlug(detail.name);
     const isBB = isBuilderBaseName(detail.name);
     if (isBB) return detail.levels;
+    // Spells/equipment don't have DPS/HP, so they aren't gated by the troop Lab — show all.
+    const hasTroopStats = detail.levels.some((l) => l.dps > 0 || l.hitpoints > 0);
+    if (!hasTroopStats) return detail.levels;
     const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
     return detail.levels.filter((l) => {
       if (isHero) {
@@ -203,42 +228,50 @@ export default function PlayerProfileScreen() {
     const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
     const visibleDetailLevels = getVisibleLevels(detail);
 
-    const infoItems: { label: string; value: string }[] = [];
-    if (detail.info.housingSpace > 0) infoItems.push({ label: 'Housing', value: String(detail.info.housingSpace) });
-    if (detail.info.attackSpeed) infoItems.push({ label: 'Speed', value: detail.info.attackSpeed });
-    if (detail.info.targetType) infoItems.push({ label: 'Target', value: detail.info.targetType });
-    if (detail.info.range) infoItems.push({ label: 'Range', value: detail.info.range });
-    if (detail.info.favoriteTarget) infoItems.push({ label: 'Fav. Target', value: detail.info.favoriteTarget });
-    if (detail.info.damageType) infoItems.push({ label: 'Damage Type', value: detail.info.damageType });
+    const structuredItems: { label: string; value: string }[] = [];
+    if (detail.info.housingSpace > 0) structuredItems.push({ label: 'Housing', value: String(detail.info.housingSpace) });
+    if (detail.info.attackSpeed) structuredItems.push({ label: 'Speed', value: detail.info.attackSpeed });
+    if (detail.info.targetType) structuredItems.push({ label: 'Target', value: detail.info.targetType });
+    if (detail.info.range) structuredItems.push({ label: 'Range', value: detail.info.range });
+    if (detail.info.favoriteTarget) structuredItems.push({ label: 'Fav. Target', value: detail.info.favoriteTarget });
+    if (detail.info.damageType) structuredItems.push({ label: 'Damage Type', value: detail.info.damageType });
+    // Spells/equipment have no structured troop fields, so fall back to generic label/value pairs.
+    const infoItems = structuredItems.length ? structuredItems : (detail.infoPairs ?? []);
+    // Equipment carries an "Unlock Requirement" entry whose value is a long, concatenated
+    // string (multiple events + a shop source). Render it as a dedicated, decoded list
+    // rather than a generic info box.
+    const unlockReq = infoItems.find((i) => i.label === 'Unlock Requirement');
+    const gridItems = infoItems.filter((i) => i.label !== 'Unlock Requirement');
+    const unlockReqItems = unlockReq ? parseUnlockRequirements(unlockReq.value) : [];
+    const unlockHasCost = unlockReqItems.some((r) => r.cost);
 
-    const chunkedInfoItems: typeof infoItems[] = [];
-    for (let i = 0; i < infoItems.length; i += 2) {
-      chunkedInfoItems.push(infoItems.slice(i, i + 2));
+    // Troop/hero/pet tables show DPS/HP; spells/equipment show their own per-level columns.
+    const isTroopLike = (detail.levels[0]?.dps ?? 0) > 0 || (detail.levels[0]?.hitpoints ?? 0) > 0;
+    const extraLabels = detail.levels[0]?.extra?.map((e) => e.label) ?? [];
+
+    const chunkedInfoItems: typeof gridItems[] = [];
+    for (let i = 0; i < gridItems.length; i += 2) {
+      chunkedInfoItems.push(gridItems.slice(i, i + 2));
     }
     const getFlex = (item: { label: string; value: string }) =>
       (item.label.length + item.value.length) > 12 ? 2 : 1;
 
     return (
       <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
-        {(detail.imageUrl || detail.description) && (
+        {detail.description ? (
           <View style={styles.panelHeader}>
-            {detail.imageUrl ? (
-              <Image source={{ uri: detail.imageUrl }} style={[styles.panelImage, { backgroundColor: colors.bgCard }]} />
-            ) : null}
-            {detail.description ? (
-              <Text style={[styles.panelDesc, { color: colors.textTertiary }]}>{detail.description}</Text>
-            ) : null}
+            <Text style={[styles.panelDesc, { color: colors.textTertiary }]}>{detail.description}</Text>
           </View>
-        )}
+        ) : null}
 
-        {infoItems.length > 0 && (
-          <View style={styles.detailStatsGrid}>
+        {gridItems.length > 0 && (
+          <View style={styles.panelStatsGrid}>
             {chunkedInfoItems.map((chunk, rowIdx) => (
-              <View key={rowIdx} style={styles.detailInfoRow}>
+              <View key={rowIdx} style={styles.panelInfoRow}>
                 {chunk.map((item) => (
-                  <View key={item.label} style={[styles.detailInfoItem, { flex: getFlex(item), backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <Text style={[styles.detailInfoLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                    <Text style={[styles.detailInfoValue, { color: colors.textPrimary }]}>{item.value}</Text>
+                  <View key={item.label} style={[styles.panelInfoItem, { flex: getFlex(item), backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <Text style={[styles.panelInfoLabel, { color: colors.textMuted }]}>{item.label}</Text>
+                    <Text style={[styles.panelInfoValue, { color: colors.textPrimary }]}>{item.value}</Text>
                   </View>
                 ))}
                 {chunk.length === 1 && <View style={{ flex: 1 }} />}
@@ -247,33 +280,99 @@ export default function PlayerProfileScreen() {
           </View>
         )}
 
+        {unlockReqItems.length > 0 ? (
+          <View style={[styles.panelTable, { borderColor: colors.border }]}>
+            <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+              <Text
+                style={[
+                  styles.panelTableCell,
+                  styles.panelTableHeader,
+                  { backgroundColor: colors.bgCard, color: colors.textMuted, textAlign: 'center', flex: unlockHasCost ? 2 : 1 },
+                ]}
+              >
+                {unlockHasCost ? 'Unlock Method' : 'Unlock Requirement'}
+              </Text>
+              {unlockHasCost ? (
+                <Text
+                  style={[
+                    styles.panelTableCell,
+                    styles.panelTableHeader,
+                    { backgroundColor: colors.bgCard, color: colors.textMuted },
+                  ]}
+                >
+                  Cost
+                </Text>
+              ) : null}
+            </View>
+            {unlockReqItems.map((r, i) => (
+              <View key={i} style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                <Text
+                  style={[
+                    styles.panelTableCell,
+                    { color: colors.textSecondary, textAlign: 'center', flex: unlockHasCost ? 2 : 1, paddingLeft: Spacing.base },
+                  ]}
+                >
+                  {r.source}
+                </Text>
+                {unlockHasCost ? (
+                  <Text style={[styles.panelTableCell, { color: colors.textPrimary, fontWeight: '600' }]}>{r.cost}</Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {visibleDetailLevels.length > 0 && (
           <>
-            <Text style={[styles.detailSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
-            <View style={[styles.detailTable, { borderColor: colors.border }]}>
-              <View style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Lvl</Text>
-                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>DPS</Text>
-                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>HP</Text>
-                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{isHero ? 'Hall' : 'Lab'}</Text>
+            <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
+            <View style={[styles.panelTable, { borderColor: colors.border }]}>
+              <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Lvl</Text>
+                {isTroopLike ? (
+                  <>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>DPS</Text>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>HP</Text>
+                  </>
+                ) : (
+                  extraLabels.map((lbl) => (
+                    <Text key={lbl} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{lbl}</Text>
+                  ))
+                )}
+                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
+                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
+                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{isHero ? 'Hero Hall' : isBB ? 'Star Laboratory' : 'Laboratory'}</Text>
               </View>
               {visibleDetailLevels.map((l) => (
-                <View key={l.level} style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
-                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
-                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
-                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
+                <View key={l.level} style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
+                  {isTroopLike ? (
+                    <>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
+                    </>
+                  ) : (
+                    extraLabels.map((lbl) => (
+                      <Text key={lbl} style={[styles.panelTableCell, { color: colors.textSecondary }]}>
+                        {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
+                      </Text>
+                    ))
+                  )}
+                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeCost || '—'}</Text>
+                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeTime || '—'}</Text>
+                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
                 </View>
               ))}
             </View>
-            <Text style={[styles.detailThNote, { color: colors.textMuted }]}>
+            <Text style={[styles.panelNote, { color: colors.textMuted }]}>
               {isBB
                 ? `Showing all Builder Base levels for ${detail.name}`
                 : isHero
                   ? maxHeroLevel !== null
                     ? `Showing all hero levels that are reachable at TH ${player.townHallLevel} (Max Lv${maxHeroLevel})`
                     : `Showing all hero levels that are reachable with Hero Hall Lv${heroHallMaxLevel}`
-                  : `Showing all troop levels that are reachable with Lab Lv${laboratoryMaxLevel}`}
+                  : isTroopLike
+                    ? `Showing all troop levels that are reachable with Lab Lv${laboratoryMaxLevel}`
+                    : `Showing all levels for ${detail.name}`}
             </Text>
           </>
         )}
@@ -348,7 +447,15 @@ export default function PlayerProfileScreen() {
         <Card style={styles.profileCard}>
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+              {getTownHallImageUrl(player.townHallLevel) ? (
+                <Image
+                  source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
+                  style={styles.avatarImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+              )}
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{player.name}</Text>
@@ -432,7 +539,7 @@ export default function PlayerProfileScreen() {
                 style={[
                   styles.tab,
                   {
-                    backgroundColor: isActive 
+                    backgroundColor: isActive
                       ? (isDark ? colors.accent : colors.accentSubtle)
                       : colors.bgCard,
                     borderColor: isActive
@@ -498,6 +605,7 @@ export default function PlayerProfileScreen() {
                             name={h.name}
                             level={h.level}
                             maxLevel={h.maxLevel}
+                            icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
                             onPress={() => toggleDetail(h.name)}
                           />
                           {renderDetailPanel(h.name)}
@@ -528,7 +636,7 @@ export default function PlayerProfileScreen() {
                         level={p.level}
                         maxLevel={p.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(p.name, th)}
-                        icon={getPetImageUrl(p.name) || undefined}
+                        icon={getTroopImageUrl(p.name) || getPetImageUrl(p.name) || undefined}
                         onPress={() => toggleDetail(p.name)}
                       />
                       {renderDetailPanel(p.name)}
@@ -576,6 +684,7 @@ export default function PlayerProfileScreen() {
                             name={t.name}
                             level={t.level}
                             maxLevel={t.maxLevel}
+                            icon={getTroopImageUrl(t.name) || undefined}
                             onPress={() => toggleDetail(t.name)}
                           />
                           {renderDetailPanel(t.name)}
@@ -634,7 +743,7 @@ export default function PlayerProfileScreen() {
                         name={e.name}
                         level={e.level}
                         maxLevel={e.maxLevel}
-                        icon={getEquipmentImageUrl(e.name) || undefined}
+                        icon={getTroopImageUrl(e.name) || getEquipmentImageUrl(e.name) || undefined}
                         onPress={() => toggleDetail(e.name)}
                       />
                       {renderDetailPanel(e.name)}
@@ -739,12 +848,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: Radius.xl,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
-    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: Radius.xl,
   },
   avatarText: {
     ...Typography.title1,
@@ -947,16 +1057,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     flex: 1,
   },
+  // ── Unlock requirements (decoded list for equipment) ──
   // ── Reusable: info grid + stats table used inside the panel ──
-  detailStatsGrid: {
+  panelStatsGrid: {
     gap: Spacing.sm,
     marginBottom: Spacing.base,
   },
-  detailInfoRow: {
+  panelInfoRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
-  detailInfoItem: {
+  panelInfoItem: {
     alignItems: 'center',
     backgroundColor: Colors.bgSubtle,
     borderRadius: Radius.sm,
@@ -964,19 +1075,19 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingVertical: Spacing.sm,
   },
-  detailInfoLabel: {
+  panelInfoLabel: {
     ...Typography.caption,
     color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  detailInfoValue: {
+  panelInfoValue: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
     marginTop: 2,
   },
-  detailThNote: {
+  panelNote: {
     ...Typography.caption,
     color: Colors.textMuted,
     textAlign: 'center',
@@ -984,24 +1095,24 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
     fontStyle: 'italic',
   },
-  detailSectionTitle: {
+  panelSectionTitle: {
     ...Typography.headline,
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
     fontSize: 14,
   },
-  detailTable: {
+  panelTable: {
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     marginBottom: Spacing.base,
   },
-  detailTableRow: {
+  panelTableRow: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
-  detailTableCell: {
+  panelTableCell: {
     flex: 1,
     ...Typography.caption,
     color: Colors.textSecondary,
@@ -1009,7 +1120,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
   },
-  detailTableHeader: {
+  panelTableHeader: {
     color: Colors.textMuted,
     fontWeight: '600',
     backgroundColor: Colors.bgSubtle,
