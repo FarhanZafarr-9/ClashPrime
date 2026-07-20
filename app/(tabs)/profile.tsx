@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  Modal,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,7 +15,7 @@ import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
-import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
+import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug, setTroopImageOverride } from '../../src/utils/troopImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { Card } from '../../src/components/Card';
 import { ItemCard } from '../../src/components/ItemCard';
@@ -32,63 +31,71 @@ export default function PlayerProfileScreen() {
   const { isDark, colors } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('heroes');
   const [refreshing, setRefreshing] = useState(false);
-  const [detailModal, setDetailModal] = useState<TroopDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  // Name of the item whose detail panel is currently expanded inline.
+  const [expandedName, setExpandedName] = useState<string | null>(null);
+  // Detail cache keyed by name so re-expansion is instant; null = not yet fetched.
+  const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
 
-  const openDetail = useCallback(async (name: string) => {
-    setDetailLoading(true);
-    setDetailModal(null);
-
-    let detail = await getTroopDetail(name);
-    if (detail && player) {
-      const allItems = [
-        ...player.heroes,
-        ...player.troops,
-        ...player.spells,
-        ...player.heroEquipment,
-        ...(player.pets ?? []),
-      ];
-      const match = allItems.find((i) => i.name === name);
-      if (match) {
-        detail.currentLevel = match.level;
-        detail.maxLevel = match.maxLevel;
-      }
+  const toggleDetail = useCallback(async (name: string) => {
+    // Collapse if already open.
+    if (expandedName === name) {
+      setExpandedName(null);
+      return;
     }
-    if (!detail && player) {
-      const heroUrl = getHeroImageUrl(name);
-      const petUrl = getPetImageUrl(name);
-      const equipUrl = getEquipmentImageUrl(name);
-      const imageUrl = heroUrl || petUrl || equipUrl;
-      if (imageUrl) {
-        const allItems = [
-          ...player.heroes,
-          ...player.troops,
-          ...player.spells,
-          ...player.heroEquipment,
-          ...(player.pets ?? []),
-        ];
+    setExpandedName(name);
+    // Fetch on first expansion (or if a previous fetch failed).
+    if (details[name] === undefined) {
+      let detail = await getTroopDetail(name);
+      if (detail) {
+        if (detail.imageUrl) setTroopImageOverride(name, detail.imageUrl);
+        const allItems = player
+          ? [
+              ...player.heroes,
+              ...player.troops,
+              ...player.spells,
+              ...player.heroEquipment,
+              ...(player.pets ?? []),
+            ]
+          : [];
         const match = allItems.find((i) => i.name === name);
-        detail = {
-          name, slug: '', description: '', imageUrl,
-          currentLevel: match?.level,
-          maxLevel: match?.maxLevel,
-          levels: match ? [{ level: match.level, dps: 0, damagePerHit: 0, hitpoints: 0, upgradeCost: '', upgradeTime: '', xp: 0, labLevel: null, thRequired: null }] : [],
-          info: { range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' },
-        };
+        if (match) {
+          detail.currentLevel = match.level;
+          detail.maxLevel = match.maxLevel;
+        }
+      } else if (player) {
+        const heroUrl = getHeroImageUrl(name);
+        const petUrl = getPetImageUrl(name);
+        const equipUrl = getEquipmentImageUrl(name);
+        const imageUrl = heroUrl || petUrl || equipUrl;
+        if (imageUrl) {
+          const allItems = [
+            ...player.heroes,
+            ...player.troops,
+            ...player.spells,
+            ...player.heroEquipment,
+            ...(player.pets ?? []),
+          ];
+          const match = allItems.find((i) => i.name === name);
+          detail = {
+            name, slug: '', description: '', imageUrl,
+            currentLevel: match?.level,
+            maxLevel: match?.maxLevel,
+            levels: match ? [{ level: match.level, dps: 0, damagePerHit: 0, hitpoints: 0, upgradeCost: '', upgradeTime: '', xp: 0, labLevel: null, thRequired: null }] : [],
+            info: { range: '', housingSpace: 0, attackSpeed: '', damageType: '', targetType: '', favoriteTarget: '' },
+          };
+        }
       }
+      setDetails((prev) => ({ ...prev, [name]: detail ?? null }));
     }
-
-    setDetailModal(detail);
-    setDetailLoading(false);
-  }, [player]);
+  }, [expandedName, details, player]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Refresh player first
     await refresh();
 
-    // Re-fetch all troops/spells/heroes/pets/equipment in the background, bypassing the cache
-    // so that previously missing images or details get updated.
+    // Re-fetch all troops/spells/heroes/pets/equipment, bypassing the cache so
+    // that previously missing images or details get updated. Awaiting the full
+    // batch keeps the spinner visible until every detail/image is refetched.
     if (player) {
       const allItems = [
         ...player.heroes,
@@ -97,10 +104,17 @@ export default function PlayerProfileScreen() {
         ...player.heroEquipment,
         ...(player.pets ?? []),
       ];
-      // Run background refresh for all items
-      Promise.all(
-        allItems.map(item => getTroopDetail(item.name, true).catch(() => null))
-      ).catch(() => null);
+      const fetched = await Promise.all(
+        allItems.map((item) => getTroopDetail(item.name, true).catch(() => null))
+      );
+      const nextDetails: Record<string, TroopDetail | null> = {};
+      fetched.forEach((detail) => {
+        if (detail) {
+          if (detail.imageUrl) setTroopImageOverride(detail.name, detail.imageUrl);
+          nextDetails[detail.name] = detail;
+        }
+      });
+      setDetails((prev) => ({ ...prev, ...nextDetails }));
     }
 
     setRefreshing(false);
@@ -137,20 +151,135 @@ export default function PlayerProfileScreen() {
 
   const laboratoryMaxLevel = getMaxLevelAtTH('Lab', player.townHallLevel) ?? 0;
   const heroHallMaxLevel = getMaxLevelAtTH('Hero Hall', player.townHallLevel) ?? 0;
-  const isHeroDetail = detailModal ? !!getHeroSlug(detailModal.name) : false;
-  const maxHeroLevel = detailModal && isHeroDetail ? getMaxLevelAtTH(detailModal.name, player.townHallLevel) : null;
 
-  const visibleDetailLevels = detailModal
-    ? detailModal.levels.filter((l) => {
-        if (isHeroDetail) {
-          if (maxHeroLevel !== null) {
-            return l.level <= maxHeroLevel;
-          }
-          return l.labLevel == null || l.labLevel <= heroHallMaxLevel;
-        }
-        return l.labLevel == null || l.labLevel <= laboratoryMaxLevel;
-      })
-    : [];
+  const isBuilderBaseName = (name: string) =>
+    player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
+    player.heroes.some((h) => h.name === name && h.village === 'builderBase');
+
+  // Returns the level rows to show for an expanded item, applying the right
+  // gating per village/hero. Builder Base units are never filtered by the Home Lab.
+  const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
+    const isHero = !!getHeroSlug(detail.name);
+    const isBB = isBuilderBaseName(detail.name);
+    if (isBB) return detail.levels;
+    const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
+    return detail.levels.filter((l) => {
+      if (isHero) {
+        if (maxHeroLevel !== null) return l.level <= maxHeroLevel;
+        return l.labLevel == null || l.labLevel <= heroHallMaxLevel;
+      }
+      return l.labLevel == null || l.labLevel <= laboratoryMaxLevel;
+    });
+  };
+
+  // Inline expansion panel rendered directly under a tapped card (replaces the
+  // old modal). Because it lives in the page's own ScrollView, the stats table
+  // scrolls naturally with the page — no nested-scroll quirks.
+  const renderDetailPanel = (name: string) => {
+    if (expandedName !== name) return null;
+    const detail = details[name];
+
+    if (detail === undefined) {
+      // Still fetching.
+      return (
+        <View style={styles.panelLoading}>
+          <ActivityIndicator size="small" color={colors.textSecondary} />
+          <Text style={[styles.panelLoadingText, { color: colors.textTertiary }]}>Loading stats…</Text>
+        </View>
+      );
+    }
+    if (detail === null) {
+      return (
+        <View style={[styles.panelEmpty, { borderColor: colors.border }]}>
+          <Text style={[styles.panelEmptyText, { color: colors.textTertiary }]}>
+            No detailed stats available for {name}.
+          </Text>
+        </View>
+      );
+    }
+
+    const isHero = !!getHeroSlug(detail.name);
+    const isBB = isBuilderBaseName(detail.name);
+    const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
+    const visibleDetailLevels = getVisibleLevels(detail);
+
+    const infoItems: { label: string; value: string }[] = [];
+    if (detail.info.housingSpace > 0) infoItems.push({ label: 'Housing', value: String(detail.info.housingSpace) });
+    if (detail.info.attackSpeed) infoItems.push({ label: 'Speed', value: detail.info.attackSpeed });
+    if (detail.info.targetType) infoItems.push({ label: 'Target', value: detail.info.targetType });
+    if (detail.info.range) infoItems.push({ label: 'Range', value: detail.info.range });
+    if (detail.info.favoriteTarget) infoItems.push({ label: 'Fav. Target', value: detail.info.favoriteTarget });
+    if (detail.info.damageType) infoItems.push({ label: 'Damage Type', value: detail.info.damageType });
+
+    const chunkedInfoItems: typeof infoItems[] = [];
+    for (let i = 0; i < infoItems.length; i += 2) {
+      chunkedInfoItems.push(infoItems.slice(i, i + 2));
+    }
+    const getFlex = (item: { label: string; value: string }) =>
+      (item.label.length + item.value.length) > 12 ? 2 : 1;
+
+    return (
+      <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
+        {(detail.imageUrl || detail.description) && (
+          <View style={styles.panelHeader}>
+            {detail.imageUrl ? (
+              <Image source={{ uri: detail.imageUrl }} style={[styles.panelImage, { backgroundColor: colors.bgCard }]} />
+            ) : null}
+            {detail.description ? (
+              <Text style={[styles.panelDesc, { color: colors.textTertiary }]}>{detail.description}</Text>
+            ) : null}
+          </View>
+        )}
+
+        {infoItems.length > 0 && (
+          <View style={styles.detailStatsGrid}>
+            {chunkedInfoItems.map((chunk, rowIdx) => (
+              <View key={rowIdx} style={styles.detailInfoRow}>
+                {chunk.map((item) => (
+                  <View key={item.label} style={[styles.detailInfoItem, { flex: getFlex(item), backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <Text style={[styles.detailInfoLabel, { color: colors.textMuted }]}>{item.label}</Text>
+                    <Text style={[styles.detailInfoValue, { color: colors.textPrimary }]}>{item.value}</Text>
+                  </View>
+                ))}
+                {chunk.length === 1 && <View style={{ flex: 1 }} />}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {visibleDetailLevels.length > 0 && (
+          <>
+            <Text style={[styles.detailSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
+            <View style={[styles.detailTable, { borderColor: colors.border }]}>
+              <View style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Lvl</Text>
+                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>DPS</Text>
+                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>HP</Text>
+                <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{isHero ? 'Hall' : 'Lab'}</Text>
+              </View>
+              {visibleDetailLevels.map((l) => (
+                <View key={l.level} style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
+                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
+                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
+                  <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={[styles.detailThNote, { color: colors.textMuted }]}>
+              {isBB
+                ? `Showing all Builder Base levels for ${detail.name}`
+                : isHero
+                  ? maxHeroLevel !== null
+                    ? `Showing all hero levels that are reachable at TH ${player.townHallLevel} (Max Lv${maxHeroLevel})`
+                    : `Showing all hero levels that are reachable with Hero Hall Lv${heroHallMaxLevel}`
+                  : `Showing all troop levels that are reachable with Lab Lv${laboratoryMaxLevel}`}
+            </Text>
+          </>
+        )}
+      </View>
+    );
+  };
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'heroes', label: 'Heroes' },
@@ -200,6 +329,20 @@ export default function PlayerProfileScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Profile</Text>
+          <Pressable
+            onPress={onRefresh}
+            disabled={refreshing}
+            hitSlop={12}
+            style={styles.headerRefreshBtn}
+            accessibilityLabel="Force refresh all images and details"
+            accessibilityRole="button"
+          >
+            <Ionicons
+              name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
+              size={28}
+              color={refreshing ? Colors.textTertiary : Colors.textSecondary}
+            />
+          </Pressable>
         </View>
 
         <Card style={styles.profileCard}>
@@ -275,7 +418,9 @@ export default function PlayerProfileScreen() {
 
         <ScrollView
           horizontal
+          scrollEnabled={true}
           showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0 }}
           contentContainerStyle={styles.tabsContainer}
         >
           {visibleTabs.map((tab) => {
@@ -329,16 +474,18 @@ export default function PlayerProfileScreen() {
                     <>
                       <SectionHeader title="Home Village" />
                       {homeHeroes.map((h) => (
-                        <ItemCard
-                          key={h.name}
-                          name={h.name}
-                          level={h.level}
-                          maxLevel={h.maxLevel}
-                          thMaxLevel={getMaxLevelAtTH(h.name, th)}
-                          subtitle={h.equipment?.map((e) => e.name).join(', ')}
-                          icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
-                          onPress={() => openDetail(h.name)}
-                        />
+                        <React.Fragment key={h.name}>
+                          <ItemCard
+                            name={h.name}
+                            level={h.level}
+                            maxLevel={h.maxLevel}
+                            thMaxLevel={getMaxLevelAtTH(h.name, th)}
+                            subtitle={h.equipment?.map((e) => e.name).join(', ')}
+                            icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                            onPress={() => toggleDetail(h.name)}
+                          />
+                          {renderDetailPanel(h.name)}
+                        </React.Fragment>
                       ))}
                     </>
                   )}
@@ -346,12 +493,15 @@ export default function PlayerProfileScreen() {
                     <>
                       <SectionHeader title="Builder Base" />
                       {builderHeroes.map((h) => (
-                        <ItemCard
-                          key={h.name}
-                          name={h.name}
-                          level={h.level}
-                          maxLevel={h.maxLevel}
-                        />
+                        <React.Fragment key={h.name}>
+                          <ItemCard
+                            name={h.name}
+                            level={h.level}
+                            maxLevel={h.maxLevel}
+                            onPress={() => toggleDetail(h.name)}
+                          />
+                          {renderDetailPanel(h.name)}
+                        </React.Fragment>
                       ))}
                     </>
                   )}
@@ -372,15 +522,17 @@ export default function PlayerProfileScreen() {
                 <>
                   <SectionHeader title="Home Village Pets" />
                   {homePets.map((p) => (
-                    <ItemCard
-                      key={p.name}
-                      name={p.name}
-                      level={p.level}
-                      maxLevel={p.maxLevel}
-                      thMaxLevel={getMaxLevelAtTH(p.name, th)}
-                      icon={getPetImageUrl(p.name) || undefined}
-                      onPress={() => openDetail(p.name)}
-                    />
+                    <React.Fragment key={p.name}>
+                      <ItemCard
+                        name={p.name}
+                        level={p.level}
+                        maxLevel={p.maxLevel}
+                        thMaxLevel={getMaxLevelAtTH(p.name, th)}
+                        icon={getPetImageUrl(p.name) || undefined}
+                        onPress={() => toggleDetail(p.name)}
+                      />
+                      {renderDetailPanel(p.name)}
+                    </React.Fragment>
                   ))}
                 </>
               )}
@@ -401,15 +553,17 @@ export default function PlayerProfileScreen() {
                     <>
                       <SectionHeader title="Home Village" />
                       {homeTroops.map((t) => (
-                        <ItemCard
-                          key={t.name}
-                          name={t.name}
-                          level={t.level}
-                          maxLevel={t.maxLevel}
-                          thMaxLevel={getMaxLevelAtTH(t.name, th)}
-                          icon={getTroopImageUrl(t.name) || undefined}
-                          onPress={() => openDetail(t.name)}
-                        />
+                        <React.Fragment key={t.name}>
+                          <ItemCard
+                            name={t.name}
+                            level={t.level}
+                            maxLevel={t.maxLevel}
+                            thMaxLevel={getMaxLevelAtTH(t.name, th)}
+                            icon={getTroopImageUrl(t.name) || undefined}
+                            onPress={() => toggleDetail(t.name)}
+                          />
+                          {renderDetailPanel(t.name)}
+                        </React.Fragment>
                       ))}
                     </>
                   )}
@@ -417,12 +571,15 @@ export default function PlayerProfileScreen() {
                     <>
                       <SectionHeader title="Builder Base" />
                       {builderTroops.map((t) => (
-                        <ItemCard
-                          key={t.name}
-                          name={t.name}
-                          level={t.level}
-                          maxLevel={t.maxLevel}
-                        />
+                        <React.Fragment key={t.name}>
+                          <ItemCard
+                            name={t.name}
+                            level={t.level}
+                            maxLevel={t.maxLevel}
+                            onPress={() => toggleDetail(t.name)}
+                          />
+                          {renderDetailPanel(t.name)}
+                        </React.Fragment>
                       ))}
                     </>
                   )}
@@ -443,15 +600,17 @@ export default function PlayerProfileScreen() {
                 <>
                   <SectionHeader title="Spells" />
                   {player.spells.filter((s) => s.village === 'home' || !s.village).map((s) => (
-                    <ItemCard
-                      key={s.name}
-                      name={s.name}
-                      level={s.level}
-                      maxLevel={s.maxLevel}
-                      thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                      icon={getTroopImageUrl(s.name) || undefined}
-                      onPress={() => openDetail(s.name)}
-                    />
+                    <React.Fragment key={s.name}>
+                      <ItemCard
+                        name={s.name}
+                        level={s.level}
+                        maxLevel={s.maxLevel}
+                        thMaxLevel={getMaxLevelAtTH(s.name, th)}
+                        icon={getTroopImageUrl(s.name) || undefined}
+                        onPress={() => toggleDetail(s.name)}
+                      />
+                      {renderDetailPanel(s.name)}
+                    </React.Fragment>
                   ))}
                 </>
               )}
@@ -470,14 +629,16 @@ export default function PlayerProfileScreen() {
                 <>
                   <SectionHeader title="Hero Equipment" />
                   {player.heroEquipment.map((e) => (
-                    <ItemCard
-                      key={e.name}
-                      name={e.name}
-                      level={e.level}
-                      maxLevel={e.maxLevel}
-                      icon={getEquipmentImageUrl(e.name) || undefined}
-                      onPress={() => openDetail(e.name)}
-                    />
+                    <React.Fragment key={e.name}>
+                      <ItemCard
+                        name={e.name}
+                        level={e.level}
+                        maxLevel={e.maxLevel}
+                        icon={getEquipmentImageUrl(e.name) || undefined}
+                        onPress={() => toggleDetail(e.name)}
+                      />
+                      {renderDetailPanel(e.name)}
+                    </React.Fragment>
                   ))}
                 </>
               )}
@@ -529,124 +690,6 @@ export default function PlayerProfileScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      <Modal
-        visible={detailLoading || detailModal !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => { setDetailModal(null); setDetailLoading(false); }}
-      >
-        <Pressable
-          style={[styles.detailOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.4)' }]}
-          onPress={() => { setDetailModal(null); setDetailLoading(false); }}
-        >
-          <Pressable style={[styles.detailContent, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={(e) => e.stopPropagation()}>
-            {detailLoading ? (
-              <View style={styles.detailLoading}>
-                <ActivityIndicator size="large" color={colors.textPrimary} />
-                <Text style={[styles.detailLoadingText, { color: colors.textTertiary }]}>Loading stats…</Text>
-              </View>
-            ) : detailModal ? (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.detailHeader}>
-                  {detailModal.imageUrl ? (
-                    <Image source={{ uri: detailModal.imageUrl }} style={[styles.detailImage, { backgroundColor: colors.bgSubtle }]} />
-                  ) : null}
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.detailName, { color: colors.textPrimary }]}>{detailModal.name}</Text>
-                    <Text style={[styles.detailDesc, { color: colors.textTertiary }]} numberOfLines={3}>{detailModal.description}</Text>
-                  </View>
-                </View>
-
-                {(() => {
-                  const infoItems: { label: string; value: string }[] = [];
-                  if (detailModal.info.housingSpace > 0) {
-                    infoItems.push({ label: 'Housing', value: String(detailModal.info.housingSpace) });
-                  }
-                  if (detailModal.info.attackSpeed) {
-                    infoItems.push({ label: 'Speed', value: detailModal.info.attackSpeed });
-                  }
-                  if (detailModal.info.targetType) {
-                    infoItems.push({ label: 'Target', value: detailModal.info.targetType });
-                  }
-                  if (detailModal.info.range) {
-                    infoItems.push({ label: 'Range', value: detailModal.info.range });
-                  }
-                  if (detailModal.info.favoriteTarget) {
-                    infoItems.push({ label: 'Fav. Target', value: detailModal.info.favoriteTarget });
-                  }
-                  if (detailModal.info.damageType) {
-                    infoItems.push({ label: 'Damage Type', value: detailModal.info.damageType });
-                  }
-
-                  if (infoItems.length === 0) return null;
-
-                  const chunkedInfoItems: typeof infoItems[] = [];
-                  for (let i = 0; i < infoItems.length; i += 2) {
-                    chunkedInfoItems.push(infoItems.slice(i, i + 2));
-                  }
-
-                  const getFlex = (item: { label: string; value: string }) => {
-                    const textLength = item.label.length + item.value.length;
-                    return textLength > 12 ? 2 : 1;
-                  };
-
-                  return (
-                    <View style={styles.detailStatsGrid}>
-                      {chunkedInfoItems.map((chunk, rowIdx) => (
-                        <View key={rowIdx} style={styles.detailInfoRow}>
-                          {chunk.map((item) => (
-                            <View key={item.label} style={[styles.detailInfoItem, { flex: getFlex(item), backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
-                              <Text style={[styles.detailInfoLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                              <Text style={[styles.detailInfoValue, { color: colors.textPrimary }]}>{item.value}</Text>
-                            </View>
-                          ))}
-                          {chunk.length === 1 && (
-                            <View style={{ flex: 1 }} />
-                          )}
-                        </View>
-                      ))}
-                    </View>
-                  );
-                })()}
-
-                {visibleDetailLevels.length > 0 && (
-                  <>
-                    <Text style={[styles.detailSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
-                    <View style={[styles.detailTable, { borderColor: colors.border }]}>
-                      <View style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>Lvl</Text>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>DPS</Text>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>HP</Text>
-                        <Text style={[styles.detailTableCell, styles.detailTableHeader, { backgroundColor: colors.bgSubtle, color: colors.textMuted }]}>{isHeroDetail ? 'Hall' : 'Lab'}</Text>
-                      </View>
-                      {visibleDetailLevels.map((l) => (
-                        <View key={l.level} style={[styles.detailTableRow, { borderBottomColor: colors.border }]}>
-                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
-                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
-                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
-                          <Text style={[styles.detailTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
-                        </View>
-                      ))}
-                    </View>
-                    <Text style={[styles.detailThNote, { color: colors.textMuted }]}>
-                      {isHeroDetail
-                        ? maxHeroLevel !== null
-                          ? `Showing all hero levels that are reachable at TH ${player.townHallLevel} (Max Lv${maxHeroLevel})`
-                          : `Showing all hero levels that are reachable with Hero Hall Lv${heroHallMaxLevel}`
-                        : `Showing all troop levels that are reachable with Lab Lv${laboratoryMaxLevel}`}
-                    </Text>
-                  </>
-                )}
-
-                <Pressable style={[styles.detailCloseBtn, { backgroundColor: colors.textPrimary }]} onPress={() => { setDetailModal(null); setDetailLoading(false); }}>
-                  <Text style={[styles.detailCloseText, { color: colors.bgElevated }]}>Close</Text>
-                </Pressable>
-              </ScrollView>
-            ) : null}
-          </Pressable>
-        </Pressable>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -670,9 +713,15 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
+  },
+  headerRefreshBtn: {
+    padding: Spacing.xs,
   },
   title: {
     ...Typography.largeTitle,
@@ -851,63 +900,54 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '600',
   },
-  detailOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  detailBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  detailContent: {
-    width: '88%',
-    maxHeight: '80%',
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
+  // ── Inline detail panel (expands below a tapped card) ──
+  panel: {
+    marginTop: 2,
+    marginBottom: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.xl,
   },
-  detailLoading: {
+  panelLoading: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    gap: Spacing.md,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.sm,
   },
-  detailLoadingText: {
-    ...Typography.subhead,
+  panelLoadingText: {
+    ...Typography.caption,
     color: Colors.textTertiary,
   },
-  detailHeader: {
+  panelEmpty: {
+    paddingVertical: Spacing.base,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+  },
+  panelEmptyText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontStyle: 'italic',
+  },
+  panelHeader: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: Spacing.md,
     marginBottom: Spacing.base,
   },
-  detailImage: {
-    width: 64,
-    height: 64,
+  panelImage: {
+    width: 56,
+    height: 56,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
   },
-  detailName: {
-    ...Typography.title2,
-    color: Colors.textPrimary,
-  },
-  detailDesc: {
+  panelDesc: {
     ...Typography.caption,
     color: Colors.textTertiary,
-    marginTop: 4,
     lineHeight: 16,
+    flex: 1,
   },
+  // ── Reusable: info grid + stats table used inside the panel ──
   detailStatsGrid: {
     gap: Spacing.sm,
     marginBottom: Spacing.base,
@@ -924,12 +964,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingVertical: Spacing.sm,
   },
-  detailInfoItemSmall: {
-    flex: 1,
-  },
-  detailInfoItemLarge: {
-    flex: 2,
-  },
   detailInfoLabel: {
     ...Typography.caption,
     color: Colors.textMuted,
@@ -941,27 +975,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
     marginTop: 2,
-  },
-  detailLevelSummary: {
-    marginBottom: Spacing.base,
-  },
-  detailLevelInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-  },
-  detailLevelText: {
-    ...Typography.headline,
-    color: Colors.textPrimary,
-  },
-  detailLevelPct: {
-    ...Typography.headline,
-    color: Colors.textSecondary,
   },
   detailThNote: {
     ...Typography.caption,
@@ -981,7 +994,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
-    overflow: 'hidden',
     marginBottom: Spacing.base,
   },
   detailTableRow: {
@@ -1003,16 +1015,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  detailCloseBtn: {
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.textPrimary,
-    borderRadius: Radius.md,
-  },
-  detailCloseText: {
-    ...Typography.subhead,
-    color: Colors.bg,
-    fontWeight: '600',
   },
 });

@@ -16,14 +16,15 @@ import { Card } from '../../src/components/Card';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import thLevelsData from '../../src/data/th-levels.json';
 
-const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Siege Machines', 'Walls'];
+// Siege Machines are Workshop-produced home-village troops (shown on the
+// Profile troops list), not buildings — excluded here.
+const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   'Defenses': 'shield-checkmark-outline',
   'Resources': 'wallet-outline',
   'Traps': 'warning-outline',
   'Army': 'people-outline',
-  'Siege Machines': 'construct-outline',
   'Walls': 'grid-outline',
 };
 
