@@ -10,6 +10,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { player, loading, error, lastSync, refresh } = usePlayer();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -160,7 +162,7 @@ export default function HomeScreen() {
             category="Heroes"
             completed={heroesMaxed}
             total={homeHeroes.length}
-            lockedMessage={homeHeroes.length === 0 ? 'Unlocks at TH4' : undefined}
+            lockedMessage={homeHeroes.length === 0 ? 'Unlocks at TH7' : undefined}
             items={homeHeroes.filter((h: { level: number; name: string }) => {
               const max = getMaxLevelAtTH(h.name, th);
               return max !== null ? h.level < max : false;
@@ -227,7 +229,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn}>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/bases')}>
             <Ionicons name="grid-outline" size={20} color={Colors.textPrimary} />
             <Text style={styles.actionText}>View Bases</Text>
           </Pressable>

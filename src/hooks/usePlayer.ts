@@ -103,3 +103,41 @@ export async function toggleFavorite(id: string): Promise<boolean> {
     return true;
   }
 }
+
+const CACHE_KEY_PREFIXES = [
+  'troop_detail_v6_',
+  'bases_clashly_th_',
+  'events_data_v1',
+];
+
+export async function clearAppCache(): Promise<void> {
+  await AsyncStorage.removeItem(PLAYER_CACHE_KEY);
+  const keys = await AsyncStorage.getAllKeys();
+  const cacheKeys = keys.filter((k) =>
+    CACHE_KEY_PREFIXES.some((prefix) => k.startsWith(prefix) || k === prefix)
+  );
+  if (cacheKeys.length > 0) {
+    await AsyncStorage.multiRemove(cacheKeys);
+  }
+}
+
+export async function exportAppData(): Promise<string> {
+  const [tag, player, savedBases, favorites] = await Promise.all([
+    getPlayerTag(),
+    getCachedPlayer(),
+    getSavedBases(),
+    getFavorites(),
+  ]);
+  return JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      app: 'ClashPrime',
+      tag,
+      player,
+      savedBases,
+      favorites,
+    },
+    null,
+    2,
+  );
+}
