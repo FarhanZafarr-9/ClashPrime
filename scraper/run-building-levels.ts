@@ -46,7 +46,7 @@ const DEFENSE_BUILDINGS: Record<string, string> = {
 
 // ── Types ────────────────────────────────────────────────────────────────
 export interface BuildingLevel {
-  level: number;
+  Level: number;
   [stat: string]: string | number;
 }
 
@@ -164,7 +164,7 @@ function parseValue(raw: string): string | number {
  *   - Single-line format: |1||class="..."|7||class="..."|5.6||300||...
  *   - Multi-line format: |1\n|class="..."|80\n|class="..."|80\n...
  */
-function parseStatsTable(wt: string): { columns: string[]; rows: Record<string, string | number>[] } {
+function parseStatsTable(wt: string): { columns: string[]; rows: BuildingLevel[] } {
   const tableStart = wt.indexOf('{|');
   if (tableStart === -1) return { columns: [], rows: [] };
   const tableEnd = wt.indexOf('|}', tableStart);
@@ -230,7 +230,7 @@ function parseStatsTable(wt: string): { columns: string[]; rows: Record<string, 
   });
 
   // ── 3. Parse rows ────────────────────────────────────────────────
-  const rows: Record<string, string | number>[] = [];
+  const rows: BuildingLevel[] = [];
   for (const row of rowLines) {
     const cells = splitRow(row.join('||').replace(/^\|-\s*/, ''));
     if (cells.length === 0) continue;
@@ -238,7 +238,7 @@ function parseStatsTable(wt: string): { columns: string[]; rows: Record<string, 
     const firstVal = cleanCell(cells[0]);
     if (!/^\d+$/.test(firstVal)) continue; // skip non-level rows
 
-    const rowData: Record<string, string | number> = { Level: parseInt(firstVal, 10) };
+    const rowData: BuildingLevel = { Level: parseInt(firstVal, 10) };
     for (let i = 1; i < columns.length && i < cells.length; i++) {
       rowData[columns[i]] = parseValue(cells[i]);
     }

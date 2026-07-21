@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,23 @@ import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../s
 import { Card } from '../../src/components/Card';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import thLevelsData from '../../src/data/th-levels.json';
+import buildingLevelsData from '../../src/data/building-levels.json';
+
+const COL_ABBREV: Record<string, string> = {
+  'Damage per Second': 'DPS',
+  'Damage per Shot': 'DMG',
+  'Damage per Hit': 'DMG',
+  'Hitpoints': 'HP',
+  'Build Cost': 'Cost',
+  'Build Time': 'Time',
+  'Experience': 'XP',
+  'Town Hall Level': 'TH',
+  'Damage when destroyed': 'Dmg/Dest',
+  'Shockwave Damage': 'Shock',
+  'Splash Damage**': 'Splash',
+  'Repair per Second': 'Repair',
+  'Repair per Hit': 'RPR',
+};
 
 // Siege Machines are Workshop-produced home-village troops (shown on the
 // Profile troops list), not buildings — excluded here.
@@ -68,6 +85,14 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
   const availableLevels = getBuildingAvailableLevels(lookupName);
   const levelsToShow = availableLevels.filter((l) => l <= maxLvl);
 
+  const buildingStats = useMemo(() => {
+    const match = (buildingLevelsData as any).find((b: any) => {
+      const bName = b.name.toLowerCase();
+      return bName === name.toLowerCase() || bName === lookupName.toLowerCase();
+    });
+    return match || null;
+  }, [name, lookupName]);
+
   const mainImgSource = getBuildingLevelImageSource(lookupName, maxLvl);
 
   return (
@@ -101,16 +126,66 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
       </Pressable>
 
       {expanded && levelsToShow.length > 0 && (
-        <View style={styles.levelStrip}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelStripContent}>
-            {levelsToShow.map((lvl) => (
-              <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} />
-            ))}
-          </ScrollView>
-        </View>
+        <>
+          <View style={styles.levelStrip}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelStripContent}>
+              {levelsToShow.map((lvl) => (
+                <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} />
+              ))}
+            </ScrollView>
+          </View>
+
+          {buildingStats && buildingStats.levels.length > 0 && (
+            <View style={styles.buildingStatsTable}>
+              {/* Header row */}
+              <View style={styles.buildingStatRow}>
+                <View style={styles.buildingStatCellIcon}>
+                  <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
+                </View>
+                {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
+                  <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
+                    {COL_ABBREV[col] || col}
+                  </Text>
+                ))}
+              </View>
+              {/* Data rows */}
+              {levelsToShow.map((lvl) => {
+                const levelData = buildingStats.levels.find((l: any) => l.Level === lvl);
+                if (!levelData) return null;
+                const iconSource = getBuildingLevelImageSource(lookupName, lvl);
+                return (
+                  <View key={lvl} style={styles.buildingStatRow}>
+                    <View style={styles.buildingStatCellIcon}>
+                      {iconSource ? (
+                        <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
+                      ) : null}
+                      <Text style={styles.buildingStatLvlNum}>{lvl}</Text>
+                    </View>
+                    {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
+                      const val = levelData[col] ?? '—';
+                      const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                      return (
+                        <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
+                          {formatted}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </>
       )}
     </Card>
   );
+}
+
+function formatCostShort(cost: number): string {
+  if (cost >= 100000000) return (cost / 1000000).toFixed(0) + 'M';
+  if (cost >= 1000000) return (cost / 1000000).toFixed(cost % 1000000 === 0 ? 0 : 1).replace('.0', '') + 'M';
+  if (cost >= 1000) return (cost / 1000).toFixed(cost % 1000 === 0 ? 0 : 1).replace('.0', '') + 'K';
+  return String(cost);
 }
 
 export default function BuildingsScreen() {
@@ -269,5 +344,50 @@ const styles = StyleSheet.create({
   levelThumbLabelCurrent: {
     color: Colors.textPrimary,
     fontWeight: '700',
+  },
+  buildingStatsTable: {
+    marginTop: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+  },
+  buildingStatRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  buildingStatCellIcon: {
+    width: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: Colors.border,
+    gap: 2,
+  },
+  buildingStatCell: {
+    flex: 1,
+    ...Typography.caption,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    textAlign: 'center',
+  },
+  buildingStatHeader: {
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    fontSize: 9,
+  },
+  buildingStatIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 3,
+    backgroundColor: Colors.bgSubtle,
+  },
+  buildingStatLvlNum: {
+    fontSize: 8,
+    color: Colors.textTertiary,
+    fontWeight: '600',
   },
 });
