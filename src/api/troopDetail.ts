@@ -87,7 +87,7 @@ async function getHeroDetailFromJson(name: string): Promise<TroopDetail | null> 
     }));
 
     const slug = getHeroSlug(name) ?? '';
-    const imageUrl = getHeroImageUrl(name) ?? `https://coc.guide/static/imgs/hero/${slug}.png`;
+    const imageUrl = getHeroImageUrl(name) ?? '';
 
     const range = heroData.AttackRange?.[0];
     const attackSpeed = heroData.AttackSpeed?.[0];
@@ -477,8 +477,8 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
     // Structured mapping kept for troops (used by the existing panel fallback).
     info.range = getCellByHeader(cells, hCells, [/range/i], -1) || '';
     info.housingSpace = parseNumeric(getCellByHeader(cells, hCells, [/housing|troop/i], -1));
-    info.attackSpeed = getCellByHeader(cells, hCells, [/attack speed|attack/i], -1) || '';
-    info.damageType = getCellByHeader(cells, hCells, [/damage type|attack type/i], -1) || '';
+    info.attackSpeed = getCellByHeader(cells, hCells, [/attack speed/i], -1) || '';
+    info.damageType = getCellByHeader(cells, hCells, [/attack type|^attack$|damage type/i], -1) || '';
     info.targetType = getCellByHeader(cells, hCells, [/^target$/i], -1) || '';
     info.favoriteTarget = getCellByHeader(cells, hCells, [/favorite target/i], -1) || '';
     break;
