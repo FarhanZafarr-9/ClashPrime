@@ -8,7 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../src/utils/buildingImages';
@@ -34,12 +34,12 @@ const COL_ABBREV: Record<string, string> = {
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
-const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  'Defenses': 'shield-checkmark-outline',
-  'Resources': 'wallet-outline',
-  'Traps': 'warning-outline',
-  'Army': 'people-outline',
-  'Walls': 'grid-outline',
+const CATEGORY_ICONS: Record<string, { set: 'ion' | 'mc'; name: string }> = {
+  'Defenses': { set: 'ion', name: 'shield-half-outline' },
+  'Resources': { set: 'mc', name: 'coin-outline' },
+  'Traps': { set: 'mc', name: 'bomb' },
+  'Army': { set: 'mc', name: 'sword-cross' },
+  'Walls': { set: 'ion', name: 'grid-outline' },
 };
 
 const NAME_FIX: Record<string, string> = {
@@ -224,6 +224,16 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
   );
 }
 
+function CategoryIcon({ cat, isActive }: { cat: string; isActive: boolean }) {
+  const icon = CATEGORY_ICONS[cat];
+  const iconColor = isActive ? Colors.bg : Colors.textSecondary;
+  return icon.set === 'mc' ? (
+    <MaterialCommunityIcons name={icon.name as any} size={14} color={iconColor} />
+  ) : (
+    <Ionicons name={icon.name as any} size={14} color={iconColor} />
+  );
+}
+
 function formatCostShort(cost: number): string {
   if (cost >= 100000000) return (cost / 1000000).toFixed(0) + 'M';
   if (cost >= 1000000) return (cost / 1000000).toFixed(cost % 1000000 === 0 ? 0 : 1).replace('.0', '') + 'M';
@@ -280,11 +290,7 @@ export default function BuildingsScreen() {
                 style={[styles.pill, isActive && styles.pillActive]}
                 onPress={() => setSelectedCat(cat)}
               >
-                <Ionicons
-                  name={CATEGORY_ICONS[cat]}
-                  size={14}
-                  color={isActive ? Colors.bg : Colors.textSecondary}
-                />
+                <CategoryIcon cat={cat} isActive={isActive} />
                 <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{cat}</Text>
               </Pressable>
             );
