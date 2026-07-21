@@ -13,7 +13,6 @@ import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
-import { SectionHeader } from '../../src/components/SectionHeader';
 import thLevelsData from '../../src/data/th-levels.json';
 import buildingLevelsData from '../../src/data/building-levels.json';
 
@@ -50,7 +49,8 @@ const NAME_FIX: Record<string, string> = {
 };
 
 function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: number; isMaxed: boolean; th: number }) {
-  const [showFullTable, setShowFullTable] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [showFull, setShowFull] = useState(false);
   const lookupName = NAME_FIX[name] ?? name;
   const buildingStats = useMemo(() => {
     const match = (buildingLevelsData as any).find((b: any) => {
@@ -78,7 +78,9 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
   const showExpand = allLevels.length > 3;
 
   let displayLevels: any[];
-  if (showFullTable || !showExpand) {
+  if (!expanded) {
+    displayLevels = [];
+  } else if (showFull || !showExpand) {
     displayLevels = allLevels;
   } else {
     const currentIdx = allLevels.findIndex((l: any) => l.Level === maxLvl);
@@ -118,26 +120,18 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
     </View>
   );
 
-  const renderExpandBtn = () => (
-    <>
-      {showExpand && !showFullTable && (
-        <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(true)}>
-          <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
-          <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
-        </Pressable>
-      )}
-      {showExpand && showFullTable && (
-        <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(false)}>
-          <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
-          <Text style={styles.expandTableText}>Show fewer</Text>
-        </Pressable>
-      )}
-    </>
-  );
+  const toggleExpanded = () => {
+    if (expanded) {
+      setExpanded(false);
+      setShowFull(false);
+    } else {
+      setExpanded(true);
+    }
+  };
 
   return (
     <Card style={styles.itemCard}>
-      <Pressable onPress={() => setShowFullTable((s) => !s)}>
+      <Pressable onPress={toggleExpanded}>
         <View style={styles.itemRow}>
           {mainImgSource ? (
             <Image source={mainImgSource} style={styles.itemIcon} resizeMode="contain" />
@@ -167,7 +161,7 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
             </View>
           </View>
           <Ionicons
-            name={showFullTable ? 'chevron-down' : 'chevron-forward'}
+            name={expanded ? 'chevron-down' : 'chevron-forward'}
             size={16}
             color={Colors.textTertiary}
             style={styles.expandArrow}
@@ -175,7 +169,7 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
         </View>
       </Pressable>
 
-      {displayLevels.length > 0 && (
+      {expanded && displayLevels.length > 0 && (
         <>
           {renderGrid()}
           {buildingStats && (
@@ -212,7 +206,18 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
               })}
             </View>
           )}
-          {renderExpandBtn()}
+          {showExpand && !showFull && (
+            <Pressable style={styles.expandTableBtn} onPress={() => setShowFull(true)}>
+              <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
+              <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
+            </Pressable>
+          )}
+          {showExpand && showFull && (
+            <Pressable style={styles.expandTableBtn} onPress={() => setShowFull(false)}>
+              <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
+              <Text style={styles.expandTableText}>Show fewer</Text>
+            </Pressable>
+          )}
         </>
       )}
     </Card>
@@ -230,13 +235,30 @@ export default function BuildingsScreen() {
   const { player } = usePlayer();
   const th = player?.townHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
+  const [selectedCat, setSelectedCat] = useState('');
+
+  const availableCats = SHOW_CATEGORIES.filter((cat) => {
+    const items = categories[cat];
+    if (!items) return false;
+    return Object.entries(items).some(([, thData]) => {
+      const thEntry = thData[String(th)];
+      return thEntry != null && (thEntry.level ?? 0) > 0;
+    });
+  });
+
+  const activeCat = selectedCat || availableCats[0] || '';
+
+  const entries = activeCat ? Object.entries(categories[activeCat] ?? {}).filter(([, thData]) => {
+    const thEntry = thData[String(th)];
+    return thEntry != null && (thEntry.level ?? 0) > 0;
+  }) : [];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <Text style={styles.title}>Buildings</Text>
-          <Text style={styles.subtitle}>Max levels for TH{th} · Stats shown around current level</Text>
+          <Text style={styles.subtitle}>Max levels for TH{th} · Tap to expand</Text>
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, styles.legendDotCurrent]} />
@@ -249,34 +271,38 @@ export default function BuildingsScreen() {
           </View>
         </View>
 
-        {SHOW_CATEGORIES.map((cat) => {
-          const items = categories[cat];
-          if (!items) return null;
-          const entries = Object.entries(items).filter(([, thData]) => {
-            const thEntry = thData[String(th)];
-            return thEntry != null && (thEntry.level ?? 0) > 0;
-          });
-          if (entries.length === 0) return null;
+        <View style={styles.pillRow}>
+          {availableCats.map((cat) => {
+            const isActive = cat === activeCat;
+            return (
+              <Pressable
+                key={cat}
+                style={[styles.pill, isActive && styles.pillActive]}
+                onPress={() => setSelectedCat(cat)}
+              >
+                <Ionicons
+                  name={CATEGORY_ICONS[cat]}
+                  size={14}
+                  color={isActive ? Colors.bg : Colors.textSecondary}
+                />
+                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{cat}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
+        {entries.map(([name, thData]) => {
+          const thEntry = thData[String(th)];
+          const maxLvl = thEntry?.level ?? 0;
+          const isMaxed = thEntry?.isMaxLevel ?? false;
           return (
-            <View key={cat}>
-              <SectionHeader icon={CATEGORY_ICONS[cat]} title={cat} />
-              {entries.map(([name, thData]) => {
-                const thEntry = thData[String(th)];
-                const maxLvl = thEntry?.level ?? 0;
-                const isMaxed = thEntry?.isMaxLevel ?? false;
-
-                return (
-                  <BuildingCard
-                    key={name}
-                    name={name}
-                    maxLvl={maxLvl}
-                    isMaxed={isMaxed}
-                    th={th}
-                  />
-                );
-              })}
-            </View>
+            <BuildingCard
+              key={name}
+              name={name}
+              maxLvl={maxLvl}
+              isMaxed={isMaxed}
+              th={th}
+            />
           );
         })}
 
@@ -308,6 +334,36 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  pillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  pillText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  pillTextActive: {
+    color: Colors.bg,
+  },
   legendRow: {
     flexDirection: 'row',
     gap: Spacing.base,
@@ -335,10 +391,10 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.xs,
-    paddingVertical: Spacing.xs,
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     overflow: 'hidden',
   },
   itemRow: {
@@ -347,8 +403,8 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   itemIcon: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
     overflow: 'hidden',
