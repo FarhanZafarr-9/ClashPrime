@@ -95,7 +95,12 @@ export function EventsScreenSkeleton() {
               </View>
               <Skeleton width={60} height={22} borderRadius={11} />
             </View>
-            <Skeleton width="100%" height={4} borderRadius={2} style={{ marginTop: Spacing.sm }} />
+            <Skeleton width="70%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <Skeleton width="100%" height={3} borderRadius={2} style={{ marginTop: Spacing.sm }} />
+            <View style={styles.eventCardFooter}>
+              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={110} height={10} borderRadius={3} />
+            </View>
           </View>
         ))}
         <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
@@ -110,6 +115,12 @@ export function EventsScreenSkeleton() {
                 <Skeleton width="35%" height={11} borderRadius={3} />
               </View>
               <Skeleton width={70} height={22} borderRadius={11} />
+            </View>
+            <Skeleton width="65%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <Skeleton width="100%" height={3} borderRadius={2} style={{ marginTop: Spacing.sm }} />
+            <View style={styles.eventCardFooter}>
+              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={100} height={10} borderRadius={3} />
             </View>
           </View>
         ))}
@@ -333,5 +344,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+  },
+  eventCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    paddingTop: Spacing.sm,
+    marginTop: Spacing.sm,
   },
 });
