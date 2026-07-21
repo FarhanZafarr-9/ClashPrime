@@ -1,0 +1,3766 @@
+[
+  {
+    "name": "Cannon",
+    "village": "home",
+    "description": "\"Cannons are great for point defense. Upgrade Cannons to increase their firepower, but beware that your Defenses cannot shoot while being upgraded!\"",
+    "maxLevel": 21,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage per Second": 7,
+        "Damage per Shot": 5.6,
+        "Hitpoints": 300,
+        "Build Cost": 250,
+        "Build Time": "5s",
+        "Gained": 2
+      },
+      {
+        "Level": 1,
+        "Damage per Second": 10,
+        "Damage per Shot": 8,
+        "Hitpoints": 360,
+        "Build Cost": 1000,
+        "Build Time": "30s",
+        "Gained": 5
+      },
+      {
+        "Level": 2,
+        "Damage per Second": 13,
+        "Damage per Shot": 10.4,
+        "Hitpoints": 420,
+        "Build Cost": 4000,
+        "Build Time": "2m",
+        "Gained": 10
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 17,
+        "Damage per Shot": 13.6,
+        "Hitpoints": 500,
+        "Build Cost": 16000,
+        "Build Time": "20m",
+        "Gained": 34
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 23,
+        "Damage per Shot": 18.4,
+        "Hitpoints": 600,
+        "Build Cost": 50000,
+        "Build Time": "30m",
+        "Gained": 42
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 30,
+        "Damage per Shot": 24,
+        "Hitpoints": 660,
+        "Build Cost": 60000,
+        "Build Time": "1h",
+        "Gained": 60
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 40,
+        "Damage per Shot": 32,
+        "Hitpoints": 730,
+        "Build Cost": 100000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 48,
+        "Damage per Shot": 38.4,
+        "Hitpoints": 800,
+        "Build Cost": 160000,
+        "Build Time": "3h",
+        "Gained": 103
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 56,
+        "Damage per Shot": 44.8,
+        "Hitpoints": 880,
+        "Build Cost": 250000,
+        "Build Time": "3h 30m",
+        "Gained": 112
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 64,
+        "Damage per Shot": 51.2,
+        "Hitpoints": 960,
+        "Build Cost": 330000,
+        "Build Time": "4h",
+        "Gained": 120
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 74,
+        "Damage per Shot": 59.2,
+        "Hitpoints": 1060,
+        "Build Cost": 500000,
+        "Build Time": "4h 30m",
+        "Gained": 127
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 85,
+        "Damage per Shot": 68,
+        "Hitpoints": 1160,
+        "Build Cost": 600000,
+        "Build Time": "5h",
+        "Gained": 134
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 95,
+        "Damage per Shot": 76,
+        "Hitpoints": 1260,
+        "Build Cost": 660000,
+        "Build Time": "6h",
+        "Gained": 146
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 100,
+        "Damage per Shot": 80,
+        "Hitpoints": 1380,
+        "Build Cost": 1000000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 105,
+        "Damage per Shot": 84,
+        "Hitpoints": 1500,
+        "Build Cost": 1200000,
+        "Build Time": "10h",
+        "Gained": 189
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 110,
+        "Damage per Shot": 88,
+        "Hitpoints": 1620,
+        "Build Cost": 1300000,
+        "Build Time": "11h",
+        "Gained": 198
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 115,
+        "Damage per Shot": 92,
+        "Hitpoints": 1740,
+        "Build Cost": 1500000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 125,
+        "Damage per Shot": 100,
+        "Hitpoints": 1870,
+        "Build Cost": 1800000,
+        "Build Time": "16h",
+        "Gained": 240
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 135,
+        "Damage per Shot": 108,
+        "Hitpoints": 2000,
+        "Build Cost": 2000000,
+        "Build Time": "20h",
+        "Gained": 268
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 150,
+        "Damage per Shot": 120,
+        "Hitpoints": 2150,
+        "Build Cost": 2600000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 160,
+        "Damage per Shot": 128,
+        "Hitpoints": 2250,
+        "Build Cost": 3000000,
+        "Build Time": "1d 12h",
+        "Gained": 360
+      }
+    ]
+  },
+  {
+    "name": "Archer Tower",
+    "village": "home",
+    "description": "\"Archer Towers have longer range than Cannons, and unlike Cannons they can attack flying enemies.\"",
+    "maxLevel": 21,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 2,
+        "Damage per Second": 11,
+        "Damage per Shot": 5.5,
+        "Hitpoints": 380,
+        "Build Cost": 1000,
+        "Build Time": "15s",
+        "Gained": 3
+      },
+      {
+        "Level": 2,
+        "Damage per Second": 15,
+        "Damage per Shot": 7.5,
+        "Hitpoints": 420,
+        "Build Cost": 2000,
+        "Build Time": "2m",
+        "Gained": 10
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 19,
+        "Damage per Shot": 9.5,
+        "Hitpoints": 460,
+        "Build Cost": 5000,
+        "Build Time": "20m",
+        "Gained": 34
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 25,
+        "Damage per Shot": 12.5,
+        "Hitpoints": 500,
+        "Build Cost": 20000,
+        "Build Time": "1h",
+        "Gained": 60
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 30,
+        "Damage per Shot": 15,
+        "Hitpoints": 540,
+        "Build Cost": 70000,
+        "Build Time": "1h 30m",
+        "Gained": 73
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 35,
+        "Damage per Shot": 17.5,
+        "Hitpoints": 580,
+        "Build Cost": 80000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 42,
+        "Damage per Shot": 21,
+        "Hitpoints": 630,
+        "Build Cost": 150000,
+        "Build Time": "3h",
+        "Gained": 103
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 48,
+        "Damage per Shot": 24,
+        "Hitpoints": 690,
+        "Build Cost": 200000,
+        "Build Time": "4h",
+        "Gained": 120
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 56,
+        "Damage per Shot": 28,
+        "Hitpoints": 750,
+        "Build Cost": 400000,
+        "Build Time": "5h",
+        "Gained": 134
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 63,
+        "Damage per Shot": 31.5,
+        "Hitpoints": 810,
+        "Build Cost": 460000,
+        "Build Time": "6h",
+        "Gained": 146
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 70,
+        "Damage per Shot": 35,
+        "Hitpoints": 890,
+        "Build Cost": 600000,
+        "Build Time": "7h",
+        "Gained": 158
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 74,
+        "Damage per Shot": 37,
+        "Hitpoints": 970,
+        "Build Cost": 700000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 78,
+        "Damage per Shot": 39,
+        "Hitpoints": 1050,
+        "Build Cost": 1000000,
+        "Build Time": "10h",
+        "Gained": 189
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 82,
+        "Damage per Shot": 41,
+        "Hitpoints": 1130,
+        "Build Cost": 1100000,
+        "Build Time": "11h",
+        "Gained": 198
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 85,
+        "Damage per Shot": 42.5,
+        "Hitpoints": 1230,
+        "Build Cost": 1300000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 90,
+        "Damage per Shot": 45,
+        "Hitpoints": 1310,
+        "Build Cost": 1600000,
+        "Build Time": "16h",
+        "Gained": 240
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 100,
+        "Damage per Shot": 50,
+        "Hitpoints": 1390,
+        "Build Cost": 1800000,
+        "Build Time": "20h",
+        "Gained": 268
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 110,
+        "Damage per Shot": 55,
+        "Hitpoints": 1510,
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 120,
+        "Damage per Shot": 60,
+        "Hitpoints": 1600,
+        "Build Cost": 2200000,
+        "Build Time": "1d 6h",
+        "Gained": 328
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 135,
+        "Damage per Shot": 67.5,
+        "Hitpoints": 1700,
+        "Build Cost": 3000000,
+        "Build Time": "1d 12h",
+        "Gained": 360
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 145,
+        "Damage per Shot": 72.5,
+        "Hitpoints": 1800,
+        "Build Cost": 4000000,
+        "Build Time": "2d",
+        "Gained": 415
+      }
+    ]
+  },
+  {
+    "name": "Mortar",
+    "village": "home",
+    "description": "\"The Mortar can mow down hordes of enemies by the splash damage from its shell. Dont let enemies get too close to it!\"",
+    "maxLevel": 18,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 3,
+        "Damage per Second": 4,
+        "Damage per Hit": 20,
+        "Hitpoints": 400,
+        "Build Cost": 5000,
+        "Build Time": "30m",
+        "Gained": 42
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 5,
+        "Damage per Hit": 25,
+        "Hitpoints": 450,
+        "Build Cost": 25000,
+        "Build Time": "1h",
+        "Gained": 60
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 6,
+        "Damage per Hit": 30,
+        "Hitpoints": 500,
+        "Build Cost": 90000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 7,
+        "Damage per Hit": 35,
+        "Hitpoints": 550,
+        "Build Cost": 180000,
+        "Build Time": "3h",
+        "Gained": 103
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 9,
+        "Damage per Hit": 45,
+        "Hitpoints": 600,
+        "Build Cost": 300000,
+        "Build Time": "6h",
+        "Gained": 146
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 11,
+        "Damage per Hit": 55,
+        "Hitpoints": 650,
+        "Build Cost": 500000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 15,
+        "Damage per Hit": 75,
+        "Hitpoints": 700,
+        "Build Cost": 900000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 20,
+        "Damage per Hit": 100,
+        "Hitpoints": 800,
+        "Build Cost": 1200000,
+        "Build Time": "18h",
+        "Gained": 254
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 25,
+        "Damage per Hit": 125,
+        "Hitpoints": 950,
+        "Build Cost": 1600000,
+        "Build Time": "20h",
+        "Gained": 268
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 30,
+        "Damage per Hit": 150,
+        "Hitpoints": 1100,
+        "Build Cost": 1800000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 35,
+        "Damage per Hit": 175,
+        "Hitpoints": 1300,
+        "Build Cost": 2300000,
+        "Build Time": "1d 6h",
+        "Gained": 328
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 38,
+        "Damage per Hit": 190,
+        "Hitpoints": 1500,
+        "Build Cost": 2400000,
+        "Build Time": "1d 12h",
+        "Gained": 360
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 42,
+        "Damage per Hit": 210,
+        "Hitpoints": 1700,
+        "Build Cost": 2800000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 48,
+        "Damage per Hit": 240,
+        "Hitpoints": 1950,
+        "Build Cost": 4300000,
+        "Build Time": "2d 12h",
+        "Gained": 464
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 54,
+        "Damage per Hit": 270,
+        "Hitpoints": 2150,
+        "Build Cost": 5000000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 60,
+        "Damage per Hit": 300,
+        "Hitpoints": 2300,
+        "Build Cost": 7000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 66,
+        "Damage per Hit": 330,
+        "Hitpoints": 2450,
+        "Build Cost": 13000000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 72,
+        "Damage per Hit": 360,
+        "Hitpoints": 2550,
+        "Build Cost": 21000000,
+        "Build Time": "12d 12h",
+        "Gained": 1039
+      }
+    ]
+  },
+  {
+    "name": "Air Defense",
+    "village": "home",
+    "description": "\"This anti-air tower is deadly against flying enemies, but cant target foes on the ground. Place it wisely to cover as much airspace as possible.\"",
+    "maxLevel": 16,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 4,
+        "Damage per Second": 80,
+        "Damage per Shot": 80,
+        "Hitpoints": 800,
+        "Build Cost": 22000,
+        "Build Time": "1h",
+        "Gained": 60
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 110,
+        "Damage per Shot": 110,
+        "Hitpoints": 850,
+        "Build Cost": 90000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 140,
+        "Damage per Shot": 140,
+        "Hitpoints": 900,
+        "Build Cost": 210000,
+        "Build Time": "6h",
+        "Gained": 146
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 160,
+        "Damage per Shot": 160,
+        "Hitpoints": 950,
+        "Build Cost": 500000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 190,
+        "Damage per Shot": 190,
+        "Hitpoints": 1000,
+        "Build Cost": 800000,
+        "Build Time": "18h",
+        "Gained": 254
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 230,
+        "Damage per Shot": 230,
+        "Hitpoints": 1050,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 280,
+        "Damage per Shot": 280,
+        "Hitpoints": 1100,
+        "Build Cost": 1750000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 320,
+        "Damage per Shot": 320,
+        "Hitpoints": 1210,
+        "Build Cost": 2300000,
+        "Build Time": "2d 12h",
+        "Gained": 464
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 360,
+        "Damage per Shot": 360,
+        "Hitpoints": 1300,
+        "Build Cost": 3400000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 400,
+        "Damage per Shot": 400,
+        "Hitpoints": 1400,
+        "Build Cost": 5000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 440,
+        "Damage per Shot": 440,
+        "Hitpoints": 1500,
+        "Build Cost": 5600000,
+        "Build Time": "4d 12h",
+        "Gained": 623
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 500,
+        "Damage per Shot": 500,
+        "Hitpoints": 1650,
+        "Build Cost": 6500000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 540,
+        "Damage per Shot": 540,
+        "Hitpoints": 1750,
+        "Build Cost": 8000000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 600,
+        "Damage per Shot": 600,
+        "Hitpoints": 1850,
+        "Build Cost": 9000000,
+        "Build Time": "6d 12h",
+        "Gained": 749
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 650,
+        "Damage per Shot": 650,
+        "Hitpoints": 1950,
+        "Build Cost": 15000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 700,
+        "Damage per Shot": 700,
+        "Hitpoints": 2000,
+        "Build Cost": 26000000,
+        "Build Time": "13d 6h",
+        "Gained": 1069
+      }
+    ]
+  },
+  {
+    "name": "Wizard Tower",
+    "village": "home",
+    "description": "\"The Ultimate Arcane Defense! Tower Wizards cast powerful area effect spells that target both flying and ground troops.\"",
+    "maxLevel": 17,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 5,
+        "Damage per Second": 11,
+        "Damage per Shot": 14.3,
+        "Hitpoints": 620,
+        "Build Cost": 100000,
+        "Build Time": "1h",
+        "Gained": 60
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 13,
+        "Damage per Shot": 16.9,
+        "Hitpoints": 650,
+        "Build Cost": 150000,
+        "Build Time": "1h 30m",
+        "Gained": 73
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 16,
+        "Damage per Shot": 20.8,
+        "Hitpoints": 680,
+        "Build Cost": 250000,
+        "Build Time": "4h",
+        "Gained": 120
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 20,
+        "Damage per Shot": 26,
+        "Hitpoints": 730,
+        "Build Cost": 400000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 24,
+        "Damage per Shot": 31.2,
+        "Hitpoints": 840,
+        "Build Cost": 550000,
+        "Build Time": "10h",
+        "Gained": 189
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 32,
+        "Damage per Shot": 41.6,
+        "Hitpoints": 960,
+        "Build Cost": 660000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 40,
+        "Damage per Shot": 52,
+        "Hitpoints": 1200,
+        "Build Cost": 1000000,
+        "Build Time": "18h",
+        "Gained": 254
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 45,
+        "Damage per Shot": 58.5,
+        "Hitpoints": 1440,
+        "Build Cost": 1100000,
+        "Build Time": "20h",
+        "Gained": 268
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 50,
+        "Damage per Shot": 65,
+        "Hitpoints": 1600,
+        "Build Cost": 1300000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 62,
+        "Damage per Shot": 80.6,
+        "Hitpoints": 1900,
+        "Build Cost": 2000000,
+        "Build Time": "1d 6h",
+        "Gained": 328
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 70,
+        "Damage per Shot": 91,
+        "Hitpoints": 2120,
+        "Build Cost": 2500000,
+        "Build Time": "1d 12h",
+        "Gained": 360
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 78,
+        "Damage per Shot": 101.4,
+        "Hitpoints": 2240,
+        "Build Cost": 2600000,
+        "Build Time": "1d 18h",
+        "Gained": 388
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 84,
+        "Damage per Shot": 109.2,
+        "Hitpoints": 2500,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 90,
+        "Damage per Shot": 117,
+        "Hitpoints": 2800,
+        "Build Cost": 4500000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 95,
+        "Damage per Shot": 123.5,
+        "Hitpoints": 3000,
+        "Build Cost": 5500000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 102,
+        "Damage per Shot": 132.6,
+        "Hitpoints": 3150,
+        "Build Cost": 8000000,
+        "Build Time": "4d 12h",
+        "Gained": 623
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 110,
+        "Damage per Shot": 143,
+        "Hitpoints": 3300,
+        "Build Cost": 14000000,
+        "Build Time": "5d 12h",
+        "Gained": 689
+      }
+    ]
+  },
+  {
+    "name": "Air Sweeper",
+    "village": "home",
+    "description": "\"Air Sweepers control the sky with strong blasts of air that push back flying enemies. Air Sweepers can only face one direction, so rotate them to maximize their effectiveness.\"",
+    "maxLevel": 7,
+    "statsColumns": [
+      "Level",
+      "Town Hall Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 6,
+        "Town Hall Level": "1.6 tiles",
+        "Hitpoints": 750,
+        "Build Cost": 200000,
+        "Build Time": "4h",
+        "Gained": 120
+      },
+      {
+        "Level": 6,
+        "Town Hall Level": "2.0 tiles",
+        "Hitpoints": 800,
+        "Build Cost": 300000,
+        "Build Time": "6h",
+        "Gained": 146
+      },
+      {
+        "Level": 7,
+        "Town Hall Level": "2.4 tiles",
+        "Hitpoints": 850,
+        "Build Cost": 450000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 8,
+        "Town Hall Level": "2.8 tiles",
+        "Hitpoints": 900,
+        "Build Cost": 800000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 9,
+        "Town Hall Level": "3.2 tiles",
+        "Hitpoints": 950,
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 10,
+        "Town Hall Level": "3.6 tiles",
+        "Hitpoints": 1000,
+        "Build Cost": 1900000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 11,
+        "Town Hall Level": "4.0 tiles",
+        "Hitpoints": 1050,
+        "Build Cost": 3400000,
+        "Build Time": "3d",
+        "Gained": 509
+      }
+    ]
+  },
+  {
+    "name": "Hidden Tesla",
+    "village": "home",
+    "description": "\"Lay a deadly trap with the Hidden Tesla! Our Wizards have trapped a storm cloud into each of these sneaky towers. When an enemy walks or flies close enough, the tower springs up and fries it using the power of Electrickery!\"",
+    "maxLevel": 17,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 7,
+        "Damage per Second": 34,
+        "Damage per Shot": 20.4,
+        "Hitpoints": 600,
+        "Build Cost": 250000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 40,
+        "Damage per Shot": 24,
+        "Hitpoints": 630,
+        "Build Cost": 350000,
+        "Build Time": "3h",
+        "Gained": 103
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 48,
+        "Damage per Shot": 28.8,
+        "Hitpoints": 660,
+        "Build Cost": 500000,
+        "Build Time": "4h",
+        "Gained": 120
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 55,
+        "Damage per Shot": 33,
+        "Hitpoints": 690,
+        "Build Cost": 600000,
+        "Build Time": "6h",
+        "Gained": 146
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 64,
+        "Damage per Shot": 38.4,
+        "Hitpoints": 730,
+        "Build Cost": 800000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 75,
+        "Damage per Shot": 45,
+        "Hitpoints": 770,
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 87,
+        "Damage per Shot": 52.2,
+        "Hitpoints": 810,
+        "Build Cost": 1400000,
+        "Build Time": "1d 6h",
+        "Gained": 328
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 99,
+        "Damage per Shot": 59.4,
+        "Hitpoints": 850,
+        "Build Cost": 1600000,
+        "Build Time": "1d 12h",
+        "Gained": 360
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 110,
+        "Damage per Shot": 66,
+        "Hitpoints": 900,
+        "Build Cost": 2100000,
+        "Build Time": "1d 18h",
+        "Gained": 388
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 120,
+        "Damage per Shot": 72,
+        "Hitpoints": 980,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 130,
+        "Damage per Shot": 78,
+        "Hitpoints": 1100,
+        "Build Cost": 3100000,
+        "Build Time": "2d 12h",
+        "Gained": 464
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 140,
+        "Damage per Shot": 84,
+        "Hitpoints": 1200,
+        "Build Cost": 3700000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 150,
+        "Damage per Shot": 90,
+        "Hitpoints": 1350,
+        "Build Cost": 5100000,
+        "Build Time": "3d 12h",
+        "Gained": 549
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 160,
+        "Damage per Shot": 96,
+        "Hitpoints": 1450,
+        "Build Cost": 6500000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 170,
+        "Damage per Shot": 102,
+        "Hitpoints": 1550,
+        "Build Cost": 8200000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 180,
+        "Damage per Shot": 108,
+        "Hitpoints": 1650,
+        "Build Cost": 15000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 190,
+        "Damage per Shot": 114,
+        "Hitpoints": 1750,
+        "Build Cost": 25000000,
+        "Build Time": "13d",
+        "Gained": 1059
+      }
+    ]
+  },
+  {
+    "name": "Bomb Tower",
+    "village": "home",
+    "description": "\"Bomb Towers bombard nearby ground troops and go up in a big BOOM when destroyed! Melee units best stand clear!\"",
+    "maxLevel": 13,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Damage when destroyed",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 8,
+        "Damage per Second": 24,
+        "Damage per Shot": 26.4,
+        "Damage when destroyed": 150,
+        "Hitpoints": 650,
+        "Build Cost": 700000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 28,
+        "Damage per Shot": 30.8,
+        "Damage when destroyed": 180,
+        "Hitpoints": 700,
+        "Build Cost": 1000000,
+        "Build Time": "18h",
+        "Gained": 254
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 32,
+        "Damage per Shot": 35.2,
+        "Damage when destroyed": 220,
+        "Hitpoints": 750,
+        "Build Cost": 1300000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 40,
+        "Damage per Shot": 44,
+        "Damage when destroyed": 260,
+        "Hitpoints": 850,
+        "Build Cost": 1800000,
+        "Build Time": "1d 12h",
+        "Gained": 360
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 48,
+        "Damage per Shot": 52.8,
+        "Damage when destroyed": 300,
+        "Hitpoints": 1050,
+        "Build Cost": 1900000,
+        "Build Time": "1d 18h",
+        "Gained": 388
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 56,
+        "Damage per Shot": 61.6,
+        "Damage when destroyed": 350,
+        "Hitpoints": 1300,
+        "Build Cost": 2000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 64,
+        "Damage per Shot": 70.4,
+        "Damage when destroyed": 400,
+        "Hitpoints": 1600,
+        "Build Cost": 4000000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 72,
+        "Damage per Shot": 79.2,
+        "Damage when destroyed": 450,
+        "Hitpoints": 1900,
+        "Build Cost": 5000000,
+        "Build Time": "3d 12h",
+        "Gained": 549
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 84,
+        "Damage per Shot": 92.4,
+        "Damage when destroyed": 500,
+        "Hitpoints": 2300,
+        "Build Cost": 6000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 94,
+        "Damage per Shot": 103.4,
+        "Damage when destroyed": 550,
+        "Hitpoints": 2500,
+        "Build Cost": 7000000,
+        "Build Time": "4d 12h",
+        "Gained": 623
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 104,
+        "Damage per Shot": 114.4,
+        "Damage when destroyed": 600,
+        "Hitpoints": 2700,
+        "Build Cost": 8500000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 114,
+        "Damage per Shot": 125.4,
+        "Damage when destroyed": 650,
+        "Hitpoints": 2900,
+        "Build Cost": 14500000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 122,
+        "Damage per Shot": 134.2,
+        "Damage when destroyed": 700,
+        "Hitpoints": 3050,
+        "Build Cost": 25000000,
+        "Build Time": "13d",
+        "Gained": 1059
+      }
+    ]
+  },
+  {
+    "name": "X-Bow",
+    "village": "home",
+    "description": "\"The X-Bow shoots mystical bolts with terrifying power. Load it with Elixir and the X-Bow works automagically. You can set it to target ground units at long ranges, or all targets at reduced range.\"",
+    "maxLevel": 13,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 9,
+        "Damage per Second": 60,
+        "Damage per Shot": 7.68,
+        "Hitpoints": 1500,
+        "Build Cost": 1000000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 70,
+        "Damage per Shot": 8.96,
+        "Hitpoints": 1900,
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 80,
+        "Damage per Shot": 10.24,
+        "Hitpoints": 2300,
+        "Build Cost": 2400000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 85,
+        "Damage per Shot": 10.88,
+        "Hitpoints": 2700,
+        "Build Cost": 2500000,
+        "Build Time": "2d 12h",
+        "Gained": 464
+      },
+      {
+        "Level": 11,
+        "Damage per Second": 95,
+        "Damage per Shot": 12.16,
+        "Hitpoints": 3100,
+        "Build Cost": 3900000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 12,
+        "Damage per Second": 110,
+        "Damage per Shot": 14.08,
+        "Hitpoints": 3400,
+        "Build Cost": 5000000,
+        "Build Time": "3d 12h",
+        "Gained": 549
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 130,
+        "Damage per Shot": 16.64,
+        "Hitpoints": 3700,
+        "Build Cost": 6000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 155,
+        "Damage per Shot": 19.84,
+        "Hitpoints": 4000,
+        "Build Cost": 7000000,
+        "Build Time": "4d 12h",
+        "Gained": 623
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 185,
+        "Damage per Shot": 23.68,
+        "Hitpoints": 4200,
+        "Build Cost": 9000000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 205,
+        "Damage per Shot": 26.24,
+        "Hitpoints": 4400,
+        "Build Cost": 9500000,
+        "Build Time": "5d 12h",
+        "Gained": 689
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 225,
+        "Damage per Shot": 28.8,
+        "Hitpoints": 4600,
+        "Build Cost": 10000000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 235,
+        "Damage per Shot": 30.08,
+        "Hitpoints": 4800,
+        "Build Cost": 16000000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 245,
+        "Damage per Shot": 31.36,
+        "Hitpoints": 5000,
+        "Build Cost": 26000000,
+        "Build Time": "13d 12h",
+        "Gained": 1080
+      }
+    ]
+  },
+  {
+    "name": "Inferno Tower",
+    "village": "home",
+    "description": "\"Set the Inferno Towers Dark Elixir fueled flame to build up unbelievable damage to single targets, or to constantly roast multiple targets at once.\"",
+    "maxLevel": 12,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level",
+      "Initial",
+      "After 1.5s",
+      "After 5.25s",
+      "Initial",
+      "After 1.5s",
+      "After 5.25s"
+    ],
+    "levels": [
+      {
+        "Level": 1500,
+        "Damage per Second": 30,
+        "Damage per Hit": 80,
+        "Hitpoints": 800,
+        "Build Cost": 3.84,
+        "Build Time": 10.24,
+        "Gained": 102.4,
+        "Initial": 10,
+        "After 1.5s": "12h",
+        "After 5.25s": 207
+      },
+      {
+        "Level": 1800,
+        "Damage per Second": 35,
+        "Damage per Hit": 100,
+        "Hitpoints": 1000,
+        "Build Cost": 4.48,
+        "Build Time": 12.8,
+        "Gained": 128,
+        "Initial": 10,
+        "After 1.5s": "1d",
+        "After 5.25s": 293
+      },
+      {
+        "Level": 2100,
+        "Damage per Second": 40,
+        "Damage per Hit": 120,
+        "Hitpoints": 1200,
+        "Build Cost": 5.12,
+        "Build Time": 15.36,
+        "Gained": 153.6,
+        "Initial": 10,
+        "After 1.5s": "2d",
+        "After 5.25s": 415
+      },
+      {
+        "Level": 2400,
+        "Damage per Second": 45,
+        "Damage per Hit": 140,
+        "Hitpoints": 1400,
+        "Build Cost": 5.76,
+        "Build Time": 17.92,
+        "Gained": 179.2,
+        "Initial": 11,
+        "After 1.5s": "2d 12h",
+        "After 5.25s": 464
+      },
+      {
+        "Level": 2700,
+        "Damage per Second": 50,
+        "Damage per Hit": 150,
+        "Hitpoints": 1500,
+        "Build Cost": 6.4,
+        "Build Time": 19.2,
+        "Gained": 192,
+        "Initial": 11,
+        "After 1.5s": "3d",
+        "After 5.25s": 509
+      },
+      {
+        "Level": 3000,
+        "Damage per Second": 55,
+        "Damage per Hit": 160,
+        "Hitpoints": 1600,
+        "Build Cost": 7.04,
+        "Build Time": 20.48,
+        "Gained": 204.8,
+        "Initial": 12,
+        "After 1.5s": "4d",
+        "After 5.25s": 587
+      },
+      {
+        "Level": 3300,
+        "Damage per Second": 65,
+        "Damage per Hit": 180,
+        "Hitpoints": 1800,
+        "Build Cost": 8.32,
+        "Build Time": 23.04,
+        "Gained": 230.4,
+        "Initial": 13,
+        "After 1.5s": "5d",
+        "After 5.25s": 657
+      },
+      {
+        "Level": 3700,
+        "Damage per Second": 80,
+        "Damage per Hit": 210,
+        "Hitpoints": 2100,
+        "Build Cost": 10.24,
+        "Build Time": 26.88,
+        "Gained": 268.8,
+        "Initial": 14,
+        "After 1.5s": "6d",
+        "After 5.25s": 720
+      },
+      {
+        "Level": 4000,
+        "Damage per Second": 100,
+        "Damage per Hit": 230,
+        "Hitpoints": 2300,
+        "Build Cost": 12.8,
+        "Build Time": 29.44,
+        "Gained": 294.4,
+        "Initial": 15,
+        "After 1.5s": "6d 12h",
+        "After 5.25s": 749
+      },
+      {
+        "Level": 4400,
+        "Damage per Second": 120,
+        "Damage per Hit": 260,
+        "Hitpoints": 2600,
+        "Build Cost": 15.36,
+        "Build Time": 33.28,
+        "Gained": 332.8,
+        "Initial": 16,
+        "After 1.5s": "7d",
+        "After 5.25s": 777
+      },
+      {
+        "Level": 4800,
+        "Damage per Second": 140,
+        "Damage per Hit": 290,
+        "Hitpoints": 2900,
+        "Build Cost": 17.92,
+        "Build Time": 37.12,
+        "Gained": 371.2,
+        "Initial": 17,
+        "After 1.5s": "8d",
+        "After 5.25s": 831
+      },
+      {
+        "Level": 5100,
+        "Damage per Second": 155,
+        "Damage per Hit": 330,
+        "Hitpoints": 3300,
+        "Build Cost": 19.84,
+        "Build Time": 42.24,
+        "Gained": 422.4,
+        "Initial": 18,
+        "After 1.5s": "13d 12h",
+        "After 5.25s": 1080
+      }
+    ]
+  },
+  {
+    "name": "Eagle Artillery",
+    "village": "home",
+    "description": "\"The Eagle Artillery has nearly unlimited range and targets tough enemies with exploding shells. However, it wont activate until a large amount of troops have been deployed.\"",
+    "maxLevel": 7,
+    "statsColumns": [
+      "Level",
+      "Damage per Hit",
+      "Damage per Second",
+      "Shockwave Damage",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 11,
+        "Damage per Hit": 225,
+        "Damage per Second": 67.5,
+        "Shockwave Damage": 20,
+        "Hitpoints": 4000,
+        "Build Cost": 5000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 11,
+        "Damage per Hit": 250,
+        "Damage per Second": 75,
+        "Shockwave Damage": 25,
+        "Hitpoints": 4400,
+        "Build Cost": 6000000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 12,
+        "Damage per Hit": 275,
+        "Damage per Second": 82.5,
+        "Shockwave Damage": 30,
+        "Hitpoints": 4800,
+        "Build Cost": 9000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 13,
+        "Damage per Hit": 350,
+        "Damage per Second": 105,
+        "Shockwave Damage": 35,
+        "Hitpoints": 5200,
+        "Build Cost": 10000000,
+        "Build Time": "7d 12h",
+        "Gained": 804
+      },
+      {
+        "Level": 14,
+        "Damage per Hit": 425,
+        "Damage per Second": 127.5,
+        "Shockwave Damage": 40,
+        "Hitpoints": 5600,
+        "Build Cost": 12000000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 15,
+        "Damage per Hit": 475,
+        "Damage per Second": 142.5,
+        "Shockwave Damage": 45,
+        "Hitpoints": 5900,
+        "Build Cost": 13000000,
+        "Build Time": "9d",
+        "Gained": 881
+      },
+      {
+        "Level": 16,
+        "Damage per Hit": 525,
+        "Damage per Second": 157.5,
+        "Shockwave Damage": 50,
+        "Hitpoints": 6200,
+        "Build Cost": 14000000,
+        "Build Time": "9d 12h",
+        "Gained": 905
+      }
+    ]
+  },
+  {
+    "name": "Scattershot",
+    "village": "home",
+    "description": "\"The Scattershot heaves very heavy objects at whoever happens to be closest. The projectile breaks apart on impact and deals additional damage to troops behind.\"",
+    "maxLevel": 7,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Splash Damage**",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 13,
+        "Damage per Second": 125,
+        "Damage per Shot": 300,
+        "Splash Damage**": 100,
+        "Hitpoints": 3600,
+        "Build Cost": 8000000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 13,
+        "Damage per Second": 150,
+        "Damage per Shot": 360,
+        "Splash Damage**": 120,
+        "Hitpoints": 4200,
+        "Build Cost": 9000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 170,
+        "Damage per Shot": 380,
+        "Splash Damage**": 130,
+        "Hitpoints": 4800,
+        "Build Cost": 11000000,
+        "Build Time": "7d 12h",
+        "Gained": 804
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 175,
+        "Damage per Shot": 400,
+        "Splash Damage**": 140,
+        "Hitpoints": 5100,
+        "Build Cost": 11500000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 180,
+        "Damage per Shot": 420,
+        "Splash Damage**": 150,
+        "Hitpoints": 5410,
+        "Build Cost": 12000000,
+        "Build Time": "8d 12h",
+        "Gained": 856
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 185,
+        "Damage per Shot": 440,
+        "Splash Damage**": 155,
+        "Hitpoints": 5600,
+        "Build Cost": 16500000,
+        "Build Time": "9d",
+        "Gained": 881
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 190,
+        "Damage per Shot": 450,
+        "Splash Damage**": 160,
+        "Hitpoints": 5800,
+        "Build Cost": 26500000,
+        "Build Time": "15d",
+        "Gained": 1138
+      }
+    ]
+  },
+  {
+    "name": "Builder's Hut",
+    "village": "home",
+    "description": "\"Nothing gets done around here without Builders! You can hire more Builders to start multiple construction projects, or speed up their work by using green gems.\"",
+    "maxLevel": 8,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Repair per Second",
+      "Repair per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage per Second": "N/A",
+        "Damage per Shot": "N/A",
+        "Repair per Second": "N/A",
+        "Repair per Hit": "N/A",
+        "Hitpoints": 250,
+        "Build Cost": "Varies**",
+        "Build Time": "None",
+        "Gained": 0
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 80,
+        "Damage per Shot": 32,
+        "Repair per Second": 50,
+        "Repair per Hit": 37.5,
+        "Hitpoints": 1000,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 100,
+        "Damage per Shot": 40,
+        "Repair per Second": 60,
+        "Repair per Hit": 45,
+        "Hitpoints": 1300,
+        "Build Cost": 4000000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 14,
+        "Damage per Second": 120,
+        "Damage per Shot": 48,
+        "Repair per Second": 70,
+        "Repair per Hit": 52.5,
+        "Hitpoints": 1600,
+        "Build Cost": 6000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 135,
+        "Damage per Shot": 54,
+        "Repair per Second": 80,
+        "Repair per Hit": 60,
+        "Hitpoints": 1800,
+        "Build Cost": 7000000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 150,
+        "Damage per Shot": 60,
+        "Repair per Second": 85,
+        "Repair per Hit": 63.75,
+        "Hitpoints": 1900,
+        "Build Cost": 8000000,
+        "Build Time": "5d 12h",
+        "Gained": 689
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 165,
+        "Damage per Shot": 66,
+        "Repair per Second": 90,
+        "Repair per Hit": 67.5,
+        "Hitpoints": 2000,
+        "Build Cost": 15500000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 180,
+        "Damage per Shot": 72,
+        "Repair per Second": 95,
+        "Repair per Hit": 71.25,
+        "Hitpoints": 2100,
+        "Build Cost": 24000000,
+        "Build Time": "13d",
+        "Gained": 1059
+      }
+    ]
+  },
+  {
+    "name": "Spell Tower",
+    "village": "home",
+    "description": "\"For years, Wizards alone brought magic to the battlefield one fireball at a time. Now theyve developed a fully automated way to give your village more ways to mess up attackers with magic!\"",
+    "maxLevel": 4,
+    "statsColumns": [
+      "Level",
+      "Unlocks",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 15,
+        "Unlocks": "",
+        "Hitpoints": 2500,
+        "Build Cost": 9000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 15,
+        "Unlocks": "",
+        "Hitpoints": 2800,
+        "Build Cost": 11000000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 15,
+        "Unlocks": "",
+        "Hitpoints": 3100,
+        "Build Cost": 12000000,
+        "Build Time": "8d 12h",
+        "Gained": 856
+      },
+      {
+        "Level": 17,
+        "Unlocks": "",
+        "Hitpoints": 3200,
+        "Build Cost": 27000000,
+        "Build Time": "10d",
+        "Gained": 929
+      }
+    ]
+  },
+  {
+    "name": "Monolith",
+    "village": "home",
+    "description": "\"The Builders first experiment in using Dark Elixir for a building resulted in something truly frightful. The stronger the Monoliths target, the more damage it does. Great to have defending your Village, but a little scary to attack against.\"",
+    "maxLevel": 5,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 15,
+        "Damage per Second": 150,
+        "Damage per Shot": 11,
+        "Hitpoints": 4747,
+        "Build Cost": 200000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 15,
+        "Damage per Second": 175,
+        "Damage per Shot": 12,
+        "Hitpoints": 5050,
+        "Build Cost": 250000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 193,
+        "Damage per Shot": 13,
+        "Hitpoints": 5353,
+        "Build Cost": 260000,
+        "Build Time": "9d",
+        "Gained": 881
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 209,
+        "Damage per Shot": 14,
+        "Hitpoints": 5656,
+        "Build Cost": 300000,
+        "Build Time": "11d",
+        "Gained": 974
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 225,
+        "Damage per Shot": 15,
+        "Hitpoints": 5959,
+        "Build Cost": 470000,
+        "Build Time": "15d",
+        "Gained": 1138
+      }
+    ]
+  },
+  {
+    "name": "Multi-Archer Tower",
+    "village": "home",
+    "description": "\"These Archers have teamed up to take out attackers faster and more furiously than ever. Teamwork makes the dream work!\"",
+    "maxLevel": 4,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 16,
+        "Damage per Second": 100,
+        "Damage per Hit": 60,
+        "Hitpoints": 5000,
+        "Build Cost": 12000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 108,
+        "Damage per Hit": 65,
+        "Hitpoints": 5200,
+        "Build Cost": 13000000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 116,
+        "Damage per Hit": 70,
+        "Hitpoints": 5400,
+        "Build Cost": 17500000,
+        "Build Time": "9d",
+        "Gained": 881
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 121,
+        "Damage per Hit": 73,
+        "Hitpoints": 5500,
+        "Build Cost": 27000000,
+        "Build Time": "14d",
+        "Gained": 1099
+      }
+    ]
+  },
+  {
+    "name": "Ricochet Cannon",
+    "village": "home",
+    "description": "\"Builder has used one weird trick to develop a devastating cannonball that will ricochet and hit a second target.\"",
+    "maxLevel": 4,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Secondary Chain Damage",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 16,
+        "Damage per Second": 360,
+        "Damage per Shot": 288,
+        "Secondary Chain Damage": 201.6,
+        "Hitpoints": 5400,
+        "Build Cost": 12000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 16,
+        "Damage per Second": 390,
+        "Damage per Shot": 312,
+        "Secondary Chain Damage": 218.4,
+        "Hitpoints": 5700,
+        "Build Cost": 13000000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 405,
+        "Damage per Shot": 324,
+        "Secondary Chain Damage": 226.8,
+        "Hitpoints": 6000,
+        "Build Cost": 17500000,
+        "Build Time": "9d",
+        "Gained": 881
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 412,
+        "Damage per Shot": 329.6,
+        "Secondary Chain Damage": 230.72,
+        "Hitpoints": 6100,
+        "Build Cost": 26500000,
+        "Build Time": "13d 12h",
+        "Gained": 1080
+      }
+    ]
+  },
+  {
+    "name": "Multi-Gear Tower",
+    "village": "home",
+    "description": "\"The Multi-Gear Tower is a powerful combination of two classic Defenses! Choose the attack mode that suits you and let the destruction begin! Targets air and ground units.\"",
+    "maxLevel": 3,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 17,
+        "Damage per Second": 350,
+        "Damage per Hit": 350,
+        "Hitpoints": 4000,
+        "Build Cost": 17000000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 370,
+        "Damage per Hit": 370,
+        "Hitpoints": 4200,
+        "Build Cost": 18000000,
+        "Build Time": "9d",
+        "Gained": 881
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 390,
+        "Damage per Hit": 390,
+        "Hitpoints": 4350,
+        "Build Cost": 28000000,
+        "Build Time": "14d",
+        "Gained": 1099
+      }
+    ]
+  },
+  {
+    "name": "Firespitter",
+    "village": "home",
+    "description": "\"The Firespitter spews flames at a fire rate faster than the X-Bow! If it misses, the Firespitter will shoot past its target to deal damage to enemies behind. It can only face a single direction, so place carefully!\"",
+    "maxLevel": 3,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit**",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 17,
+        "Damage per Second": 410,
+        "Damage per Hit**": 46.03,
+        "Hitpoints": 4500,
+        "Build Cost": 17000000,
+        "Build Time": "8d 12h",
+        "Gained": 856
+      },
+      {
+        "Level": 17,
+        "Damage per Second": 437,
+        "Damage per Hit**": 49.05,
+        "Hitpoints": 5000,
+        "Build Cost": 18000000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 455,
+        "Damage per Hit**": 51.07,
+        "Hitpoints": 5300,
+        "Build Cost": 29000000,
+        "Build Time": "15d",
+        "Gained": 1138
+      }
+    ]
+  },
+  {
+    "name": "Revenge Tower",
+    "village": "home",
+    "description": "\"If you destroy its building friends, the Revenge Tower will look for you, it will find you, and it will smite you. As fellow buildings fall, it grows stronger and angrier!\"",
+    "maxLevel": 2,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 18,
+        "Hitpoints": 5800,
+        "Build Cost": 430000,
+        "Build Time": "13d 5s",
+        "Gained": 1059
+      },
+      {
+        "Level": 18,
+        "Hitpoints": 6200,
+        "Build Cost": 460000,
+        "Build Time": "14d",
+        "Gained": 1099
+      }
+    ]
+  },
+  {
+    "name": "Super Wizard Tower",
+    "village": "home",
+    "description": "\"Super Wizards first strike can shock up to fifteen nearby enemies. Chained targets take less damage.\"",
+    "maxLevel": 2,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit (Primary)",
+      "Damage per Hit (Secondary)",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 18,
+        "Damage per Second": 290,
+        "Damage per Hit (Primary)": 377,
+        "Damage per Hit (Secondary)": 150.8,
+        "Hitpoints": 6000,
+        "Build Cost": 29000000,
+        "Build Time": "13d",
+        "Gained": 1059
+      },
+      {
+        "Level": 18,
+        "Damage per Second": 320,
+        "Damage per Hit (Primary)": 416,
+        "Damage per Hit (Secondary)": 166.4,
+        "Hitpoints": 6300,
+        "Build Cost": 30000000,
+        "Build Time": "14d",
+        "Gained": 1099
+      }
+    ]
+  },
+  {
+    "name": "Double Cannon",
+    "village": "home",
+    "description": "\"Double cannons, double shots per cannon, Its a double-double dose of trouble!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 2,
+        "Damage per Second": 91,
+        "Damage per Shot": 50,
+        "Hitpoints": 600,
+        "Build Cost": 20000,
+        "Build Time": "10m",
+        "Experience": 24
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 101,
+        "Damage per Shot": 55,
+        "Hitpoints": 690,
+        "Build Cost": 50000,
+        "Build Time": "1h",
+        "Experience": 60
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 112,
+        "Damage per Shot": 61,
+        "Hitpoints": 800,
+        "Build Cost": 80000,
+        "Build Time": "3h",
+        "Experience": 103
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 123,
+        "Damage per Shot": 67,
+        "Hitpoints": 910,
+        "Build Cost": 300000,
+        "Build Time": "12h",
+        "Experience": 207
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 136,
+        "Damage per Shot": 74,
+        "Hitpoints": 1050,
+        "Build Cost": 900000,
+        "Build Time": "1d",
+        "Experience": 293
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 148,
+        "Damage per Shot": 81,
+        "Hitpoints": 1250,
+        "Build Cost": 1400000,
+        "Build Time": "2d",
+        "Experience": 415
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 163,
+        "Damage per Shot": 89,
+        "Hitpoints": 1450,
+        "Build Cost": 2200000,
+        "Build Time": "4d",
+        "Experience": 587
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 180,
+        "Damage per Shot": 98,
+        "Hitpoints": 1700,
+        "Build Cost": 3200000,
+        "Build Time": "6d",
+        "Experience": 720
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 198,
+        "Damage per Shot": 108,
+        "Hitpoints": 1950,
+        "Build Cost": 4200000,
+        "Build Time": "8d",
+        "Experience": 831
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 220,
+        "Damage per Shot": 120,
+        "Hitpoints": 2200,
+        "Build Cost": 5200000,
+        "Build Time": "10d",
+        "Experience": 929
+      }
+    ]
+  },
+  {
+    "name": "BB Archer Tower",
+    "village": "builderBase",
+    "description": "\"No foe can escape the Archer arrows. This tower has a special switch – choose long range or fast attack!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 2,
+        "Damage per Second": 40,
+        "Damage per Shot": 40,
+        "Hitpoints": 500,
+        "Build Cost": 12000,
+        "Build Time": "5m",
+        "Gained": 17
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 44,
+        "Damage per Shot": 44,
+        "Hitpoints": 575,
+        "Build Cost": 30000,
+        "Build Time": "15m",
+        "Gained": 30
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 48,
+        "Damage per Shot": 48,
+        "Hitpoints": 660,
+        "Build Cost": 60000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 53,
+        "Damage per Shot": 53,
+        "Hitpoints": 760,
+        "Build Cost": 250000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 59,
+        "Damage per Shot": 59,
+        "Hitpoints": 875,
+        "Build Cost": 800000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 64,
+        "Damage per Shot": 64,
+        "Hitpoints": 1050,
+        "Build Cost": 1200000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 71,
+        "Damage per Shot": 71,
+        "Hitpoints": 1250,
+        "Build Cost": 2000000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 78,
+        "Damage per Shot": 78,
+        "Hitpoints": 1450,
+        "Build Cost": 2800000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 86,
+        "Damage per Shot": 86,
+        "Hitpoints": 1650,
+        "Build Cost": 3600000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 94,
+        "Damage per Shot": 94,
+        "Hitpoints": 1850,
+        "Build Cost": 4600000,
+        "Build Time": "9d",
+        "Gained": 881
+      }
+    ]
+  },
+  {
+    "name": "BB Hidden Tesla",
+    "village": "builderBase",
+    "description": "\"Part tower, part trap, completely shocking! Zap air and ground foes alike with the power of science!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 3,
+        "Damage per Second": 60,
+        "Damage per Shot": 36,
+        "Hitpoints": 300,
+        "Build Cost": 50000,
+        "Build Time": "30m",
+        "Experience": 42
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 66,
+        "Damage per Shot": 40,
+        "Hitpoints": 350,
+        "Build Cost": 100000,
+        "Build Time": "3h",
+        "Experience": 103
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 73,
+        "Damage per Shot": 44,
+        "Hitpoints": 400,
+        "Build Cost": 150000,
+        "Build Time": "5h",
+        "Experience": 134
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 80,
+        "Damage per Shot": 48,
+        "Hitpoints": 460,
+        "Build Cost": 280000,
+        "Build Time": "10h",
+        "Experience": 189
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 88,
+        "Damage per Shot": 53,
+        "Hitpoints": 550,
+        "Build Cost": 700000,
+        "Build Time": "1d",
+        "Experience": 293
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 96,
+        "Damage per Shot": 58,
+        "Hitpoints": 650,
+        "Build Cost": 1300000,
+        "Build Time": "2d",
+        "Experience": 415
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 106,
+        "Damage per Shot": 64,
+        "Hitpoints": 750,
+        "Build Cost": 2100000,
+        "Build Time": "4d",
+        "Experience": 587
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 116,
+        "Damage per Shot": 70,
+        "Hitpoints": 850,
+        "Build Cost": 3100000,
+        "Build Time": "6d",
+        "Experience": 720
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 128,
+        "Damage per Shot": 77,
+        "Hitpoints": 1000,
+        "Build Cost": 4100000,
+        "Build Time": "8d",
+        "Experience": 831
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 141,
+        "Damage per Shot": 85,
+        "Hitpoints": 1150,
+        "Build Cost": 5100000,
+        "Build Time": "10d",
+        "Experience": 929
+      }
+    ]
+  },
+  {
+    "name": "Firecrackers",
+    "village": "home",
+    "description": "“Keep flying pests away with flurries of small rockets! Its like a bug zapper, but prettier.”",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 3,
+        "Damage per Second": 59,
+        "Damage per Shot": 19,
+        "Hitpoints": 400,
+        "Build Cost": 40000,
+        "Build Time": "15m",
+        "Experience": 30
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 65,
+        "Damage per Shot": 21,
+        "Hitpoints": 460,
+        "Build Cost": 80000,
+        "Build Time": "2h",
+        "Experience": 84
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 71,
+        "Damage per Shot": 23,
+        "Hitpoints": 530,
+        "Build Cost": 120000,
+        "Build Time": "4h",
+        "Experience": 120
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 78,
+        "Damage per Shot": 25,
+        "Hitpoints": 610,
+        "Build Cost": 300000,
+        "Build Time": "12h",
+        "Experience": 207
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 84,
+        "Damage per Shot": 27,
+        "Hitpoints": 700,
+        "Build Cost": 800000,
+        "Build Time": "1d",
+        "Experience": 293
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 93,
+        "Damage per Shot": 30,
+        "Hitpoints": 850,
+        "Build Cost": 1200000,
+        "Build Time": "2d",
+        "Experience": 415
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 103,
+        "Damage per Shot": 33,
+        "Hitpoints": 1000,
+        "Build Cost": 2000000,
+        "Build Time": "4d",
+        "Experience": 587
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 112,
+        "Damage per Shot": 36,
+        "Hitpoints": 1150,
+        "Build Cost": 3000000,
+        "Build Time": "6d",
+        "Experience": 720
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 125,
+        "Damage per Shot": 40,
+        "Hitpoints": 1300,
+        "Build Cost": 4000000,
+        "Build Time": "8d",
+        "Experience": 831
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 137,
+        "Damage per Shot": 44,
+        "Hitpoints": 1500,
+        "Build Cost": 5000000,
+        "Build Time": "9d",
+        "Experience": 881
+      }
+    ]
+  },
+  {
+    "name": "Crusher",
+    "village": "builderBase",
+    "description": "“The Crusher REALLY likes its personal space. This hulking stone slams ground units with a mighty wallop!”",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 3,
+        "Damage per Second": 125,
+        "Damage per Hit": 438,
+        "Hitpoints": 1000,
+        "Build Cost": 120000,
+        "Build Time": "2h",
+        "Gained": 84
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 138,
+        "Damage per Hit": 483,
+        "Hitpoints": 1100,
+        "Build Cost": 180000,
+        "Build Time": "5h",
+        "Gained": 134
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 152,
+        "Damage per Hit": 532,
+        "Hitpoints": 1250,
+        "Build Cost": 220000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 167,
+        "Damage per Hit": 585,
+        "Hitpoints": 1400,
+        "Build Cost": 350000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 184,
+        "Damage per Hit": 644,
+        "Hitpoints": 1600,
+        "Build Cost": 1200000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 202,
+        "Damage per Hit": 707,
+        "Hitpoints": 1850,
+        "Build Cost": 1500000,
+        "Build Time": "4d",
+        "Gained": 581
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 222,
+        "Damage per Hit": 777,
+        "Hitpoints": 2100,
+        "Build Cost": 2400000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 244,
+        "Damage per Hit": 854,
+        "Hitpoints": 2350,
+        "Build Cost": 3400000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 269,
+        "Damage per Hit": 942,
+        "Hitpoints": 2600,
+        "Build Cost": 4400000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 296,
+        "Damage per Hit": 1036,
+        "Hitpoints": 2900,
+        "Build Cost": 5400000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  },
+  {
+    "name": "Guard Post",
+    "village": "home",
+    "description": "\"Houses troops to aid in defense! These rabble rousers are sure to slow down the enemy.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 4,
+        "Hitpoints": 300,
+        "Build Cost": 200000,
+        "Build Time": "4h",
+        "Gained": 120
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 350,
+        "Build Cost": 240000,
+        "Build Time": "8h",
+        "Gained": 169
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 400,
+        "Build Cost": 280000,
+        "Build Time": "12h",
+        "Gained": 207
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 460,
+        "Build Cost": 320000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 550,
+        "Build Cost": 1000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 650,
+        "Build Cost": 1400000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 750,
+        "Build Cost": 2300000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 850,
+        "Build Cost": 3200000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 1000,
+        "Build Cost": 4100000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 1150,
+        "Build Cost": 5100000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  },
+  {
+    "name": "BB Air Bombs",
+    "village": "builderBase",
+    "description": "\"For heavyweight air defense, Air Bombs do the trick. An endless supply of explosive barrels launch into the sky to ravage flying enemies!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 4,
+        "Damage per Second": 90,
+        "Damage per Hit": 270,
+        "Hitpoints": 1000,
+        "Build Cost": 300000,
+        "Build Time": "6h",
+        "Experience": 146
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 99,
+        "Damage per Hit": 297,
+        "Hitpoints": 1100,
+        "Build Cost": 320000,
+        "Build Time": "12h",
+        "Experience": 207
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 109,
+        "Damage per Hit": 327,
+        "Hitpoints": 1250,
+        "Build Cost": 340000,
+        "Build Time": "1d",
+        "Experience": 293
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 119,
+        "Damage per Hit": 357,
+        "Hitpoints": 1400,
+        "Build Cost": 360000,
+        "Build Time": "2d",
+        "Experience": 415
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 131,
+        "Damage per Hit": 393,
+        "Hitpoints": 1600,
+        "Build Cost": 1200000,
+        "Build Time": "3d",
+        "Experience": 509
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 145,
+        "Damage per Hit": 435,
+        "Hitpoints": 1850,
+        "Build Cost": 1500000,
+        "Build Time": "5d",
+        "Experience": 657
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 159,
+        "Damage per Hit": 477,
+        "Hitpoints": 2100,
+        "Build Cost": 2400000,
+        "Build Time": "7d",
+        "Experience": 777
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 175,
+        "Damage per Hit": 525,
+        "Hitpoints": 2350,
+        "Build Cost": 3400000,
+        "Build Time": "8d",
+        "Experience": 831
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 193,
+        "Damage per Hit": 579,
+        "Hitpoints": 2600,
+        "Build Cost": 4400000,
+        "Build Time": "10d",
+        "Experience": 929
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 212,
+        "Damage per Hit": 636,
+        "Hitpoints": 2900,
+        "Build Cost": 5400000,
+        "Build Time": "12d",
+        "Experience": 1018
+      }
+    ]
+  },
+  {
+    "name": "Multi Mortar",
+    "village": "builderBase",
+    "description": "\"Fires long range splash damage multiple times to maximize chances of hitting its target!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Burst Fire (Shots)",
+      "Damage per Hit",
+      "Build Time",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 5,
+        "Damage per Second": 22,
+        "Burst Fire (Shots)": 3,
+        "Damage per Hit": 45,
+        "Build Time": "8h",
+        "Hitpoints": 500,
+        "Build Cost": 600000,
+        "Experience": 169
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 27,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 45,
+        "Build Time": "12h",
+        "Hitpoints": 575,
+        "Build Cost": 700000,
+        "Experience": 207
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 30,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 50,
+        "Build Time": "1d",
+        "Hitpoints": 660,
+        "Build Cost": 800000,
+        "Experience": 293
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 33,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 55,
+        "Build Time": "2d",
+        "Hitpoints": 760,
+        "Build Cost": 1000000,
+        "Experience": 415
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 36,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 60,
+        "Build Time": "3d",
+        "Hitpoints": 875,
+        "Build Cost": 1200000,
+        "Experience": 509
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 40,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 66,
+        "Build Time": "5d",
+        "Hitpoints": 1050,
+        "Build Cost": 1600000,
+        "Experience": 657
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 44,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 73,
+        "Build Time": "7d",
+        "Hitpoints": 1250,
+        "Build Cost": 2500000,
+        "Experience": 777
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 49,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 80,
+        "Build Time": "9d",
+        "Hitpoints": 1450,
+        "Build Cost": 3500000,
+        "Experience": 881
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 53,
+        "Burst Fire (Shots)": 4,
+        "Damage per Hit": 88,
+        "Build Time": "11d",
+        "Hitpoints": 1650,
+        "Build Cost": 4500000,
+        "Experience": 974
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 62,
+        "Burst Fire (Shots)": 5,
+        "Damage per Hit": 88,
+        "Build Time": "12d",
+        "Hitpoints": 1850,
+        "Build Cost": 5500000,
+        "Experience": 1018
+      }
+    ]
+  },
+  {
+    "name": "O.T.T.O's Outpost",
+    "village": "home",
+    "description": "\"O.T.T.Os home and the main building of the second stage. May contain additional feisty robots. Destroying O.T.T.Os Outpost awards an extra star in attacks.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Spawned Zappies",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 6,
+        "Hitpoints": 650,
+        "Spawned Zappies": 2,
+        "Build Cost": "N/A",
+        "Build Time": "N/A",
+        "Experience": "N/A"
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 800,
+        "Spawned Zappies": 2,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Experience": 293
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 975,
+        "Spawned Zappies": 2,
+        "Build Cost": 1250000,
+        "Build Time": "2d",
+        "Experience": 415
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1150,
+        "Spawned Zappies": 3,
+        "Build Cost": 1500000,
+        "Build Time": "3d",
+        "Experience": 509
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1350,
+        "Spawned Zappies": 3,
+        "Build Cost": 1750000,
+        "Build Time": "4d",
+        "Experience": 587
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1600,
+        "Spawned Zappies": 3,
+        "Build Cost": 2000000,
+        "Build Time": "5d",
+        "Experience": 657
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 1850,
+        "Spawned Zappies": 4,
+        "Build Cost": 3000000,
+        "Build Time": "7d",
+        "Experience": 777
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 2150,
+        "Spawned Zappies": 4,
+        "Build Cost": 4000000,
+        "Build Time": "9d",
+        "Experience": 881
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 2450,
+        "Spawned Zappies": 4,
+        "Build Cost": 5000000,
+        "Build Time": "10d",
+        "Experience": 929
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 2750,
+        "Spawned Zappies": 5,
+        "Build Cost": 6000000,
+        "Build Time": "11d",
+        "Experience": 974
+      }
+    ]
+  },
+  {
+    "name": "BB Roaster",
+    "village": "builderBase",
+    "description": "\"Bathe foes in a fiery flood of scalding plasma! Both air and ground troops will feel the burn!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 6,
+        "Damage per Second": 59,
+        "Damage per Shot": 15,
+        "Hitpoints": 800,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 67,
+        "Damage per Shot": 17,
+        "Hitpoints": 950,
+        "Build Cost": 1200000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 75,
+        "Damage per Shot": 19,
+        "Hitpoints": 1100,
+        "Build Cost": 1400000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 83,
+        "Damage per Shot": 21,
+        "Hitpoints": 1300,
+        "Build Cost": 1500000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 91,
+        "Damage per Shot": 23,
+        "Hitpoints": 1500,
+        "Build Cost": 1600000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 99,
+        "Damage per Shot": 25,
+        "Hitpoints": 1700,
+        "Build Cost": 1700000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 107,
+        "Damage per Shot": 27,
+        "Hitpoints": 1900,
+        "Build Cost": 2600000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 119,
+        "Damage per Shot": 30,
+        "Hitpoints": 2100,
+        "Build Cost": 3600000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 131,
+        "Damage per Shot": 33,
+        "Hitpoints": 2350,
+        "Build Cost": 4600000,
+        "Build Time": "11d",
+        "Gained": 974
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 143,
+        "Damage per Shot": 36,
+        "Hitpoints": 2600,
+        "Build Cost": 5600000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  },
+  {
+    "name": "Giant Cannon",
+    "village": "builderBase",
+    "description": "\"Nothing gets in the way of the Giant Cannon. Its mammoth-sized cannon balls push past anything and keeps going and going and going...\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 7,
+        "Damage per Second": 41,
+        "Damage per Shot": 205,
+        "Hitpoints": 700,
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Gained": 293
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 45,
+        "Damage per Shot": 225,
+        "Hitpoints": 800,
+        "Build Cost": 2100000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 49,
+        "Damage per Shot": 245,
+        "Hitpoints": 950,
+        "Build Cost": 2200000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 54,
+        "Damage per Shot": 270,
+        "Hitpoints": 1100,
+        "Build Cost": 2300000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 60,
+        "Damage per Shot": 300,
+        "Hitpoints": 1300,
+        "Build Cost": 2400000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 66,
+        "Damage per Shot": 330,
+        "Hitpoints": 1500,
+        "Build Cost": 2500000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 72,
+        "Damage per Shot": 360,
+        "Hitpoints": 1700,
+        "Build Cost": 2700000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 79,
+        "Damage per Shot": 395,
+        "Hitpoints": 1900,
+        "Build Cost": 3800000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 87,
+        "Damage per Shot": 435,
+        "Hitpoints": 2150,
+        "Build Cost": 4700000,
+        "Build Time": "11d",
+        "Gained": 974
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 96,
+        "Damage per Shot": 480,
+        "Hitpoints": 2400,
+        "Build Cost": 5700000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  },
+  {
+    "name": "Mega Tesla",
+    "village": "home",
+    "description": "\"What happens when a Tesla goes Mega? Its powerful jolt deals heavy damage to even the toughest units!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 8,
+        "Damage per Second": 95,
+        "Damage per Shot": 380,
+        "Hitpoints": 700,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 104,
+        "Damage per Shot": 416,
+        "Hitpoints": 800,
+        "Build Cost": 3100000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 115,
+        "Damage per Shot": 460,
+        "Hitpoints": 950,
+        "Build Cost": 3200000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 126,
+        "Damage per Shot": 504,
+        "Hitpoints": 1100,
+        "Build Cost": 3300000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 139,
+        "Damage per Shot": 556,
+        "Hitpoints": 1300,
+        "Build Cost": 3400000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 153,
+        "Damage per Shot": 612,
+        "Hitpoints": 1500,
+        "Build Cost": 3600000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 168,
+        "Damage per Shot": 672,
+        "Hitpoints": 1700,
+        "Build Cost": 3800000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 185,
+        "Damage per Shot": 740,
+        "Hitpoints": 1900,
+        "Build Cost": 4000000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 204,
+        "Damage per Shot": 816,
+        "Hitpoints": 2150,
+        "Build Cost": 4800000,
+        "Build Time": "11d",
+        "Gained": 974
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 224,
+        "Damage per Shot": 896,
+        "Hitpoints": 2400,
+        "Build Cost": 5800000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  },
+  {
+    "name": "BB Lava Launcher",
+    "village": "builderBase",
+    "description": "\"Hurls molten rock over great distances. Sets the ground on fire, which really turns up the heat for enemy ground troops!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Hit",
+      "Damage per Second",
+      "Total Burn Damage",
+      "Burn Damage per Tick",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 9,
+        "Damage per Second": 15,
+        "Damage per Hit": 50,
+        "Total Burn Damage": 300,
+        "Burn Damage per Tick": 6,
+        "Hitpoints": 500,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Gained": 415
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 17.5,
+        "Damage per Hit": 55,
+        "Total Burn Damage": 350,
+        "Burn Damage per Tick": 7,
+        "Hitpoints": 575,
+        "Build Cost": 3100000,
+        "Build Time": "3d",
+        "Gained": 509
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 20,
+        "Damage per Hit": 61,
+        "Total Burn Damage": 400,
+        "Burn Damage per Tick": 8,
+        "Hitpoints": 660,
+        "Build Cost": 3200000,
+        "Build Time": "4d",
+        "Gained": 587
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 22.5,
+        "Damage per Hit": 67,
+        "Total Burn Damage": 450,
+        "Burn Damage per Tick": 9,
+        "Hitpoints": 760,
+        "Build Cost": 3400000,
+        "Build Time": "5d",
+        "Gained": 657
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 25,
+        "Damage per Hit": 73,
+        "Total Burn Damage": 500,
+        "Burn Damage per Tick": 10,
+        "Hitpoints": 875,
+        "Build Cost": 3700000,
+        "Build Time": "6d",
+        "Gained": 720
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 27.5,
+        "Damage per Hit": 81,
+        "Total Burn Damage": 550,
+        "Burn Damage per Tick": 11,
+        "Hitpoints": 1050,
+        "Build Cost": 4000000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 30,
+        "Damage per Hit": 89,
+        "Total Burn Damage": 600,
+        "Burn Damage per Tick": 12,
+        "Hitpoints": 1250,
+        "Build Cost": 4300000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 32.5,
+        "Damage per Hit": 97,
+        "Total Burn Damage": 650,
+        "Burn Damage per Tick": 13,
+        "Hitpoints": 1450,
+        "Build Cost": 4600000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 35,
+        "Damage per Hit": 107,
+        "Total Burn Damage": 700,
+        "Burn Damage per Tick": 14,
+        "Hitpoints": 1650,
+        "Build Cost": 4900000,
+        "Build Time": "11d",
+        "Gained": 974
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 37.5,
+        "Damage per Hit": 118,
+        "Total Burn Damage": 750,
+        "Burn Damage per Tick": 15,
+        "Hitpoints": 1850,
+        "Build Cost": 5900000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  },
+  {
+    "name": "BB X-Bow",
+    "village": "builderBase",
+    "description": "\"The X-Bow shoots powerful bolts with terrifying power. You can set it to target ground units or air units.\"",
+    "maxLevel": 5,
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Gained",
+      "Level"
+    ],
+    "levels": [
+      {
+        "Level": 10,
+        "Damage per Second": 80,
+        "Damage per Shot": 15.36,
+        "Hitpoints": 1700,
+        "Build Cost": 4400000,
+        "Build Time": "7d",
+        "Gained": 777
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 88,
+        "Damage per Shot": 16.9,
+        "Hitpoints": 1900,
+        "Build Cost": 4800000,
+        "Build Time": "8d",
+        "Gained": 831
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 96,
+        "Damage per Shot": 18.43,
+        "Hitpoints": 2100,
+        "Build Cost": 5200000,
+        "Build Time": "10d",
+        "Gained": 929
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 106,
+        "Damage per Shot": 20.35,
+        "Hitpoints": 2350,
+        "Build Cost": 5600000,
+        "Build Time": "11d",
+        "Gained": 974
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 116,
+        "Damage per Shot": 22.27,
+        "Hitpoints": 2600,
+        "Build Cost": 6000000,
+        "Build Time": "12d",
+        "Gained": 1018
+      }
+    ]
+  }
+]
