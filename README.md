@@ -124,13 +124,13 @@ npx tsx scraper/fandom-buildings.ts
 # Re-download building images + regenerate asset mapping
 npx tsx scraper/download-building-images.ts
 
-# Scrape building level data from Fandom wiki (defenses)
+# Scrape building level data from Fandom wiki (all building types)
 npx tsx scraper/run-building-levels.ts
 ```
 
 ## Roadmap
 
-- **Building level data from Fandom** ✅ — Per-building descriptions and level counts (max level per village variant) from the Clash of Clans Fandom Wiki. Runs via `npx tsx scraper/run-building-levels.ts` and generates `src/data/building-levels.json`. Currently covers 35 defense buildings (Home Village + Builder Base). The scraper handles both single-line (`||`-delimited) and multi-line cell formats, and automatically normalises column names (Damage per Second, Hitpoints, Build Cost, Build Time, etc.) even when column sets differ per building type.
+- **Building level data from Fandom** ✅ — Per-building descriptions, max levels, and full stat tables from the Clash of Clans Fandom Wiki (`action=raw` wikitext). Runs via `npx tsx scraper/run-building-levels.ts` and generates `src/data/building-levels.json`. Covers **83 buildings** across all categories: Defenses, Resources, Army buildings, Traps, Walls, and their Builder Base variants. The scraper uses a flexible parser that handles both single-line (`||`-delimited) and multi-line cell formats, `{{GoldPass}}` cost/template wrappers, and dynamically discovers column sets instead of hardcoding them. Column names are normalised (Damage per Second → DPS, Hitpoints → HP, etc.) for consistent display, and info-only tables (Range, Attack Speed, Damage Type) are automatically skipped.
 
 ## License
 

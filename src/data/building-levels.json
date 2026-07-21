@@ -1026,76 +1026,76 @@
     "maxLevel": 7,
     "statsColumns": [
       "Level",
-      "Town Hall Level",
+      "Push Strength",
       "Hitpoints",
       "Build Cost",
       "Build Time",
       "Experience",
-      "Town Hall Level_2"
+      "Town Hall Level"
     ],
     "levels": [
       {
         "Level": 1,
-        "Town Hall Level": "1.6 tiles",
+        "Push Strength": "1.6 tiles",
         "Hitpoints": 750,
         "Build Cost": 200000,
         "Build Time": "4h",
         "Experience": 120,
-        "Town Hall Level_2": 6
+        "Town Hall Level": 6
       },
       {
         "Level": 2,
-        "Town Hall Level": "2.0 tiles",
+        "Push Strength": "2.0 tiles",
         "Hitpoints": 800,
         "Build Cost": 300000,
         "Build Time": "6h",
         "Experience": 146,
-        "Town Hall Level_2": 6
+        "Town Hall Level": 6
       },
       {
         "Level": 3,
-        "Town Hall Level": "2.4 tiles",
+        "Push Strength": "2.4 tiles",
         "Hitpoints": 850,
         "Build Cost": 450000,
         "Build Time": "8h",
         "Experience": 169,
-        "Town Hall Level_2": 7
+        "Town Hall Level": 7
       },
       {
         "Level": 4,
-        "Town Hall Level": "2.8 tiles",
+        "Push Strength": "2.8 tiles",
         "Hitpoints": 900,
         "Build Cost": 800000,
         "Build Time": "12h",
         "Experience": 207,
-        "Town Hall Level_2": 8
+        "Town Hall Level": 8
       },
       {
         "Level": 5,
-        "Town Hall Level": "3.2 tiles",
+        "Push Strength": "3.2 tiles",
         "Hitpoints": 950,
         "Build Cost": 1200000,
         "Build Time": "1d",
         "Experience": 293,
-        "Town Hall Level_2": 9
+        "Town Hall Level": 9
       },
       {
         "Level": 6,
-        "Town Hall Level": "3.6 tiles",
+        "Push Strength": "3.6 tiles",
         "Hitpoints": 1000,
         "Build Cost": 1900000,
         "Build Time": "2d",
         "Experience": 415,
-        "Town Hall Level_2": 10
+        "Town Hall Level": 10
       },
       {
         "Level": 7,
-        "Town Hall Level": "4.0 tiles",
+        "Push Strength": "4.0 tiles",
         "Hitpoints": 1050,
         "Build Cost": 3400000,
         "Build Time": "3d",
         "Experience": 509,
-        "Town Hall Level_2": 11
+        "Town Hall Level": 11
       }
     ]
   },
@@ -2401,7 +2401,7 @@
     "statsColumns": [
       "Level",
       "Damage per Second",
-      "Damage per Hit**",
+      "Damage per Hit",
       "Hitpoints",
       "Build Cost",
       "Build Time",
@@ -2412,7 +2412,7 @@
       {
         "Level": 1,
         "Damage per Second": 410,
-        "Damage per Hit**": 46.03,
+        "Damage per Hit": 46.03,
         "Hitpoints": 4500,
         "Build Cost": 17000000,
         "Build Time": "8d 12h",
@@ -2422,7 +2422,7 @@
       {
         "Level": 2,
         "Damage per Second": 437,
-        "Damage per Hit**": 49.05,
+        "Damage per Hit": 49.05,
         "Hitpoints": 5000,
         "Build Cost": 18000000,
         "Build Time": "10d",
@@ -2432,7 +2432,7 @@
       {
         "Level": 3,
         "Damage per Second": 455,
-        "Damage per Hit**": 51.07,
+        "Damage per Hit": 51.07,
         "Hitpoints": 5300,
         "Build Cost": 29000000,
         "Build Time": "15d",
@@ -2481,8 +2481,8 @@
     "statsColumns": [
       "Level",
       "Damage per Second",
-      "Damage per Hit (Primary)",
-      "Damage per Hit (Secondary)",
+      "Damage per Hit",
+      "Damage per Hit_2",
       "Hitpoints",
       "Build Cost",
       "Build Time",
@@ -2493,8 +2493,8 @@
       {
         "Level": 1,
         "Damage per Second": 290,
-        "Damage per Hit (Primary)": 377,
-        "Damage per Hit (Secondary)": 150.8,
+        "Damage per Hit": 377,
+        "Damage per Hit_2": 150.8,
         "Hitpoints": 6000,
         "Build Cost": 29000000,
         "Build Time": "13d",
@@ -2504,12 +2504,3836 @@
       {
         "Level": 2,
         "Damage per Second": 320,
-        "Damage per Hit (Primary)": 416,
-        "Damage per Hit (Secondary)": 166.4,
+        "Damage per Hit": 416,
+        "Damage per Hit_2": 166.4,
         "Hitpoints": 6300,
         "Build Cost": 30000000,
         "Build Time": "14d",
         "Experience": 1099,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Wall",
+    "village": "home",
+    "description": "\"Walls are great for keeping your village safe and your enemies in the line of fire.\"",
+    "maxLevel": 19,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Cost_2",
+      "Build Cost_3",
+      "Build Cost_4",
+      "Build Cost_5",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 100,
+        "Build Cost": 0,
+        "Build Cost_2": 0,
+        "Build Cost_3": "N/A",
+        "Build Cost_4": "N/A",
+        "Build Cost_5": "N/A",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 200,
+        "Build Cost": 1000,
+        "Build Cost_2": 1000,
+        "Build Cost_3": "N/A",
+        "Build Cost_4": "N/A",
+        "Build Cost_5": 1,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 400,
+        "Build Cost": 5000,
+        "Build Cost_2": 6000,
+        "Build Cost_3": "N/A",
+        "Build Cost_4": "N/A",
+        "Build Cost_5": 1,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 800,
+        "Build Cost": 10000,
+        "Build Cost_2": 16000,
+        "Build Cost_3": "N/A",
+        "Build Cost_4": "N/A",
+        "Build Cost_5": 1,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 1200,
+        "Build Cost": 20000,
+        "Build Cost_2": 36000,
+        "Build Cost_3": 20000,
+        "Build Cost_4": 20000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1800,
+        "Build Cost": 30000,
+        "Build Cost_2": 66000,
+        "Build Cost_3": 30000,
+        "Build Cost_4": 50000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 2400,
+        "Build Cost": 50000,
+        "Build Cost_2": 116000,
+        "Build Cost_3": 50000,
+        "Build Cost_4": 100000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 3000,
+        "Build Cost": 75000,
+        "Build Cost_2": 191000,
+        "Build Cost_3": 75000,
+        "Build Cost_4": 175000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 3500,
+        "Build Cost": 100000,
+        "Build Cost_2": 291000,
+        "Build Cost_3": 100000,
+        "Build Cost_4": 275000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 4000,
+        "Build Cost": 200000,
+        "Build Cost_2": 491000,
+        "Build Cost_3": 200000,
+        "Build Cost_4": 475000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 11,
+        "Hitpoints": 5000,
+        "Build Cost": 500000,
+        "Build Cost_2": 991000,
+        "Build Cost_3": 500000,
+        "Build Cost_4": 975000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 12,
+        "Hitpoints": 7000,
+        "Build Cost": 1000000,
+        "Build Cost_2": 1991000,
+        "Build Cost_3": 1000000,
+        "Build Cost_4": 1975000,
+        "Build Cost_5": 1,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 13,
+        "Hitpoints": 8000,
+        "Build Cost": 1500000,
+        "Build Cost_2": 3491000,
+        "Build Cost_3": 1500000,
+        "Build Cost_4": 3475000,
+        "Build Cost_5": 2,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 14,
+        "Hitpoints": 9000,
+        "Build Cost": 2000000,
+        "Build Cost_2": 5491000,
+        "Build Cost_3": 2000000,
+        "Build Cost_4": 5475000,
+        "Build Cost_5": 2,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 15,
+        "Hitpoints": 10000,
+        "Build Cost": 3000000,
+        "Build Cost_2": 8491000,
+        "Build Cost_3": 3000000,
+        "Build Cost_4": 8475000,
+        "Build Cost_5": 3,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 16,
+        "Hitpoints": 11000,
+        "Build Cost": 4000000,
+        "Build Cost_2": 12491000,
+        "Build Cost_3": 4000000,
+        "Build Cost_4": 12475000,
+        "Build Cost_5": 4,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 17,
+        "Hitpoints": 12000,
+        "Build Cost": 5000000,
+        "Build Cost_2": 17491000,
+        "Build Cost_3": 5000000,
+        "Build Cost_4": 17475000,
+        "Build Cost_5": 5,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 18,
+        "Hitpoints": 13000,
+        "Build Cost": 7000000,
+        "Build Cost_2": 24491000,
+        "Build Cost_3": 7000000,
+        "Build Cost_4": 24475000,
+        "Build Cost_5": 7,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 19,
+        "Hitpoints": 14000,
+        "Build Cost": 10000000,
+        "Build Cost_2": 34491000,
+        "Build Cost_3": 10000000,
+        "Build Cost_4": 34475000,
+        "Build Cost_5": 10,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Town Hall",
+    "village": "home",
+    "description": "\"This is the heart of your village. Upgrading the Town Hall unlocks new defenses, buildings, traps and much more. Destroying an opponents Town Hall earns you one star in battle. Protect your Town Hall from attacks by placing it in the middle of your village and surrounding it with walls, traps, and defenses.\"",
+    "maxLevel": 11,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Maximum Number of Buildings Available*",
+      "Maximum Number of Traps Available"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 400,
+        "Build Cost": "N/A",
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Maximum Number of Buildings Available*": "13<!-- Available at this TH: Town Hall, 1 Cannon, 1 Gold Mine, 1 Gold Storage, 1 Elixir Collector, 1 Elixir Storage, 1 Army Camp, 1 Barracks, 5 Builder's Huts-->",
+        "Maximum Number of Traps Available": "N/A"
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 800,
+        "Build Cost": 1000,
+        "Build Time": "10s",
+        "Experience": 3,
+        "Maximum Number of Buildings Available*": "17<!-- +4: +1 Cannon, +1 Archer Tower, +1 Gold Mine, +1 Elixir Collector-->",
+        "Maximum Number of Traps Available": "N/A"
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 1600,
+        "Build Cost": 4000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Maximum Number of Buildings Available*": "25<!-- +8: +1 Mortar, +1 Gold Mine, +1 Elixir Collector, +1 Gold Storage, +1 Elixir Storage, +1 Army Camp, +1 Laboratory, +1 Clan Castle -->",
+        "Maximum Number of Traps Available": "2<!-- +2: +2 Bombs -->"
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 2000,
+        "Build Cost": 25000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Maximum Number of Buildings Available*": "29<!-- +4: +1 Archer Tower, +1 Air Defense, +1 Gold Mine, +1 Elixir Collector-->",
+        "Maximum Number of Traps Available": "4<!-- +2: +2 Spring Traps-->"
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 2400,
+        "Build Cost": 150000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Maximum Number of Buildings Available*": "36<!-- +7: +1 Cannon, +1 Archer Tower, +1 Wizard Tower, +1 Gold Mine, +1 Elixir Collector, +1 Army Camp, +1 Spell Factory-->",
+        "Maximum Number of Traps Available": "8<!-- +4: +2 Bombs, +2 Air Bombs-->"
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 2800,
+        "Build Cost": 500000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Maximum Number of Buildings Available*": "42<!-- +6: +1 Mortar, +1 Wizard Tower, +1 Air Defense, +1 Air Sweeper, +1 Gold Mine, +1 Elixir Collector-->",
+        "Maximum Number of Traps Available": "11<!-- +3: +2 Spring Traps, +1 Giant Bomb-->"
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 3300,
+        "Build Cost": 1000000,
+        "Build Time": "18h",
+        "Experience": 254,
+        "Maximum Number of Buildings Available*": "54<!-- +12: +2 Cannons, +1 Archer Tower, +1 Mortar, +1 Air Defense, +2 Hidden Teslas, +1 Dark Elixir Storage, +1 Dark Elixir Drill, +1 Army Camp, +1 Dark Barracks, +1 Hero Hall-->",
+        "Maximum Number of Traps Available": "15<!-- +4: +2 Bombs, +1 Giant Bomb, +1 Seeking Air Mine-->"
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 3900,
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Maximum Number of Buildings Available*": "64<!-- +10: +1 Archer Tower, +1 Mortar, +1 Wizard Tower, +1 Hidden Tesla, +1 Bomb Tower, +1 Gold Storage, +1 Elixir Storage, +1 Dark Elixir Drill, +1 Dark Spell Factory, +1 Blacksmith -->",
+        "Maximum Number of Traps Available": "23<!-- +8: +2 Spring Traps, +1 Giant Bomb, +2 Air Bombs, +1 Seeking Air Mine, +2 Skeleton Traps-->"
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 4600,
+        "Build Cost": 2500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Maximum Number of Buildings Available*": "77<!-- +13: +1 Archer Tower, +1 Air Defense, +1 Wizard Tower, +1 Air Sweeper, +1 Hidden Tesla, +2 X-Bows, +1 Gold Storage, +1 Elixir Storage, +1 Gold Mine, +1 Elixir Collector, +1 Dark Elixir Drill, +1 Helper Hut-->",
+        "Maximum Number of Traps Available": "26<!-- +3: +1 Giant Bomb, +2 Seeking Air Mines-->"
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 5500,
+        "Build Cost": 3500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Maximum Number of Buildings Available*": "84<!-- +7: +1 Cannon, +1 Archer Tower, +1 Bomb Tower, +1 X-Bow, +2 Inferno Towers, +1 B.O.B's Hut-->",
+        "Maximum Number of Traps Available": "30<!-- +4: +1 Air Bomb, +1 Giant Bomb, +1 Seeking Air Mine, +1 Skeleton Trap-->"
+      },
+      {
+        "Level": 11,
+        "Hitpoints": 6800,
+        "Build Cost": 4000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Maximum Number of Buildings Available*": "89<!-- +5: +1 Cannon, +1 Archer Tower, +1 Wizard Tower, +1 X-Bow, +1 Eagle Artillery-->",
+        "Maximum Number of Traps Available": "31<!-- +1 Tornado Trap-->"
+      },
+      {
+        "Level": 12,
+        "Hitpoints": 7500,
+        "Build Cost": 6000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Maximum Number of Buildings Available*": "92<!-- +3: +1 Hidden Tesla, +1 Inferno Tower, +1 Workshop-->",
+        "Maximum Number of Traps Available": "36<!-- +5: +2 Spring Traps, +1 Giant Bomb, +1 Air Bomb, +1 Seeking Air Mine-->"
+      },
+      {
+        "Level": 13,
+        "Hitpoints": 8200,
+        "Build Cost": 9000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Maximum Number of Buildings Available*": "94<!-- +2 Scattershots-->",
+        "Maximum Number of Traps Available": "39<!-- +3: +1 Bomb, +1 Spring Trap, +1 Seeking Air Mine-->"
+      },
+      {
+        "Level": 14,
+        "Hitpoints": 8900,
+        "Build Cost": 12000000,
+        "Build Time": "7d 12h",
+        "Experience": 804,
+        "Maximum Number of Buildings Available*": "95<!-- +1 Pet House-->",
+        "Maximum Number of Traps Available": "44<!-- +5: +1 Bomb, +1 Giant Bomb, +1 Air Bomb, +1 Seeking Air Mine, +1 Skeleton Trap-->"
+      },
+      {
+        "Level": 15,
+        "Hitpoints": 9600,
+        "Build Cost": 13000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Maximum Number of Buildings Available*": "98<!-- +3: +2 Spell Towers, +1 Monolith -->",
+        "Maximum Number of Traps Available": 44
+      },
+      {
+        "Level": 16,
+        "Hitpoints": 10000,
+        "Build Cost": 15000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Maximum Number of Buildings Available*": "94<!-- -4: -2 from 2 Multi-Archer Tower merges, -2 from 2 Ricochet Cannon merges-->",
+        "Maximum Number of Traps Available": 44
+      },
+      {
+        "Level": 17,
+        "Hitpoints": 10400,
+        "Build Cost": 16000000,
+        "Build Time": "10d",
+        "Experience": 929,
+        "Maximum Number of Buildings Available*": "93<!-- -1: -1 from Eagle merge into TH, -1 from Multi-Archer Tower merge, -1 from Ricochet Cannon merge, -1 from Multi-Gear Tower merge, +1 Archer Tower, +2 Firespitters-->",
+        "Maximum Number of Traps Available": "47<!-- +3: +1 Giant Bomb, +1 Seeking Air Mine, +1 Giga Bomb-->"
+      },
+      {
+        "Level": 18,
+        "Hitpoints": 10800,
+        "Build Cost": 25000000,
+        "Build Time": "12d",
+        "Experience": 1018,
+        "Maximum Number of Buildings Available*": "94<!-- +1: -2 from Super Wizard Tower merge, +1 Wizard Tower, +1 Revenge Tower, +1 Crafting Station-->",
+        "Maximum Number of Traps Available": 47
+      }
+    ]
+  },
+  {
+    "name": "Gold Mine",
+    "village": "home",
+    "description": "\"The Gold Mine produces gold. Upgrade it to boost its production and gold storage capacity.\"",
+    "maxLevel": 17,
+    "statsColumns": [
+      "Level",
+      "Capacity",
+      "Production Rate",
+      "Hitpoints",
+      "Boost Cost",
+      "Time to Fill",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Catch-Up Point*",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Capacity": 1000,
+        "Production Rate": "200/hr",
+        "Hitpoints": 75,
+        "Boost Cost": "N/A",
+        "Time to Fill": "5h",
+        "Build Cost": 150,
+        "Build Time": "5s",
+        "Experience": 2,
+        "Catch-Up Point*": "N/A",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Capacity": 2000,
+        "Production Rate": "400/hr",
+        "Hitpoints": 150,
+        "Boost Cost": "N/A",
+        "Time to Fill": "5h",
+        "Build Cost": 300,
+        "Build Time": "15s",
+        "Experience": 3,
+        "Catch-Up Point*": "15s",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 3,
+        "Capacity": 3000,
+        "Production Rate": "600/hr",
+        "Hitpoints": 300,
+        "Boost Cost": "N/A",
+        "Time to Fill": "5h",
+        "Build Cost": 700,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Catch-Up Point*": "2m",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 4,
+        "Capacity": 5000,
+        "Production Rate": "800/hr",
+        "Hitpoints": 400,
+        "Boost Cost": "N/A",
+        "Time to Fill": "6h 15m",
+        "Build Cost": 1400,
+        "Build Time": "2m",
+        "Experience": 10,
+        "Catch-Up Point*": "6m",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 5,
+        "Capacity": 10000,
+        "Production Rate": "1,000/hr",
+        "Hitpoints": 500,
+        "Boost Cost": 4,
+        "Time to Fill": "10h",
+        "Build Cost": 3000,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Catch-Up Point*": "20m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 6,
+        "Capacity": 20000,
+        "Production Rate": "1,300/hr",
+        "Hitpoints": 550,
+        "Boost Cost": 5,
+        "Time to Fill": "15h 23m 5s",
+        "Build Cost": 7000,
+        "Build Time": "15m",
+        "Experience": 30,
+        "Catch-Up Point*": "50m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 7,
+        "Capacity": 30000,
+        "Production Rate": "1,600/hr",
+        "Hitpoints": 600,
+        "Boost Cost": 6,
+        "Time to Fill": "18h 45m",
+        "Build Cost": 14000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Catch-Up Point*": "2h 10m",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 8,
+        "Capacity": 50000,
+        "Production Rate": "1,900/hr",
+        "Hitpoints": 660,
+        "Boost Cost": 7,
+        "Time to Fill": "1d 2h 18m 57s",
+        "Build Cost": 28000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Catch-Up Point*": "5h 20m",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 9,
+        "Capacity": 75000,
+        "Production Rate": "2,200/hr",
+        "Hitpoints": 720,
+        "Boost Cost": 8,
+        "Time to Fill": "1d 10h 5m 27s",
+        "Build Cost": 56000,
+        "Build Time": "1h 30m",
+        "Experience": 73,
+        "Catch-Up Point*": "9h 30m",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 10,
+        "Capacity": 100000,
+        "Production Rate": "2,800/hr",
+        "Hitpoints": 780,
+        "Boost Cost": 9,
+        "Time to Fill": "1d 11h 42m 52s",
+        "Build Cost": 75000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Catch-Up Point*": "7h 20m",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 11,
+        "Capacity": 150000,
+        "Production Rate": "3,500/hr",
+        "Hitpoints": 860,
+        "Boost Cost": 10,
+        "Time to Fill": "1d 18h 51m 26s",
+        "Build Cost": 85000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Catch-Up Point*": "12h",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 12,
+        "Capacity": 200000,
+        "Production Rate": "4,200/hr",
+        "Hitpoints": 960,
+        "Boost Cost": 10,
+        "Time to Fill": "1d 23h 37m 9s",
+        "Build Cost": 170000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Catch-Up Point*": "20h",
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 13,
+        "Capacity": 250000,
+        "Production Rate": "4,900/hr",
+        "Hitpoints": 1080,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 3h 1m 14s",
+        "Build Cost": 400000,
+        "Build Time": "5h",
+        "Experience": 134,
+        "Catch-Up Point*": "1d 6h",
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 14,
+        "Capacity": 300000,
+        "Production Rate": "5,600/hr",
+        "Hitpoints": 1180,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 5h 34m 18s",
+        "Build Cost": 800000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Catch-Up Point*": "1d 18h",
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 15,
+        "Capacity": 350000,
+        "Production Rate": "6,300/hr",
+        "Hitpoints": 1280,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 7h 33m 20s",
+        "Build Cost": 1200000,
+        "Build Time": "10h",
+        "Experience": 189,
+        "Catch-Up Point*": "3d 8h",
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 16,
+        "Capacity": 385000,
+        "Production Rate": "7,000/hr",
+        "Hitpoints": 1350,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 7h",
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Catch-Up Point*": "9d",
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 17,
+        "Capacity": 420000,
+        "Production Rate": "7,560/hr",
+        "Hitpoints": 1400,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 7h 33m 20s",
+        "Build Cost": 8000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Catch-Up Point*": "25d",
+        "Town Hall Level": 16
+      }
+    ]
+  },
+  {
+    "name": "Elixir Collector",
+    "village": "home",
+    "description": "\"Elixir is pumped from the Ley Lines coursing underneath your village. Upgrade your Elixir Collectors to maximize Elixir production.\"",
+    "maxLevel": 17,
+    "statsColumns": [
+      "Level",
+      "Capacity",
+      "Production Rate",
+      "Hitpoints",
+      "Boost Cost",
+      "Time to Fill",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Catch-Up Point*",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Capacity": 1000,
+        "Production Rate": "200/hr",
+        "Hitpoints": 75,
+        "Boost Cost": "N/A",
+        "Time to Fill": "5h",
+        "Build Cost": 150,
+        "Build Time": "5s",
+        "Experience": 2,
+        "Catch-Up Point*": "N/A",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Capacity": 2000,
+        "Production Rate": "400/hr",
+        "Hitpoints": 150,
+        "Boost Cost": "N/A",
+        "Time to Fill": "5h",
+        "Build Cost": 300,
+        "Build Time": "15s",
+        "Experience": 3,
+        "Catch-Up Point*": "15s",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 3,
+        "Capacity": 3000,
+        "Production Rate": "600/hr",
+        "Hitpoints": 300,
+        "Boost Cost": "N/A",
+        "Time to Fill": "5h",
+        "Build Cost": 700,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Catch-Up Point*": "2m",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 4,
+        "Capacity": 5000,
+        "Production Rate": "800/hr",
+        "Hitpoints": 400,
+        "Boost Cost": "N/A",
+        "Time to Fill": "6h 15m",
+        "Build Cost": 1400,
+        "Build Time": "2m",
+        "Experience": 10,
+        "Catch-Up Point*": "6m",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 5,
+        "Capacity": 10000,
+        "Production Rate": "1,000/hr",
+        "Hitpoints": 500,
+        "Boost Cost": 4,
+        "Time to Fill": "10h",
+        "Build Cost": 3000,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Catch-Up Point*": "20m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 6,
+        "Capacity": 20000,
+        "Production Rate": "1,300/hr",
+        "Hitpoints": 550,
+        "Boost Cost": 5,
+        "Time to Fill": "15h 23m 5s",
+        "Build Cost": 7000,
+        "Build Time": "15m",
+        "Experience": 30,
+        "Catch-Up Point*": "50m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 7,
+        "Capacity": 30000,
+        "Production Rate": "1,600/hr",
+        "Hitpoints": 600,
+        "Boost Cost": 6,
+        "Time to Fill": "18h 45m",
+        "Build Cost": 14000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Catch-Up Point*": "2h 10m",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 8,
+        "Capacity": 50000,
+        "Production Rate": "1,900/hr",
+        "Hitpoints": 660,
+        "Boost Cost": 7,
+        "Time to Fill": "1d 2h 18m 57s",
+        "Build Cost": 28000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Catch-Up Point*": "5h 20m",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 9,
+        "Capacity": 75000,
+        "Production Rate": "2,200/hr",
+        "Hitpoints": 720,
+        "Boost Cost": 8,
+        "Time to Fill": "1d 10h 5m 27s",
+        "Build Cost": 56000,
+        "Build Time": "1h 30m",
+        "Experience": 73,
+        "Catch-Up Point*": "9h 30m",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 10,
+        "Capacity": 100000,
+        "Production Rate": "2,800/hr",
+        "Hitpoints": 780,
+        "Boost Cost": 9,
+        "Time to Fill": "1d 11h 42m 52s",
+        "Build Cost": 75000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Catch-Up Point*": "7h 20m",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 11,
+        "Capacity": 150000,
+        "Production Rate": "3,500/hr",
+        "Hitpoints": 860,
+        "Boost Cost": 10,
+        "Time to Fill": "1d 18h 51m 26s",
+        "Build Cost": 85000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Catch-Up Point*": "12h",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 12,
+        "Capacity": 200000,
+        "Production Rate": "4,200/hr",
+        "Hitpoints": 960,
+        "Boost Cost": 10,
+        "Time to Fill": "1d 23h 37m 9s",
+        "Build Cost": 170000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Catch-Up Point*": "20h",
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 13,
+        "Capacity": 250000,
+        "Production Rate": "4,900/hr",
+        "Hitpoints": 1080,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 3h 1m 14s",
+        "Build Cost": 400000,
+        "Build Time": "5h",
+        "Experience": 134,
+        "Catch-Up Point*": "1d 6h",
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 14,
+        "Capacity": 300000,
+        "Production Rate": "5,600/hr",
+        "Hitpoints": 1180,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 5h 34m 18s",
+        "Build Cost": 800000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Catch-Up Point*": "1d 18h",
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 15,
+        "Capacity": 350000,
+        "Production Rate": "6,300/hr",
+        "Hitpoints": 1280,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 7h 33m 20s",
+        "Build Cost": 1200000,
+        "Build Time": "10h",
+        "Experience": 189,
+        "Catch-Up Point*": "3d 8h",
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 16,
+        "Capacity": 385000,
+        "Production Rate": "7,000/hr",
+        "Hitpoints": 1350,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 7h",
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Catch-Up Point*": "9d",
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 17,
+        "Capacity": 420000,
+        "Production Rate": "7,560/hr",
+        "Hitpoints": 1400,
+        "Boost Cost": 11,
+        "Time to Fill": "2d 7h 33m 20s",
+        "Build Cost": 8000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Catch-Up Point*": "25d",
+        "Town Hall Level": 16
+      }
+    ]
+  },
+  {
+    "name": "Dark Elixir Drill",
+    "village": "home",
+    "description": "\"Our Builders have finally figured a way to extract pure Dark Elixir, the rarest form of the magical substance.\"",
+    "maxLevel": 11,
+    "statsColumns": [
+      "Level",
+      "Capacity",
+      "Production Rate",
+      "Hitpoints",
+      "Boost Cost",
+      "Time to Fill",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Catch-Up Point*",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Capacity": 160,
+        "Production Rate": "20/hr",
+        "Hitpoints": 800,
+        "Boost Cost": 7,
+        "Time to Fill": "8h",
+        "Build Cost": 180000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Catch-Up Point*": "N/A",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 2,
+        "Capacity": 300,
+        "Production Rate": "30/hr",
+        "Hitpoints": 860,
+        "Boost Cost": 10,
+        "Time to Fill": "10h",
+        "Build Cost": 270000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Catch-Up Point*": "12h",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 3,
+        "Capacity": 540,
+        "Production Rate": "45/hr",
+        "Hitpoints": 920,
+        "Boost Cost": 15,
+        "Time to Fill": "12h",
+        "Build Cost": 540000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Catch-Up Point*": "1d",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 4,
+        "Capacity": 840,
+        "Production Rate": "60/hr",
+        "Hitpoints": 980,
+        "Boost Cost": 20,
+        "Time to Fill": "14h",
+        "Build Cost": 900000,
+        "Build Time": "18h",
+        "Experience": 254,
+        "Catch-Up Point*": "2d 6h",
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 5,
+        "Capacity": 1280,
+        "Production Rate": "80/hr",
+        "Hitpoints": 1060,
+        "Boost Cost": 25,
+        "Time to Fill": "16h",
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Catch-Up Point*": "3d",
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 6,
+        "Capacity": 1800,
+        "Production Rate": "100/hr",
+        "Hitpoints": 1160,
+        "Boost Cost": 30,
+        "Time to Fill": "18h",
+        "Build Cost": 1800000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Catch-Up Point*": "6d",
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 7,
+        "Capacity": 2400,
+        "Production Rate": "120/hr",
+        "Hitpoints": 1280,
+        "Boost Cost": 35,
+        "Time to Fill": "20h",
+        "Build Cost": 2100000,
+        "Build Time": "1d 18h",
+        "Experience": 388,
+        "Catch-Up Point*": "8d 18h",
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 8,
+        "Capacity": 3000,
+        "Production Rate": "140/hr",
+        "Hitpoints": 1380,
+        "Boost Cost": 40,
+        "Time to Fill": "21h 25m 43s",
+        "Build Cost": 2400000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Catch-Up Point*": "12d",
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 9,
+        "Capacity": 3600,
+        "Production Rate": "160/hr",
+        "Hitpoints": 1480,
+        "Boost Cost": 45,
+        "Time to Fill": "22h 30m",
+        "Build Cost": 3700000,
+        "Build Time": "2d 12h",
+        "Experience": 464,
+        "Catch-Up Point*": "17d 12h",
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 10,
+        "Capacity": 4200,
+        "Production Rate": "180/hr",
+        "Hitpoints": 1550,
+        "Boost Cost": 50,
+        "Time to Fill": "23h 20m",
+        "Build Cost": 5300000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Catch-Up Point*": "24d",
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 11,
+        "Capacity": 4600,
+        "Production Rate": "200/hr",
+        "Hitpoints": 1600,
+        "Boost Cost": 55,
+        "Time to Fill": "23h",
+        "Build Cost": 12000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Catch-Up Point*": "54d",
+        "Town Hall Level": 16
+      }
+    ]
+  },
+  {
+    "name": "Gold Storage",
+    "village": "home",
+    "description": "\"All your precious gold is stored here. Dont let sneaky goblins anywhere near! Upgrade the storage to increase its capacity and durability against attack.\"",
+    "maxLevel": 19,
+    "statsColumns": [
+      "Level",
+      "Storage Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Storage Capacity": 1500,
+        "Hitpoints": 150,
+        "Build Cost": 300,
+        "Build Time": "10s",
+        "Experience": 3,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Storage Capacity": 3000,
+        "Hitpoints": 300,
+        "Build Cost": 750,
+        "Build Time": "2m",
+        "Experience": 10,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 3,
+        "Storage Capacity": 6000,
+        "Hitpoints": 450,
+        "Build Cost": 1500,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 4,
+        "Storage Capacity": 12000,
+        "Hitpoints": 600,
+        "Build Cost": 3000,
+        "Build Time": "15m",
+        "Experience": 30,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 5,
+        "Storage Capacity": 25000,
+        "Hitpoints": 800,
+        "Build Cost": 6000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 6,
+        "Storage Capacity": 45000,
+        "Hitpoints": 1000,
+        "Build Cost": 12000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 7,
+        "Storage Capacity": 100000,
+        "Hitpoints": 1250,
+        "Build Cost": 25000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 8,
+        "Storage Capacity": 225000,
+        "Hitpoints": 1500,
+        "Build Cost": 50000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 9,
+        "Storage Capacity": 450000,
+        "Hitpoints": 1700,
+        "Build Cost": 100000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 10,
+        "Storage Capacity": 850000,
+        "Hitpoints": 1900,
+        "Build Cost": 250000,
+        "Build Time": "5h",
+        "Experience": 134,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 11,
+        "Storage Capacity": 1750000,
+        "Hitpoints": 2100,
+        "Build Cost": 500000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 12,
+        "Storage Capacity": 2000000,
+        "Hitpoints": 2500,
+        "Build Cost": 1000000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 13,
+        "Storage Capacity": 3000000,
+        "Hitpoints": 2900,
+        "Build Cost": 1800000,
+        "Build Time": "18h",
+        "Experience": 254,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 14,
+        "Storage Capacity": 4000000,
+        "Hitpoints": 3300,
+        "Build Cost": 2800000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 15,
+        "Storage Capacity": 4500000,
+        "Hitpoints": 3700,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 16,
+        "Storage Capacity": 5000000,
+        "Hitpoints": 3900,
+        "Build Cost": 4000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 17,
+        "Storage Capacity": 5500000,
+        "Hitpoints": 4050,
+        "Build Cost": 5500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 18,
+        "Storage Capacity": 6000000,
+        "Hitpoints": 4200,
+        "Build Cost": 10000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 19,
+        "Storage Capacity": 6500000,
+        "Hitpoints": 4300,
+        "Build Cost": 18000000,
+        "Build Time": "12d 12h",
+        "Experience": 1039,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Elixir Storage",
+    "village": "home",
+    "description": "\"These storages contain the elixir pumped from underground. Upgrade them to increase the maximum amount of elixir you can store.\"",
+    "maxLevel": 19,
+    "statsColumns": [
+      "Level",
+      "Storage Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Storage Capacity": 1500,
+        "Hitpoints": 150,
+        "Build Cost": 300,
+        "Build Time": "10s",
+        "Experience": 3,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Storage Capacity": 3000,
+        "Hitpoints": 300,
+        "Build Cost": 750,
+        "Build Time": "2m",
+        "Experience": 10,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 3,
+        "Storage Capacity": 6000,
+        "Hitpoints": 450,
+        "Build Cost": 1500,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 4,
+        "Storage Capacity": 12000,
+        "Hitpoints": 600,
+        "Build Cost": 3000,
+        "Build Time": "15m",
+        "Experience": 30,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 5,
+        "Storage Capacity": 25000,
+        "Hitpoints": 800,
+        "Build Cost": 6000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 6,
+        "Storage Capacity": 45000,
+        "Hitpoints": 1000,
+        "Build Cost": 12000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 7,
+        "Storage Capacity": 100000,
+        "Hitpoints": 1250,
+        "Build Cost": 25000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 8,
+        "Storage Capacity": 225000,
+        "Hitpoints": 1500,
+        "Build Cost": 50000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 9,
+        "Storage Capacity": 450000,
+        "Hitpoints": 1700,
+        "Build Cost": 100000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 10,
+        "Storage Capacity": 850000,
+        "Hitpoints": 1900,
+        "Build Cost": 250000,
+        "Build Time": "5h",
+        "Experience": 134,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 11,
+        "Storage Capacity": 1750000,
+        "Hitpoints": 2100,
+        "Build Cost": 500000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 12,
+        "Storage Capacity": 2000000,
+        "Hitpoints": 2500,
+        "Build Cost": 1000000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 13,
+        "Storage Capacity": 3000000,
+        "Hitpoints": 2900,
+        "Build Cost": 1800000,
+        "Build Time": "18h",
+        "Experience": 254,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 14,
+        "Storage Capacity": 4000000,
+        "Hitpoints": 3300,
+        "Build Cost": 2800000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 15,
+        "Storage Capacity": 4500000,
+        "Hitpoints": 3700,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 16,
+        "Storage Capacity": 5000000,
+        "Hitpoints": 3900,
+        "Build Cost": 4000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 17,
+        "Storage Capacity": 5500000,
+        "Hitpoints": 4050,
+        "Build Cost": 5500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 18,
+        "Storage Capacity": 6000000,
+        "Hitpoints": 4200,
+        "Build Cost": 10000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 19,
+        "Storage Capacity": 6500000,
+        "Hitpoints": 4300,
+        "Build Cost": 18000000,
+        "Build Time": "12d 12h",
+        "Experience": 1039,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Dark Elixir Storage",
+    "village": "home",
+    "description": "\"The power of Dark Elixir could not be contained in a regularly shaped Elixir vat. As its three times as powerful, we had to invent a cubical form of storage!\"",
+    "maxLevel": 13,
+    "statsColumns": [
+      "Level",
+      "Storage Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Storage Capacity": 10000,
+        "Hitpoints": 2000,
+        "Build Cost": 250000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 2,
+        "Storage Capacity": 17500,
+        "Hitpoints": 2200,
+        "Build Cost": 500000,
+        "Build Time": "16h",
+        "Experience": 240,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 3,
+        "Storage Capacity": 40000,
+        "Hitpoints": 2400,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 4,
+        "Storage Capacity": 75000,
+        "Hitpoints": 2600,
+        "Build Cost": 1500000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 5,
+        "Storage Capacity": 140000,
+        "Hitpoints": 2900,
+        "Build Cost": 2000000,
+        "Build Time": "1d 16h",
+        "Experience": 379,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 6,
+        "Storage Capacity": 180000,
+        "Hitpoints": 3200,
+        "Build Cost": 2400000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 7,
+        "Storage Capacity": 220000,
+        "Hitpoints": 3500,
+        "Build Cost": 3800000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 8,
+        "Storage Capacity": 280000,
+        "Hitpoints": 3800,
+        "Build Cost": 5400000,
+        "Build Time": "3d 12h",
+        "Experience": 549,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 9,
+        "Storage Capacity": 330000,
+        "Hitpoints": 4100,
+        "Build Cost": 6600000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 10,
+        "Storage Capacity": 360000,
+        "Hitpoints": 4300,
+        "Build Cost": 8000000,
+        "Build Time": "4d 12h",
+        "Experience": 623,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 11,
+        "Storage Capacity": 390000,
+        "Hitpoints": 4500,
+        "Build Cost": 10000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 12,
+        "Storage Capacity": 420000,
+        "Hitpoints": 4700,
+        "Build Cost": 16000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 13,
+        "Storage Capacity": 450000,
+        "Hitpoints": 4800,
+        "Build Cost": 25000000,
+        "Build Time": "13d",
+        "Experience": 1059,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Clan Castle",
+    "village": "home",
+    "description": "\"The Clan Castle houses your Treasury and any reinforcement troops or spells sent by your clanmates.\"",
+    "maxLevel": 14,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Troop Capacity",
+      "Spell Capacity",
+      "Siege Machine Capacity",
+      "Level_2",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 600,
+        "Troop Capacity": 10,
+        "Spell Capacity": "-",
+        "Siege Machine Capacity": "-",
+        "Level_2": 5,
+        "Build Cost": 10000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 1200,
+        "Troop Capacity": 15,
+        "Spell Capacity": "-",
+        "Siege Machine Capacity": "-",
+        "Level_2": 6,
+        "Build Cost": 50000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 1800,
+        "Troop Capacity": 20,
+        "Spell Capacity": "-",
+        "Siege Machine Capacity": "-",
+        "Level_2": 7,
+        "Build Cost": 600000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 2600,
+        "Troop Capacity": 25,
+        "Spell Capacity": 1,
+        "Siege Machine Capacity": "-",
+        "Level_2": 8,
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 3000,
+        "Troop Capacity": 30,
+        "Spell Capacity": 1,
+        "Siege Machine Capacity": "-",
+        "Level_2": 9,
+        "Build Cost": 2000000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 3400,
+        "Troop Capacity": 35,
+        "Spell Capacity": 1,
+        "Siege Machine Capacity": 1,
+        "Level_2": 10,
+        "Build Cost": 3000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 4000,
+        "Troop Capacity": 35,
+        "Spell Capacity": 2,
+        "Siege Machine Capacity": 1,
+        "Level_2": 11,
+        "Build Cost": 5000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 4400,
+        "Troop Capacity": 40,
+        "Spell Capacity": 2,
+        "Siege Machine Capacity": 1,
+        "Level_2": 12,
+        "Build Cost": 5000000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 4800,
+        "Troop Capacity": 45,
+        "Spell Capacity": 2,
+        "Siege Machine Capacity": 1,
+        "Level_2": 13,
+        "Build Cost": 8000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 5200,
+        "Troop Capacity": 45,
+        "Spell Capacity": 3,
+        "Siege Machine Capacity": 1,
+        "Level_2": 14,
+        "Build Cost": 10000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 11,
+        "Hitpoints": 5400,
+        "Troop Capacity": 50,
+        "Spell Capacity": 3,
+        "Siege Machine Capacity": 1,
+        "Level_2": 15,
+        "Build Cost": 12000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 12,
+        "Hitpoints": 5600,
+        "Troop Capacity": 50,
+        "Spell Capacity": 3,
+        "Siege Machine Capacity": 2,
+        "Level_2": 16,
+        "Build Cost": 14500000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 13,
+        "Hitpoints": 5800,
+        "Troop Capacity": 55,
+        "Spell Capacity": 3,
+        "Siege Machine Capacity": 2,
+        "Level_2": 16,
+        "Build Cost": 19000000,
+        "Build Time": "10d",
+        "Experience": 929,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 14,
+        "Hitpoints": 6000,
+        "Troop Capacity": 55,
+        "Spell Capacity": 4,
+        "Siege Machine Capacity": 2,
+        "Level_2": 16,
+        "Build Cost": 28000000,
+        "Build Time": "14d",
+        "Experience": 1099,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Army Camp",
+    "village": "home",
+    "description": "\"Your troops are stationed in Army Camps. Build more camps and upgrade them to muster a powerful army.\"",
+    "maxLevel": 14,
+    "statsColumns": [
+      "Level",
+      "Troop Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Troop Capacity": 20,
+        "Hitpoints": 100,
+        "Build Cost": 200,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Troop Capacity": 30,
+        "Hitpoints": 150,
+        "Build Cost": 2000,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 3,
+        "Troop Capacity": 35,
+        "Hitpoints": 200,
+        "Build Cost": 10000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Troop Capacity": 40,
+        "Hitpoints": 250,
+        "Build Cost": 100000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Troop Capacity": 45,
+        "Hitpoints": 300,
+        "Build Cost": 250000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Troop Capacity": 50,
+        "Hitpoints": 330,
+        "Build Cost": 500000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Troop Capacity": 55,
+        "Hitpoints": 400,
+        "Build Cost": 1500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 8,
+        "Troop Capacity": 60,
+        "Hitpoints": 500,
+        "Build Cost": 2500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 9,
+        "Troop Capacity": 65,
+        "Hitpoints": 600,
+        "Build Cost": 4200000,
+        "Build Time": "3d 12h",
+        "Experience": 549,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 10,
+        "Troop Capacity": 70,
+        "Hitpoints": 700,
+        "Build Cost": 4500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 11,
+        "Troop Capacity": 75,
+        "Hitpoints": 800,
+        "Build Cost": 7500000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 12,
+        "Troop Capacity": 80,
+        "Hitpoints": 850,
+        "Build Cost": 10000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 13,
+        "Troop Capacity": 85,
+        "Hitpoints": 900,
+        "Build Cost": 17000000,
+        "Build Time": "7d 12h",
+        "Experience": 804,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 14,
+        "Troop Capacity": 88,
+        "Hitpoints": 950,
+        "Build Cost": 26000000,
+        "Build Time": "15d",
+        "Experience": 1138,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Barracks",
+    "village": "home",
+    "description": "\"The Barracks allow you to train troops to attack your enemies. Upgrade the Barracks to unlock advanced units that can win epic battles.\"",
+    "maxLevel": 19,
+    "statsColumns": [
+      "Level",
+      "Unlocked Unit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Unlocked Unit": "Barbarian",
+        "Hitpoints": 100,
+        "Build Cost": 100,
+        "Build Time": "10s",
+        "Experience": 3,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Unlocked Unit": "Archer",
+        "Hitpoints": 200,
+        "Build Cost": 500,
+        "Build Time": "15s",
+        "Experience": 3,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 3,
+        "Unlocked Unit": "Giant",
+        "Hitpoints": 250,
+        "Build Cost": 2500,
+        "Build Time": "2m",
+        "Experience": 10,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 4,
+        "Unlocked Unit": "Goblin",
+        "Hitpoints": 300,
+        "Build Cost": 5000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 5,
+        "Unlocked Unit": "Wall Breaker",
+        "Hitpoints": 360,
+        "Build Cost": 20000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 6,
+        "Unlocked Unit": "Balloon",
+        "Hitpoints": 420,
+        "Build Cost": 120000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 7,
+        "Unlocked Unit": "Wizard",
+        "Hitpoints": 500,
+        "Build Cost": 270000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 8,
+        "Unlocked Unit": "Healer",
+        "Hitpoints": 575,
+        "Build Cost": 600000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 9,
+        "Unlocked Unit": "Dragon",
+        "Hitpoints": 650,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 10,
+        "Unlocked Unit": "P.E.K.K.A",
+        "Hitpoints": 730,
+        "Build Cost": 1400000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 11,
+        "Unlocked Unit": "Baby Dragon}}",
+        "Hitpoints": 810,
+        "Build Cost": 2600000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 12,
+        "Unlocked Unit": "Miner",
+        "Hitpoints": 900,
+        "Build Cost": 3700000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 13,
+        "Unlocked Unit": "Electro Dragon",
+        "Hitpoints": 980,
+        "Build Cost": 6000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 14,
+        "Unlocked Unit": "Yeti",
+        "Hitpoints": 1050,
+        "Build Cost": 7000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 15,
+        "Unlocked Unit": "Dragon Rider",
+        "Hitpoints": 1150,
+        "Build Cost": 9000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 16,
+        "Unlocked Unit": "Electro Titan",
+        "Hitpoints": 1250,
+        "Build Cost": 11000000,
+        "Build Time": "7d 12h",
+        "Experience": 804,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 17,
+        "Unlocked Unit": "Root Rider",
+        "Hitpoints": 1350,
+        "Build Cost": 12600000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 18,
+        "Unlocked Unit": "Thrower",
+        "Hitpoints": 1450,
+        "Build Cost": 15000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 19,
+        "Unlocked Unit": "Meteor Golem",
+        "Hitpoints": 1520,
+        "Build Cost": 26000000,
+        "Build Time": "10d 12h",
+        "Experience": 952,
+        "Town Hall Level": 17
+      }
+    ]
+  },
+  {
+    "name": "Dark Barracks",
+    "village": "home",
+    "description": "\"The Dark Barracks will open doors for creatures born out of Dark Elixir. Upgrade the barracks to unlock more troops with unique battle skills.\"",
+    "maxLevel": 13,
+    "statsColumns": [
+      "Level",
+      "Unlocked Unit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Unlocked Unit": "Minion",
+        "Hitpoints": 500,
+        "Build Cost": 200000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 2,
+        "Unlocked Unit": "Hog Rider",
+        "Hitpoints": 550,
+        "Build Cost": 600000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 3,
+        "Unlocked Unit": "Valkyrie",
+        "Hitpoints": 600,
+        "Build Cost": 1000000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 4,
+        "Unlocked Unit": "Golem",
+        "Hitpoints": 650,
+        "Build Cost": 1600000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 5,
+        "Unlocked Unit": "Witch",
+        "Hitpoints": 700,
+        "Build Cost": 2200000,
+        "Build Time": "2d 12h",
+        "Experience": 464,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 6,
+        "Unlocked Unit": "Lava Hound",
+        "Hitpoints": 750,
+        "Build Cost": 2900000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 7,
+        "Unlocked Unit": "Bowler",
+        "Hitpoints": 800,
+        "Build Cost": 4000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 8,
+        "Unlocked Unit": "Ice Golem",
+        "Hitpoints": 850,
+        "Build Cost": 7000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 9,
+        "Unlocked Unit": "Headhunter",
+        "Hitpoints": 900,
+        "Build Cost": 7200000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 10,
+        "Unlocked Unit": "Apprentice Warden",
+        "Hitpoints": 950,
+        "Build Cost": 10000000,
+        "Build Time": "7d 12h",
+        "Experience": 804,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 11,
+        "Unlocked Unit": "Druid",
+        "Hitpoints": 1000,
+        "Build Cost": 12000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 12,
+        "Unlocked Unit": "Furnace",
+        "Hitpoints": 1050,
+        "Build Cost": 20000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 13,
+        "Unlocked Unit": "Ruin Witch",
+        "Hitpoints": 1100,
+        "Build Cost": 23000000,
+        "Build Time": "10d",
+        "Experience": 929,
+        "Town Hall Level": 16
+      }
+    ]
+  },
+  {
+    "name": "Laboratory",
+    "village": "home",
+    "description": "\"What dark secrets do these Wizards hide inside their Laboratory? Nobody has dared to look. All we know is that their research makes our spells and troops harder, better, faster and stronger!\"",
+    "maxLevel": 16,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 500,
+        "Build Cost": 5000,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 550,
+        "Build Cost": 25000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 600,
+        "Build Cost": 50000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 650,
+        "Build Cost": 100000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 700,
+        "Build Cost": 200000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 750,
+        "Build Cost": 400000,
+        "Build Time": "16h",
+        "Experience": 240,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 830,
+        "Build Cost": 800000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 950,
+        "Build Cost": 1300000,
+        "Build Time": "1d 18h",
+        "Experience": 388,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 1070,
+        "Build Cost": 2100000,
+        "Build Time": "2d 18h",
+        "Experience": 487,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 1140,
+        "Build Cost": 3800000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 11,
+        "Hitpoints": 1210,
+        "Build Cost": 5500000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 12,
+        "Hitpoints": 1280,
+        "Build Cost": 8100000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 13,
+        "Hitpoints": 1350,
+        "Build Cost": 10800000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 14,
+        "Hitpoints": 1400,
+        "Build Cost": 13000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 15,
+        "Hitpoints": 1450,
+        "Build Cost": 18000000,
+        "Build Time": "10d",
+        "Experience": 929,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 16,
+        "Hitpoints": 1500,
+        "Build Cost": 27000000,
+        "Build Time": "16d",
+        "Experience": 1175,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Spell Factory",
+    "village": "home",
+    "description": "\"The Spell Factory is home to veteran Wizards who are better suited to creating magical weapons than front-line combat. Use their powerful Attack Spells to turn the tide of a battle in your favor!\"",
+    "maxLevel": 9,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Spell(s) Unlocked",
+      "Spell Storage Capacity",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 425,
+        "Spell(s) Unlocked": "Lightning Spell",
+        "Spell Storage Capacity": 2,
+        "Build Cost": 150000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 470,
+        "Spell(s) Unlocked": "Healing Spell",
+        "Spell Storage Capacity": 4,
+        "Build Cost": 300000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 520,
+        "Spell(s) Unlocked": "Rage Spell",
+        "Spell Storage Capacity": 6,
+        "Build Cost": 600000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 600,
+        "Spell(s) Unlocked": "Jump Spell Freeze Spell",
+        "Spell Storage Capacity": 8,
+        "Build Cost": 1200000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 720,
+        "Spell(s) Unlocked": "Clone Spell",
+        "Spell Storage Capacity": 10,
+        "Build Cost": 2000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 840,
+        "Spell(s) Unlocked": "Invisibility Spell",
+        "Spell Storage Capacity": 10,
+        "Build Cost": 3500000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 960,
+        "Spell(s) Unlocked": "Recall Spell",
+        "Spell Storage Capacity": 10,
+        "Build Cost": 9000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 1080,
+        "Spell(s) Unlocked": "Revive Spell",
+        "Spell Storage Capacity": 10,
+        "Build Cost": 14000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 1150,
+        "Spell(s) Unlocked": "Totem Spell",
+        "Spell Storage Capacity": 10,
+        "Build Cost": 24000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 16
+      }
+    ]
+  },
+  {
+    "name": "Hero Hall",
+    "village": "home",
+    "description": "\"This fancy Hall honors your Villages mightiest warriors! Visit the Hero Hall for all your heroic essentials, and to upgrade Heroes. Upgrade the Hero Hall to unlock more Heroes!\"",
+    "maxLevel": 12,
+    "statsColumns": [
+      "Level",
+      "Unlocked Hero",
+      "Hero Slots",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Unlocked Hero": "Barbarian King",
+        "Hero Slots": 1,
+        "Hitpoints": 800,
+        "Build Cost": 30000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 2,
+        "Unlocked Hero": "Archer Queen",
+        "Hero Slots": 1,
+        "Hitpoints": 1600,
+        "Build Cost": 1600000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 3,
+        "Unlocked Hero": "Minion Prince",
+        "Hero Slots": 2,
+        "Hitpoints": 2400,
+        "Build Cost": 2300000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 4,
+        "Unlocked Hero": "-",
+        "Hero Slots": 2,
+        "Hitpoints": 3200,
+        "Build Cost": 2500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 5,
+        "Unlocked Hero": "Grand Warden",
+        "Hero Slots": 3,
+        "Hitpoints": 3600,
+        "Build Cost": 4500000,
+        "Build Time": "4d 12h",
+        "Experience": 623,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 6,
+        "Unlocked Hero": "-",
+        "Hero Slots": 3,
+        "Hitpoints": 3800,
+        "Build Cost": 5500000,
+        "Build Time": "5d",
+        "Experience": 720,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 7,
+        "Unlocked Hero": "Royal Champion",
+        "Hero Slots": 4,
+        "Hitpoints": 4200,
+        "Build Cost": 8500000,
+        "Build Time": "6d",
+        "Experience": 777,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 8,
+        "Unlocked Hero": "-",
+        "Hero Slots": 4,
+        "Hitpoints": 4600,
+        "Build Cost": 9500000,
+        "Build Time": "6d 12h",
+        "Experience": 749,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 9,
+        "Unlocked Hero": "Dragon Duke",
+        "Hero Slots": 4,
+        "Hitpoints": 5000,
+        "Build Cost": 11000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 10,
+        "Unlocked Hero": "-",
+        "Hero Slots": 4,
+        "Hitpoints": 5400,
+        "Build Cost": 13000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 11,
+        "Unlocked Hero": "-",
+        "Hero Slots": 4,
+        "Hitpoints": 5800,
+        "Build Cost": 17000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 12,
+        "Unlocked Hero": "-",
+        "Hero Slots": 4,
+        "Hitpoints": 6000,
+        "Build Cost": 26000000,
+        "Build Time": "13d 12h",
+        "Experience": 1080,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Dark Spell Factory",
+    "village": "home",
+    "description": "\"Only the most brilliant or reckless Master Wizards dabble in Dark Elixir brewery. Their compact Dark Spells require keen insight to master, but provide unique tactical advantages.\"",
+    "maxLevel": 8,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Spell(s) Unlocked",
+      "Spell Storage Capacity",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 600,
+        "Spell(s) Unlocked": "Poison Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 130000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 660,
+        "Spell(s) Unlocked": "Earthquake Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 260000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 720,
+        "Spell(s) Unlocked": "Haste Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 600000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 780,
+        "Spell(s) Unlocked": "Skeleton Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 1200000,
+        "Build Time": "3d",
+        "Experience": 587,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 840,
+        "Spell(s) Unlocked": "Bat Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 2500000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 950,
+        "Spell(s) Unlocked": "Overgrowth Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 4000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 1010,
+        "Spell(s) Unlocked": "Ice Block Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 11000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 1070,
+        "Spell(s) Unlocked": "Angry Spell",
+        "Spell Storage Capacity": 1,
+        "Build Cost": 18000000,
+        "Build Time": "10d",
+        "Experience": 929,
+        "Town Hall Level": 15
+      }
+    ]
+  },
+  {
+    "name": "Blacksmith",
+    "village": "home",
+    "description": "\"Bring the right magical ores here and your heroes equipment can be upgraded to be even mightier! The smoke from the furnace helps make delicious, if unhealthy, brisket.\"",
+    "maxLevel": 0,
+    "statsColumns": [
+      "Level",
+      "Equipment Unlocked",
+      "Hitpoints",
+      "Ore Capacity",
+      "Level_2",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level",
+      "Shiny Ore",
+      "Glowy Ore",
+      "Starry Ore",
+      "Common",
+      "Epic"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Equipment Unlocked": "Earthquake Boots",
+        "Hitpoints": 700,
+        "Ore Capacity": 10000,
+        "Level_2": 1000,
+        "Build Cost": 200,
+        "Build Time": 9,
+        "Experience": 12,
+        "Town Hall Level": 600000,
+        "Shiny Ore": "12h",
+        "Glowy Ore": 207,
+        "Starry Ore": 8
+      },
+      {
+        "Level": 2,
+        "Equipment Unlocked": "Giant Arrow",
+        "Hitpoints": 800,
+        "Ore Capacity": 15000,
+        "Level_2": 1500,
+        "Build Cost": 300,
+        "Build Time": 9,
+        "Experience": 12,
+        "Town Hall Level": 1200000,
+        "Shiny Ore": "1d",
+        "Glowy Ore": 293,
+        "Starry Ore": 9
+      },
+      {
+        "Level": 3,
+        "Equipment Unlocked": "Vampstache Metal Pants",
+        "Hitpoints": 900,
+        "Ore Capacity": 20000,
+        "Level_2": 2000,
+        "Build Cost": 400,
+        "Build Time": 12,
+        "Experience": 15,
+        "Town Hall Level": 2300000,
+        "Shiny Ore": "2d",
+        "Glowy Ore": 415,
+        "Starry Ore": 10
+      },
+      {
+        "Level": 4,
+        "Equipment Unlocked": "Rage Gem",
+        "Hitpoints": 1000,
+        "Ore Capacity": 25000,
+        "Level_2": 2500,
+        "Build Cost": 500,
+        "Build Time": 12,
+        "Experience": 15,
+        "Town Hall Level": 3000000,
+        "Shiny Ore": "3d",
+        "Glowy Ore": 509,
+        "Starry Ore": 11
+      },
+      {
+        "Level": 5,
+        "Equipment Unlocked": "Healer Puppet Noble Iron",
+        "Hitpoints": 1100,
+        "Ore Capacity": 30000,
+        "Level_2": 3000,
+        "Build Cost": 600,
+        "Build Time": 15,
+        "Experience": 18,
+        "Town Hall Level": 5000000,
+        "Shiny Ore": "4d",
+        "Glowy Ore": 587,
+        "Starry Ore": 12
+      },
+      {
+        "Level": 6,
+        "Equipment Unlocked": "Healing Tome",
+        "Hitpoints": 1200,
+        "Ore Capacity": 35000,
+        "Level_2": 3500,
+        "Build Cost": 700,
+        "Build Time": 15,
+        "Experience": 18,
+        "Town Hall Level": 6200000,
+        "Shiny Ore": "4d 12h",
+        "Glowy Ore": 623,
+        "Starry Ore": 13
+      },
+      {
+        "Level": 7,
+        "Equipment Unlocked": "Hog Rider Puppet",
+        "Hitpoints": 1300,
+        "Ore Capacity": 40000,
+        "Level_2": 4000,
+        "Build Cost": 800,
+        "Build Time": 18,
+        "Experience": 21,
+        "Town Hall Level": 9200000,
+        "Shiny Ore": "5d",
+        "Glowy Ore": 657,
+        "Starry Ore": 14
+      },
+      {
+        "Level": 8,
+        "Equipment Unlocked": "Haste Vial",
+        "Hitpoints": 1400,
+        "Ore Capacity": 45000,
+        "Level_2": 4500,
+        "Build Cost": 900,
+        "Build Time": 18,
+        "Experience": 24,
+        "Town Hall Level": 10000000,
+        "Shiny Ore": "6d",
+        "Glowy Ore": 720,
+        "Starry Ore": 15
+      },
+      {
+        "Level": 9,
+        "Equipment Unlocked": "Stun Blaster",
+        "Hitpoints": 1500,
+        "Ore Capacity": 50000,
+        "Level_2": 5000,
+        "Build Cost": 1000,
+        "Build Time": 18,
+        "Experience": 27,
+        "Town Hall Level": 11000000,
+        "Shiny Ore": "7d",
+        "Glowy Ore": 777,
+        "Starry Ore": 16
+      },
+      {
+        "Level": 10,
+        "Equipment Unlocked": "Electro Fangs",
+        "Hitpoints": 1600,
+        "Ore Capacity": 50000,
+        "Level_2": 5000,
+        "Build Cost": 1000,
+        "Build Time": 18,
+        "Experience": 27,
+        "Town Hall Level": 18000000,
+        "Shiny Ore": "10d",
+        "Glowy Ore": 929,
+        "Starry Ore": 17
+      }
+    ]
+  },
+  {
+    "name": "Workshop",
+    "village": "home",
+    "description": "\"The Workshop is where Siege Machines are built. Upgrade the Workshop to unlock different Siege Machines!\"",
+    "maxLevel": 9,
+    "statsColumns": [
+      "Level",
+      "Unlocked Siege Machine",
+      "Siege Machine Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Unlocked Siege Machine": "Wall Wrecker",
+        "Siege Machine Capacity": 1,
+        "Hitpoints": 1000,
+        "Build Cost": 2400000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 2,
+        "Unlocked Siege Machine": "Battle Blimp",
+        "Siege Machine Capacity": 2,
+        "Hitpoints": 1100,
+        "Build Cost": 3700000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 3,
+        "Unlocked Siege Machine": "Stone Slammer",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1200,
+        "Build Cost": 5000000,
+        "Build Time": "3d 12h",
+        "Experience": 549,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 4,
+        "Unlocked Siege Machine": "Siege Barracks",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1300,
+        "Build Cost": 8700000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 5,
+        "Unlocked Siege Machine": "Log Launcher",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1400,
+        "Build Cost": 9000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 6,
+        "Unlocked Siege Machine": "Flame Flinger",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1500,
+        "Build Cost": 10000000,
+        "Build Time": "5d 12h",
+        "Experience": 689,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 7,
+        "Unlocked Siege Machine": "Battle Drill",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1600,
+        "Build Cost": 11000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 8,
+        "Unlocked Siege Machine": "Troop Launcher",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1700,
+        "Build Cost": 13000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 9,
+        "Unlocked Siege Machine": "Sky Wagon",
+        "Siege Machine Capacity": 3,
+        "Hitpoints": 1800,
+        "Build Cost": 26000000,
+        "Build Time": "13d 12h",
+        "Experience": 1080,
+        "Town Hall Level": 17
+      }
+    ]
+  },
+  {
+    "name": "Pet House",
+    "village": "home",
+    "description": "\"Every hero deserves a loyal companion. The Pet House allows you to unlock powerful Pets with various abilities to fight alongside your heroes.\"",
+    "maxLevel": 12,
+    "statsColumns": [
+      "Level",
+      "Unlocked Pet",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Unlocked Pet": "L.A.S.S.I",
+        "Hitpoints": 700,
+        "Build Cost": 3000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 2,
+        "Unlocked Pet": "Electro Owl",
+        "Hitpoints": 800,
+        "Build Cost": 4000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 3,
+        "Unlocked Pet": "Mighty Yak",
+        "Hitpoints": 900,
+        "Build Cost": 5000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 4,
+        "Unlocked Pet": "Unicorn",
+        "Hitpoints": 1000,
+        "Build Cost": 6000000,
+        "Build Time": "3d 12h",
+        "Experience": 549,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 5,
+        "Unlocked Pet": "Frosty",
+        "Hitpoints": 1050,
+        "Build Cost": 7000000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 6,
+        "Unlocked Pet": "Diggy",
+        "Hitpoints": 1100,
+        "Build Cost": 8000000,
+        "Build Time": "4d 12h",
+        "Experience": 623,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 7,
+        "Unlocked Pet": "Poison Lizard",
+        "Hitpoints": 1150,
+        "Build Cost": 9000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 8,
+        "Unlocked Pet": "Phoenix",
+        "Hitpoints": 1200,
+        "Build Cost": 10000000,
+        "Build Time": "5d 12h",
+        "Experience": 689,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 9,
+        "Unlocked Pet": "Spirit Fox",
+        "Hitpoints": 1250,
+        "Build Cost": 11000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 10,
+        "Unlocked Pet": "Angry Jelly",
+        "Hitpoints": 1300,
+        "Build Cost": 12000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 11,
+        "Unlocked Pet": "Sneezy",
+        "Hitpoints": 1350,
+        "Build Cost": 16500000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 12,
+        "Unlocked Pet": "Greedy Raven",
+        "Hitpoints": 1400,
+        "Build Cost": 25500000,
+        "Build Time": "13d 12h",
+        "Experience": 1080,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Bomb",
+    "village": "home",
+    "description": "\"Nothing says STAY OUT quite like a good old-fashioned hidden bomb.\"",
+    "maxLevel": 0,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 20,
+        "Build Cost": 400,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Damage": 24,
+        "Build Cost": 1000,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Damage": 29,
+        "Build Cost": 10000,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 4,
+        "Damage": 35,
+        "Build Cost": 40000,
+        "Build Time": "40m",
+        "Experience": 48,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 5,
+        "Damage": 42,
+        "Build Cost": 100000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 6,
+        "Damage": 54,
+        "Build Cost": 230000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 7,
+        "Damage": 72,
+        "Build Cost": 330000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 8,
+        "Damage": 92,
+        "Build Cost": 500000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 9,
+        "Damage": 125,
+        "Build Cost": 750000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 10,
+        "Damage": 140,
+        "Build Cost": 1300000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 11,
+        "Damage": 155,
+        "Build Cost": 2500000,
+        "Build Time": "18h",
+        "Experience": 254,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 12,
+        "Damage": 170,
+        "Build Cost": 4000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 13,
+        "Damage": 185,
+        "Build Cost": 8500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 14,
+        "Damage": 200,
+        "Build Cost": 14000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Spring Trap",
+    "village": "home",
+    "description": "\"This bouncy little number tosses an unwanted visitor right off your property!\"",
+    "maxLevel": 13,
+    "statsColumns": [
+      "Level",
+      "Spring Capacity",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Spring Capacity": 10,
+        "Damage": 0,
+        "Build Cost": 2000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 2,
+        "Spring Capacity": 12,
+        "Damage": 250,
+        "Build Cost": 130000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 3,
+        "Spring Capacity": 14,
+        "Damage": 300,
+        "Build Cost": 240000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 4,
+        "Spring Capacity": 16,
+        "Damage": 350,
+        "Build Cost": 350000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 5,
+        "Spring Capacity": 18,
+        "Damage": 400,
+        "Build Cost": 800000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 6,
+        "Spring Capacity": 18,
+        "Damage": 500,
+        "Build Cost": 1000000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 7,
+        "Spring Capacity": 18,
+        "Damage": 600,
+        "Build Cost": 1700000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 8,
+        "Spring Capacity": 18,
+        "Damage": 750,
+        "Build Cost": 2000000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 9,
+        "Spring Capacity": 18,
+        "Damage": 900,
+        "Build Cost": 3000000,
+        "Build Time": "18h",
+        "Experience": 254,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 10,
+        "Spring Capacity": 18,
+        "Damage": 1050,
+        "Build Cost": 4000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 11,
+        "Spring Capacity": 18,
+        "Damage": 1200,
+        "Build Cost": 6000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 12,
+        "Spring Capacity": 18,
+        "Damage": 1300,
+        "Build Cost": 13000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 13,
+        "Spring Capacity": 18,
+        "Damage": 1400,
+        "Build Cost": 16000000,
+        "Build Time": "11d",
+        "Experience": 974,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Giant Bomb",
+    "village": "home",
+    "description": "\"When youre looking for a Big Boom, you need the Giant Bomb.\"",
+    "maxLevel": 0,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Damage Radius",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 175,
+        "Damage Radius": "3 tiles",
+        "Build Cost": 12500,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 2,
+        "Damage": 200,
+        "Damage Radius": "3.5 tiles",
+        "Build Cost": 75000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 3,
+        "Damage": 225,
+        "Damage Radius": "3.5 tiles",
+        "Build Cost": 220000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 4,
+        "Damage": 250,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 750000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 5,
+        "Damage": 275,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 900000,
+        "Build Time": "10h",
+        "Experience": 189,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 6,
+        "Damage": 325,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 1300000,
+        "Build Time": "11h",
+        "Experience": 198,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 7,
+        "Damage": 375,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 1500000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 8,
+        "Damage": 400,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 9,
+        "Damage": 425,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 3200000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 10,
+        "Damage": 450,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 5500000,
+        "Build Time": "2d 12h",
+        "Experience": 464,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 11,
+        "Damage": 475,
+        "Damage Radius": "4 tiles",
+        "Build Cost": 10000000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 12,
+        "Damage": 490,
+        "Damage Radius": "4.2 tiles",
+        "Build Cost": 17000000,
+        "Build Time": "10d 12h",
+        "Experience": 952,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Air Bomb",
+    "village": "home",
+    "description": "\"Latest invention in the field of flying pest control. This trap can blast multiple air units in a small area.\"",
+    "maxLevel": 13,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 100,
+        "Build Cost": 4000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 2,
+        "Damage": 120,
+        "Build Cost": 20000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 3,
+        "Damage": 144,
+        "Build Cost": 75000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 4,
+        "Damage": 173,
+        "Build Cost": 300000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 5,
+        "Damage": 208,
+        "Build Cost": 550000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 6,
+        "Damage": 232,
+        "Build Cost": 800000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 12
+      },
+      {
+        "Level": 7,
+        "Damage": 252,
+        "Build Cost": 1000000,
+        "Build Time": "14h",
+        "Experience": 224,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 8,
+        "Damage": 280,
+        "Build Cost": 1200000,
+        "Build Time": "16h",
+        "Experience": 240,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 9,
+        "Damage": 325,
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 14
+      },
+      {
+        "Level": 10,
+        "Damage": 350,
+        "Build Cost": 3000000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 11,
+        "Damage": 375,
+        "Build Cost": 5000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 12,
+        "Damage": 400,
+        "Build Cost": 9500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 13,
+        "Damage": 425,
+        "Build Cost": 15000000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Seeking Air Mine",
+    "village": "home",
+    "description": "\"Is it a bird? Is it a plane? Well, it makes no difference as the Seeking Air Mine will blow it sky high. This trap does devastating damage to a single air unit.\"",
+    "maxLevel": 7,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 1500,
+        "Build Cost": 12000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 2,
+        "Damage": 1800,
+        "Build Cost": 600000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 3,
+        "Damage": 2100,
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 4,
+        "Damage": 2500,
+        "Build Cost": 2500000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 13
+      },
+      {
+        "Level": 5,
+        "Damage": 2800,
+        "Build Cost": 5000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 15
+      },
+      {
+        "Level": 6,
+        "Damage": 3000,
+        "Build Cost": 6500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 16
+      },
+      {
+        "Level": 7,
+        "Damage": 3200,
+        "Build Cost": 12000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 8,
+        "Damage": 3350,
+        "Build Cost": 19000000,
+        "Build Time": "11d 12h",
+        "Experience": 996,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Skeleton Trap",
+    "village": "home",
+    "description": "\"Ambush and distract unsuspecting foes with a surprise skirmish of short-lived, but sneaky skeleton troops! Skeleton Traps can be configured to pursue ground or air troops.\"",
+    "maxLevel": 5,
+    "statsColumns": [
+      "Level",
+      "Spawned Units",
+      "Level_2",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Spawned Units": 2,
+        "Level_2": 1,
+        "Build Cost": 6000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 2,
+        "Spawned Units": 3,
+        "Level_2": 1,
+        "Build Cost": 250000,
+        "Build Time": "5h",
+        "Experience": 134,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 3,
+        "Spawned Units": 4,
+        "Level_2": 1,
+        "Build Cost": 400000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 4,
+        "Spawned Units": 5,
+        "Level_2": 1,
+        "Build Cost": 1000000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 10
+      },
+      {
+        "Level": 5,
+        "Spawned Units": 5,
+        "Level_2": 2,
+        "Build Cost": 18000000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Town Hall Level": 18
+      }
+    ]
+  },
+  {
+    "name": "Tornado Trap",
+    "village": "home",
+    "description": "\"Wind and stones may break some bones, but this trap will definitely confound you. Just place one of these traps down and the released vortex will draw the enemy troops in, hindering their progress.\"",
+    "maxLevel": 1,
+    "statsColumns": [
+      "Level",
+      "Duration",
+      "Total Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Duration": "5 seconds",
+        "Total Damage": 39,
+        "Build Cost": 1800000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 2,
+        "Duration": "6 seconds",
+        "Total Damage": 47,
+        "Build Cost": 2000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 11
+      },
+      {
+        "Level": 3,
+        "Duration": "7 seconds",
+        "Total Damage": 55,
+        "Build Cost": 2500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 12
+      }
+    ]
+  },
+  {
+    "name": "Giga Bomb",
+    "village": "home",
+    "description": "\"Villagers didnt want to keep this dangerous Weapon inside the Town Hall, so they moved it out! The Giga Bomb pushes enemies back with massive damage. This Trap is so deadly, it doesnt need to hide!\"",
+    "maxLevel": 4,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 1100,
+        "Build Cost": 4500000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 2,
+        "Damage": 1200,
+        "Build Cost": 8500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 3,
+        "Damage": 1300,
+        "Build Cost": 12500000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 17
+      },
+      {
+        "Level": 4,
+        "Damage": 1400,
+        "Build Cost": 20000000,
+        "Build Time": "13d",
+        "Experience": 1059,
         "Town Hall Level": 18
       }
     ]
@@ -4146,6 +7970,1640 @@
         "Build Time": "12d",
         "Experience": 1018,
         "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "BB Walls",
+    "village": "builderBase",
+    "description": "",
+    "maxLevel": 0,
+    "statsColumns": [],
+    "levels": []
+  },
+  {
+    "name": "Push Trap",
+    "village": "home",
+    "description": "\"Toss ground troops in a direction you choose. Heave ho!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Spring Capacity",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Spring Capacity": 8,
+        "Build Cost": 1000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 2,
+        "Spring Capacity": 10,
+        "Build Cost": 3000,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Spring Capacity": 12,
+        "Build Cost": 10000,
+        "Build Time": "20m",
+        "Experience": 34,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Spring Capacity": 14,
+        "Build Cost": 20000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Spring Capacity": 16,
+        "Build Cost": 40000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Spring Capacity": 18,
+        "Build Cost": 60000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Spring Capacity": 20,
+        "Build Cost": 100000,
+        "Build Time": "16h",
+        "Experience": 240,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Spring Capacity": 22,
+        "Build Cost": 200000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Spring Capacity": 24,
+        "Build Cost": 300000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Spring Capacity": 26,
+        "Build Cost": 500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "BB Spring Trap",
+    "village": "builderBase",
+    "description": "\"This bouncy little number launches a small Troop out of battle! Big Troops with higher Housing Space are pushed back and damaged.\"",
+    "maxLevel": 1,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Damage vs Heroes",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 100,
+        "Damage vs Heroes": 50,
+        "Build Cost": 10000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Damage": 175,
+        "Damage vs Heroes": 87.5,
+        "Build Cost": 30000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 3,
+        "Damage": 250,
+        "Damage vs Heroes": 125,
+        "Build Cost": 100000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 4,
+        "Damage": 325,
+        "Damage vs Heroes": 162.5,
+        "Build Cost": 300000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 5,
+        "Damage": 400,
+        "Damage vs Heroes": 200,
+        "Build Cost": 500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Mine",
+    "village": "builderBase",
+    "description": "\"Plan an explosive surprise for troops that get too close. Choose air or ground!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 80,
+        "Build Cost": 5000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Damage": 90,
+        "Build Cost": 10000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Damage": 100,
+        "Build Cost": 15000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Damage": 110,
+        "Build Cost": 25000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Damage": 120,
+        "Build Cost": 50000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Damage": 130,
+        "Build Cost": 80000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Damage": 140,
+        "Build Cost": 120000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Damage": 150,
+        "Build Cost": 250000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Damage": 165,
+        "Build Cost": 500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Damage": 180,
+        "Build Cost": 1500000,
+        "Build Time": "2d 12h",
+        "Experience": 464,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Mega Mine",
+    "village": "builderBase",
+    "description": "\"A hidden dose of heavy destruction. Choose air or ground!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Damage",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage": 250,
+        "Build Cost": 30000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 2,
+        "Damage": 275,
+        "Build Cost": 40000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 3,
+        "Damage": 300,
+        "Build Cost": 50000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 4,
+        "Damage": 330,
+        "Build Cost": 80000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Damage": 360,
+        "Build Cost": 120000,
+        "Build Time": "12h",
+        "Experience": 169,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Damage": 395,
+        "Build Cost": 300000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Damage": 430,
+        "Build Cost": 600000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Damage": 470,
+        "Build Cost": 1000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Damage": 510,
+        "Build Cost": 1400000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Damage": 550,
+        "Build Cost": 2500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Builder Hall",
+    "village": "home",
+    "description": "\"Home of the Master Builder and the main objective in battle. Destroying a Builder Hall awards a Star in attacks. Destroying 50% of buildings in a stage gains you a second Star, while 100% destruction awards three Stars for the stage. Upgrade the Builder Hall to unlock advanced buildings and troops!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Maximum Number of Buildings Available"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 650,
+        "Build Cost": "N/A",
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Maximum Number of Buildings Available": 0
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 800,
+        "Build Cost": 3500,
+        "Build Time": "5s",
+        "Experience": 2,
+        "Maximum Number of Buildings Available": 10
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 975,
+        "Build Cost": 30000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Maximum Number of Buildings Available": 18
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 1150,
+        "Build Cost": 200000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Maximum Number of Buildings Available": 23
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 1350,
+        "Build Cost": 400000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Maximum Number of Buildings Available": 27
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1600,
+        "Build Cost": 1200000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Maximum Number of Buildings Available": 39
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 1850,
+        "Build Cost": 1800000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Maximum Number of Buildings Available": 44
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 2150,
+        "Build Cost": 2800000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Maximum Number of Buildings Available": 50
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 2450,
+        "Build Cost": 3800000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Maximum Number of Buildings Available": 54
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 2750,
+        "Build Cost": 4800000,
+        "Build Time": "7d",
+        "Experience": 777,
+        "Maximum Number of Buildings Available": 55
+      }
+    ]
+  },
+  {
+    "name": "BB Gold Mine",
+    "village": "builderBase",
+    "description": "\"The Gold Mine produces gold. Upgrade it to boost its production and gold storage capacity.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Capacity",
+      "Production Rate",
+      "Hitpoints",
+      "Time to Fill",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Catch-Up Point*",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Capacity": 24000,
+        "Production Rate": "1,000/hr",
+        "Hitpoints": 300,
+        "Time to Fill": "1d",
+        "Build Cost": 1000,
+        "Build Time": "10m",
+        "Experience": 24,
+        "Catch-Up Point*": "N/A",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Capacity": 28800,
+        "Production Rate": "1,200/hr",
+        "Hitpoints": 350,
+        "Time to Fill": "1d",
+        "Build Cost": 5000,
+        "Build Time": "20m",
+        "Experience": 34,
+        "Catch-Up Point*": "1h 40m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Capacity": 36000,
+        "Production Rate": "1,500/hr",
+        "Hitpoints": 400,
+        "Time to Fill": "1d",
+        "Build Cost": 10000,
+        "Build Time": "40m",
+        "Experience": 48,
+        "Catch-Up Point*": "2h 40m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Capacity": 43200,
+        "Production Rate": "1,800/hr",
+        "Hitpoints": 460,
+        "Time to Fill": "1d",
+        "Build Cost": 30000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Catch-Up Point*": "10h",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Capacity": 50400,
+        "Production Rate": "2,100/hr",
+        "Hitpoints": 550,
+        "Time to Fill": "1d",
+        "Build Cost": 60000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Catch-Up Point*": "1d 12h",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Capacity": 60000,
+        "Production Rate": "2,500/hr",
+        "Hitpoints": 650,
+        "Time to Fill": "1d",
+        "Build Cost": 100000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Catch-Up Point*": "5d 6h",
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Capacity": 72000,
+        "Production Rate": "3,000/hr",
+        "Hitpoints": 750,
+        "Time to Fill": "1d",
+        "Build Cost": 200000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Catch-Up Point*": "7d 12h",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Capacity": 84000,
+        "Production Rate": "3,500/hr",
+        "Hitpoints": 850,
+        "Time to Fill": "1d",
+        "Build Cost": 300000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Catch-Up Point*": "12d",
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Capacity": 96000,
+        "Production Rate": "4,000/hr",
+        "Hitpoints": 1000,
+        "Time to Fill": "1d",
+        "Build Cost": 400000,
+        "Build Time": "2d 12h",
+        "Experience": 464,
+        "Catch-Up Point*": "17d 12h",
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Capacity": 108000,
+        "Production Rate": "4,500/hr",
+        "Hitpoints": 1150,
+        "Time to Fill": "1d",
+        "Build Cost": 800000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Catch-Up Point*": "24d",
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "BB Elixir Collector",
+    "village": "builderBase",
+    "description": "\"Elixir is pumped from Ley Lines coursing underneath your village. Upgrade your Elixir Collectors to maximize elixir production.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Capacity",
+      "Production Per Hour",
+      "Hitpoints",
+      "Time to Fill",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Catch-Up Point*",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Capacity": 24000,
+        "Production Per Hour": "1,000/hr",
+        "Hitpoints": 300,
+        "Time to Fill": "1d",
+        "Build Cost": 1000,
+        "Build Time": "10m",
+        "Experience": 24,
+        "Catch-Up Point*": "N/A",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Capacity": 28800,
+        "Production Per Hour": "1,200/hr",
+        "Hitpoints": 350,
+        "Time to Fill": "1d",
+        "Build Cost": 5000,
+        "Build Time": "20m",
+        "Experience": 34,
+        "Catch-Up Point*": "1h 40m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Capacity": 36000,
+        "Production Per Hour": "1,500/hr",
+        "Hitpoints": 400,
+        "Time to Fill": "1d",
+        "Build Cost": 10000,
+        "Build Time": "40m",
+        "Experience": 48,
+        "Catch-Up Point*": "2h 40m",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Capacity": 43200,
+        "Production Per Hour": "1,800/hr",
+        "Hitpoints": 460,
+        "Time to Fill": "1d",
+        "Build Cost": 30000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Catch-Up Point*": "10h",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Capacity": 50400,
+        "Production Per Hour": "2,100/hr",
+        "Hitpoints": 550,
+        "Time to Fill": "1d",
+        "Build Cost": 60000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Catch-Up Point*": "1d 12h",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Capacity": 60000,
+        "Production Per Hour": "2,500/hr",
+        "Hitpoints": 650,
+        "Time to Fill": "1d",
+        "Build Cost": 100000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Catch-Up Point*": "5d 6h",
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Capacity": 72000,
+        "Production Per Hour": "3,000/hr",
+        "Hitpoints": 750,
+        "Time to Fill": "1d",
+        "Build Cost": 200000,
+        "Build Time": "1d 12h",
+        "Experience": 360,
+        "Catch-Up Point*": "7d 12h",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Capacity": 84000,
+        "Production Per Hour": "3,500/hr",
+        "Hitpoints": 850,
+        "Time to Fill": "1d",
+        "Build Cost": 300000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Catch-Up Point*": "12d",
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Capacity": 96000,
+        "Production Per Hour": "4,000/hr",
+        "Hitpoints": 1000,
+        "Time to Fill": "1d",
+        "Build Cost": 400000,
+        "Build Time": "2d 12h",
+        "Experience": 464,
+        "Catch-Up Point*": "17d 12h",
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Capacity": 108000,
+        "Production Per Hour": "4,500/hr",
+        "Hitpoints": 1150,
+        "Time to Fill": "1d",
+        "Build Cost": 800000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Catch-Up Point*": "24d",
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "BB Gold Storage",
+    "village": "builderBase",
+    "description": "\"All your precious gold is stored here. Dont let sneaky goblins anywhere near! Upgrade the storage to increase its capacity and durability against attack.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Storage Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Storage Capacity": 70000,
+        "Hitpoints": 650,
+        "Build Cost": 20000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Storage Capacity": 150000,
+        "Hitpoints": 800,
+        "Build Cost": 80000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Storage Capacity": 250000,
+        "Hitpoints": 975,
+        "Build Cost": 200000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Storage Capacity": 350000,
+        "Hitpoints": 1150,
+        "Build Cost": 300000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Storage Capacity": 600000,
+        "Hitpoints": 1350,
+        "Build Cost": 600000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Storage Capacity": 800000,
+        "Hitpoints": 1600,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Storage Capacity": 1200000,
+        "Hitpoints": 1850,
+        "Build Cost": 1500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Storage Capacity": 1600000,
+        "Hitpoints": 2150,
+        "Build Cost": 2000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Storage Capacity": 2000000,
+        "Hitpoints": 2450,
+        "Build Cost": 2500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Storage Capacity": 2500000,
+        "Hitpoints": 2750,
+        "Build Cost": 3200000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "BB Elixir Storage",
+    "village": "builderBase",
+    "description": "\"These storages contain the elixir pumped from underground. Upgrade them to increase the maximum amount of elixir you can store.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Storage Capacity",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Storage Capacity": 70000,
+        "Hitpoints": 650,
+        "Build Cost": 20000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Storage Capacity": 150000,
+        "Hitpoints": 800,
+        "Build Cost": 80000,
+        "Build Time": "1h",
+        "Experience": 60,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Storage Capacity": 250000,
+        "Hitpoints": 975,
+        "Build Cost": 200000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Storage Capacity": 350000,
+        "Hitpoints": 1150,
+        "Build Cost": 300000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Storage Capacity": 600000,
+        "Hitpoints": 1350,
+        "Build Cost": 600000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Storage Capacity": 800000,
+        "Hitpoints": 1600,
+        "Build Cost": 1000000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Storage Capacity": 1200000,
+        "Hitpoints": 1850,
+        "Build Cost": 1500000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Storage Capacity": 1600000,
+        "Hitpoints": 2150,
+        "Build Cost": 2000000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Storage Capacity": 2000000,
+        "Hitpoints": 2450,
+        "Build Cost": 2500000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Storage Capacity": 2500000,
+        "Hitpoints": 2750,
+        "Build Cost": 3200000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Gem Mine",
+    "village": "home",
+    "description": "\"Gem Mines access a rare deposit of this highly valuable resource! Mining gems is slow and hard work.\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Capacity",
+      "Production Rate*",
+      "Build Time",
+      "Time to Fill",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time_2",
+      "Experience",
+      "Catch-up Point**",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Capacity": 10,
+        "Production Rate*": "2.16/d",
+        "Build Time": "11h 6m 40s",
+        "Time to Fill": "4d 15h 6m 40s",
+        "Hitpoints": 300,
+        "Build Cost": 120000,
+        "Build Time_2": "1h",
+        "Experience": 60,
+        "Catch-up Point**": "N/A",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 2,
+        "Capacity": 11,
+        "Production Rate*": "2.40/d",
+        "Build Time": "10h",
+        "Time to Fill": "4d 14h",
+        "Hitpoints": 350,
+        "Build Cost": 180000,
+        "Build Time_2": "2h",
+        "Experience": 84,
+        "Catch-up Point**": "18h",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Capacity": 12,
+        "Production Rate*": "2.64/d",
+        "Build Time": "9h 5m 27s",
+        "Time to Fill": "4d 13h 5m 27s",
+        "Hitpoints": 400,
+        "Build Cost": 240000,
+        "Build Time_2": "6h",
+        "Experience": 146,
+        "Catch-up Point**": "2d 12h",
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Capacity": 13,
+        "Production Rate*": "2.88/d",
+        "Build Time": "8h 20m",
+        "Time to Fill": "4d 12h 20m",
+        "Hitpoints": 450,
+        "Build Cost": 450000,
+        "Build Time_2": "8h",
+        "Experience": 169,
+        "Catch-up Point**": "3d 16h",
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Capacity": 14,
+        "Production Rate*": "3.12/d",
+        "Build Time": "7h 41m 32s",
+        "Time to Fill": "4d 11h 41m 32s",
+        "Hitpoints": 550,
+        "Build Cost": 1000000,
+        "Build Time_2": "12h",
+        "Experience": 207,
+        "Catch-up Point**": "6d",
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Capacity": 15,
+        "Production Rate*": "3.36/d",
+        "Build Time": "7h 8m 34s",
+        "Time to Fill": "4d 11h 8m 34s",
+        "Hitpoints": 650,
+        "Build Cost": 1500000,
+        "Build Time_2": "1d",
+        "Experience": 293,
+        "Catch-up Point**": "13d",
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Capacity": 16,
+        "Production Rate*": "3.84/d",
+        "Build Time": "6h 15m",
+        "Time to Fill": "4d 4h",
+        "Hitpoints": 750,
+        "Build Cost": 2500000,
+        "Build Time_2": "2d",
+        "Experience": 415,
+        "Catch-up Point**": "14d",
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Capacity": 17,
+        "Production Rate*": "4.32/d",
+        "Build Time": "5h 33m 20s",
+        "Time to Fill": "3d 22h 26m 40s",
+        "Hitpoints": 850,
+        "Build Cost": 3500000,
+        "Build Time_2": "4d",
+        "Experience": 587,
+        "Catch-up Point**": "32d",
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Capacity": 18,
+        "Production Rate*": "4.80/d",
+        "Build Time": "5h",
+        "Time to Fill": "3d 18h",
+        "Hitpoints": 1000,
+        "Build Cost": 4500000,
+        "Build Time_2": "6d",
+        "Experience": 720,
+        "Catch-up Point**": "54d",
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Capacity": 19,
+        "Production Rate*": "5.04/d",
+        "Build Time": "4h 45m 43s",
+        "Time to Fill": "3d 18h 28m 34s",
+        "Hitpoints": 1150,
+        "Build Cost": 5500000,
+        "Build Time_2": "8d",
+        "Experience": 831,
+        "Catch-up Point**": "160d",
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Builder Barracks",
+    "village": "home",
+    "description": "\"The Builder Barracks trains troops for Builder Battles! You can also quickly swap troops immediately before attacking. Upgrade the Builder Barracks to unlock more troop types!\"",
+    "maxLevel": 12,
+    "statsColumns": [
+      "Level",
+      "Unlocked Unit",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Unlocked Unit": "Raged Barbarian",
+        "Hitpoints": 300,
+        "Build Cost": 1000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 2,
+        "Unlocked Unit": "Sneaky Archer",
+        "Hitpoints": 350,
+        "Build Cost": 4000,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 3,
+        "Unlocked Unit": "Boxer Giant",
+        "Hitpoints": 400,
+        "Build Cost": 10000,
+        "Build Time": "10m",
+        "Experience": 24,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Unlocked Unit": "Beta Minion",
+        "Hitpoints": 460,
+        "Build Cost": 25000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 5,
+        "Unlocked Unit": "Bomber",
+        "Hitpoints": 550,
+        "Build Cost": 100000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 6,
+        "Unlocked Unit": "Baby Dragon}}",
+        "Hitpoints": 650,
+        "Build Cost": 150000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 7,
+        "Unlocked Unit": "Cannon Cart",
+        "Hitpoints": 750,
+        "Build Cost": 300000,
+        "Build Time": "9h",
+        "Experience": 180,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 8,
+        "Unlocked Unit": "Night Witch",
+        "Hitpoints": 850,
+        "Build Cost": 500000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 9,
+        "Unlocked Unit": "Drop Ship",
+        "Hitpoints": 1000,
+        "Build Cost": 1000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 10,
+        "Unlocked Unit": "Power P.E.K.K.A",
+        "Hitpoints": 1150,
+        "Build Cost": 1500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 11,
+        "Unlocked Unit": "Hog Glider",
+        "Hitpoints": 1300,
+        "Build Cost": 2000000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 12,
+        "Unlocked Unit": "Electrofire Wizard",
+        "Hitpoints": 1450,
+        "Build Cost": 3000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "BB Army Camp",
+    "village": "builderBase",
+    "description": "\"Your troops are stationed in Army Camps. Each camp can house only one troop type at a time. Some troops can be upgraded to fit more units per camp!\"",
+    "maxLevel": 0,
+    "statsColumns": [],
+    "levels": []
+  },
+  {
+    "name": "Star Laboratory",
+    "village": "home",
+    "description": "\"The Star Laboratory searches the heavens for secrets to unlock a troops full potential. Improve troop hitpoints, damage and housing space in addition to special troop abilities!\"",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 650,
+        "Build Cost": 1000,
+        "Build Time": "N/A",
+        "Experience": "N/A",
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 800,
+        "Build Cost": 15000,
+        "Build Time": "10m",
+        "Experience": 24,
+        "Town Hall Level": 2
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 975,
+        "Build Cost": 50000,
+        "Build Time": "30m",
+        "Experience": 42,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 1150,
+        "Build Cost": 300000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 1350,
+        "Build Cost": 700000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1600,
+        "Build Cost": 1000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 1850,
+        "Build Cost": 2000000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 2150,
+        "Build Cost": 3000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 2450,
+        "Build Cost": 4000000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 2750,
+        "Build Cost": 5000000,
+        "Build Time": "10d",
+        "Experience": 929,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Battle Machine Altar",
+    "village": "home",
+    "description": "\"The Master Builders prize invention smashes enemy buildings to bits. What better way is there to show whos the best builder around? Unlock the Electric Hammer ability to give opponents a real pounding!\"",
+    "maxLevel": 0,
+    "statsColumns": [],
+    "levels": []
+  },
+  {
+    "name": "Reinforcement Camp",
+    "village": "home",
+    "description": "\"Reinforcement Camps provide helpful reinforcements during battles when reaching the corresponding stage.\"",
+    "maxLevel": 0,
+    "statsColumns": [],
+    "levels": []
+  },
+  {
+    "name": "Healing Hut",
+    "village": "home",
+    "description": "\"Brews up a hearty and nourishing cauldron of soup following Master Builders grandmas recipe. Troops eat some on their way to the next stage of an attack, recovering some of their health.\"",
+    "maxLevel": 6,
+    "statsColumns": [
+      "Level",
+      "Health Recovery",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Health Recovery": 4,
+        "Hitpoints": 600,
+        "Build Cost": 1500000,
+        "Build Time": "1d 6h",
+        "Experience": 328,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 2,
+        "Health Recovery": 8,
+        "Hitpoints": 690,
+        "Build Cost": 2000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 3,
+        "Health Recovery": 12,
+        "Hitpoints": 800,
+        "Build Cost": 2500000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 4,
+        "Health Recovery": 16,
+        "Hitpoints": 910,
+        "Build Cost": 3250000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 5,
+        "Health Recovery": 20,
+        "Hitpoints": 1050,
+        "Build Cost": 4000000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 6,
+        "Health Recovery": 24,
+        "Hitpoints": 1250,
+        "Build Cost": 5000000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Battle Copter Altar",
+    "village": "home",
+    "description": "\"Get to the Copter! Tired of hammering through Walls, Master Builders next-generation flying machine lets him soar over them. The Battle Copter attacks from afar with its powerful cannons; or can get up close and personal when using its Bomb Rush ability.\"",
+    "maxLevel": 0,
+    "statsColumns": [],
+    "levels": []
+  },
+  {
+    "name": "B.O.T.O's Shack",
+    "village": "home",
+    "description": "Master Builder saved this little guy from the scrap heap. Despite a few loose screws, B.O.T.O is eager to help with tasks around Builder Base!",
+    "maxLevel": 0,
+    "statsColumns": [],
+    "levels": []
+  },
+  {
+    "name": "Clock Tower",
+    "village": "home",
+    "description": "“The Clock Tower makes things happen faster in your village! Collect resources, research and build faster.”",
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Boost Duration",
+      "Time Gained per Boost",
+      "Relative Boost*",
+      "Catch-Up Point of Construction**",
+      "Catch-Up Point of Boost***",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 650,
+        "Boost Duration": "14m",
+        "Time Gained per Boost": "2h 6m",
+        "Relative Boost*": 9.4,
+        "Catch-Up Point of Construction**": "1 time",
+        "Catch-Up Point of Boost***": "N/A",
+        "Build Cost": 150000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 800,
+        "Boost Duration": "16m",
+        "Time Gained per Boost": "2h 24m",
+        "Relative Boost*": 10.8,
+        "Catch-Up Point of Construction**": "10 times",
+        "Catch-Up Point of Boost***": "N/A",
+        "Build Cost": 180000,
+        "Build Time": "3h",
+        "Experience": 103,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 975,
+        "Boost Duration": "18m",
+        "Time Gained per Boost": "2h 42m",
+        "Relative Boost*": 12.1,
+        "Catch-Up Point of Construction**": "14 times",
+        "Catch-Up Point of Boost***": "N/A",
+        "Build Cost": 220000,
+        "Build Time": "4h",
+        "Experience": 120,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 1150,
+        "Boost Duration": "20m",
+        "Time Gained per Boost": "3h",
+        "Relative Boost*": 13.4,
+        "Catch-Up Point of Construction**": "20 times",
+        "Catch-Up Point of Boost***": "N/A",
+        "Build Cost": 300000,
+        "Build Time": "6h",
+        "Experience": 146,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 1350,
+        "Boost Duration": "22m",
+        "Time Gained per Boost": "3h 18m",
+        "Relative Boost*": 14.8,
+        "Catch-Up Point of Construction**": "40 times",
+        "Catch-Up Point of Boost***": "N/A",
+        "Build Cost": 700000,
+        "Build Time": "12h",
+        "Experience": 207,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 1600,
+        "Boost Duration": "24m",
+        "Time Gained per Boost": "3h 36m",
+        "Relative Boost*": 16.1,
+        "Catch-Up Point of Construction**": "80 times",
+        "Catch-Up Point of Boost***": "1 time",
+        "Build Cost": 1200000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 1850,
+        "Boost Duration": "26m",
+        "Time Gained per Boost": "3h 54m",
+        "Relative Boost*": 17.4,
+        "Catch-Up Point of Construction**": "160 times",
+        "Catch-Up Point of Boost***": "15 times",
+        "Build Cost": 1700000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 2150,
+        "Boost Duration": "28m",
+        "Time Gained per Boost": "4h 12m",
+        "Relative Boost*": 18.7,
+        "Catch-Up Point of Construction**": "240 times",
+        "Catch-Up Point of Boost***": "30 times",
+        "Build Cost": 2200000,
+        "Build Time": "3d",
+        "Experience": 509,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 2450,
+        "Boost Duration": "30m",
+        "Time Gained per Boost": "4h 30m",
+        "Relative Boost*": 20,
+        "Catch-Up Point of Construction**": "320 times",
+        "Catch-Up Point of Boost***": "48 times",
+        "Build Cost": 2700000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 2750,
+        "Boost Duration": "32m",
+        "Time Gained per Boost": "4h 48m",
+        "Relative Boost*": 21.3,
+        "Catch-Up Point of Construction**": "400 times",
+        "Catch-Up Point of Boost***": "67 times",
+        "Build Cost": 3700000,
+        "Build Time": "5d",
+        "Experience": 657,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
+    "name": "Elixir Cart",
+    "village": "home",
+    "description": "<div class=\"stats-background\"> {| class=\"wikitable\" style=\"text-align: center; width: 50%;\" !Builder Hall Level {{Res|RES=Builder Hall}} !Elixir Capacity {{Res|RES=ElixirB}} |- |1||40,000 |- |2||100,000 |- |3||200,000 |- |4||300,000 |- |5||600,000 |- |6||800,000 |- |7||1,000,000 |- |8||1,200,000 |- |9||1,400,000 |- |10||1,600,000 |} </div>",
+    "maxLevel": 0,
+    "statsColumns": [
+      "Level",
+      "Build Cost"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Build Cost": 40000
+      },
+      {
+        "Level": 2,
+        "Build Cost": 100000
+      },
+      {
+        "Level": 3,
+        "Build Cost": 200000
+      },
+      {
+        "Level": 4,
+        "Build Cost": 300000
+      },
+      {
+        "Level": 5,
+        "Build Cost": 600000
+      },
+      {
+        "Level": 6,
+        "Build Cost": 800000
+      },
+      {
+        "Level": 7,
+        "Build Cost": 1000000
+      },
+      {
+        "Level": 8,
+        "Build Cost": 1200000
+      },
+      {
+        "Level": 9,
+        "Build Cost": 1400000
+      },
+      {
+        "Level": 10,
+        "Build Cost": 1600000
       }
     ]
   }

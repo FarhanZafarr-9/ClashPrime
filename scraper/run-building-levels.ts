@@ -2,11 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const API_BASE = 'https://clashofclans.fandom.com/api.php';
-const DELAY_MS = 300;
+const DELAY_MS = 400;
 const OUTPUT_PATH = path.join(__dirname, '..', 'src', 'data', 'building-levels.json');
 
-// ── Defense buildings only ───────────────────────────────────────────────
-const DEFENSE_BUILDINGS: Record<string, string> = {
+// ── All buildings ────────────────────────────────────────────────────────
+const ALL_BUILDINGS: Record<string, string> = {
+  // ── Defenses ──
   'Cannon': 'Cannon/Home_Village',
   'Archer Tower': 'Archer_Tower/Home_Village',
   'Mortar': 'Mortar',
@@ -28,6 +29,37 @@ const DEFENSE_BUILDINGS: Record<string, string> = {
   'Firespitter': 'Firespitter',
   'Revenge Tower': 'Revenge_Tower',
   'Super Wizard Tower': 'Super_Wizard_Tower/Home_Village',
+  'Wall': 'Wall/Home_Village',
+  // ── Resources ──
+  'Town Hall': 'Town_Hall',
+  'Gold Mine': 'Gold_Mine/Home_Village',
+  'Elixir Collector': 'Elixir_Collector/Home_Village',
+  'Dark Elixir Drill': 'Dark_Elixir_Drill',
+  'Gold Storage': 'Gold_Storage/Home_Village',
+  'Elixir Storage': 'Elixir_Storage/Home_Village',
+  'Dark Elixir Storage': 'Dark_Elixir_Storage',
+  'Clan Castle': 'Clan_Castle',
+  // ── Army ──
+  'Army Camp': 'Army_Camp/Home_Village',
+  'Barracks': 'Barracks',
+  'Dark Barracks': 'Dark_Barracks',
+  'Laboratory': 'Laboratory',
+  'Spell Factory': 'Spell_Factory',
+  'Hero Hall': 'Hero_Hall',
+  'Dark Spell Factory': 'Dark_Spell_Factory',
+  'Blacksmith': 'Blacksmith',
+  'Workshop': 'Workshop',
+  'Pet House': 'Pet_House',
+  // ── Traps ──
+  'Bomb': 'Bomb',
+  'Spring Trap': 'Spring_Trap/Home_Village',
+  'Giant Bomb': 'Giant_Bomb',
+  'Air Bomb': 'Air_Bomb',
+  'Seeking Air Mine': 'Seeking_Air_Mine',
+  'Skeleton Trap': 'Skeleton_Trap',
+  'Tornado Trap': 'Tornado_Trap',
+  'Giga Bomb': 'Giga_Bomb',
+  // Builder Base - Defenses
   'Double Cannon': 'Double_Cannon',
   'BB Archer Tower': 'Archer_Tower/Builder_Base',
   'BB Hidden Tesla': 'Hidden_Tesla/Builder_Base',
@@ -42,6 +74,32 @@ const DEFENSE_BUILDINGS: Record<string, string> = {
   'Mega Tesla': 'Mega_Tesla',
   'BB Lava Launcher': 'Lava_Launcher/Builder_Base',
   'BB X-Bow': 'X-Bow/Builder_Base',
+  // Builder Base - Walls
+  'BB Walls': 'Walls/Builder_Base',
+  // Builder Base - Traps
+  'Push Trap': 'Push_Trap',
+  'BB Spring Trap': 'Spring_Trap/Builder_Base',
+  'Mine': 'Mine/Builder_Base',
+  'Mega Mine': 'Mega_Mine/Builder_Base',
+  // Builder Base - Resources
+  'Builder Hall': 'Builder_Hall',
+  'BB Gold Mine': 'Gold_Mine/Builder_Base',
+  'BB Elixir Collector': 'Elixir_Collector/Builder_Base',
+  'BB Gold Storage': 'Gold_Storage/Builder_Base',
+  'BB Elixir Storage': 'Elixir_Storage/Builder_Base',
+  'Gem Mine': 'Gem_Mine',
+  // Builder Base - Army
+  'Builder Barracks': 'Builder_Barracks',
+  'BB Army Camp': 'Army_Camp/Builder_Base',
+  'Star Laboratory': 'Star_Laboratory',
+  'Battle Machine Altar': 'Battle_Machine_Altar',
+  'Reinforcement Camp': 'Reinforcement_Camp',
+  'Healing Hut': 'Healing_Hut',
+  'Battle Copter Altar': 'Battle_Copter_Altar',
+  // Builder Base - Other
+  "B.O.T.O's Shack": "B.O.T.O's_Shack",
+  'Clock Tower': 'Clock_Tower',
+  'Elixir Cart': 'Elixir_Cart',
 };
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -112,14 +170,12 @@ function extractDescription(wt: string): string {
 
 function extractMaxLevel(wt: string): number {
   const levels: number[] = [];
-  // Handle <div>Level N</div>, <div>'''Level N'''</div>, <div>Level N</div></div> etc.
   const re = /<div>(?:'''?\s*)?Level\s*(\d+)(?:\s*'''?)?<\/div>/gi;
   let match;
   while ((match = re.exec(wt)) !== null) {
     levels.push(parseInt(match[1], 10));
   }
   if (levels.length === 0) {
-    // Fallback: look for gallery-style images with level numbers
     const imgRe = /\[\[File:[^\]]*?Level\s*(\d+)[^\]]*?\]\]/gi;
     while ((match = imgRe.exec(wt)) !== null) {
       levels.push(parseInt(match[1], 10));
@@ -128,7 +184,6 @@ function extractMaxLevel(wt: string): number {
   return levels.length > 0 ? Math.max(...levels) : 0;
 }
 
-/** Strip wiki formatting from a cell value */
 function cleanCell(raw: string): string {
   let v = raw
     .replace(/^[|!]\s*/, '')
@@ -140,135 +195,26 @@ function cleanCell(raw: string): string {
     .replace(/{{Res\|RES=[^}]*}}/g, '')
     .replace(/\|$/, '')
     .trim();
-  // Extract value after last | (for attribute|value format)
   const lastPipe = v.lastIndexOf('|');
   if (lastPipe >= 0) v = v.slice(lastPipe + 1).trim();
   return v;
 }
 
-/** Try to parse a numeric value; return number if numeric, otherwise string */
 function parseValue(raw: string): string | number {
   const cleaned = cleanCell(raw);
   if (!cleaned || /^(N\/A|Varies|—|-|None)/i.test(cleaned)) return cleaned;
-  // Contains any letter → keep as text (time string, unit, etc.)
   if (/[a-zA-Z]/.test(cleaned)) return cleaned;
-  // Pure numeric (with optional commas, decimals)
   const stripped = cleaned.replace(/,/g, '');
   const num = parseFloat(stripped);
   return isNaN(num) ? cleaned : num;
 }
 
-/**
- * Parse the first wikitable (wikitext table) from the page content.
- * Handles both:
- *   - Single-line format: |1||class="..."|7||class="..."|5.6||300||...
- *   - Multi-line format: |1\n|class="..."|80\n|class="..."|80\n...
- */
-function parseStatsTable(wt: string): { columns: string[]; rows: BuildingLevel[] } {
-  const tableStart = wt.indexOf('{|');
-  if (tableStart === -1) return { columns: [], rows: [] };
-  const tableEnd = wt.indexOf('|}', tableStart);
-  if (tableEnd === -1) return { columns: [], rows: [] };
-
-  const tableContent = wt.slice(tableStart + 2, tableEnd);
-  const lines = tableContent.split('\n');
-
-  // ── 1. Collect header lines ──────────────────────────────────────
-  let headerLines: string[] = [];
-  let rowLines: string[][] = [];
-  let inHeader = false;
-  let inRow = false;
-
-  for (const line of lines) {
-    const t = line.trim();
-    if (!t) continue;
-
-    if (t.startsWith('!')) {
-      inHeader = true;
-      headerLines.push(t);
-      continue;
-    }
-    if (t === '|-') {
-      if (inRow && rowLines.length > 0) inRow = false;
-      continue;
-    }
-    // Data row
-    if (t.startsWith('|')) {
-      if (!inRow) {
-        if (inHeader) inHeader = false;
-        rowLines.push([]);
-        inRow = true;
-      }
-      rowLines[rowLines.length - 1].push(t);
-      continue;
-    }
-  }
-
-  // ── 2. Parse header ──────────────────────────────────────────────
-  const headerJoined = headerLines.join('||').replace(/!!/g, '||');
-  const headerPieces = splitRow(headerJoined);
-  const usedColNames = new Set<string>();
-  const columns = headerPieces.map(p => {
-    const c = cleanCell(p);
-    // Derive short name from the cleaned text
-    const short = c
-      .replace(/\[\[[^\]]*\]\]/g, '')
-      .replace(/{{[^}]*}}/g, '')
-      .replace(/<br[^>]*>/gi, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    // Map common terms to consistent keys
-    let name: string;
-    if (/town hall|th|level required/i.test(short)) name = 'Town Hall Level';
-    else if (/level/i.test(short)) name = 'Level';
-    else if (/damage per second|dps/i.test(short)) name = 'Damage per Second';
-    else if (/damage per shot|damage per attack|dph/i.test(short)) name = 'Damage per Shot';
-    else if (/hitpoint|hp/i.test(short)) name = 'Hitpoints';
-    else if (/build cost|cost|gold/i.test(short)) name = 'Build Cost';
-    else if (/build time|time/i.test(short)) name = 'Build Time';
-    else if (/experience|xp/i.test(short)) name = 'Experience';
-    else if (/damage/i.test(short)) name = short.replace(/^\*+/, '').trim();
-    else name = short || 'Stat';
-    // Deduplicate
-    if (usedColNames.has(name)) {
-      let suffix = 2;
-      while (usedColNames.has(`${name}_${suffix}`)) suffix++;
-      name = `${name}_${suffix}`;
-    }
-    usedColNames.add(name);
-    return name;
-  });
-
-  // ── 3. Parse rows ────────────────────────────────────────────────
-  const rows: BuildingLevel[] = [];
-  for (let ri = 0; ri < rowLines.length; ri++) {
-    const row = rowLines[ri];
-    const joined = row.join('||').replace(/^\|-\s*/, '');
-    const cells = splitRow(joined);
-    if (cells.length === 0) continue;
-
-    const firstValRaw = cells[0] || '';
-    const firstValClean = cleanCell(firstValRaw);
-    if (!/^\d+$/.test(firstValClean)) continue; // skip non-level rows
-
-    const rowData: BuildingLevel = { Level: parseInt(firstValClean, 10) };
-    for (let i = 1; i < columns.length && i < cells.length; i++) {
-      rowData[columns[i]] = parseValue(cells[i]);
-    }
-    rows.push(rowData);
-  }
-
-  return { columns, rows };
-}
-
-/** Split a wikitext row into cells, respecting {{ }} and [[ ]] nesting */
 function splitRow(line: string): string[] {
   const cells: string[] = [];
   let depth = 0;
   let current = '';
   let i = 0;
 
-  // Skip leading pipe(s)
   while (i < line.length && (line[i] === '|' || line[i] === '!')) i++;
 
   for (; i < line.length; i++) {
@@ -279,7 +225,7 @@ function splitRow(line: string): string[] {
     if (depth === 0 && ch === '|' && i + 1 < line.length && line[i + 1] === '|') {
       cells.push(current);
       current = '';
-      i++; // skip second |
+      i++;
       continue;
     }
     current += ch;
@@ -290,6 +236,139 @@ function splitRow(line: string): string[] {
 
 function detectVillage(slug: string): 'home' | 'builderBase' {
   return slug.includes('Builder_Base') ? 'builderBase' : 'home';
+}
+
+function normalizeHeaderName(raw: string): string {
+  const short = raw
+    .replace(/\[\[[^\]]*\]\]/g, '')
+    .replace(/{{[^}]*}}/g, '')
+    .replace(/<br[^>]*>/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (/town hall|th\b.*required|level required/i.test(short)) return 'Town Hall Level';
+  if (/level/i.test(short) && !/experience|xp/i.test(short)) return 'Level';
+  if (/damage per second|dps/i.test(short)) return 'Damage per Second';
+  if (/damage per shot|damage per attack|dph/i.test(short)) return 'Damage per Shot';
+  if (/damage per hit/i.test(short)) return 'Damage per Hit';
+  if (/hitpoint|hp\b/i.test(short)) return 'Hitpoints';
+  if (/build cost|cost|gold|elixir|resource/i.test(short) && !/boost/i.test(short) && !/experience|xp/i.test(short)) return 'Build Cost';
+  if (/build time|time\b/i.test(short) && !/fill|boost/i.test(short) && !/catch/i.test(short)) return 'Build Time';
+  if (/experience|xp/i.test(short)) return 'Experience';
+  if (/damage when destroyed/i.test(short)) return 'Damage when destroyed';
+  if (/shockwave/i.test(short)) return 'Shockwave Damage';
+  if (/splash damage/i.test(short)) return 'Splash Damage**';
+  if (/repair per second/i.test(short)) return 'Repair per Second';
+  if (/repair per hit/i.test(short)) return 'Repair per Hit';
+  if (/secondary chain/i.test(short)) return 'Secondary Chain Damage';
+  if (/damage/i.test(short)) return short.replace(/^\*+/, '').trim();
+  return short || 'Stat';
+}
+
+/**
+ * Find the first stat wikitable in the page that looks like building level data.
+ * Skips supercharge tables, info-only tables (Range/Attack Speed/etc.), and
+ * challenge/achievement tables.
+ */
+function findStatsTable(wt: string): { columns: string[]; rows: BuildingLevel[] } | null {
+  let searchPos = 0;
+
+  while (true) {
+    const tableStart = wt.indexOf('{|', searchPos);
+    if (tableStart === -1) return null;
+    const tableEnd = wt.indexOf('|}', tableStart);
+    if (tableEnd === -1) return null;
+
+    const tableContent = wt.slice(tableStart + 2, tableEnd);
+
+    if (/supercharg/i.test(tableContent)) {
+      searchPos = tableEnd + 2;
+      continue;
+    }
+
+    const lines = tableContent.split('\n');
+    const headerLines: string[] = [];
+    let rowLines: string[][] = [];
+    let inHeader = false;
+    let inRow = false;
+
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t) continue;
+
+      if (t.startsWith('!')) {
+        inHeader = true;
+        headerLines.push(t);
+        continue;
+      }
+      if (t === '|-') {
+        if (inRow && rowLines.length > 0) inRow = false;
+        continue;
+      }
+      if (t.startsWith('|')) {
+        if (!inRow) {
+          if (inHeader) inHeader = false;
+          rowLines.push([]);
+          inRow = true;
+        }
+        rowLines[rowLines.length - 1].push(t);
+        continue;
+      }
+    }
+
+    if (headerLines.length === 0 || rowLines.length < 2) {
+      searchPos = tableEnd + 2;
+      continue;
+    }
+
+    const headerJoined = headerLines.join('||').replace(/!!/g, '||');
+    const headerPieces = splitRow(headerJoined);
+    const normalizedHeaders = headerPieces.map(p => normalizeHeaderName(cleanCell(p)));
+
+    // Must have a Level column to be a stats table. Info tables (Range/Attack
+    // Speed/etc.) and achievement tables never have a Level column.
+    if (!normalizedHeaders.some(h => h === 'Level')) {
+      searchPos = tableEnd + 2;
+      continue;
+    }
+
+    const usedColNames = new Set<string>();
+    const columns = headerPieces.map(p => {
+      const c = cleanCell(p);
+      let name = normalizeHeaderName(c);
+      if (usedColNames.has(name)) {
+        let suffix = 2;
+        while (usedColNames.has(`${name}_${suffix}`)) suffix++;
+        name = `${name}_${suffix}`;
+      }
+      usedColNames.add(name);
+      return name;
+    });
+
+    const rows: BuildingLevel[] = [];
+    for (let ri = 0; ri < rowLines.length; ri++) {
+      const row = rowLines[ri];
+      const joined = row.join('||').replace(/^\|-\s*/, '');
+      const cells = splitRow(joined);
+      if (cells.length === 0) continue;
+
+      const firstValRaw = cells[0] || '';
+      const firstValClean = cleanCell(firstValRaw);
+      if (!/^\d+$/.test(firstValClean)) continue;
+
+      const rowData: BuildingLevel = { Level: parseInt(firstValClean, 10) };
+      for (let i = 1; i < columns.length && i < cells.length; i++) {
+        rowData[columns[i]] = parseValue(cells[i]);
+      }
+      rows.push(rowData);
+    }
+
+    if (rows.length > 0) {
+      return { columns, rows };
+    }
+
+    searchPos = tableEnd + 2;
+  }
 }
 
 // ── Main scraper ────────────────────────────────────────────────────────
@@ -304,26 +383,28 @@ async function scrapeBuilding(name: string, slug: string): Promise<BuildingData 
 
   const description = extractDescription(wt);
   const maxLevel = extractMaxLevel(wt);
-  const stats = parseStatsTable(wt);
+  const stats = findStatsTable(wt);
 
   const result: BuildingData = {
     name,
     village: detectVillage(slug),
     description,
     maxLevel,
-    statsColumns: stats.columns,
-    levels: stats.rows,
+    statsColumns: stats?.columns ?? [],
+    levels: stats?.rows ?? [],
   };
 
   const lvlRange = maxLevel > 0 ? `Lv1-${maxLevel}` : 'no gallery';
-  console.log(`${lvlRange}, ${stats.rows.length} rows, ${stats.columns.length} cols`);
+  const rowCount = stats?.rows.length ?? 0;
+  const colCount = stats?.columns.length ?? 0;
+  console.log(`${lvlRange}, ${rowCount} rows, ${colCount} cols`);
   return result;
 }
 
 async function main() {
   console.log('Scraping building level data from Clash of Clans Fandom wiki...\n');
 
-  const entries = Object.entries(DEFENSE_BUILDINGS);
+  const entries = Object.entries(ALL_BUILDINGS);
   const results: BuildingData[] = [];
 
   for (let i = 0; i < entries.length; i++) {
@@ -342,7 +423,6 @@ async function main() {
 
   console.log(`\nDone: ${results.length}/${entries.length} buildings scraped`);
 
-  // Write output
   const outDir = path.dirname(OUTPUT_PATH);
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf8');
