@@ -42,16 +42,13 @@ function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: 
       onPress={onPress}
       style={({ pressed }) => [styles.settingItem, pressed && styles.settingPressed]}
     >
-      <View style={styles.settingLeft}>
-        <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
-          <Ionicons name={icon as any} size={18} color={danger ? Colors.textPrimary : Colors.textTertiary} />
-        </View>
-        <Text style={[styles.settingLabel, danger && styles.settingLabelDanger]}>{label}</Text>
+      <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
+        <Ionicons name={icon as any} size={16} color={danger ? Colors.bg : Colors.textSecondary} />
       </View>
-      <View style={styles.settingRight}>
-        {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
-        {showArrow && <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />}
-      </View>
+      <Text style={[styles.settingLabel, danger && styles.settingLabelDanger]}>{label}</Text>
+      <View style={styles.settingSpacer} />
+      {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
+      {showArrow && <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />}
     </Pressable>
   );
 }
@@ -65,7 +62,7 @@ function SettingGroup({ title, children }: SettingGroupProps) {
   return (
     <View style={styles.group}>
       {title && <Text style={styles.groupTitle}>{title}</Text>}
-      <View style={styles.groupCard}>{children}</View>
+      <View style={styles.groupItems}>{children}</View>
     </View>
   );
 }
@@ -320,7 +317,7 @@ export default function SettingsScreen() {
           <Text style={styles.title}>Settings</Text>
         </View>
 
-        <SettingGroup title="ACCOUNT">
+        <SettingGroup title="Account">
           <SettingItem
             icon="person-outline"
             label="Player Tag"
@@ -343,26 +340,23 @@ export default function SettingsScreen() {
           />
         </SettingGroup>
 
-        <SettingGroup title="APPEARANCE">
+        <SettingGroup title="Appearance">
           <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <View style={styles.settingIcon}>
-                <Ionicons name="moon-outline" size={18} color={Colors.textTertiary} />
-              </View>
-              <Text style={styles.settingLabel}>Dark Mode</Text>
+            <View style={styles.settingIcon}>
+              <Ionicons name="moon-outline" size={16} color={Colors.textSecondary} />
             </View>
+            <Text style={styles.settingLabel}>Dark Mode</Text>
+            <View style={styles.settingSpacer} />
             <Switch
               value={isDark}
-              onValueChange={(v) => {
-                setThemeMode(v);
-              }}
+              onValueChange={(v) => setThemeMode(v)}
               trackColor={{ false: Colors.border, true: Colors.textMuted }}
               thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
             />
           </View>
         </SettingGroup>
 
-        <SettingGroup title="DATA">
+        <SettingGroup title="Data">
           <SettingItem
             icon="cloud-download-outline"
             label="Clear Cache"
@@ -375,7 +369,7 @@ export default function SettingsScreen() {
           />
         </SettingGroup>
 
-        <SettingGroup title="ABOUT">
+        <SettingGroup title="About">
           <SettingItem
             icon="information-circle-outline"
             label="About ClashPrime"
@@ -600,43 +594,33 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   groupTitle: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    fontWeight: '600',
     paddingHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
   },
-  groupCard: {
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+  groupItems: {
     marginHorizontal: Spacing.base,
-    overflow: 'hidden',
+    gap: Spacing.sm,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
-    minHeight: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    gap: Spacing.md,
   },
   settingPressed: {
-    backgroundColor: Colors.bgSubtle,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
+    opacity: 0.8,
   },
   settingIcon: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: Radius.md,
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
@@ -646,18 +630,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.destructive,
   },
   settingLabel: {
-    ...Typography.body,
+    ...Typography.subhead,
     color: Colors.textPrimary,
+    fontWeight: '500',
   },
   settingLabelDanger: {
-    color: Colors.textPrimary,
+    color: Colors.bg,
   },
-  settingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    maxWidth: '45%',
-    flexShrink: 0,
+  settingSpacer: {
+    flex: 1,
   },
   settingValue: {
     ...Typography.subhead,
@@ -666,14 +647,14 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: Spacing.xxl,
+    paddingVertical: Spacing.xl,
     gap: Spacing.xs,
+    opacity: 0.6,
   },
   footerText: {
     ...Typography.caption,
     color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontWeight: '500',
   },
   footerSubtext: {
     ...Typography.caption,

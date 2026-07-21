@@ -432,6 +432,7 @@ const styles = StyleSheet.create({
   },
   filterPills: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.sm,
   },
   filterPill: {
