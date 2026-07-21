@@ -10,6 +10,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,8 @@ import {
   setPlayerTag,
   getApiToken,
   setApiToken,
+  clearAppCache,
+  exportAppData,
 } from '../../src/hooks/usePlayer';
 import { usePlayerActions } from '../../src/hooks/usePlayerContext';
 import { useDialog } from '../../src/components/AlertDialog';
@@ -127,10 +130,18 @@ export default function SettingsScreen() {
   const [contentBody, setContentBody] = useState<React.ReactNode>(null);
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingTag, setOnboardingTag] = useState('');
+  const [onboardingToken, setOnboardingToken] = useState('');
+
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
   useEffect(() => {
-    getPlayerTag().then(setPlayerTagState);
+    getPlayerTag().then((tag) => {
+      setPlayerTagState(tag);
+      if (!tag) setShowOnboarding(true);
+    });
     getApiToken().then((t) => {
       setApiTokenState(maskSecret(t));
     });
@@ -169,6 +180,41 @@ export default function SettingsScreen() {
         bumpTagVersion();
       }
     });
+  };
+
+  const handleClearCache = async () => {
+    await clearAppCache();
+    bumpTagVersion();
+    showDialog({ title: 'Cache Cleared', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+  };
+
+  const handleExportData = async () => {
+    try {
+      const data = await exportAppData();
+      await Share.share({
+        message: data,
+        title: 'ClashPrime Export',
+      });
+    } catch {
+      showDialog({ title: 'Export Failed', message: 'Could not export data. Please try again.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+    }
+  };
+
+  const handleOnboardingSave = async () => {
+    if (onboardingStep === 0) {
+      if (onboardingTag && onboardingTag.startsWith('#')) {
+        await setPlayerTag(onboardingTag);
+        setPlayerTagState(onboardingTag);
+        setOnboardingStep(1);
+      }
+    } else {
+      if (onboardingToken) {
+        await setApiToken(onboardingToken);
+        setApiTokenState(maskSecret(onboardingToken));
+        bumpTagVersion();
+        setShowOnboarding(false);
+      }
+    }
   };
 
   const openCredits = () => {
@@ -309,12 +355,12 @@ export default function SettingsScreen() {
           <SettingItem
             icon="cloud-download-outline"
             label="Clear Cache"
-            onPress={() => showDialog({ title: 'Cleared', message: 'Local cache cleared.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
+            onPress={handleClearCache}
           />
           <SettingItem
             icon="download-outline"
             label="Export Data"
-            onPress={() => showDialog({ title: 'Export', message: 'Feature coming soon.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
+            onPress={handleExportData}
           />
         </SettingGroup>
 
@@ -323,7 +369,7 @@ export default function SettingsScreen() {
             icon="information-circle-outline"
             label="About ClashPrime"
             value="v1.0.0"
-            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
+            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
           />
           <SettingItem
             icon="document-text-outline"
@@ -437,6 +483,58 @@ export default function SettingsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <Modal
+        visible={showOnboarding}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowOnboarding(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.onboardingOverlay}
+        >
+          <View style={styles.onboardingCard}>
+            <View style={styles.onboardingIcon}>
+              <Ionicons name={onboardingStep === 0 ? 'person-outline' : 'key-outline'} size={24} color={Colors.textPrimary} />
+            </View>
+            <Text style={styles.onboardingTitle}>
+              {onboardingStep === 0 ? 'Enter Your Player Tag' : 'Enter Your API Token'}
+            </Text>
+            <Text style={styles.onboardingDesc}>
+              {onboardingStep === 0
+                ? 'Find your tag in-game under Settings → More → Show Tag'
+                : 'Get your token from clashofclans.com → API → My API Tokens'}
+            </Text>
+            <TextInput
+              style={styles.onboardingInput}
+              value={onboardingStep === 0 ? onboardingTag : onboardingToken}
+              onChangeText={(t) => onboardingStep === 0 ? setOnboardingTag(t) : setOnboardingToken(t)}
+              placeholder={onboardingStep === 0 ? '#PG8U2LR00' : 'Paste your API token'}
+              placeholderTextColor={Colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <View style={styles.onboardingActions}>
+              <Pressable
+                style={styles.onboardingBtn}
+                onPress={handleOnboardingSave}
+              >
+                <Text style={styles.onboardingBtnText}>
+                  {onboardingStep === 0 ? 'Continue' : 'Get Started'}
+                </Text>
+              </Pressable>
+            </View>
+            <Pressable
+              style={styles.onboardingSkip}
+              onPress={() => setShowOnboarding(false)}
+            >
+              <Text style={styles.onboardingSkipText}>Skip for now</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       <Dialog />
     </SafeAreaView>
   );
@@ -772,5 +870,73 @@ const styles = StyleSheet.create({
   feedbackNote: {
     ...Typography.footnote,
     color: Colors.textTertiary,
+  },
+  onboardingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  onboardingCard: {
+    width: '85%',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  onboardingIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onboardingTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  onboardingDesc: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  onboardingInput: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    width: '100%',
+  },
+  onboardingActions: {
+    width: '100%',
+  },
+  onboardingBtn: {
+    backgroundColor: Colors.textPrimary,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+  },
+  onboardingSkip: {
+    marginTop: Spacing.sm,
+  },
+  onboardingSkipText: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    textDecorationLine: 'underline',
+  },
+  onboardingBtnText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '600',
   },
 });
