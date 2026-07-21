@@ -135,7 +135,7 @@ function cleanCell(raw: string): string {
     .replace(/class="[^"]*"/gi, '')
     .replace(/style="[^"]*"/gi, '')
     .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/\[\[[^\]|]*\|?([^\]|]*)\]\]/g, '$1')
+    .replace(/\[\[(?:[^\]|]*\|)?([^\]|]*)\]\]/g, '$1')
     .replace(/{{Res\|[^}]*}}/g, '')
     .replace(/{{Res\|RES=[^}]*}}/g, '')
     .replace(/\|$/, '')
@@ -207,6 +207,7 @@ function parseStatsTable(wt: string): { columns: string[]; rows: BuildingLevel[]
   // ── 2. Parse header ──────────────────────────────────────────────
   const headerJoined = headerLines.join('||').replace(/!!/g, '||');
   const headerPieces = splitRow(headerJoined);
+  const usedColNames = new Set<string>();
   const columns = headerPieces.map(p => {
     const c = cleanCell(p);
     // Derive short name from the cleaned text
@@ -217,28 +218,40 @@ function parseStatsTable(wt: string): { columns: string[]; rows: BuildingLevel[]
       .replace(/\s+/g, ' ')
       .trim();
     // Map common terms to consistent keys
-    if (/level/i.test(short)) return 'Level';
-    if (/damage per second|dps/i.test(short)) return 'Damage per Second';
-    if (/damage per shot|damage per attack|dph/i.test(short)) return 'Damage per Shot';
-    if (/hitpoint|hp/i.test(short)) return 'Hitpoints';
-    if (/build cost|cost|gold/i.test(short)) return 'Build Cost';
-    if (/build time|time/i.test(short)) return 'Build Time';
-    if (/experience|xp/i.test(short)) return 'Experience';
-    if (/town hall|th/i.test(short)) return 'Town Hall Level';
-    if (/damage/i.test(short)) return short.replace(/^\*+/, '').trim();
-    return short || 'Stat';
+    let name: string;
+    if (/town hall|th|level required/i.test(short)) name = 'Town Hall Level';
+    else if (/level/i.test(short)) name = 'Level';
+    else if (/damage per second|dps/i.test(short)) name = 'Damage per Second';
+    else if (/damage per shot|damage per attack|dph/i.test(short)) name = 'Damage per Shot';
+    else if (/hitpoint|hp/i.test(short)) name = 'Hitpoints';
+    else if (/build cost|cost|gold/i.test(short)) name = 'Build Cost';
+    else if (/build time|time/i.test(short)) name = 'Build Time';
+    else if (/experience|xp/i.test(short)) name = 'Experience';
+    else if (/damage/i.test(short)) name = short.replace(/^\*+/, '').trim();
+    else name = short || 'Stat';
+    // Deduplicate
+    if (usedColNames.has(name)) {
+      let suffix = 2;
+      while (usedColNames.has(`${name}_${suffix}`)) suffix++;
+      name = `${name}_${suffix}`;
+    }
+    usedColNames.add(name);
+    return name;
   });
 
   // ── 3. Parse rows ────────────────────────────────────────────────
   const rows: BuildingLevel[] = [];
-  for (const row of rowLines) {
-    const cells = splitRow(row.join('||').replace(/^\|-\s*/, ''));
+  for (let ri = 0; ri < rowLines.length; ri++) {
+    const row = rowLines[ri];
+    const joined = row.join('||').replace(/^\|-\s*/, '');
+    const cells = splitRow(joined);
     if (cells.length === 0) continue;
 
-    const firstVal = cleanCell(cells[0]);
-    if (!/^\d+$/.test(firstVal)) continue; // skip non-level rows
+    const firstValRaw = cells[0] || '';
+    const firstValClean = cleanCell(firstValRaw);
+    if (!/^\d+$/.test(firstValClean)) continue; // skip non-level rows
 
-    const rowData: BuildingLevel = { Level: parseInt(firstVal, 10) };
+    const rowData: BuildingLevel = { Level: parseInt(firstValClean, 10) };
     for (let i = 1; i < columns.length && i < cells.length; i++) {
       rowData[columns[i]] = parseValue(cells[i]);
     }

@@ -148,10 +148,9 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
                   </Text>
                 ))}
               </View>
-              {/* Data rows */}
-              {levelsToShow.map((lvl) => {
-                const levelData = buildingStats.levels.find((l: any) => l.Level === lvl);
-                if (!levelData) return null;
+              {/* Data rows — use all levels from scraper data, not only image-available levels */}
+              {buildingStats.levels.map((levelData: any, _idx: number) => {
+                const lvl = levelData.Level;
                 const iconSource = getBuildingLevelImageSource(lookupName, lvl);
                 return (
                   <View key={lvl} style={styles.buildingStatRow}>

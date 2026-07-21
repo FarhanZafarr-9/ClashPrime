@@ -11,8 +11,8 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
@@ -22,187 +22,208 @@
         "Hitpoints": 300,
         "Build Cost": 250,
         "Build Time": "5s",
-        "Gained": 2
+        "Experience": 2,
+        "Town Hall Level": 1
       },
       {
-        "Level": 1,
+        "Level": 2,
         "Damage per Second": 10,
         "Damage per Shot": 8,
         "Hitpoints": 360,
         "Build Cost": 1000,
         "Build Time": "30s",
-        "Gained": 5
+        "Experience": 5,
+        "Town Hall Level": 1
       },
       {
-        "Level": 2,
+        "Level": 3,
         "Damage per Second": 13,
         "Damage per Shot": 10.4,
         "Hitpoints": 420,
         "Build Cost": 4000,
         "Build Time": "2m",
-        "Gained": 10
+        "Experience": 10,
+        "Town Hall Level": 2
       },
       {
-        "Level": 3,
+        "Level": 4,
         "Damage per Second": 17,
         "Damage per Shot": 13.6,
         "Hitpoints": 500,
         "Build Cost": 16000,
         "Build Time": "20m",
-        "Gained": 34
+        "Experience": 34,
+        "Town Hall Level": 3
       },
       {
-        "Level": 4,
+        "Level": 5,
         "Damage per Second": 23,
         "Damage per Shot": 18.4,
         "Hitpoints": 600,
         "Build Cost": 50000,
         "Build Time": "30m",
-        "Gained": 42
+        "Experience": 42,
+        "Town Hall Level": 4
       },
       {
-        "Level": 5,
+        "Level": 6,
         "Damage per Second": 30,
         "Damage per Shot": 24,
         "Hitpoints": 660,
         "Build Cost": 60000,
         "Build Time": "1h",
-        "Gained": 60
+        "Experience": 60,
+        "Town Hall Level": 5
       },
       {
-        "Level": 6,
+        "Level": 7,
         "Damage per Second": 40,
         "Damage per Shot": 32,
         "Hitpoints": 730,
         "Build Cost": 100000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 6
       },
       {
-        "Level": 7,
+        "Level": 8,
         "Damage per Second": 48,
         "Damage per Shot": 38.4,
         "Hitpoints": 800,
         "Build Cost": 160000,
         "Build Time": "3h",
-        "Gained": 103
+        "Experience": 103,
+        "Town Hall Level": 7
       },
       {
-        "Level": 8,
+        "Level": 9,
         "Damage per Second": 56,
         "Damage per Shot": 44.8,
         "Hitpoints": 880,
         "Build Cost": 250000,
         "Build Time": "3h 30m",
-        "Gained": 112
+        "Experience": 112,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 10,
         "Damage per Second": 64,
         "Damage per Shot": 51.2,
         "Hitpoints": 960,
         "Build Cost": 330000,
         "Build Time": "4h",
-        "Gained": 120
+        "Experience": 120,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 11,
         "Damage per Second": 74,
         "Damage per Shot": 59.2,
         "Hitpoints": 1060,
         "Build Cost": 500000,
         "Build Time": "4h 30m",
-        "Gained": 127
+        "Experience": 127,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 12,
         "Damage per Second": 85,
         "Damage per Shot": 68,
         "Hitpoints": 1160,
         "Build Cost": 600000,
         "Build Time": "5h",
-        "Gained": 134
+        "Experience": 134,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 13,
         "Damage per Second": 95,
         "Damage per Shot": 76,
         "Hitpoints": 1260,
         "Build Cost": 660000,
         "Build Time": "6h",
-        "Gained": 146
+        "Experience": 146,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 14,
         "Damage per Second": 100,
         "Damage per Shot": 80,
         "Hitpoints": 1380,
         "Build Cost": 1000000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level": 11
       },
       {
-        "Level": 11,
+        "Level": 15,
         "Damage per Second": 105,
         "Damage per Shot": 84,
         "Hitpoints": 1500,
         "Build Cost": 1200000,
         "Build Time": "10h",
-        "Gained": 189
+        "Experience": 189,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 16,
         "Damage per Second": 110,
         "Damage per Shot": 88,
         "Hitpoints": 1620,
         "Build Cost": 1300000,
         "Build Time": "11h",
-        "Gained": 198
+        "Experience": 198,
+        "Town Hall Level": 12
       },
       {
-        "Level": 12,
+        "Level": 17,
         "Damage per Second": 115,
         "Damage per Shot": 92,
         "Hitpoints": 1740,
         "Build Cost": 1500000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 18,
         "Damage per Second": 125,
         "Damage per Shot": 100,
         "Hitpoints": 1870,
         "Build Cost": 1800000,
         "Build Time": "16h",
-        "Gained": 240
+        "Experience": 240,
+        "Town Hall Level": 13
       },
       {
-        "Level": 13,
+        "Level": 19,
         "Damage per Second": 135,
         "Damage per Shot": 108,
         "Hitpoints": 2000,
         "Build Cost": 2000000,
         "Build Time": "20h",
-        "Gained": 268
+        "Experience": 268,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 20,
         "Damage per Second": 150,
         "Damage per Shot": 120,
         "Hitpoints": 2150,
         "Build Cost": 2600000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 21,
         "Damage per Second": 160,
         "Damage per Shot": 128,
         "Hitpoints": 2250,
         "Build Cost": 3000000,
         "Build Time": "1d 12h",
-        "Gained": 360
+        "Experience": 360,
+        "Town Hall Level": 15
       }
     ]
   },
@@ -218,18 +239,19 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 2,
+        "Level": 1,
         "Damage per Second": 11,
         "Damage per Shot": 5.5,
         "Hitpoints": 380,
         "Build Cost": 1000,
         "Build Time": "15s",
-        "Gained": 3
+        "Experience": 3,
+        "Town Hall Level": 2
       },
       {
         "Level": 2,
@@ -238,7 +260,8 @@
         "Hitpoints": 420,
         "Build Cost": 2000,
         "Build Time": "2m",
-        "Gained": 10
+        "Experience": 10,
+        "Town Hall Level": 2
       },
       {
         "Level": 3,
@@ -247,7 +270,8 @@
         "Hitpoints": 460,
         "Build Cost": 5000,
         "Build Time": "20m",
-        "Gained": 34
+        "Experience": 34,
+        "Town Hall Level": 3
       },
       {
         "Level": 4,
@@ -256,7 +280,8 @@
         "Hitpoints": 500,
         "Build Cost": 20000,
         "Build Time": "1h",
-        "Gained": 60
+        "Experience": 60,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -265,151 +290,168 @@
         "Hitpoints": 540,
         "Build Cost": 70000,
         "Build Time": "1h 30m",
-        "Gained": 73
+        "Experience": 73,
+        "Town Hall Level": 5
       },
       {
-        "Level": 5,
+        "Level": 6,
         "Damage per Second": 35,
         "Damage per Shot": 17.5,
         "Hitpoints": 580,
         "Build Cost": 80000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 5
       },
       {
-        "Level": 6,
+        "Level": 7,
         "Damage per Second": 42,
         "Damage per Shot": 21,
         "Hitpoints": 630,
         "Build Cost": 150000,
         "Build Time": "3h",
-        "Gained": 103
+        "Experience": 103,
+        "Town Hall Level": 6
       },
       {
-        "Level": 7,
+        "Level": 8,
         "Damage per Second": 48,
         "Damage per Shot": 24,
         "Hitpoints": 690,
         "Build Cost": 200000,
         "Build Time": "4h",
-        "Gained": 120
+        "Experience": 120,
+        "Town Hall Level": 7
       },
       {
-        "Level": 8,
+        "Level": 9,
         "Damage per Second": 56,
         "Damage per Shot": 28,
         "Hitpoints": 750,
         "Build Cost": 400000,
         "Build Time": "5h",
-        "Gained": 134
+        "Experience": 134,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 10,
         "Damage per Second": 63,
         "Damage per Shot": 31.5,
         "Hitpoints": 810,
         "Build Cost": 460000,
         "Build Time": "6h",
-        "Gained": 146
+        "Experience": 146,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 11,
         "Damage per Second": 70,
         "Damage per Shot": 35,
         "Hitpoints": 890,
         "Build Cost": 600000,
         "Build Time": "7h",
-        "Gained": 158
+        "Experience": 158,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 12,
         "Damage per Second": 74,
         "Damage per Shot": 37,
         "Hitpoints": 970,
         "Build Cost": 700000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 13,
         "Damage per Second": 78,
         "Damage per Shot": 39,
         "Hitpoints": 1050,
         "Build Cost": 1000000,
         "Build Time": "10h",
-        "Gained": 189
+        "Experience": 189,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 14,
         "Damage per Second": 82,
         "Damage per Shot": 41,
         "Hitpoints": 1130,
         "Build Cost": 1100000,
         "Build Time": "11h",
-        "Gained": 198
+        "Experience": 198,
+        "Town Hall Level": 11
       },
       {
-        "Level": 11,
+        "Level": 15,
         "Damage per Second": 85,
         "Damage per Shot": 42.5,
         "Hitpoints": 1230,
         "Build Cost": 1300000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 16,
         "Damage per Second": 90,
         "Damage per Shot": 45,
         "Hitpoints": 1310,
         "Build Cost": 1600000,
         "Build Time": "16h",
-        "Gained": 240
+        "Experience": 240,
+        "Town Hall Level": 12
       },
       {
-        "Level": 12,
+        "Level": 17,
         "Damage per Second": 100,
         "Damage per Shot": 50,
         "Hitpoints": 1390,
         "Build Cost": 1800000,
         "Build Time": "20h",
-        "Gained": 268
+        "Experience": 268,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 18,
         "Damage per Second": 110,
         "Damage per Shot": 55,
         "Hitpoints": 1510,
         "Build Cost": 2000000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 13
       },
       {
-        "Level": 13,
+        "Level": 19,
         "Damage per Second": 120,
         "Damage per Shot": 60,
         "Hitpoints": 1600,
         "Build Cost": 2200000,
         "Build Time": "1d 6h",
-        "Gained": 328
+        "Experience": 328,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 20,
         "Damage per Second": 135,
         "Damage per Shot": 67.5,
         "Hitpoints": 1700,
         "Build Cost": 3000000,
         "Build Time": "1d 12h",
-        "Gained": 360
+        "Experience": 360,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 21,
         "Damage per Second": 145,
         "Damage per Shot": 72.5,
         "Hitpoints": 1800,
         "Build Cost": 4000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 15
       }
     ]
   },
@@ -425,108 +467,119 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 3,
+        "Level": 1,
         "Damage per Second": 4,
         "Damage per Hit": 20,
         "Hitpoints": 400,
         "Build Cost": 5000,
         "Build Time": "30m",
-        "Gained": 42
+        "Experience": 42,
+        "Town Hall Level": 3
       },
       {
-        "Level": 4,
+        "Level": 2,
         "Damage per Second": 5,
         "Damage per Hit": 25,
         "Hitpoints": 450,
         "Build Cost": 25000,
         "Build Time": "1h",
-        "Gained": 60
+        "Experience": 60,
+        "Town Hall Level": 4
       },
       {
-        "Level": 5,
+        "Level": 3,
         "Damage per Second": 6,
         "Damage per Hit": 30,
         "Hitpoints": 500,
         "Build Cost": 90000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 5
       },
       {
-        "Level": 6,
+        "Level": 4,
         "Damage per Second": 7,
         "Damage per Hit": 35,
         "Hitpoints": 550,
         "Build Cost": 180000,
         "Build Time": "3h",
-        "Gained": 103
+        "Experience": 103,
+        "Town Hall Level": 6
       },
       {
-        "Level": 7,
+        "Level": 5,
         "Damage per Second": 9,
         "Damage per Hit": 45,
         "Hitpoints": 600,
         "Build Cost": 300000,
         "Build Time": "6h",
-        "Gained": 146
+        "Experience": 146,
+        "Town Hall Level": 7
       },
       {
-        "Level": 8,
+        "Level": 6,
         "Damage per Second": 11,
         "Damage per Hit": 55,
         "Hitpoints": 650,
         "Build Cost": 500000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 7,
         "Damage per Second": 15,
         "Damage per Hit": 75,
         "Hitpoints": 700,
         "Build Cost": 900000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 8,
         "Damage per Second": 20,
         "Damage per Hit": 100,
         "Hitpoints": 800,
         "Build Cost": 1200000,
         "Build Time": "18h",
-        "Gained": 254
+        "Experience": 254,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 9,
         "Damage per Second": 25,
         "Damage per Hit": 125,
         "Hitpoints": 950,
         "Build Cost": 1600000,
         "Build Time": "20h",
-        "Gained": 268
+        "Experience": 268,
+        "Town Hall Level": 11
       },
       {
-        "Level": 11,
+        "Level": 10,
         "Damage per Second": 30,
         "Damage per Hit": 150,
         "Hitpoints": 1100,
         "Build Cost": 1800000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 11,
         "Damage per Second": 35,
         "Damage per Hit": 175,
         "Hitpoints": 1300,
         "Build Cost": 2300000,
         "Build Time": "1d 6h",
-        "Gained": 328
+        "Experience": 328,
+        "Town Hall Level": 12
       },
       {
         "Level": 12,
@@ -535,7 +588,8 @@
         "Hitpoints": 1500,
         "Build Cost": 2400000,
         "Build Time": "1d 12h",
-        "Gained": 360
+        "Experience": 360,
+        "Town Hall Level": 12
       },
       {
         "Level": 13,
@@ -544,7 +598,8 @@
         "Hitpoints": 1700,
         "Build Cost": 2800000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 13
       },
       {
         "Level": 14,
@@ -553,7 +608,8 @@
         "Hitpoints": 1950,
         "Build Cost": 4300000,
         "Build Time": "2d 12h",
-        "Gained": 464
+        "Experience": 464,
+        "Town Hall Level": 14
       },
       {
         "Level": 15,
@@ -562,7 +618,8 @@
         "Hitpoints": 2150,
         "Build Cost": 5000000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 15
       },
       {
         "Level": 16,
@@ -571,7 +628,8 @@
         "Hitpoints": 2300,
         "Build Cost": 7000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 16
       },
       {
         "Level": 17,
@@ -580,7 +638,8 @@
         "Hitpoints": 2450,
         "Build Cost": 13000000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 17
       },
       {
         "Level": 18,
@@ -589,7 +648,8 @@
         "Hitpoints": 2550,
         "Build Cost": 21000000,
         "Build Time": "12d 12h",
-        "Gained": 1039
+        "Experience": 1039,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -605,153 +665,169 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 4,
+        "Level": 1,
         "Damage per Second": 80,
         "Damage per Shot": 80,
         "Hitpoints": 800,
         "Build Cost": 22000,
         "Build Time": "1h",
-        "Gained": 60
+        "Experience": 60,
+        "Town Hall Level": 4
       },
       {
-        "Level": 4,
+        "Level": 2,
         "Damage per Second": 110,
         "Damage per Shot": 110,
         "Hitpoints": 850,
         "Build Cost": 90000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 4
       },
       {
-        "Level": 5,
+        "Level": 3,
         "Damage per Second": 140,
         "Damage per Shot": 140,
         "Hitpoints": 900,
         "Build Cost": 210000,
         "Build Time": "6h",
-        "Gained": 146
+        "Experience": 146,
+        "Town Hall Level": 5
       },
       {
-        "Level": 6,
+        "Level": 4,
         "Damage per Second": 160,
         "Damage per Shot": 160,
         "Hitpoints": 950,
         "Build Cost": 500000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 6
       },
       {
-        "Level": 7,
+        "Level": 5,
         "Damage per Second": 190,
         "Damage per Shot": 190,
         "Hitpoints": 1000,
         "Build Cost": 800000,
         "Build Time": "18h",
-        "Gained": 254
+        "Experience": 254,
+        "Town Hall Level": 7
       },
       {
-        "Level": 8,
+        "Level": 6,
         "Damage per Second": 230,
         "Damage per Shot": 230,
         "Hitpoints": 1050,
         "Build Cost": 1000000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 7,
         "Damage per Second": 280,
         "Damage per Shot": 280,
         "Hitpoints": 1100,
         "Build Cost": 1750000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 8,
         "Damage per Second": 320,
         "Damage per Shot": 320,
         "Hitpoints": 1210,
         "Build Cost": 2300000,
         "Build Time": "2d 12h",
-        "Gained": 464
+        "Experience": 464,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 9,
         "Damage per Second": 360,
         "Damage per Shot": 360,
         "Hitpoints": 1300,
         "Build Cost": 3400000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 10,
         "Damage per Second": 400,
         "Damage per Shot": 400,
         "Hitpoints": 1400,
         "Build Cost": 5000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 11,
         "Damage per Second": 440,
         "Damage per Shot": 440,
         "Hitpoints": 1500,
         "Build Cost": 5600000,
         "Build Time": "4d 12h",
-        "Gained": 623
+        "Experience": 623,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 12,
         "Damage per Second": 500,
         "Damage per Shot": 500,
         "Hitpoints": 1650,
         "Build Cost": 6500000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 13,
         "Damage per Second": 540,
         "Damage per Shot": 540,
         "Hitpoints": 1750,
         "Build Cost": 8000000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 14,
         "Damage per Second": 600,
         "Damage per Shot": 600,
         "Hitpoints": 1850,
         "Build Cost": 9000000,
         "Build Time": "6d 12h",
-        "Gained": 749
+        "Experience": 749,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 15,
         "Damage per Second": 650,
         "Damage per Shot": 650,
         "Hitpoints": 1950,
         "Build Cost": 15000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 16,
         "Damage per Second": 700,
         "Damage per Shot": 700,
         "Hitpoints": 2000,
         "Build Cost": 26000000,
         "Build Time": "13d 6h",
-        "Gained": 1069
+        "Experience": 1069,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -767,117 +843,129 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 5,
+        "Level": 1,
         "Damage per Second": 11,
         "Damage per Shot": 14.3,
         "Hitpoints": 620,
         "Build Cost": 100000,
         "Build Time": "1h",
-        "Gained": 60
+        "Experience": 60,
+        "Town Hall Level": 5
       },
       {
-        "Level": 5,
+        "Level": 2,
         "Damage per Second": 13,
         "Damage per Shot": 16.9,
         "Hitpoints": 650,
         "Build Cost": 150000,
         "Build Time": "1h 30m",
-        "Gained": 73
+        "Experience": 73,
+        "Town Hall Level": 5
       },
       {
-        "Level": 6,
+        "Level": 3,
         "Damage per Second": 16,
         "Damage per Shot": 20.8,
         "Hitpoints": 680,
         "Build Cost": 250000,
         "Build Time": "4h",
-        "Gained": 120
+        "Experience": 120,
+        "Town Hall Level": 6
       },
       {
-        "Level": 7,
+        "Level": 4,
         "Damage per Second": 20,
         "Damage per Shot": 26,
         "Hitpoints": 730,
         "Build Cost": 400000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level": 7
       },
       {
-        "Level": 8,
+        "Level": 5,
         "Damage per Second": 24,
         "Damage per Shot": 31.2,
         "Hitpoints": 840,
         "Build Cost": 550000,
         "Build Time": "10h",
-        "Gained": 189
+        "Experience": 189,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 6,
         "Damage per Second": 32,
         "Damage per Shot": 41.6,
         "Hitpoints": 960,
         "Build Cost": 660000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 7,
         "Damage per Second": 40,
         "Damage per Shot": 52,
         "Hitpoints": 1200,
         "Build Cost": 1000000,
         "Build Time": "18h",
-        "Gained": 254
+        "Experience": 254,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 8,
         "Damage per Second": 45,
         "Damage per Shot": 58.5,
         "Hitpoints": 1440,
         "Build Cost": 1100000,
         "Build Time": "20h",
-        "Gained": 268
+        "Experience": 268,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 9,
         "Damage per Second": 50,
         "Damage per Shot": 65,
         "Hitpoints": 1600,
         "Build Cost": 1300000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 10,
         "Damage per Second": 62,
         "Damage per Shot": 80.6,
         "Hitpoints": 1900,
         "Build Cost": 2000000,
         "Build Time": "1d 6h",
-        "Gained": 328
+        "Experience": 328,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 11,
         "Damage per Second": 70,
         "Damage per Shot": 91,
         "Hitpoints": 2120,
         "Build Cost": 2500000,
         "Build Time": "1d 12h",
-        "Gained": 360
+        "Experience": 360,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 12,
         "Damage per Second": 78,
         "Damage per Shot": 101.4,
         "Hitpoints": 2240,
         "Build Cost": 2600000,
         "Build Time": "1d 18h",
-        "Gained": 388
+        "Experience": 388,
+        "Town Hall Level": 13
       },
       {
         "Level": 13,
@@ -886,7 +974,8 @@
         "Hitpoints": 2500,
         "Build Cost": 3000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 13
       },
       {
         "Level": 14,
@@ -895,7 +984,8 @@
         "Hitpoints": 2800,
         "Build Cost": 4500000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 14
       },
       {
         "Level": 15,
@@ -904,7 +994,8 @@
         "Hitpoints": 3000,
         "Build Cost": 5500000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 15
       },
       {
         "Level": 16,
@@ -913,7 +1004,8 @@
         "Hitpoints": 3150,
         "Build Cost": 8000000,
         "Build Time": "4d 12h",
-        "Gained": 623
+        "Experience": 623,
+        "Town Hall Level": 16
       },
       {
         "Level": 17,
@@ -922,7 +1014,8 @@
         "Hitpoints": 3300,
         "Build Cost": 14000000,
         "Build Time": "5d 12h",
-        "Gained": 689
+        "Experience": 689,
+        "Town Hall Level": 17
       }
     ]
   },
@@ -937,65 +1030,72 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level_2"
     ],
     "levels": [
       {
-        "Level": 6,
+        "Level": 1,
         "Town Hall Level": "1.6 tiles",
         "Hitpoints": 750,
         "Build Cost": 200000,
         "Build Time": "4h",
-        "Gained": 120
+        "Experience": 120,
+        "Town Hall Level_2": 6
       },
       {
-        "Level": 6,
+        "Level": 2,
         "Town Hall Level": "2.0 tiles",
         "Hitpoints": 800,
         "Build Cost": 300000,
         "Build Time": "6h",
-        "Gained": 146
+        "Experience": 146,
+        "Town Hall Level_2": 6
       },
       {
-        "Level": 7,
+        "Level": 3,
         "Town Hall Level": "2.4 tiles",
         "Hitpoints": 850,
         "Build Cost": 450000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level_2": 7
       },
       {
-        "Level": 8,
+        "Level": 4,
         "Town Hall Level": "2.8 tiles",
         "Hitpoints": 900,
         "Build Cost": 800000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level_2": 8
       },
       {
-        "Level": 9,
+        "Level": 5,
         "Town Hall Level": "3.2 tiles",
         "Hitpoints": 950,
         "Build Cost": 1200000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level_2": 9
       },
       {
-        "Level": 10,
+        "Level": 6,
         "Town Hall Level": "3.6 tiles",
         "Hitpoints": 1000,
         "Build Cost": 1900000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level_2": 10
       },
       {
-        "Level": 11,
+        "Level": 7,
         "Town Hall Level": "4.0 tiles",
         "Hitpoints": 1050,
         "Build Cost": 3400000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level_2": 11
       }
     ]
   },
@@ -1011,162 +1111,179 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 7,
+        "Level": 1,
         "Damage per Second": 34,
         "Damage per Shot": 20.4,
         "Hitpoints": 600,
         "Build Cost": 250000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 2,
         "Damage per Second": 40,
         "Damage per Shot": 24,
         "Hitpoints": 630,
         "Build Cost": 350000,
         "Build Time": "3h",
-        "Gained": 103
+        "Experience": 103,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 3,
         "Damage per Second": 48,
         "Damage per Shot": 28.8,
         "Hitpoints": 660,
         "Build Cost": 500000,
         "Build Time": "4h",
-        "Gained": 120
+        "Experience": 120,
+        "Town Hall Level": 7
       },
       {
-        "Level": 8,
+        "Level": 4,
         "Damage per Second": 55,
         "Damage per Shot": 33,
         "Hitpoints": 690,
         "Build Cost": 600000,
         "Build Time": "6h",
-        "Gained": 146
+        "Experience": 146,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 5,
         "Damage per Second": 64,
         "Damage per Shot": 38.4,
         "Hitpoints": 730,
         "Build Cost": 800000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 6,
         "Damage per Second": 75,
         "Damage per Shot": 45,
         "Hitpoints": 770,
         "Build Cost": 1200000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 7,
         "Damage per Second": 87,
         "Damage per Shot": 52.2,
         "Hitpoints": 810,
         "Build Cost": 1400000,
         "Build Time": "1d 6h",
-        "Gained": 328
+        "Experience": 328,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 8,
         "Damage per Second": 99,
         "Damage per Shot": 59.4,
         "Hitpoints": 850,
         "Build Cost": 1600000,
         "Build Time": "1d 12h",
-        "Gained": 360
+        "Experience": 360,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 9,
         "Damage per Second": 110,
         "Damage per Shot": 66,
         "Hitpoints": 900,
         "Build Cost": 2100000,
         "Build Time": "1d 18h",
-        "Gained": 388
+        "Experience": 388,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 10,
         "Damage per Second": 120,
         "Damage per Shot": 72,
         "Hitpoints": 980,
         "Build Cost": 3000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 11,
         "Damage per Second": 130,
         "Damage per Shot": 78,
         "Hitpoints": 1100,
         "Build Cost": 3100000,
         "Build Time": "2d 12h",
-        "Gained": 464
+        "Experience": 464,
+        "Town Hall Level": 13
       },
       {
-        "Level": 13,
+        "Level": 12,
         "Damage per Second": 140,
         "Damage per Shot": 84,
         "Hitpoints": 1200,
         "Build Cost": 3700000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 13,
         "Damage per Second": 150,
         "Damage per Shot": 90,
         "Hitpoints": 1350,
         "Build Cost": 5100000,
         "Build Time": "3d 12h",
-        "Gained": 549
+        "Experience": 549,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 14,
         "Damage per Second": 160,
         "Damage per Shot": 96,
         "Hitpoints": 1450,
         "Build Cost": 6500000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 15,
         "Damage per Second": 170,
         "Damage per Shot": 102,
         "Hitpoints": 1550,
         "Build Cost": 8200000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 16,
         "Damage per Second": 180,
         "Damage per Shot": 108,
         "Hitpoints": 1650,
         "Build Cost": 15000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 17,
         "Damage per Second": 190,
         "Damage per Shot": 114,
         "Hitpoints": 1750,
         "Build Cost": 25000000,
         "Build Time": "13d",
-        "Gained": 1059
+        "Experience": 1059,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -1183,139 +1300,152 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 8,
+        "Level": 1,
         "Damage per Second": 24,
         "Damage per Shot": 26.4,
         "Damage when destroyed": 150,
         "Hitpoints": 650,
         "Build Cost": 700000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 2,
         "Damage per Second": 28,
         "Damage per Shot": 30.8,
         "Damage when destroyed": 180,
         "Hitpoints": 700,
         "Build Cost": 1000000,
         "Build Time": "18h",
-        "Gained": 254
+        "Experience": 254,
+        "Town Hall Level": 8
       },
       {
-        "Level": 9,
+        "Level": 3,
         "Damage per Second": 32,
         "Damage per Shot": 35.2,
         "Damage when destroyed": 220,
         "Hitpoints": 750,
         "Build Cost": 1300000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 4,
         "Damage per Second": 40,
         "Damage per Shot": 44,
         "Damage when destroyed": 260,
         "Hitpoints": 850,
         "Build Cost": 1800000,
         "Build Time": "1d 12h",
-        "Gained": 360
+        "Experience": 360,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 5,
         "Damage per Second": 48,
         "Damage per Shot": 52.8,
         "Damage when destroyed": 300,
         "Hitpoints": 1050,
         "Build Cost": 1900000,
         "Build Time": "1d 18h",
-        "Gained": 388
+        "Experience": 388,
+        "Town Hall Level": 11
       },
       {
-        "Level": 11,
+        "Level": 6,
         "Damage per Second": 56,
         "Damage per Shot": 61.6,
         "Damage when destroyed": 350,
         "Hitpoints": 1300,
         "Build Cost": 2000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 7,
         "Damage per Second": 64,
         "Damage per Shot": 70.4,
         "Damage when destroyed": 400,
         "Hitpoints": 1600,
         "Build Cost": 4000000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 8,
         "Damage per Second": 72,
         "Damage per Shot": 79.2,
         "Damage when destroyed": 450,
         "Hitpoints": 1900,
         "Build Cost": 5000000,
         "Build Time": "3d 12h",
-        "Gained": 549
+        "Experience": 549,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 9,
         "Damage per Second": 84,
         "Damage per Shot": 92.4,
         "Damage when destroyed": 500,
         "Hitpoints": 2300,
         "Build Cost": 6000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 10,
         "Damage per Second": 94,
         "Damage per Shot": 103.4,
         "Damage when destroyed": 550,
         "Hitpoints": 2500,
         "Build Cost": 7000000,
         "Build Time": "4d 12h",
-        "Gained": 623
+        "Experience": 623,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 11,
         "Damage per Second": 104,
         "Damage per Shot": 114.4,
         "Damage when destroyed": 600,
         "Hitpoints": 2700,
         "Build Cost": 8500000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 12,
         "Damage per Second": 114,
         "Damage per Shot": 125.4,
         "Damage when destroyed": 650,
         "Hitpoints": 2900,
         "Build Cost": 14500000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 13,
         "Damage per Second": 122,
         "Damage per Shot": 134.2,
         "Damage when destroyed": 700,
         "Hitpoints": 3050,
         "Build Cost": 25000000,
         "Build Time": "13d",
-        "Gained": 1059
+        "Experience": 1059,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -1331,126 +1461,139 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 9,
+        "Level": 1,
         "Damage per Second": 60,
         "Damage per Shot": 7.68,
         "Hitpoints": 1500,
         "Build Cost": 1000000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
+        "Level": 2,
         "Damage per Second": 70,
         "Damage per Shot": 8.96,
         "Hitpoints": 1900,
         "Build Cost": 1200000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
+        "Level": 3,
         "Damage per Second": 80,
         "Damage per Shot": 10.24,
         "Hitpoints": 2300,
         "Build Cost": 2400000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 9
       },
       {
-        "Level": 10,
+        "Level": 4,
         "Damage per Second": 85,
         "Damage per Shot": 10.88,
         "Hitpoints": 2700,
         "Build Cost": 2500000,
         "Build Time": "2d 12h",
-        "Gained": 464
+        "Experience": 464,
+        "Town Hall Level": 10
       },
       {
-        "Level": 11,
+        "Level": 5,
         "Damage per Second": 95,
         "Damage per Shot": 12.16,
         "Hitpoints": 3100,
         "Build Cost": 3900000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 6,
         "Damage per Second": 110,
         "Damage per Shot": 14.08,
         "Hitpoints": 3400,
         "Build Cost": 5000000,
         "Build Time": "3d 12h",
-        "Gained": 549
+        "Experience": 549,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 7,
         "Damage per Second": 130,
         "Damage per Shot": 16.64,
         "Hitpoints": 3700,
         "Build Cost": 6000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 13
       },
       {
-        "Level": 13,
+        "Level": 8,
         "Damage per Second": 155,
         "Damage per Shot": 19.84,
         "Hitpoints": 4000,
         "Build Cost": 7000000,
         "Build Time": "4d 12h",
-        "Gained": 623
+        "Experience": 623,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 9,
         "Damage per Second": 185,
         "Damage per Shot": 23.68,
         "Hitpoints": 4200,
         "Build Cost": 9000000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 10,
         "Damage per Second": 205,
         "Damage per Shot": 26.24,
         "Hitpoints": 4400,
         "Build Cost": 9500000,
         "Build Time": "5d 12h",
-        "Gained": 689
+        "Experience": 689,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 11,
         "Damage per Second": 225,
         "Damage per Shot": 28.8,
         "Hitpoints": 4600,
         "Build Cost": 10000000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 12,
         "Damage per Second": 235,
         "Damage per Shot": 30.08,
         "Hitpoints": 4800,
         "Build Cost": 16000000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 13,
         "Damage per Second": 245,
         "Damage per Shot": 31.36,
         "Hitpoints": 5000,
         "Build Cost": 26000000,
         "Build Time": "13d 12h",
-        "Gained": 1080
+        "Experience": 1080,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -1466,159 +1609,183 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level",
+      "Experience",
+      "Town Hall Level",
       "Initial",
       "After 1.5s",
       "After 5.25s",
-      "Initial",
-      "After 1.5s",
-      "After 5.25s"
+      "Initial_2",
+      "After 1.5s_2",
+      "After 5.25s_2"
     ],
     "levels": [
       {
-        "Level": 1500,
+        "Level": 1,
         "Damage per Second": 30,
         "Damage per Hit": 80,
         "Hitpoints": 800,
         "Build Cost": 3.84,
         "Build Time": 10.24,
-        "Gained": 102.4,
-        "Initial": 10,
+        "Experience": 102.4,
+        "Town Hall Level": 1500,
+        "Initial": 1000000,
         "After 1.5s": "12h",
-        "After 5.25s": 207
+        "After 5.25s": 207,
+        "Initial_2": 10
       },
       {
-        "Level": 1800,
+        "Level": 2,
         "Damage per Second": 35,
         "Damage per Hit": 100,
         "Hitpoints": 1000,
         "Build Cost": 4.48,
         "Build Time": 12.8,
-        "Gained": 128,
-        "Initial": 10,
+        "Experience": 128,
+        "Town Hall Level": 1800,
+        "Initial": 1200000,
         "After 1.5s": "1d",
-        "After 5.25s": 293
+        "After 5.25s": 293,
+        "Initial_2": 10
       },
       {
-        "Level": 2100,
+        "Level": 3,
         "Damage per Second": 40,
         "Damage per Hit": 120,
         "Hitpoints": 1200,
         "Build Cost": 5.12,
         "Build Time": 15.36,
-        "Gained": 153.6,
-        "Initial": 10,
+        "Experience": 153.6,
+        "Town Hall Level": 2100,
+        "Initial": 2400000,
         "After 1.5s": "2d",
-        "After 5.25s": 415
+        "After 5.25s": 415,
+        "Initial_2": 10
       },
       {
-        "Level": 2400,
+        "Level": 4,
         "Damage per Second": 45,
         "Damage per Hit": 140,
         "Hitpoints": 1400,
         "Build Cost": 5.76,
         "Build Time": 17.92,
-        "Gained": 179.2,
-        "Initial": 11,
+        "Experience": 179.2,
+        "Town Hall Level": 2400,
+        "Initial": 3400000,
         "After 1.5s": "2d 12h",
-        "After 5.25s": 464
+        "After 5.25s": 464,
+        "Initial_2": 11
       },
       {
-        "Level": 2700,
+        "Level": 5,
         "Damage per Second": 50,
         "Damage per Hit": 150,
         "Hitpoints": 1500,
         "Build Cost": 6.4,
         "Build Time": 19.2,
-        "Gained": 192,
-        "Initial": 11,
+        "Experience": 192,
+        "Town Hall Level": 2700,
+        "Initial": 4200000,
         "After 1.5s": "3d",
-        "After 5.25s": 509
+        "After 5.25s": 509,
+        "Initial_2": 11
       },
       {
-        "Level": 3000,
+        "Level": 6,
         "Damage per Second": 55,
         "Damage per Hit": 160,
         "Hitpoints": 1600,
         "Build Cost": 7.04,
         "Build Time": 20.48,
-        "Gained": 204.8,
-        "Initial": 12,
+        "Experience": 204.8,
+        "Town Hall Level": 3000,
+        "Initial": 6000000,
         "After 1.5s": "4d",
-        "After 5.25s": 587
+        "After 5.25s": 587,
+        "Initial_2": 12
       },
       {
-        "Level": 3300,
+        "Level": 7,
         "Damage per Second": 65,
         "Damage per Hit": 180,
         "Hitpoints": 1800,
         "Build Cost": 8.32,
         "Build Time": 23.04,
-        "Gained": 230.4,
-        "Initial": 13,
+        "Experience": 230.4,
+        "Town Hall Level": 3300,
+        "Initial": 8000000,
         "After 1.5s": "5d",
-        "After 5.25s": 657
+        "After 5.25s": 657,
+        "Initial_2": 13
       },
       {
-        "Level": 3700,
+        "Level": 8,
         "Damage per Second": 80,
         "Damage per Hit": 210,
         "Hitpoints": 2100,
         "Build Cost": 10.24,
         "Build Time": 26.88,
-        "Gained": 268.8,
-        "Initial": 14,
+        "Experience": 268.8,
+        "Town Hall Level": 3700,
+        "Initial": 9500000,
         "After 1.5s": "6d",
-        "After 5.25s": 720
+        "After 5.25s": 720,
+        "Initial_2": 14
       },
       {
-        "Level": 4000,
+        "Level": 9,
         "Damage per Second": 100,
         "Damage per Hit": 230,
         "Hitpoints": 2300,
         "Build Cost": 12.8,
         "Build Time": 29.44,
-        "Gained": 294.4,
-        "Initial": 15,
+        "Experience": 294.4,
+        "Town Hall Level": 4000,
+        "Initial": 10000000,
         "After 1.5s": "6d 12h",
-        "After 5.25s": 749
+        "After 5.25s": 749,
+        "Initial_2": 15
       },
       {
-        "Level": 4400,
+        "Level": 10,
         "Damage per Second": 120,
         "Damage per Hit": 260,
         "Hitpoints": 2600,
         "Build Cost": 15.36,
         "Build Time": 33.28,
-        "Gained": 332.8,
-        "Initial": 16,
+        "Experience": 332.8,
+        "Town Hall Level": 4400,
+        "Initial": 11000000,
         "After 1.5s": "7d",
-        "After 5.25s": 777
+        "After 5.25s": 777,
+        "Initial_2": 16
       },
       {
-        "Level": 4800,
+        "Level": 11,
         "Damage per Second": 140,
         "Damage per Hit": 290,
         "Hitpoints": 2900,
         "Build Cost": 17.92,
         "Build Time": 37.12,
-        "Gained": 371.2,
-        "Initial": 17,
+        "Experience": 371.2,
+        "Town Hall Level": 4800,
+        "Initial": 16000000,
         "After 1.5s": "8d",
-        "After 5.25s": 831
+        "After 5.25s": 831,
+        "Initial_2": 17
       },
       {
-        "Level": 5100,
+        "Level": 12,
         "Damage per Second": 155,
         "Damage per Hit": 330,
         "Hitpoints": 3300,
         "Build Cost": 19.84,
         "Build Time": 42.24,
-        "Gained": 422.4,
-        "Initial": 18,
+        "Experience": 422.4,
+        "Town Hall Level": 5100,
+        "Initial": 26500000,
         "After 1.5s": "13d 12h",
-        "After 5.25s": 1080
+        "After 5.25s": 1080,
+        "Initial_2": 18
       }
     ]
   },
@@ -1635,79 +1802,86 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 11,
+        "Level": 1,
         "Damage per Hit": 225,
         "Damage per Second": 67.5,
         "Shockwave Damage": 20,
         "Hitpoints": 4000,
         "Build Cost": 5000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 11
       },
       {
-        "Level": 11,
+        "Level": 2,
         "Damage per Hit": 250,
         "Damage per Second": 75,
         "Shockwave Damage": 25,
         "Hitpoints": 4400,
         "Build Cost": 6000000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 11
       },
       {
-        "Level": 12,
+        "Level": 3,
         "Damage per Hit": 275,
         "Damage per Second": 82.5,
         "Shockwave Damage": 30,
         "Hitpoints": 4800,
         "Build Cost": 9000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 12
       },
       {
-        "Level": 13,
+        "Level": 4,
         "Damage per Hit": 350,
         "Damage per Second": 105,
         "Shockwave Damage": 35,
         "Hitpoints": 5200,
         "Build Cost": 10000000,
         "Build Time": "7d 12h",
-        "Gained": 804
+        "Experience": 804,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 5,
         "Damage per Hit": 425,
         "Damage per Second": 127.5,
         "Shockwave Damage": 40,
         "Hitpoints": 5600,
         "Build Cost": 12000000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 6,
         "Damage per Hit": 475,
         "Damage per Second": 142.5,
         "Shockwave Damage": 45,
         "Hitpoints": 5900,
         "Build Cost": 13000000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 7,
         "Damage per Hit": 525,
         "Damage per Second": 157.5,
         "Shockwave Damage": 50,
         "Hitpoints": 6200,
         "Build Cost": 14000000,
         "Build Time": "9d 12h",
-        "Gained": 905
+        "Experience": 905,
+        "Town Hall Level": 16
       }
     ]
   },
@@ -1724,79 +1898,86 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 13,
+        "Level": 1,
         "Damage per Second": 125,
         "Damage per Shot": 300,
         "Splash Damage**": 100,
         "Hitpoints": 3600,
         "Build Cost": 8000000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 13
       },
       {
-        "Level": 13,
+        "Level": 2,
         "Damage per Second": 150,
         "Damage per Shot": 360,
         "Splash Damage**": 120,
         "Hitpoints": 4200,
         "Build Cost": 9000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 13
       },
       {
-        "Level": 14,
+        "Level": 3,
         "Damage per Second": 170,
         "Damage per Shot": 380,
         "Splash Damage**": 130,
         "Hitpoints": 4800,
         "Build Cost": 11000000,
         "Build Time": "7d 12h",
-        "Gained": 804
+        "Experience": 804,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 4,
         "Damage per Second": 175,
         "Damage per Shot": 400,
         "Splash Damage**": 140,
         "Hitpoints": 5100,
         "Build Cost": 11500000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 5,
         "Damage per Second": 180,
         "Damage per Shot": 420,
         "Splash Damage**": 150,
         "Hitpoints": 5410,
         "Build Cost": 12000000,
         "Build Time": "8d 12h",
-        "Gained": 856
+        "Experience": 856,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 6,
         "Damage per Second": 185,
         "Damage per Shot": 440,
         "Splash Damage**": 155,
         "Hitpoints": 5600,
         "Build Cost": 16500000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 7,
         "Damage per Second": 190,
         "Damage per Shot": 450,
         "Splash Damage**": 160,
         "Hitpoints": 5800,
         "Build Cost": 26500000,
         "Build Time": "15d",
-        "Gained": 1138
+        "Experience": 1138,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -1814,8 +1995,8 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
@@ -1827,10 +2008,11 @@
         "Hitpoints": 250,
         "Build Cost": "Varies**",
         "Build Time": "None",
-        "Gained": 0
+        "Experience": 0,
+        "Town Hall Level": 1
       },
       {
-        "Level": 14,
+        "Level": 2,
         "Damage per Second": 80,
         "Damage per Shot": 32,
         "Repair per Second": 50,
@@ -1838,10 +2020,11 @@
         "Hitpoints": 1000,
         "Build Cost": 3000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 14
       },
       {
-        "Level": 14,
+        "Level": 3,
         "Damage per Second": 100,
         "Damage per Shot": 40,
         "Repair per Second": 60,
@@ -1849,10 +2032,11 @@
         "Hitpoints": 1300,
         "Build Cost": 4000000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 14
       },
       {
-        "Level": 14,
+        "Level": 4,
         "Damage per Second": 120,
         "Damage per Shot": 48,
         "Repair per Second": 70,
@@ -1860,10 +2044,11 @@
         "Hitpoints": 1600,
         "Build Cost": 6000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 14
       },
       {
-        "Level": 15,
+        "Level": 5,
         "Damage per Second": 135,
         "Damage per Shot": 54,
         "Repair per Second": 80,
@@ -1871,10 +2056,11 @@
         "Hitpoints": 1800,
         "Build Cost": 7000000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 6,
         "Damage per Second": 150,
         "Damage per Shot": 60,
         "Repair per Second": 85,
@@ -1882,10 +2068,11 @@
         "Hitpoints": 1900,
         "Build Cost": 8000000,
         "Build Time": "5d 12h",
-        "Gained": 689
+        "Experience": 689,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 7,
         "Damage per Second": 165,
         "Damage per Shot": 66,
         "Repair per Second": 90,
@@ -1893,10 +2080,11 @@
         "Hitpoints": 2000,
         "Build Cost": 15500000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 8,
         "Damage per Second": 180,
         "Damage per Shot": 72,
         "Repair per Second": 95,
@@ -1904,7 +2092,8 @@
         "Hitpoints": 2100,
         "Build Cost": 24000000,
         "Build Time": "13d",
-        "Gained": 1059
+        "Experience": 1059,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -1919,41 +2108,45 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 15,
-        "Unlocks": "",
+        "Level": 1,
+        "Unlocks": "Rage Spell",
         "Hitpoints": 2500,
         "Build Cost": 9000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 15
       },
       {
-        "Level": 15,
-        "Unlocks": "",
+        "Level": 2,
+        "Unlocks": "Poison Spell",
         "Hitpoints": 2800,
         "Build Cost": 11000000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 15
       },
       {
-        "Level": 15,
-        "Unlocks": "",
+        "Level": 3,
+        "Unlocks": "Invisibility Spell",
         "Hitpoints": 3100,
         "Build Cost": 12000000,
         "Build Time": "8d 12h",
-        "Gained": 856
+        "Experience": 856,
+        "Town Hall Level": 15
       },
       {
-        "Level": 17,
-        "Unlocks": "",
+        "Level": 4,
+        "Unlocks": "Earthquake Spell",
         "Hitpoints": 3200,
         "Build Cost": 27000000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 17
       }
     ]
   },
@@ -1966,58 +2159,68 @@
       "Level",
       "Damage per Second",
       "Damage per Shot",
-      "Damage per Shot",
+      "Damage per Shot_2",
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 15,
+        "Level": 1,
         "Damage per Second": 150,
-        "Damage per Shot": 11,
+        "Damage per Shot": 225,
+        "Damage per Shot_2": 11,
         "Hitpoints": 4747,
         "Build Cost": 200000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 15
       },
       {
-        "Level": 15,
+        "Level": 2,
         "Damage per Second": 175,
-        "Damage per Shot": 12,
+        "Damage per Shot": 262.5,
+        "Damage per Shot_2": 12,
         "Hitpoints": 5050,
         "Build Cost": 250000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 15
       },
       {
-        "Level": 16,
+        "Level": 3,
         "Damage per Second": 193,
-        "Damage per Shot": 13,
+        "Damage per Shot": 289.5,
+        "Damage per Shot_2": 13,
         "Hitpoints": 5353,
         "Build Cost": 260000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 4,
         "Damage per Second": 209,
-        "Damage per Shot": 14,
+        "Damage per Shot": 313.5,
+        "Damage per Shot_2": 14,
         "Hitpoints": 5656,
         "Build Cost": 300000,
         "Build Time": "11d",
-        "Gained": 974
+        "Experience": 974,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 5,
         "Damage per Second": 225,
-        "Damage per Shot": 15,
+        "Damage per Shot": 337.5,
+        "Damage per Shot_2": 15,
         "Hitpoints": 5959,
         "Build Cost": 470000,
         "Build Time": "15d",
-        "Gained": 1138
+        "Experience": 1138,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2033,45 +2236,49 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 16,
+        "Level": 1,
         "Damage per Second": 100,
         "Damage per Hit": 60,
         "Hitpoints": 5000,
         "Build Cost": 12000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 16
       },
       {
-        "Level": 16,
+        "Level": 2,
         "Damage per Second": 108,
         "Damage per Hit": 65,
         "Hitpoints": 5200,
         "Build Cost": 13000000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 3,
         "Damage per Second": 116,
         "Damage per Hit": 70,
         "Hitpoints": 5400,
         "Build Cost": 17500000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 4,
         "Damage per Second": 121,
         "Damage per Hit": 73,
         "Hitpoints": 5500,
         "Build Cost": 27000000,
         "Build Time": "14d",
-        "Gained": 1099
+        "Experience": 1099,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2088,49 +2295,53 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 16,
+        "Level": 1,
         "Damage per Second": 360,
         "Damage per Shot": 288,
         "Secondary Chain Damage": 201.6,
         "Hitpoints": 5400,
         "Build Cost": 12000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 16
       },
       {
-        "Level": 16,
+        "Level": 2,
         "Damage per Second": 390,
         "Damage per Shot": 312,
         "Secondary Chain Damage": 218.4,
         "Hitpoints": 5700,
         "Build Cost": 13000000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 16
       },
       {
-        "Level": 17,
+        "Level": 3,
         "Damage per Second": 405,
         "Damage per Shot": 324,
         "Secondary Chain Damage": 226.8,
         "Hitpoints": 6000,
         "Build Cost": 17500000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 4,
         "Damage per Second": 412,
         "Damage per Shot": 329.6,
         "Secondary Chain Damage": 230.72,
         "Hitpoints": 6100,
         "Build Cost": 26500000,
         "Build Time": "13d 12h",
-        "Gained": 1080
+        "Experience": 1080,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2146,36 +2357,39 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 17,
+        "Level": 1,
         "Damage per Second": 350,
         "Damage per Hit": 350,
         "Hitpoints": 4000,
         "Build Cost": 17000000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 17
       },
       {
-        "Level": 17,
+        "Level": 2,
         "Damage per Second": 370,
         "Damage per Hit": 370,
         "Hitpoints": 4200,
         "Build Cost": 18000000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 3,
         "Damage per Second": 390,
         "Damage per Hit": 390,
         "Hitpoints": 4350,
         "Build Cost": 28000000,
         "Build Time": "14d",
-        "Gained": 1099
+        "Experience": 1099,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2191,36 +2405,39 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 17,
+        "Level": 1,
         "Damage per Second": 410,
         "Damage per Hit**": 46.03,
         "Hitpoints": 4500,
         "Build Cost": 17000000,
         "Build Time": "8d 12h",
-        "Gained": 856
+        "Experience": 856,
+        "Town Hall Level": 17
       },
       {
-        "Level": 17,
+        "Level": 2,
         "Damage per Second": 437,
         "Damage per Hit**": 49.05,
         "Hitpoints": 5000,
         "Build Cost": 18000000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 17
       },
       {
-        "Level": 18,
+        "Level": 3,
         "Damage per Second": 455,
         "Damage per Hit**": 51.07,
         "Hitpoints": 5300,
         "Build Cost": 29000000,
         "Build Time": "15d",
-        "Gained": 1138
+        "Experience": 1138,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2234,23 +2451,25 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 18,
+        "Level": 1,
         "Hitpoints": 5800,
         "Build Cost": 430000,
         "Build Time": "13d 5s",
-        "Gained": 1059
+        "Experience": 1059,
+        "Town Hall Level": 18
       },
       {
-        "Level": 18,
+        "Level": 2,
         "Hitpoints": 6200,
         "Build Cost": 460000,
         "Build Time": "14d",
-        "Gained": 1099
+        "Experience": 1099,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2267,29 +2486,31 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 18,
+        "Level": 1,
         "Damage per Second": 290,
         "Damage per Hit (Primary)": 377,
         "Damage per Hit (Secondary)": 150.8,
         "Hitpoints": 6000,
         "Build Cost": 29000000,
         "Build Time": "13d",
-        "Gained": 1059
+        "Experience": 1059,
+        "Town Hall Level": 18
       },
       {
-        "Level": 18,
+        "Level": 2,
         "Damage per Second": 320,
         "Damage per Hit (Primary)": 416,
         "Damage per Hit (Secondary)": 166.4,
         "Hitpoints": 6300,
         "Build Cost": 30000000,
         "Build Time": "14d",
-        "Gained": 1099
+        "Experience": 1099,
+        "Town Hall Level": 18
       }
     ]
   },
@@ -2306,26 +2527,28 @@
       "Build Cost",
       "Build Time",
       "Experience",
-      "Level"
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 2,
+        "Level": 1,
         "Damage per Second": 91,
         "Damage per Shot": 50,
         "Hitpoints": 600,
         "Build Cost": 20000,
         "Build Time": "10m",
-        "Experience": 24
+        "Experience": 24,
+        "Town Hall Level": 2
       },
       {
-        "Level": 3,
+        "Level": 2,
         "Damage per Second": 101,
         "Damage per Shot": 55,
         "Hitpoints": 690,
         "Build Cost": 50000,
         "Build Time": "1h",
-        "Experience": 60
+        "Experience": 60,
+        "Town Hall Level": 3
       },
       {
         "Level": 3,
@@ -2334,7 +2557,8 @@
         "Hitpoints": 800,
         "Build Cost": 80000,
         "Build Time": "3h",
-        "Experience": 103
+        "Experience": 103,
+        "Town Hall Level": 3
       },
       {
         "Level": 4,
@@ -2343,7 +2567,8 @@
         "Hitpoints": 910,
         "Build Cost": 300000,
         "Build Time": "12h",
-        "Experience": 207
+        "Experience": 207,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -2352,7 +2577,8 @@
         "Hitpoints": 1050,
         "Build Cost": 900000,
         "Build Time": "1d",
-        "Experience": 293
+        "Experience": 293,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
@@ -2361,7 +2587,8 @@
         "Hitpoints": 1250,
         "Build Cost": 1400000,
         "Build Time": "2d",
-        "Experience": 415
+        "Experience": 415,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -2370,7 +2597,8 @@
         "Hitpoints": 1450,
         "Build Cost": 2200000,
         "Build Time": "4d",
-        "Experience": 587
+        "Experience": 587,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -2379,7 +2607,8 @@
         "Hitpoints": 1700,
         "Build Cost": 3200000,
         "Build Time": "6d",
-        "Experience": 720
+        "Experience": 720,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -2388,7 +2617,8 @@
         "Hitpoints": 1950,
         "Build Cost": 4200000,
         "Build Time": "8d",
-        "Experience": 831
+        "Experience": 831,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -2397,7 +2627,8 @@
         "Hitpoints": 2200,
         "Build Cost": 5200000,
         "Build Time": "10d",
-        "Experience": 929
+        "Experience": 929,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -2413,27 +2644,29 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 2,
+        "Level": 1,
         "Damage per Second": 40,
         "Damage per Shot": 40,
         "Hitpoints": 500,
         "Build Cost": 12000,
         "Build Time": "5m",
-        "Gained": 17
+        "Experience": 17,
+        "Town Hall Level": 2
       },
       {
-        "Level": 3,
+        "Level": 2,
         "Damage per Second": 44,
         "Damage per Shot": 44,
         "Hitpoints": 575,
         "Build Cost": 30000,
         "Build Time": "15m",
-        "Gained": 30
+        "Experience": 30,
+        "Town Hall Level": 3
       },
       {
         "Level": 3,
@@ -2442,7 +2675,8 @@
         "Hitpoints": 660,
         "Build Cost": 60000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 3
       },
       {
         "Level": 4,
@@ -2451,7 +2685,8 @@
         "Hitpoints": 760,
         "Build Cost": 250000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -2460,7 +2695,8 @@
         "Hitpoints": 875,
         "Build Cost": 800000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
@@ -2469,7 +2705,8 @@
         "Hitpoints": 1050,
         "Build Cost": 1200000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -2478,7 +2715,8 @@
         "Hitpoints": 1250,
         "Build Cost": 2000000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -2487,7 +2725,8 @@
         "Hitpoints": 1450,
         "Build Cost": 2800000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -2496,7 +2735,8 @@
         "Hitpoints": 1650,
         "Build Cost": 3600000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -2505,7 +2745,8 @@
         "Hitpoints": 1850,
         "Build Cost": 4600000,
         "Build Time": "9d",
-        "Gained": 881
+        "Experience": 881,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -2522,26 +2763,28 @@
       "Build Cost",
       "Build Time",
       "Experience",
-      "Level"
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 3,
+        "Level": 1,
         "Damage per Second": 60,
         "Damage per Shot": 36,
         "Hitpoints": 300,
         "Build Cost": 50000,
         "Build Time": "30m",
-        "Experience": 42
+        "Experience": 42,
+        "Town Hall Level": 3
       },
       {
-        "Level": 3,
+        "Level": 2,
         "Damage per Second": 66,
         "Damage per Shot": 40,
         "Hitpoints": 350,
         "Build Cost": 100000,
         "Build Time": "3h",
-        "Experience": 103
+        "Experience": 103,
+        "Town Hall Level": 3
       },
       {
         "Level": 3,
@@ -2550,7 +2793,8 @@
         "Hitpoints": 400,
         "Build Cost": 150000,
         "Build Time": "5h",
-        "Experience": 134
+        "Experience": 134,
+        "Town Hall Level": 3
       },
       {
         "Level": 4,
@@ -2559,7 +2803,8 @@
         "Hitpoints": 460,
         "Build Cost": 280000,
         "Build Time": "10h",
-        "Experience": 189
+        "Experience": 189,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -2568,7 +2813,8 @@
         "Hitpoints": 550,
         "Build Cost": 700000,
         "Build Time": "1d",
-        "Experience": 293
+        "Experience": 293,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
@@ -2577,7 +2823,8 @@
         "Hitpoints": 650,
         "Build Cost": 1300000,
         "Build Time": "2d",
-        "Experience": 415
+        "Experience": 415,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -2586,7 +2833,8 @@
         "Hitpoints": 750,
         "Build Cost": 2100000,
         "Build Time": "4d",
-        "Experience": 587
+        "Experience": 587,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -2595,7 +2843,8 @@
         "Hitpoints": 850,
         "Build Cost": 3100000,
         "Build Time": "6d",
-        "Experience": 720
+        "Experience": 720,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -2604,7 +2853,8 @@
         "Hitpoints": 1000,
         "Build Cost": 4100000,
         "Build Time": "8d",
-        "Experience": 831
+        "Experience": 831,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -2613,7 +2863,8 @@
         "Hitpoints": 1150,
         "Build Cost": 5100000,
         "Build Time": "10d",
-        "Experience": 929
+        "Experience": 929,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -2630,26 +2881,28 @@
       "Build Cost",
       "Build Time",
       "Experience",
-      "Level"
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 3,
+        "Level": 1,
         "Damage per Second": 59,
         "Damage per Shot": 19,
         "Hitpoints": 400,
         "Build Cost": 40000,
         "Build Time": "15m",
-        "Experience": 30
+        "Experience": 30,
+        "Town Hall Level": 3
       },
       {
-        "Level": 3,
+        "Level": 2,
         "Damage per Second": 65,
         "Damage per Shot": 21,
         "Hitpoints": 460,
         "Build Cost": 80000,
         "Build Time": "2h",
-        "Experience": 84
+        "Experience": 84,
+        "Town Hall Level": 3
       },
       {
         "Level": 3,
@@ -2658,7 +2911,8 @@
         "Hitpoints": 530,
         "Build Cost": 120000,
         "Build Time": "4h",
-        "Experience": 120
+        "Experience": 120,
+        "Town Hall Level": 3
       },
       {
         "Level": 4,
@@ -2667,7 +2921,8 @@
         "Hitpoints": 610,
         "Build Cost": 300000,
         "Build Time": "12h",
-        "Experience": 207
+        "Experience": 207,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -2676,7 +2931,8 @@
         "Hitpoints": 700,
         "Build Cost": 800000,
         "Build Time": "1d",
-        "Experience": 293
+        "Experience": 293,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
@@ -2685,7 +2941,8 @@
         "Hitpoints": 850,
         "Build Cost": 1200000,
         "Build Time": "2d",
-        "Experience": 415
+        "Experience": 415,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -2694,7 +2951,8 @@
         "Hitpoints": 1000,
         "Build Cost": 2000000,
         "Build Time": "4d",
-        "Experience": 587
+        "Experience": 587,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -2703,7 +2961,8 @@
         "Hitpoints": 1150,
         "Build Cost": 3000000,
         "Build Time": "6d",
-        "Experience": 720
+        "Experience": 720,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -2712,7 +2971,8 @@
         "Hitpoints": 1300,
         "Build Cost": 4000000,
         "Build Time": "8d",
-        "Experience": 831
+        "Experience": 831,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -2721,7 +2981,8 @@
         "Hitpoints": 1500,
         "Build Cost": 5000000,
         "Build Time": "9d",
-        "Experience": 881
+        "Experience": 881,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -2737,27 +2998,29 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 3,
+        "Level": 1,
         "Damage per Second": 125,
         "Damage per Hit": 438,
         "Hitpoints": 1000,
         "Build Cost": 120000,
         "Build Time": "2h",
-        "Gained": 84
+        "Experience": 84,
+        "Town Hall Level": 3
       },
       {
-        "Level": 3,
+        "Level": 2,
         "Damage per Second": 138,
         "Damage per Hit": 483,
         "Hitpoints": 1100,
         "Build Cost": 180000,
         "Build Time": "5h",
-        "Gained": 134
+        "Experience": 134,
+        "Town Hall Level": 3
       },
       {
         "Level": 3,
@@ -2766,7 +3029,8 @@
         "Hitpoints": 1250,
         "Build Cost": 220000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 3
       },
       {
         "Level": 4,
@@ -2775,7 +3039,8 @@
         "Hitpoints": 1400,
         "Build Cost": 350000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -2784,7 +3049,8 @@
         "Hitpoints": 1600,
         "Build Cost": 1200000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
@@ -2793,7 +3059,8 @@
         "Hitpoints": 1850,
         "Build Cost": 1500000,
         "Build Time": "4d",
-        "Gained": 581
+        "Experience": 581,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -2802,7 +3069,8 @@
         "Hitpoints": 2100,
         "Build Cost": 2400000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -2811,7 +3079,8 @@
         "Hitpoints": 2350,
         "Build Cost": 3400000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -2820,7 +3089,8 @@
         "Hitpoints": 2600,
         "Build Cost": 4400000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -2829,7 +3099,8 @@
         "Hitpoints": 2900,
         "Build Cost": 5400000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -2840,83 +3111,103 @@
     "maxLevel": 10,
     "statsColumns": [
       "Level",
-      "Level",
+      "Level_2",
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 4,
+        "Level": 1,
+        "Level_2": 2,
         "Hitpoints": 300,
         "Build Cost": 200000,
         "Build Time": "4h",
-        "Gained": 120
+        "Experience": 120,
+        "Town Hall Level": 4
       },
       {
-        "Level": 4,
+        "Level": 2,
+        "Level_2": 4,
         "Hitpoints": 350,
         "Build Cost": 240000,
         "Build Time": "8h",
-        "Gained": 169
+        "Experience": 169,
+        "Town Hall Level": 4
       },
       {
-        "Level": 4,
+        "Level": 3,
+        "Level_2": 6,
         "Hitpoints": 400,
         "Build Cost": 280000,
         "Build Time": "12h",
-        "Gained": 207
+        "Experience": 207,
+        "Town Hall Level": 4
       },
       {
         "Level": 4,
+        "Level_2": 8,
         "Hitpoints": 460,
         "Build Cost": 320000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
+        "Level_2": 10,
         "Hitpoints": 550,
         "Build Cost": 1000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
+        "Level_2": 12,
         "Hitpoints": 650,
         "Build Cost": 1400000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
+        "Level_2": 14,
         "Hitpoints": 750,
         "Build Cost": 2300000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
+        "Level_2": 16,
         "Hitpoints": 850,
         "Build Cost": 3200000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
+        "Level_2": 18,
         "Hitpoints": 1000,
         "Build Cost": 4100000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
+        "Level_2": 20,
         "Hitpoints": 1150,
         "Build Cost": 5100000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -2933,35 +3224,38 @@
       "Build Cost",
       "Build Time",
       "Experience",
-      "Level"
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 4,
+        "Level": 1,
         "Damage per Second": 90,
         "Damage per Hit": 270,
         "Hitpoints": 1000,
         "Build Cost": 300000,
         "Build Time": "6h",
-        "Experience": 146
+        "Experience": 146,
+        "Town Hall Level": 4
       },
       {
-        "Level": 4,
+        "Level": 2,
         "Damage per Second": 99,
         "Damage per Hit": 297,
         "Hitpoints": 1100,
         "Build Cost": 320000,
         "Build Time": "12h",
-        "Experience": 207
+        "Experience": 207,
+        "Town Hall Level": 4
       },
       {
-        "Level": 4,
+        "Level": 3,
         "Damage per Second": 109,
         "Damage per Hit": 327,
         "Hitpoints": 1250,
         "Build Cost": 340000,
         "Build Time": "1d",
-        "Experience": 293
+        "Experience": 293,
+        "Town Hall Level": 4
       },
       {
         "Level": 4,
@@ -2970,7 +3264,8 @@
         "Hitpoints": 1400,
         "Build Cost": 360000,
         "Build Time": "2d",
-        "Experience": 415
+        "Experience": 415,
+        "Town Hall Level": 4
       },
       {
         "Level": 5,
@@ -2979,7 +3274,8 @@
         "Hitpoints": 1600,
         "Build Cost": 1200000,
         "Build Time": "3d",
-        "Experience": 509
+        "Experience": 509,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
@@ -2988,7 +3284,8 @@
         "Hitpoints": 1850,
         "Build Cost": 1500000,
         "Build Time": "5d",
-        "Experience": 657
+        "Experience": 657,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -2997,7 +3294,8 @@
         "Hitpoints": 2100,
         "Build Cost": 2400000,
         "Build Time": "7d",
-        "Experience": 777
+        "Experience": 777,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -3006,7 +3304,8 @@
         "Hitpoints": 2350,
         "Build Cost": 3400000,
         "Build Time": "8d",
-        "Experience": 831
+        "Experience": 831,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -3015,7 +3314,8 @@
         "Hitpoints": 2600,
         "Build Cost": 4400000,
         "Build Time": "10d",
-        "Experience": 929
+        "Experience": 929,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -3024,7 +3324,8 @@
         "Hitpoints": 2900,
         "Build Cost": 5400000,
         "Build Time": "12d",
-        "Experience": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3041,110 +3342,130 @@
       "Build Time",
       "Hitpoints",
       "Build Cost",
-      "Build Time",
+      "Build Time_2",
       "Experience",
-      "Level"
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 5,
+        "Level": 1,
         "Damage per Second": 22,
         "Burst Fire (Shots)": 3,
         "Damage per Hit": 45,
-        "Build Time": "8h",
+        "Build Time": "6s",
         "Hitpoints": 500,
         "Build Cost": 600000,
-        "Experience": 169
+        "Build Time_2": "8h",
+        "Experience": 169,
+        "Town Hall Level": 5
       },
       {
-        "Level": 5,
+        "Level": 2,
         "Damage per Second": 27,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 45,
-        "Build Time": "12h",
+        "Build Time": "5.5s",
         "Hitpoints": 575,
         "Build Cost": 700000,
-        "Experience": 207
+        "Build Time_2": "12h",
+        "Experience": 207,
+        "Town Hall Level": 5
       },
       {
-        "Level": 5,
+        "Level": 3,
         "Damage per Second": 30,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 50,
-        "Build Time": "1d",
+        "Build Time": "5.5s",
         "Hitpoints": 660,
         "Build Cost": 800000,
-        "Experience": 293
+        "Build Time_2": "1d",
+        "Experience": 293,
+        "Town Hall Level": 5
       },
       {
-        "Level": 5,
+        "Level": 4,
         "Damage per Second": 33,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 55,
-        "Build Time": "2d",
+        "Build Time": "5.5s",
         "Hitpoints": 760,
         "Build Cost": 1000000,
-        "Experience": 415
+        "Build Time_2": "2d",
+        "Experience": 415,
+        "Town Hall Level": 5
       },
       {
         "Level": 5,
         "Damage per Second": 36,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 60,
-        "Build Time": "3d",
+        "Build Time": "5.5s",
         "Hitpoints": 875,
         "Build Cost": 1200000,
-        "Experience": 509
+        "Build Time_2": "3d",
+        "Experience": 509,
+        "Town Hall Level": 5
       },
       {
         "Level": 6,
         "Damage per Second": 40,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 66,
-        "Build Time": "5d",
+        "Build Time": "5.5s",
         "Hitpoints": 1050,
         "Build Cost": 1600000,
-        "Experience": 657
+        "Build Time_2": "5d",
+        "Experience": 657,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
         "Damage per Second": 44,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 73,
-        "Build Time": "7d",
+        "Build Time": "5.5s",
         "Hitpoints": 1250,
         "Build Cost": 2500000,
-        "Experience": 777
+        "Build Time_2": "7d",
+        "Experience": 777,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
         "Damage per Second": 49,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 80,
-        "Build Time": "9d",
+        "Build Time": "5.5s",
         "Hitpoints": 1450,
         "Build Cost": 3500000,
-        "Experience": 881
+        "Build Time_2": "9d",
+        "Experience": 881,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
         "Damage per Second": 53,
         "Burst Fire (Shots)": 4,
         "Damage per Hit": 88,
-        "Build Time": "11d",
+        "Build Time": "5.5s",
         "Hitpoints": 1650,
         "Build Cost": 4500000,
-        "Experience": 974
+        "Build Time_2": "11d",
+        "Experience": 974,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
         "Damage per Second": 62,
         "Burst Fire (Shots)": 5,
         "Damage per Hit": 88,
-        "Build Time": "12d",
+        "Build Time": "5s",
         "Hitpoints": 1850,
         "Build Cost": 5500000,
-        "Experience": 1018
+        "Build Time_2": "12d",
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3160,48 +3481,53 @@
       "Build Cost",
       "Build Time",
       "Experience",
-      "Level"
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 6,
+        "Level": 1,
         "Hitpoints": 650,
         "Spawned Zappies": 2,
         "Build Cost": "N/A",
         "Build Time": "N/A",
-        "Experience": "N/A"
+        "Experience": "N/A",
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 2,
         "Hitpoints": 800,
         "Spawned Zappies": 2,
         "Build Cost": 1000000,
         "Build Time": "1d",
-        "Experience": 293
+        "Experience": 293,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 3,
         "Hitpoints": 975,
         "Spawned Zappies": 2,
         "Build Cost": 1250000,
         "Build Time": "2d",
-        "Experience": 415
+        "Experience": 415,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 4,
         "Hitpoints": 1150,
         "Spawned Zappies": 3,
         "Build Cost": 1500000,
         "Build Time": "3d",
-        "Experience": 509
+        "Experience": 509,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 5,
         "Hitpoints": 1350,
         "Spawned Zappies": 3,
         "Build Cost": 1750000,
         "Build Time": "4d",
-        "Experience": 587
+        "Experience": 587,
+        "Town Hall Level": 6
       },
       {
         "Level": 6,
@@ -3209,7 +3535,8 @@
         "Spawned Zappies": 3,
         "Build Cost": 2000000,
         "Build Time": "5d",
-        "Experience": 657
+        "Experience": 657,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -3217,7 +3544,8 @@
         "Spawned Zappies": 4,
         "Build Cost": 3000000,
         "Build Time": "7d",
-        "Experience": 777
+        "Experience": 777,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -3225,7 +3553,8 @@
         "Spawned Zappies": 4,
         "Build Cost": 4000000,
         "Build Time": "9d",
-        "Experience": 881
+        "Experience": 881,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -3233,7 +3562,8 @@
         "Spawned Zappies": 4,
         "Build Cost": 5000000,
         "Build Time": "10d",
-        "Experience": 929
+        "Experience": 929,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -3241,7 +3571,8 @@
         "Spawned Zappies": 5,
         "Build Cost": 6000000,
         "Build Time": "11d",
-        "Experience": 974
+        "Experience": 974,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3257,54 +3588,59 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 6,
+        "Level": 1,
         "Damage per Second": 59,
         "Damage per Shot": 15,
         "Hitpoints": 800,
         "Build Cost": 1000000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 2,
         "Damage per Second": 67,
         "Damage per Shot": 17,
         "Hitpoints": 950,
         "Build Cost": 1200000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 3,
         "Damage per Second": 75,
         "Damage per Shot": 19,
         "Hitpoints": 1100,
         "Build Cost": 1400000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 4,
         "Damage per Second": 83,
         "Damage per Shot": 21,
         "Hitpoints": 1300,
         "Build Cost": 1500000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 6
       },
       {
-        "Level": 6,
+        "Level": 5,
         "Damage per Second": 91,
         "Damage per Shot": 23,
         "Hitpoints": 1500,
         "Build Cost": 1600000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 6
       },
       {
         "Level": 6,
@@ -3313,7 +3649,8 @@
         "Hitpoints": 1700,
         "Build Cost": 1700000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 6
       },
       {
         "Level": 7,
@@ -3322,7 +3659,8 @@
         "Hitpoints": 1900,
         "Build Cost": 2600000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -3331,7 +3669,8 @@
         "Hitpoints": 2100,
         "Build Cost": 3600000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -3340,7 +3679,8 @@
         "Hitpoints": 2350,
         "Build Cost": 4600000,
         "Build Time": "11d",
-        "Gained": 974
+        "Experience": 974,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -3349,7 +3689,8 @@
         "Hitpoints": 2600,
         "Build Cost": 5600000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3365,63 +3706,69 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 7,
+        "Level": 1,
         "Damage per Second": 41,
         "Damage per Shot": 205,
         "Hitpoints": 700,
         "Build Cost": 2000000,
         "Build Time": "1d",
-        "Gained": 293
+        "Experience": 293,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 2,
         "Damage per Second": 45,
         "Damage per Shot": 225,
         "Hitpoints": 800,
         "Build Cost": 2100000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 3,
         "Damage per Second": 49,
         "Damage per Shot": 245,
         "Hitpoints": 950,
         "Build Cost": 2200000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 4,
         "Damage per Second": 54,
         "Damage per Shot": 270,
         "Hitpoints": 1100,
         "Build Cost": 2300000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 5,
         "Damage per Second": 60,
         "Damage per Shot": 300,
         "Hitpoints": 1300,
         "Build Cost": 2400000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 7
       },
       {
-        "Level": 7,
+        "Level": 6,
         "Damage per Second": 66,
         "Damage per Shot": 330,
         "Hitpoints": 1500,
         "Build Cost": 2500000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 7
       },
       {
         "Level": 7,
@@ -3430,7 +3777,8 @@
         "Hitpoints": 1700,
         "Build Cost": 2700000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 7
       },
       {
         "Level": 8,
@@ -3439,7 +3787,8 @@
         "Hitpoints": 1900,
         "Build Cost": 3800000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -3448,7 +3797,8 @@
         "Hitpoints": 2150,
         "Build Cost": 4700000,
         "Build Time": "11d",
-        "Gained": 974
+        "Experience": 974,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -3457,7 +3807,8 @@
         "Hitpoints": 2400,
         "Build Cost": 5700000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3473,72 +3824,79 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 8,
+        "Level": 1,
         "Damage per Second": 95,
         "Damage per Shot": 380,
         "Hitpoints": 700,
         "Build Cost": 3000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 2,
         "Damage per Second": 104,
         "Damage per Shot": 416,
         "Hitpoints": 800,
         "Build Cost": 3100000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 3,
         "Damage per Second": 115,
         "Damage per Shot": 460,
         "Hitpoints": 950,
         "Build Cost": 3200000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 4,
         "Damage per Second": 126,
         "Damage per Shot": 504,
         "Hitpoints": 1100,
         "Build Cost": 3300000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 5,
         "Damage per Second": 139,
         "Damage per Shot": 556,
         "Hitpoints": 1300,
         "Build Cost": 3400000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 6,
         "Damage per Second": 153,
         "Damage per Shot": 612,
         "Hitpoints": 1500,
         "Build Cost": 3600000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 8
       },
       {
-        "Level": 8,
+        "Level": 7,
         "Damage per Second": 168,
         "Damage per Shot": 672,
         "Hitpoints": 1700,
         "Build Cost": 3800000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 8
       },
       {
         "Level": 8,
@@ -3547,7 +3905,8 @@
         "Hitpoints": 1900,
         "Build Cost": 4000000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 8
       },
       {
         "Level": 9,
@@ -3556,7 +3915,8 @@
         "Hitpoints": 2150,
         "Build Cost": 4800000,
         "Build Time": "11d",
-        "Gained": 974
+        "Experience": 974,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
@@ -3565,7 +3925,8 @@
         "Hitpoints": 2400,
         "Build Cost": 5800000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3578,125 +3939,145 @@
       "Level",
       "Damage per Second",
       "Damage per Hit",
-      "Damage per Second",
+      "Damage per Second_2",
       "Total Burn Damage",
       "Burn Damage per Tick",
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 9,
-        "Damage per Second": 15,
+        "Level": 1,
+        "Damage per Second": 7.1,
         "Damage per Hit": 50,
+        "Damage per Second_2": 15,
         "Total Burn Damage": 300,
         "Burn Damage per Tick": 6,
         "Hitpoints": 500,
         "Build Cost": 3000000,
         "Build Time": "2d",
-        "Gained": 415
+        "Experience": 415,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 17.5,
+        "Level": 2,
+        "Damage per Second": 7.8,
         "Damage per Hit": 55,
+        "Damage per Second_2": 17.5,
         "Total Burn Damage": 350,
         "Burn Damage per Tick": 7,
         "Hitpoints": 575,
         "Build Cost": 3100000,
         "Build Time": "3d",
-        "Gained": 509
+        "Experience": 509,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 20,
+        "Level": 3,
+        "Damage per Second": 8.7,
         "Damage per Hit": 61,
+        "Damage per Second_2": 20,
         "Total Burn Damage": 400,
         "Burn Damage per Tick": 8,
         "Hitpoints": 660,
         "Build Cost": 3200000,
         "Build Time": "4d",
-        "Gained": 587
+        "Experience": 587,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 22.5,
+        "Level": 4,
+        "Damage per Second": 9.5,
         "Damage per Hit": 67,
+        "Damage per Second_2": 22.5,
         "Total Burn Damage": 450,
         "Burn Damage per Tick": 9,
         "Hitpoints": 760,
         "Build Cost": 3400000,
         "Build Time": "5d",
-        "Gained": 657
+        "Experience": 657,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 25,
+        "Level": 5,
+        "Damage per Second": 10.4,
         "Damage per Hit": 73,
+        "Damage per Second_2": 25,
         "Total Burn Damage": 500,
         "Burn Damage per Tick": 10,
         "Hitpoints": 875,
         "Build Cost": 3700000,
         "Build Time": "6d",
-        "Gained": 720
+        "Experience": 720,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 27.5,
+        "Level": 6,
+        "Damage per Second": 11.5,
         "Damage per Hit": 81,
+        "Damage per Second_2": 27.5,
         "Total Burn Damage": 550,
         "Burn Damage per Tick": 11,
         "Hitpoints": 1050,
         "Build Cost": 4000000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 30,
+        "Level": 7,
+        "Damage per Second": 12.7,
         "Damage per Hit": 89,
+        "Damage per Second_2": 30,
         "Total Burn Damage": 600,
         "Burn Damage per Tick": 12,
         "Hitpoints": 1250,
         "Build Cost": 4300000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 9
       },
       {
-        "Level": 9,
-        "Damage per Second": 32.5,
+        "Level": 8,
+        "Damage per Second": 13.8,
         "Damage per Hit": 97,
+        "Damage per Second_2": 32.5,
         "Total Burn Damage": 650,
         "Burn Damage per Tick": 13,
         "Hitpoints": 1450,
         "Build Cost": 4600000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 9
       },
       {
         "Level": 9,
-        "Damage per Second": 35,
+        "Damage per Second": 15.2,
         "Damage per Hit": 107,
+        "Damage per Second_2": 35,
         "Total Burn Damage": 700,
         "Burn Damage per Tick": 14,
         "Hitpoints": 1650,
         "Build Cost": 4900000,
         "Build Time": "11d",
-        "Gained": 974
+        "Experience": 974,
+        "Town Hall Level": 9
       },
       {
         "Level": 10,
-        "Damage per Second": 37.5,
+        "Damage per Second": 16.8,
         "Damage per Hit": 118,
+        "Damage per Second_2": 37.5,
         "Total Burn Damage": 750,
         "Burn Damage per Tick": 15,
         "Hitpoints": 1850,
         "Build Cost": 5900000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   },
@@ -3712,54 +4093,59 @@
       "Hitpoints",
       "Build Cost",
       "Build Time",
-      "Gained",
-      "Level"
+      "Experience",
+      "Town Hall Level"
     ],
     "levels": [
       {
-        "Level": 10,
+        "Level": 1,
         "Damage per Second": 80,
         "Damage per Shot": 15.36,
         "Hitpoints": 1700,
         "Build Cost": 4400000,
         "Build Time": "7d",
-        "Gained": 777
+        "Experience": 777,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 2,
         "Damage per Second": 88,
         "Damage per Shot": 16.9,
         "Hitpoints": 1900,
         "Build Cost": 4800000,
         "Build Time": "8d",
-        "Gained": 831
+        "Experience": 831,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 3,
         "Damage per Second": 96,
         "Damage per Shot": 18.43,
         "Hitpoints": 2100,
         "Build Cost": 5200000,
         "Build Time": "10d",
-        "Gained": 929
+        "Experience": 929,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 4,
         "Damage per Second": 106,
         "Damage per Shot": 20.35,
         "Hitpoints": 2350,
         "Build Cost": 5600000,
         "Build Time": "11d",
-        "Gained": 974
+        "Experience": 974,
+        "Town Hall Level": 10
       },
       {
-        "Level": 10,
+        "Level": 5,
         "Damage per Second": 116,
         "Damage per Shot": 22.27,
         "Hitpoints": 2600,
         "Build Cost": 6000000,
         "Build Time": "12d",
-        "Gained": 1018
+        "Experience": 1018,
+        "Town Hall Level": 10
       }
     ]
   }
