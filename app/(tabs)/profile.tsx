@@ -33,7 +33,7 @@ const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
   pets: { set: 'mc', name: 'paw' },
   troops: { set: 'mc', name: 'sword-cross' },
   spells: { set: 'ion', name: 'flask-outline' },
-  equipment: { set: 'ion', name: 'diamond-outline' },
+  equipment: { set: 'ion', name: 'trophy-outline' },
 };
 
 // Decodes an "Unlock Requirement" value (e.g. "Buy in X event for 3,100 ... or
@@ -66,6 +66,7 @@ export default function PlayerProfileScreen() {
 
   const [progressExpanded, setProgressExpanded] = useState(false);
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
+  const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
 
   type StatPill = { icon: keyof typeof Ionicons.glyphMap; value: string };
 
@@ -170,6 +171,16 @@ export default function PlayerProfileScreen() {
         }
       }
       setDetails((prev) => ({ ...prev, [name]: detail ?? null }));
+
+      // Prefetch images for caching
+      const urls = [
+        detail?.imageUrl,
+        getHeroImageUrl(name),
+        getTroopImageUrl(name),
+        getPetImageUrl(name),
+        getEquipmentImageUrl(name),
+      ].filter((u): u is string => !!u);
+      urls.forEach((url) => Image.prefetch(url));
     }
   }, [expandedName, details, player]);
 
@@ -195,6 +206,15 @@ export default function PlayerProfileScreen() {
       fetched.forEach((detail) => {
         if (detail) {
           nextDetails[detail.name] = detail;
+          // Prefetch images for caching
+          const urls = [
+            detail.imageUrl,
+            getHeroImageUrl(detail.name),
+            getTroopImageUrl(detail.name),
+            getPetImageUrl(detail.name),
+            getEquipmentImageUrl(detail.name),
+          ].filter((u): u is string => !!u);
+          urls.forEach((url) => Image.prefetch(url));
         }
       });
       setDetails((prev) => ({ ...prev, ...nextDetails }));
@@ -202,6 +222,10 @@ export default function PlayerProfileScreen() {
 
     setRefreshing(false);
   }, [refresh, player]);
+
+  // Prefetch the TH image on load for caching
+  const thImageUrl = getTownHallImageUrl(player?.townHallLevel ?? 1);
+  if (thImageUrl) Image.prefetch(thImageUrl);
 
   if (loading && !player) {
     return <ProfileScreenSkeleton />;
@@ -286,6 +310,19 @@ export default function PlayerProfileScreen() {
     const isBB = isBuilderBaseName(detail.name);
     const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
     const visibleDetailLevels = getVisibleLevels(detail);
+
+    const currentLevel = detail.currentLevel ?? 0;
+    const showFull = showFullLevels[name] || false;
+
+    let displayLevels: TroopDetail['levels'];
+    if (showFull || visibleDetailLevels.length <= 3) {
+      displayLevels = visibleDetailLevels;
+    } else {
+      const currentIdx = visibleDetailLevels.findIndex((l) => l.level === currentLevel);
+      const start = Math.max(0, currentIdx - 1);
+      const end = Math.min(visibleDetailLevels.length, currentIdx + 2);
+      displayLevels = visibleDetailLevels.slice(start, end);
+    }
 
     const pills = formatStatPills(detail.info);
     const infoItems = pills.length ? pills : (detail.infoPairs ?? []).map((p) => ({ icon: 'information-circle-outline' as const, value: `${p.label}: ${p.value}` }));
@@ -377,27 +414,41 @@ export default function PlayerProfileScreen() {
                 <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
                 <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{isHero ? 'Hero Hall' : isBB ? 'Star Laboratory' : 'Laboratory'}</Text>
               </View>
-              {visibleDetailLevels.map((l) => (
-                <View key={l.level} style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
-                  {isTroopLike ? (
-                    <>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
-                    </>
-                  ) : (
-                    extraLabels.map((lbl) => (
-                      <Text key={lbl} style={[styles.panelTableCell, { color: colors.textSecondary }]}>
-                        {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
-                      </Text>
-                    ))
-                  )}
-                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeCost || '—'}</Text>
-                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeTime || '—'}</Text>
-                  <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
-                </View>
-              ))}
+              {displayLevels.map((l) => {
+                const isCurrentRow = l.level === currentLevel;
+                return (
+                  <View key={l.level} style={[styles.panelTableRow, { borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
+                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
+                    {isTroopLike ? (
+                      <>
+                        <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
+                        <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
+                      </>
+                    ) : (
+                      extraLabels.map((lbl) => (
+                        <Text key={lbl} style={[styles.panelTableCell, { color: colors.textSecondary }]}>
+                          {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
+                        </Text>
+                      ))
+                    )}
+                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeCost || '—'}</Text>
+                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeTime || '—'}</Text>
+                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
+                  </View>
+                );
+              })}
             </View>
+            {visibleDetailLevels.length > 3 && (
+              <Pressable
+                style={styles.expandTableBtn}
+                onPress={() => setShowFullLevels((prev) => ({ ...prev, [name]: !showFull }))}
+              >
+                <Ionicons name={showFull ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
+                <Text style={styles.expandTableText}>
+                  {showFull ? 'Show fewer' : `Show all ${visibleDetailLevels.length} levels`}
+                </Text>
+              </Pressable>
+            )}
             <Text style={[styles.panelNote, { color: colors.textMuted }]}>
               {isBB
                 ? `Showing all Builder Base levels for ${detail.name}`
@@ -459,7 +510,10 @@ export default function PlayerProfileScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>Profile</Text>
+            <Text style={styles.subtitle}>Your units, heroes, spells & equipment</Text>
+          </View>
           <Pressable
             onPress={onRefresh}
             disabled={refreshing}
@@ -824,12 +878,20 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
+  headerLeft: {
+    flex: 1,
+  },
   headerRefreshBtn: {
     padding: Spacing.xs,
   },
   title: {
     ...Typography.largeTitle,
     color: Colors.textPrimary,
+  },
+  subtitle: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
   profileCard: {
     marginHorizontal: Spacing.base,
@@ -1092,11 +1154,25 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     fontSize: 14,
   },
+  expandTableBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    marginTop: -Spacing.base,
+  },
+  expandTableText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
   panelTable: {
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     marginBottom: Spacing.base,
+    overflow: 'hidden',
   },
   panelTableRow: {
     flexDirection: 'row',
