@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../src/utils/buildingImages';
+import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import thLevelsData from '../../src/data/th-levels.json';
@@ -49,40 +49,9 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function LevelThumb({ name, level, isCurrent, isNextTH }: { name: string; level: number; isCurrent: boolean; isNextTH?: boolean }) {
-  const lookupName = NAME_FIX[name] ?? name;
-  const imgSource = getBuildingLevelImageSource(lookupName, level);
-
-  if (imgSource) {
-    return (
-      <View style={[styles.levelThumbWrap, isCurrent && styles.levelThumbCurrent, isNextTH && styles.levelThumbNextTH]}>
-        <Image source={imgSource} style={styles.levelThumbImg} resizeMode="contain" />
-        <Text style={[styles.levelThumbLabel, isCurrent && styles.levelThumbLabelCurrent, isNextTH && styles.levelThumbLabelNextTH]}>
-          {level}
-        </Text>
-      </View>
-    );
-  }
-
-  const initials = name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  return (
-    <View style={[styles.levelThumbWrap, isCurrent && styles.levelThumbCurrent, isNextTH && styles.levelThumbNextTH]}>
-      <View style={[styles.levelThumbImg, styles.levelThumbFallback]}>
-        <Text style={styles.levelThumbFallbackText}>{initials}</Text>
-      </View>
-      <Text style={[styles.levelThumbLabel, isCurrent && styles.levelThumbLabelCurrent, isNextTH && styles.levelThumbLabelNextTH]}>
-        {level}
-      </Text>
-    </View>
-  );
-}
-
 function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: number; isMaxed: boolean; th: number }) {
   const [showFullTable, setShowFullTable] = useState(false);
   const lookupName = NAME_FIX[name] ?? name;
-  const availableLevels = getBuildingAvailableLevels(lookupName);
-  const levelsToShow = availableLevels.filter((l) => l <= maxLvl + 1);
-
   const buildingStats = useMemo(() => {
     const match = (buildingLevelsData as any).find((b: any) => {
       const bName = b.name.toLowerCase();
@@ -157,63 +126,86 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
         </View>
       </Pressable>
 
-      <View style={styles.levelStrip}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelStripContent}>
-          {levelsToShow.map((lvl) => (
-            <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} isNextTH={lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0)} />
-          ))}
-        </ScrollView>
-      </View>
-
       {buildingStats && displayLevels.length > 0 && (
-        <View style={styles.buildingStatsTable}>
-          <View style={styles.buildingStatRow}>
-            <View style={styles.buildingStatCellIcon}>
-              <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
-            </View>
-            {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
-              <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
-                {COL_ABBREV[col] || col}
-              </Text>
-            ))}
-          </View>
-          {displayLevels.map((levelData: any) => {
-            const lvl = levelData.Level;
-            const iconSource = getBuildingLevelImageSource(lookupName, lvl);
-            const isCurrentLevel = lvl === maxLvl;
-            return (
-              <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
-                <View style={styles.buildingStatCellIcon}>
-                  {iconSource ? (
-                    <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
-                  ) : null}
-                  <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+        <>
+          <View style={styles.levelGrid}>
+            {displayLevels.map((levelData: any) => {
+              const lvl = levelData.Level;
+              const cellSource = getBuildingLevelImageSource(lookupName, lvl);
+              const isCurrent = lvl === maxLvl;
+              const isNext = lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0);
+              return (
+                <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
+                  <View style={styles.levelGridImgWrap}>
+                    {cellSource ? (
+                      <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
+                    ) : (
+                      <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
+                        <Text style={styles.levelGridFallbackText}>
+                          {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={[styles.levelGridBadge, isNext && styles.levelGridBadgeNext]}>
+                      <Text style={[styles.levelGridBadgeText, isCurrent && styles.levelGridBadgeTextCurrent, isNext && styles.levelGridBadgeTextNext]}>
+                        {lvl}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-                {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
-                  const val = levelData[col] ?? '—';
-                  const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
-                  return (
-                    <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
-                      {formatted}
-                    </Text>
-                  );
-                })}
+              );
+            })}
+          </View>
+
+          <View style={styles.buildingStatsTable}>
+            <View style={styles.buildingStatRow}>
+              <View style={styles.buildingStatCellIcon}>
+                <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
               </View>
-            );
-          })}
-          {showExpand && !showFullTable && (
-            <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(true)}>
-              <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
-              <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
-            </Pressable>
-          )}
-          {showExpand && showFullTable && (
-            <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(false)}>
-              <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
-              <Text style={styles.expandTableText}>Show fewer</Text>
-            </Pressable>
-          )}
-        </View>
+              {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
+                <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
+                  {COL_ABBREV[col] || col}
+                </Text>
+              ))}
+            </View>
+            {displayLevels.map((levelData: any) => {
+              const lvl = levelData.Level;
+              const iconSource = getBuildingLevelImageSource(lookupName, lvl);
+              const isCurrentLevel = lvl === maxLvl;
+              return (
+                <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
+                  <View style={styles.buildingStatCellIcon}>
+                    {iconSource ? (
+                      <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
+                    ) : null}
+                    <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+                  </View>
+                  {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
+                    const val = levelData[col] ?? '—';
+                    const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                    return (
+                      <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
+                        {formatted}
+                      </Text>
+                    );
+                  })}
+                </View>
+              );
+            })}
+            {showExpand && !showFullTable && (
+              <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(true)}>
+                <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
+                <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
+              </Pressable>
+            )}
+            {showExpand && showFullTable && (
+              <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(false)}>
+                <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
+                <Text style={styles.expandTableText}>Show fewer</Text>
+              </Pressable>
+            )}
+          </View>
+        </>
       )}
     </Card>
   );
@@ -409,53 +401,73 @@ const styles = StyleSheet.create({
     width: 24,
     textAlign: 'center',
   },
-  levelStrip: {
+  levelGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
     marginTop: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    paddingTop: Spacing.sm,
   },
-  levelStripContent: {
-    paddingHorizontal: Spacing.xs,
-    gap: Spacing.sm,
+  levelGridCell: {
+    width: '25%',
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.border,
   },
-  levelThumbWrap: {
+  levelGridCellCurrent: {
+    backgroundColor: Colors.accentGhost,
+  },
+  levelGridImgWrap: {
+    position: 'relative',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    paddingVertical: Spacing.xs,
   },
-  levelThumbCurrent: {
-    opacity: 1,
-  },
-  levelThumbNextTH: {
-    opacity: 0.7,
-  },
-  levelThumbImg: {
-    width: 52,
-    height: 52,
+  levelGridImg: {
+    width: 36,
+    height: 36,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
   },
-  levelThumbFallback: {
+  levelGridImgFallback: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  levelThumbFallbackText: {
+  levelGridFallbackText: {
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '600',
-    fontSize: 10,
+    fontSize: 9,
   },
-  levelThumbLabel: {
-    color: Colors.textTertiary,
-    fontSize: 10,
+  levelGridBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 16,
+    height: 14,
+    borderRadius: 3,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
   },
-  levelThumbLabelCurrent: {
-    color: Colors.textPrimary,
+  levelGridBadgeText: {
+    fontSize: 8,
     fontWeight: '700',
+    color: Colors.textTertiary,
   },
-  levelThumbLabelNextTH: {
+  levelGridBadgeTextCurrent: {
+    color: Colors.textPrimary,
+  },
+  levelGridBadgeNext: {
+    borderColor: Colors.warning,
+  },
+  levelGridBadgeTextNext: {
     color: Colors.warning,
-    fontWeight: '600',
   },
   buildingStatsTable: {
     marginTop: Spacing.sm,
