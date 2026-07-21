@@ -36,10 +36,10 @@ const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
 const CATEGORY_ICONS: Record<string, { set: 'ion' | 'mc'; name: string }> = {
   'Defenses': { set: 'ion', name: 'shield-half-outline' },
-  'Resources': { set: 'mc', name: 'cash' },
+  'Resources': { set: 'mc', name: 'currency-usd' },
   'Traps': { set: 'mc', name: 'bomb' },
   'Army': { set: 'mc', name: 'sword-cross' },
-  'Walls': { set: 'ion', name: 'grid-outline' },
+  'Walls': { set: 'mc', name: 'wall' },
 };
 
 const NAME_FIX: Record<string, string> = {
