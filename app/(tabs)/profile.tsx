@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
@@ -20,16 +20,21 @@ import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { Card } from '../../src/components/Card';
 import { ItemCard } from '../../src/components/ItemCard';
-import { ProgressRing } from '../../src/components/ProgressRing';
+
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
-import { AchievementCard } from '../../src/components/AchievementCard';
-import { groupAchievements, getTotalStars } from '../../src/utils/achievements';
-import type { Village } from '../../src/types/clash';
 
-type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment' | 'achievements';
-type AchievementVillageFilter = 'all' | Village;
+
+type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment';
+
+const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
+  heroes: { set: 'ion', name: 'shield-half-outline' },
+  pets: { set: 'mc', name: 'paw' },
+  troops: { set: 'mc', name: 'sword-cross' },
+  spells: { set: 'ion', name: 'flask-outline' },
+  equipment: { set: 'ion', name: 'diamond-outline' },
+};
 
 // Decodes an "Unlock Requirement" value (e.g. "Buy in X event for 3,100 ... or
 // purchasable from the Trader for 1,500") into discrete unlock methods.
@@ -58,8 +63,8 @@ export default function PlayerProfileScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('heroes');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedName, setExpandedName] = useState<string | null>(null);
-  const [expandedAchievement, setExpandedAchievement] = useState<string | null>(null);
-  const [achievementVillageFilter, setAchievementVillageFilter] = useState<AchievementVillageFilter>('all');
+
+  const [progressExpanded, setProgressExpanded] = useState(false);
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
 
   type StatPill = { icon: keyof typeof Ionicons.glyphMap; value: string };
@@ -210,18 +215,6 @@ export default function PlayerProfileScreen() {
   const homeTroops = filterHomeTroops(player.troops);
   const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
   const homePets = (player.pets ?? []).filter((p) => p.village === 'home' || !p.village);
-  const filteredAchievements = achievementVillageFilter === 'all'
-    ? player.achievements
-    : player.achievements.filter((a) => a.village === achievementVillageFilter);
-  const achievementGroups = groupAchievements(filteredAchievements);
-  const starTotals = getTotalStars(filteredAchievements);
-  const achievementVillageCounts = {
-    all: player.achievements.length,
-    home: player.achievements.filter((a) => a.village === 'home').length,
-    builderBase: player.achievements.filter((a) => a.village === 'builderBase').length,
-    clanCapital: player.achievements.filter((a) => a.village === 'clanCapital').length,
-  };
-
   const overallProgress = (() => {
     const th = player.townHallLevel;
     const all = [
@@ -428,7 +421,6 @@ export default function PlayerProfileScreen() {
     { key: 'troops', label: 'Troops' },
     { key: 'spells', label: 'Spells' },
     { key: 'equipment', label: 'Gear' },
-    { key: 'achievements', label: 'Awards' },
   ];
 
   const hasHeroes = homeHeroes.length + builderHeroes.length > 0;
@@ -500,6 +492,18 @@ export default function PlayerProfileScreen() {
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{player.name}</Text>
               <Text style={styles.profileTag}>{player.tag}</Text>
+              {player.clan && (
+                <View style={styles.profileClanRow}>
+                  <Text style={styles.profileClanText} numberOfLines={1}>
+                    {player.clan.name}
+                  </Text>
+                  <View style={styles.profileClanDot} />
+                  <Text style={styles.profileClanText}>{player.role || 'Member'}</Text>
+                  <View style={styles.profileClanDot} />
+                  <Ionicons name="star" size={10} color={Colors.warning} />
+                  <Text style={styles.profileClanText}>{player.warStars.toLocaleString()}</Text>
+                </View>
+              )}
               <View style={styles.profileBadges}>
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>TH{player.townHallLevel}</Text>
@@ -515,90 +519,81 @@ export default function PlayerProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.progressSection}>
-            <ProgressRing
-              size={72}
-              strokeWidth={6}
-              progress={overallProgress}
-              label={`${Math.round(overallProgress * 100)}%`}
-              sublabel="overall"
-              color={Colors.textPrimary}
-            />
-            <View style={styles.progressStats}>
-              <Text style={styles.progressLabel}>Total Progress</Text>
-              <Text style={styles.progressDetail}>
-                {(() => {
-                  const th = player.townHallLevel;
-                  const all = [
-                    ...filterHomeTroops(player.troops),
-                    ...player.spells.filter((s) => s.village === 'home' || !s.village),
-                    ...player.heroes.filter((h) => h.village === 'home'),
-                    ...player.heroEquipment,
-                  ];
-                  const maxed = all.filter((i) => {
-                    const thMax = getMaxLevelAtTH(i.name, th);
-                    return thMax !== null ? i.level >= thMax : i.level >= i.maxLevel;
-                  }).length;
-                  return `${maxed} / ${all.length} items maxed`;
-                })()}
-              </Text>
+          <Pressable style={styles.progressSection} onPress={() => setProgressExpanded((p) => !p)}>
+            <View style={styles.progressOverallRow}>
+              <View style={styles.progressOverallTrack}>
+                <View style={[styles.progressOverallFill, { width: `${overallProgress * 100}%` }]} />
+              </View>
+              <Text style={styles.progressOverallLabel}>{Math.round(overallProgress * 100)}%</Text>
+              <Ionicons
+                name={progressExpanded ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={Colors.textTertiary}
+              />
             </View>
-          </View>
+            {progressExpanded && (() => {
+              const th = player.townHallLevel;
+              const cats: { label: string; items: { level: number; maxLevel: number; name: string }[] }[] = [
+                { label: 'Troops', items: filterHomeTroops(player.troops) },
+                { label: 'Spells', items: player.spells.filter((s) => s.village === 'home' || !s.village) },
+                { label: 'Heroes', items: player.heroes.filter((h) => h.village === 'home') },
+                { label: 'Gear', items: player.heroEquipment },
+              ];
+              const all = cats.flatMap((c) => c.items);
+              const allMaxed = all.filter((i) => {
+                const thMax = getMaxLevelAtTH(i.name, th);
+                return thMax !== null ? i.level >= thMax : i.level >= i.maxLevel;
+              }).length;
+              return (
+                <View style={styles.progressStats}>
+                  {cats.map((cat) => {
+                    const maxed = cat.items.filter((i) => {
+                      const thMax = getMaxLevelAtTH(i.name, th);
+                      return thMax !== null ? i.level >= thMax : i.level >= i.maxLevel;
+                    }).length;
+                    const pct = cat.items.length > 0 ? maxed / cat.items.length : 0;
+                    return (
+                      <View key={cat.label} style={styles.progressCatRow}>
+                        <Text style={styles.progressCatLabel}>{cat.label}</Text>
+                        <View style={styles.progressCatTrack}>
+                          <View style={[styles.progressCatFill, { width: `${pct * 100}%` }]} />
+                        </View>
+                        <Text style={styles.progressCatCount}>{maxed}/{cat.items.length}</Text>
+                      </View>
+                    );
+                  })}
+                  <Text style={styles.progressDetail}>
+                    {allMaxed} / {all.length} items maxed
+                  </Text>
+                </View>
+              );
+            })()}
+          </Pressable>
 
-          {player.clan && (
-            <View style={styles.clanRow}>
-              <View style={styles.clanInfo}>
-                <Text style={styles.clanLabel}>Clan</Text>
-                <Text style={styles.clanName}>{player.clan.name}</Text>
-              </View>
-              <View style={styles.clanInfo}>
-                <Text style={styles.clanLabel}>Role</Text>
-                <Text style={styles.clanName}>{player.role || 'Member'}</Text>
-              </View>
-              <View style={styles.clanInfo}>
-                <Text style={styles.clanLabel}>War Stars</Text>
-                <Text style={styles.clanName}>{player.warStars.toLocaleString()}</Text>
-              </View>
-            </View>
-          )}
         </Card>
 
         <ScrollView
           horizontal
-          scrollEnabled={true}
           showsHorizontalScrollIndicator={false}
           style={{ flexGrow: 0 }}
           contentContainerStyle={styles.tabsContainer}
         >
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.key;
+            const iconDef = TAB_ICONS[tab.key];
+            const iconColor = isActive ? Colors.bg : Colors.textSecondary;
             return (
               <Pressable
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
-                style={[
-                  styles.tab,
-                  {
-                    backgroundColor: isActive
-                      ? (isDark ? colors.accent : colors.accentSubtle)
-                      : colors.bgCard,
-                    borderColor: isActive
-                      ? (isDark ? colors.accent : colors.accentSubtle)
-                      : colors.border,
-                  }
-                ]}
+                style={[styles.tab, isActive && styles.tabActive]}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color: isActive
-                        ? (isDark ? colors.bg : colors.textPrimary)
-                        : colors.textSecondary,
-                      fontWeight: isActive ? '700' : '600',
-                    }
-                  ]}
-                >
+                {iconDef.set === 'mc' ? (
+                  <MaterialCommunityIcons name={iconDef.name as any} size={14} color={iconColor} />
+                ) : (
+                  <Ionicons name={iconDef.name as any} size={14} color={iconColor} />
+                )}
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
                   {tab.label}
                 </Text>
               </Pressable>
@@ -794,96 +789,7 @@ export default function PlayerProfileScreen() {
             </>
           )}
 
-          {activeTab === 'achievements' && (
-            <>
-              {player.achievements.length === 0 ? (
-                <EmptyState
-                  icon="🏆"
-                  title="No achievements yet"
-                  description="Complete in-game milestones to earn achievements. Pull to refresh after playing."
-                />
-              ) : (
-                <>
-                  <View style={styles.achievementSummary}>
-                    <View style={styles.achievementSummaryTop}>
-                      <Text style={styles.achievementSummaryTitle}>
-                        {starTotals.earned} / {starTotals.max} stars
-                      </Text>
-                      <Text style={styles.achievementSummarySub}>
-                        {filteredAchievements.filter((a) => a.stars === 3).length} complete
-                      </Text>
-                    </View>
-                    <View style={styles.achievementSummaryBar}>
-                      <View
-                        style={[
-                          styles.achievementSummaryFill,
-                          { width: `${starTotals.max > 0 ? (starTotals.earned / starTotals.max) * 100 : 0}%` },
-                        ]}
-                      />
-                    </View>
-                  </View>
 
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.achievementFilters}
-                  >
-                    {([
-                      { key: 'all' as const, label: 'All' },
-                      { key: 'home' as const, label: 'Home' },
-                      { key: 'builderBase' as const, label: 'Builder' },
-                      { key: 'clanCapital' as const, label: 'Capital' },
-                    ]).filter((f) => f.key === 'all' || achievementVillageCounts[f.key] > 0).map((f) => (
-                      <Pressable
-                        key={f.key}
-                        onPress={() => setAchievementVillageFilter(f.key)}
-                        style={[
-                          styles.achievementFilterPill,
-                          achievementVillageFilter === f.key && styles.achievementFilterPillActive,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.achievementFilterText,
-                            achievementVillageFilter === f.key && styles.achievementFilterTextActive,
-                          ]}
-                        >
-                          {f.label}
-                          {f.key !== 'all' ? ` (${achievementVillageCounts[f.key]})` : ''}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-
-                  {filteredAchievements.length === 0 ? (
-                    <EmptyState
-                      icon="🏆"
-                      title="No achievements in this village"
-                      description="Try another filter or sync your profile."
-                    />
-                  ) : (
-                    achievementGroups.map((group) => (
-                      <View key={group.group}>
-                        <SectionHeader title={`${group.label} (${group.items.length})`} />
-                        {group.items.map((a, idx) => {
-                          const key = `${a.name}-${a.village}-${idx}`;
-                          return (
-                            <AchievementCard
-                              key={key}
-                              achievement={a}
-                              expanded={expandedAchievement === key}
-                              showVillage={achievementVillageFilter === 'all'}
-                              onPress={() => setExpandedAchievement(expandedAchievement === key ? null : key)}
-                            />
-                          );
-                        })}
-                      </View>
-                    ))
-                  )}
-                </>
-              )}
-            </>
-          )}
         </View>
 
         <View style={{ height: 100 }} />
@@ -979,136 +885,131 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '500',
   },
-  progressSection: {
+  profileClanRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.lg,
-    paddingVertical: Spacing.base,
+    gap: Spacing.xs,
+    marginTop: 3,
+  },
+  profileClanText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '500',
+  },
+  profileClanDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: Colors.textMuted,
+  },
+  progressSection: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    marginBottom: Spacing.base,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+  },
+  progressOverallRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  progressOverallTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.bgSubtle,
+    overflow: 'hidden',
+  },
+  progressOverallFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: Colors.textPrimary,
+  },
+  progressOverallLabel: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    width: 36,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
   progressStats: {
-    flex: 1,
+    marginTop: 6,
   },
-  progressLabel: {
-    ...Typography.headline,
-    color: Colors.textPrimary,
-  },
-  progressDetail: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
-    marginTop: 2,
-  },
-  clanRow: {
+  progressCatRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  clanInfo: {
     alignItems: 'center',
-    flex: 1,
+    paddingVertical: 5,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
   },
-  clanLabel: {
+  progressCatLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    width: 48,
+    fontWeight: '500',
+  },
+  progressCatTrack: {
+    flex: 1,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: Colors.bgSubtle,
+    overflow: 'hidden',
+    marginHorizontal: Spacing.sm,
+  },
+  progressCatFill: {
+    height: '100%',
+    borderRadius: 2.5,
+    backgroundColor: Colors.textPrimary,
+  },
+  progressCatCount: {
     ...Typography.caption,
     color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    width: 36,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+    fontWeight: '600',
   },
-  clanName: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '500',
-    marginTop: 2,
+  progressDetail: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 6,
     textAlign: 'center',
+    fontWeight: '500',
   },
+
   tabsContainer: {
     paddingHorizontal: Spacing.base,
     gap: Spacing.sm,
     paddingVertical: Spacing.base,
   },
   tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
-    backgroundColor: Colors.bgCard,
+    backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   tabActive: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
   },
   tabText: {
-    ...Typography.footnote,
+    ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: Colors.bgElevated,
-    fontWeight: '700',
+    color: Colors.bg,
   },
   tabContent: {
     paddingHorizontal: Spacing.base,
   },
-  achievementSummary: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.base,
-    marginBottom: Spacing.md,
-  },
-  achievementSummaryTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  achievementSummaryTitle: {
-    ...Typography.headline,
-    color: Colors.textPrimary,
-  },
-  achievementSummarySub: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-  },
-  achievementSummaryBar: {
-    height: 4,
-    backgroundColor: Colors.borderSubtle,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  achievementSummaryFill: {
-    height: '100%',
-    backgroundColor: Colors.textPrimary,
-    borderRadius: 2,
-  },
-  achievementFilters: {
-    gap: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  achievementFilterPill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  achievementFilterPillActive: {
-    backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
-  },
-  achievementFilterText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  achievementFilterTextActive: {
-    color: Colors.bg,
-  },
+
   // ── Inline detail panel (expands below a tapped card) ──
   panel: {
     marginTop: 2,

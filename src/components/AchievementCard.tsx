@@ -7,7 +7,6 @@ import {
   formatAchievementValue,
   getAchievementIcon,
   getAchievementProgress,
-  getVillageLabel,
 } from '../utils/achievements';
 
 interface Props {
@@ -16,6 +15,12 @@ interface Props {
   onPress?: () => void;
   showVillage?: boolean;
 }
+
+const VILLAGE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  home: 'home-outline',
+  builderBase: 'hammer-outline',
+  clanCapital: 'flag-outline',
+};
 
 export function AchievementCard({ achievement: a, expanded, onPress, showVillage }: Props) {
   const progress = getAchievementProgress(a);
@@ -35,32 +40,18 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
         <View style={styles.left}>
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>{a.name}</Text>
-            {showVillage && (
-              <View style={styles.villageBadge}>
-                <Text style={styles.villageText}>{getVillageLabel(a.village)}</Text>
-              </View>
-            )}
+
           </View>
-          <Text style={styles.info} numberOfLines={expanded ? undefined : 1}>
-            {a.completionInfo || a.info}
+          <Text style={styles.info} numberOfLines={1}>
+            {(a.completionInfo || a.info)}{a.target > 0 ? `: ${formatAchievementValue(a.value)} / ${formatAchievementValue(a.target)}` : ''}
           </Text>
-          {!isComplete && a.target > 0 && (
-            <>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-              </View>
-              <Text style={styles.progressText}>
-                {formatAchievementValue(a.value)} / {formatAchievementValue(a.target)}
-                {remaining > 0 ? ` · ${formatAchievementValue(remaining)} to go` : ''}
-              </Text>
-            </>
-          )}
-          {expanded && a.info && a.completionInfo && (
-            <Text style={styles.detailInfo}>{a.info}</Text>
-          )}
+
         </View>
         <View style={styles.right}>
           <View style={styles.starsRow}>
+            {showVillage && (
+              <Ionicons name={VILLAGE_ICONS[a.village] || 'planet-outline'} size={11} color={Colors.textSecondary} style={{ marginRight: 8, marginTop: 1 }} />
+            )}
             {[1, 2, 3].map((s) => (
               <Ionicons
                 key={s}
@@ -70,9 +61,24 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
               />
             ))}
           </View>
-          <Text style={styles.badge}>{a.stars}/3</Text>
         </View>
+
+
       </View>
+
+      {!isComplete && a.target > 0 && (
+        <View style={styles.progressRow}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          </View>
+          {remaining > 0 && (
+            <Text style={[styles.progressRemaining, { marginLeft: 20 }]}>{formatAchievementValue(remaining)} to go</Text>
+          )}
+        </View>
+      )}
+      {expanded && a.info && a.completionInfo && (
+        <Text style={styles.detailInfo}>{a.info}</Text>
+      )}
     </Pressable>
   );
 }
@@ -122,23 +128,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flexShrink: 1,
   },
-  villageBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  villageText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 9,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
   info: {
-    ...Typography.footnote,
+    ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: 2,
   },
@@ -148,11 +139,17 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     lineHeight: 18,
   },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    width: '100%'
+  },
   progressTrack: {
+    flex: 1,
     height: 4,
-    backgroundColor: Colors.borderSubtle,
+    backgroundColor: Colors.border,
     borderRadius: 2,
-    marginTop: Spacing.sm,
     overflow: 'hidden',
   },
   progressFill: {
@@ -160,24 +157,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textSecondary,
     borderRadius: 2,
   },
-  progressText: {
+  progressRemaining: {
     ...Typography.caption,
-    color: Colors.textMuted,
-    marginTop: 4,
+    color: Colors.textTertiary,
     fontVariant: ['tabular-nums'],
+    marginBottom: 2
   },
   right: {
     alignItems: 'flex-end',
-    gap: 4,
-    marginTop: 2,
+    gap: 2,
+    marginTop: 0,
   },
   starsRow: {
     flexDirection: 'row',
     gap: 2,
-  },
-  badge: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
   },
 });

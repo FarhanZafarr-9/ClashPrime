@@ -55,23 +55,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="bases"
-        options={{
-          title: 'Bases',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="grid" size={18} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
               <Ionicons name="person" size={18} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="buildings"
+        options={{
+          title: 'Buildings',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
+              <Ionicons name="business" size={18} color={color} />
             </View>
           ),
         }}
@@ -88,12 +88,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="buildings"
+        name="bases"
         options={{
-          title: 'Buildings',
+          title: 'Bases',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="business" size={18} color={color} />
+              <Ionicons name="grid" size={18} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="achievements"
+        options={{
+          title: 'Awards',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
+              <Ionicons name="trophy" size={18} color={color} />
             </View>
           ),
         }}
