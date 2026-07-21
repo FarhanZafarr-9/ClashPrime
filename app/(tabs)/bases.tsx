@@ -19,6 +19,8 @@ import type { ScrapedBase, ScrapeResult } from '../../src/types/bases';
 import { scrapeBasesForTH } from '../../src/api/baseScraper';
 import { useDialog } from '../../src/components/AlertDialog';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
+import { getSavedBases, getFavorites, saveBase, removeBase, toggleFavorite } from '../../src/hooks/usePlayer';
+import type { SavedBase } from '../../src/hooks/usePlayer';
 
 const CATEGORY_MAP: Record<string, string> = {
   war: 'War',
@@ -31,15 +33,22 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 const CATEGORIES = ['All', 'War', 'Trophy', 'Farming', 'Hybrid', 'CWL'];
+const FILTER_PILLS = [
+  { key: 'library', label: 'Library' },
+  { key: 'saved', label: 'Saved' },
+  { key: 'favorites', label: 'Favorites' },
+];
 
 export default function BaseLibraryScreen() {
   const { player, refresh: refreshPlayer } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [selectedFilter, setSelectedFilter] = useState<FILTER_PILLS[number]['key']>('library');
   const [baseData, setBaseData] = useState<ScrapeResult | null>(null);
   const [loadingBases, setLoadingBases] = useState(true);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
+  const [savedBases, setSavedBases] = useState<SavedBase[]>([]);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const thLevel = player?.townHallLevel || 16;
 
@@ -56,9 +65,16 @@ export default function BaseLibraryScreen() {
     }
   }, [thLevel]);
 
+  const loadSavedData = useCallback(async () => {
+    const [saved, favs] = await Promise.all([getSavedBases(), getFavorites()]);
+    setSavedBases(saved);
+    setFavorites(new Set(favs));
+  }, []);
+
   useEffect(() => {
     fetchBases();
-  }, [fetchBases]);
+    loadSavedData();
+  }, [fetchBases, loadSavedData]);
 
   const allBases = useMemo(() => {
     if (!baseData) return [];
@@ -68,6 +84,8 @@ export default function BaseLibraryScreen() {
     }
     return bases;
   }, [baseData]);
+
+  const savedBaseIds = useMemo(() => new Set(savedBases.map((b) => b.id)), [savedBases]);
 
   const filtered = useMemo(() => {
     const catLower = selectedCategory.toLowerCase();
@@ -79,13 +97,36 @@ export default function BaseLibraryScreen() {
     });
   }, [allBases, selectedCategory]);
 
-  const handleFavorite = (detailUrl: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(detailUrl)) next.delete(detailUrl);
-      else next.add(detailUrl);
-      return next;
-    });
+  const isSaved = (detailUrl: string) => savedBases.some((b) => b.url === detailUrl);
+
+  const handleFavorite = async (detailUrl: string) => {
+    const isFav = favorites.has(detailUrl);
+    const newFavs = new Set(favorites);
+    if (isFav) newFavs.delete(detailUrl);
+    else newFavs.add(detailUrl);
+    setFavorites(newFavs);
+    await toggleFavorite(detailUrl);
+  };
+
+  const handleSaveBase = async (base: ScrapedBase) => {
+    const newBase: SavedBase = {
+      id: base.detail_url,
+      name: base.title,
+      category: CATEGORY_MAP[base.type] || base.type,
+      townHallLevel: base.th_level,
+      rating: base.rating_out_of_5,
+      tags: base.tags,
+      thumbnail: base.preview_image_url,
+      url: base.detail_url,
+      copiedAt: new Date().toISOString(),
+    };
+    await saveBase(newBase);
+    loadSavedData();
+  };
+
+  const handleRemoveSaved = async (id: string) => {
+    await removeBase(id);
+    loadSavedData();
   };
 
   const handleCopy = (base: ScrapedBase) => {
@@ -95,6 +136,20 @@ export default function BaseLibraryScreen() {
       showDialog({ title: 'No Copy Link', message: 'This base does not have an in-game copy link.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
     }
   };
+
+  const getFilteredBases = () => {
+    switch (selectedFilter) {
+      case 'saved':
+        return savedBases;
+      case 'favorites':
+        return filtered.filter((b) => favorites.has(b.detail_url));
+      case 'library':
+      default:
+        return filtered;
+    }
+  };
+
+  const currentBases = getFilteredBases();
 
   if (loadingBases) {
     return <BasesScreenSkeleton />;
@@ -129,58 +184,121 @@ export default function BaseLibraryScreen() {
         <>
           <View style={styles.countBar}>
             <Text style={styles.countText}>
-              {filtered.length} base{filtered.length !== 1 ? 's' : ''}
+              {currentBases.length} base{currentBases.length !== 1 ? 's' : ''}
             </Text>
-            {(baseData?.total_bases || 0) !== filtered.length && (
+            {selectedFilter === 'library' && (baseData?.total_bases || 0) !== filtered.length && (
               <Text style={styles.countSubtext}>
                 {baseData?.total_bases || 0} total
               </Text>
             )}
           </View>
 
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>View</Text>
+            <View style={styles.filterPills}>
+              {FILTER_PILLS.map((pill) => (
+                <Pressable
+                  key={pill.key}
+                  onPress={() => setSelectedFilter(pill.key)}
+                  style={[
+                    styles.filterPill,
+                    selectedFilter === pill.key && styles.filterPillActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      selectedFilter === pill.key && styles.filterPillTextActive,
+                    ]}
+                  >
+                    {pill.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
 
-
-          <View style={styles.chipsContainer}>
-            {CATEGORIES.map((cat) => (
-              <Chip
-                key={cat}
-                label={cat}
-                selected={selectedCategory === cat}
-                onPress={() => setSelectedCategory(cat)}
-              />
-            ))}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>Category</Text>
+            <View style={styles.chipsContainer}>
+              {CATEGORIES.map((cat) => (
+                <Chip
+                  key={cat}
+                  label={cat}
+                  selected={selectedCategory === cat}
+                  onPress={() => setSelectedCategory(cat)}
+                />
+              ))}
+            </View>
           </View>
 
           <ScrollView
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
           >
-            {filtered.length === 0 ? (
+            {currentBases.length === 0 ? (
               <EmptyState
-                icon="🔍"
-                title="No bases found"
-                description={`No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for TH${thLevel}. Try a different filter or search.`}
+                icon={selectedFilter === 'library' ? '🔍' : selectedFilter === 'saved' ? '🔖' : '♡'}
+                title={
+                  selectedFilter === 'library'
+                    ? 'No bases found'
+                    : selectedFilter === 'saved'
+                    ? 'No saved bases'
+                    : 'No favorites yet'
+                }
+                description={
+                  selectedFilter === 'library'
+                    ? `No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for TH${thLevel}. Try a different filter.`
+                    : selectedFilter === 'saved'
+                    ? 'Save bases from the Library to access them quickly.'
+                    : 'Tap the heart icon on any base to add it to your favorites.'
+                }
               />
             ) : (
-              filtered.map((base) => (
-                <BaseCard
-                  key={String(base.id)}
-                  name={base.title}
-                  category={CATEGORY_MAP[base.type] || base.type}
-                  townHallLevel={base.th_level}
-                  rating={base.rating_out_of_5}
-                  tags={base.tags}
-                  previewImage={base.preview_image_url}
-                  views={base.views_raw}
-                  downloads={base.votes}
-                  year={base.year}
-                  updated={base.updated}
-                  hasLink={base.has_link}
-                  isFavorite={favorites.has(base.detail_url)}
-                  onFavorite={() => handleFavorite(base.detail_url)}
-                  onCopy={() => handleCopy(base)}
-                />
-              ))
+              currentBases.map((base) => {
+                if (selectedFilter === 'saved') {
+                  const savedBase = base as SavedBase;
+                  return (
+                    <View key={savedBase.id} style={styles.savedItem}>
+                      <View style={styles.itemIcon}>
+                        <Text style={styles.itemIconText}>TH{savedBase.townHallLevel}</Text>
+                      </View>
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.itemName}>{savedBase.name}</Text>
+                        <Text style={styles.itemMeta}>{savedBase.category} · Rating {savedBase.rating}</Text>
+                      </View>
+                      <Pressable onPress={() => handleRemoveSaved(savedBase.id)} hitSlop={8}>
+                        <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
+                      </Pressable>
+                    </View>
+                  );
+                }
+
+                const scrapedBase = base as ScrapedBase;
+                const isFav = favorites.has(scrapedBase.detail_url);
+                const isSavedBase = isSaved(scrapedBase.detail_url);
+                return (
+                  <BaseCard
+                    key={String(scrapedBase.id)}
+                    name={scrapedBase.title}
+                    category={CATEGORY_MAP[scrapedBase.type] || scrapedBase.type}
+                    townHallLevel={scrapedBase.th_level}
+                    rating={scrapedBase.rating_out_of_5}
+                    tags={scrapedBase.tags}
+                    previewImage={scrapedBase.preview_image_url}
+                    views={scrapedBase.views_raw}
+                    downloads={scrapedBase.votes}
+                    year={scrapedBase.year}
+                    updated={scrapedBase.updated}
+                    hasLink={scrapedBase.has_link}
+                    isFavorite={isFav}
+                    isSaved={isSavedBase}
+                    onFavorite={() => handleFavorite(scrapedBase.detail_url)}
+                    onCopy={() => handleCopy(scrapedBase)}
+                    onSave={() => handleSaveBase(scrapedBase)}
+                  />
+                );
+              })
             )}
             <View style={{ height: 100 }} />
           </ScrollView>
@@ -190,6 +308,8 @@ export default function BaseLibraryScreen() {
     </SafeAreaView>
   );
 }
+
+type FILTER_PILLS = typeof FILTER_PILLS;
 
 const styles = StyleSheet.create({
   container: {
@@ -262,36 +382,89 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
   },
-  searchContainer: {
+  filterSection: {
     paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
+    paddingBottom: Spacing.sm,
+    gap: Spacing.sm,
   },
-  searchBar: {
+  filterLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '600',
+    paddingHorizontal: Spacing.xs,
+  },
+  filterPills: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  filterPill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
     backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    height: 44,
-    gap: Spacing.sm,
   },
-  searchInput: {
-    flex: 1,
-    ...Typography.body,
-    color: Colors.textPrimary,
-    padding: 0,
+  filterPillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  filterPillText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  filterPillTextActive: {
+    color: Colors.bg,
   },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   list: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.sm,
+  },
+  savedItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  itemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  itemIconText: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  itemMeta: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
 });

@@ -109,12 +109,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="saved"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }

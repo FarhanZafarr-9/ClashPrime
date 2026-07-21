@@ -15,24 +15,30 @@ interface Props {
   year?: number | null;
   updated?: boolean;
   isFavorite?: boolean;
+  isSaved?: boolean;
   hasLink?: boolean;
   onCopy?: () => void;
   onFavorite?: () => void;
+  onSave?: () => void;
 }
 
 export function BaseCard({
   name,
+  category,
   townHallLevel,
   rating = 0,
+  tags,
   previewImage,
   views,
   downloads,
   year,
   updated,
   isFavorite,
+  isSaved,
   hasLink,
   onCopy,
   onFavorite,
+  onSave,
 }: Props) {
   const safeRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
   const [imgRatio, setImgRatio] = useState<number | null>(null);
@@ -88,14 +94,24 @@ export function BaseCard({
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
+            <Text style={styles.category}>{category}</Text>
           </View>
-          <Pressable onPress={onFavorite} hitSlop={8} style={styles.favBtn}>
-            <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={18}
-              color={isFavorite ? Colors.textPrimary : Colors.textTertiary}
-            />
-          </Pressable>
+          <View style={styles.actionRow}>
+            <Pressable onPress={onSave} hitSlop={8} style={styles.actionBtn}>
+              <Ionicons
+                name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                size={18}
+                color={isSaved ? Colors.textPrimary : Colors.textTertiary}
+              />
+            </Pressable>
+            <Pressable onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={18}
+                color={isFavorite ? Colors.textPrimary : Colors.textTertiary}
+              />
+            </Pressable>
+          </View>
         </View>
         {hasLink ? (
           <Pressable onPress={onCopy} style={styles.copyBtn}>
@@ -214,6 +230,18 @@ const styles = StyleSheet.create({
     ...Typography.headline,
     color: Colors.textPrimary,
     lineHeight: 20,
+  },
+  category: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  actionBtn: {
+    padding: Spacing.xs,
   },
   favBtn: {
     padding: Spacing.xs,
