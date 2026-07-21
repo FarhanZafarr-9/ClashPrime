@@ -6,13 +6,11 @@ import {
   StyleSheet,
   Pressable,
   Linking,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { Chip } from '../../src/components/Chip';
 import { BaseCard } from '../../src/components/BaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import type { ScrapedBase, ScrapeResult } from '../../src/types/bases';
@@ -32,11 +30,18 @@ const CATEGORY_MAP: Record<string, string> = {
   builder: 'Builder',
 };
 
-const CATEGORIES = ['All', 'War', 'Trophy', 'Farming', 'Hybrid', 'CWL'];
-const FILTER_PILLS = [
-  { key: 'library', label: 'Library' },
-  { key: 'saved', label: 'Saved' },
-  { key: 'favorites', label: 'Favorites' },
+const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'All', label: 'All', icon: 'apps-outline' },
+  { key: 'War', label: 'War', icon: 'shield-outline' },
+  { key: 'Trophy', label: 'Trophy', icon: 'trophy-outline' },
+  { key: 'Farming', label: 'Farming', icon: 'leaf-outline' },
+  { key: 'Hybrid', label: 'Hybrid', icon: 'layers-outline' },
+  { key: 'CWL', label: 'CWL', icon: 'medal-outline' },
+];
+const FILTER_PILLS: { key: 'library' | 'saved' | 'favorites'; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'library', label: 'Library', icon: 'library-outline' },
+  { key: 'saved', label: 'Saved', icon: 'bookmark-outline' },
+  { key: 'favorites', label: 'Favorites', icon: 'heart-outline' },
 ];
 
 export default function BaseLibraryScreen() {
@@ -49,6 +54,8 @@ export default function BaseLibraryScreen() {
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [savedBases, setSavedBases] = useState<SavedBase[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [displayCount, setDisplayCount] = useState(20);
+  const PAGE_SIZE = 20;
 
   const thLevel = player?.townHallLevel || 16;
 
@@ -149,18 +156,29 @@ export default function BaseLibraryScreen() {
     }
   };
 
-  const currentBases = getFilteredBases();
+  React.useEffect(() => {
+    setDisplayCount(PAGE_SIZE);
+  }, [selectedCategory, selectedFilter]);
 
-  if (loadingBases) {
-    return <BasesScreenSkeleton />;
-  }
+  const currentBases = getFilteredBases();
+  const visibleBases = currentBases.slice(0, displayCount);
+  const hasMore = displayCount < currentBases.length;
+
+  const handleScroll = useCallback((e: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 200 && hasMore) {
+      setDisplayCount((prev) => prev + PAGE_SIZE);
+    }
+  }, [hasMore]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
-          <Text style={styles.subtitle}>TH{thLevel} layouts from ClashLy</Text>
+          {loadingBases ? null : (
+            <Text style={styles.subtitle}>TH{thLevel} layouts from ClashLy</Text>
+          )}
         </View>
         <Pressable onPress={fetchBases} style={styles.refreshBtn}>
           <Ionicons name="refresh" size={18} color={Colors.textPrimary} />
@@ -168,10 +186,7 @@ export default function BaseLibraryScreen() {
       </View>
 
       {loadingBases ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.textPrimary} />
-          <Text style={styles.loadingText}>Loading TH{thLevel} bases…</Text>
-        </View>
+        <BasesScreenSkeleton />
       ) : scrapeError ? (
         <View style={styles.loadingContainer}>
           <Ionicons name="cloud-offline-outline" size={36} color={Colors.textTertiary} />
@@ -185,6 +200,7 @@ export default function BaseLibraryScreen() {
           <View style={styles.countBar}>
             <Text style={styles.countText}>
               {currentBases.length} base{currentBases.length !== 1 ? 's' : ''}
+              {currentBases.length > PAGE_SIZE && ` · showing ${Math.min(displayCount, currentBases.length)}`}
             </Text>
             {selectedFilter === 'library' && (baseData?.total_bases || 0) !== filtered.length && (
               <Text style={styles.countSubtext}>
@@ -205,6 +221,11 @@ export default function BaseLibraryScreen() {
                     selectedFilter === pill.key && styles.filterPillActive,
                   ]}
                 >
+                  <Ionicons
+                    name={pill.icon}
+                    size={13}
+                    color={selectedFilter === pill.key ? Colors.bg : Colors.textSecondary}
+                  />
                   <Text
                     style={[
                       styles.filterPillText,
@@ -220,14 +241,30 @@ export default function BaseLibraryScreen() {
 
           <View style={styles.filterSection}>
             <Text style={styles.filterLabel}>Category</Text>
-            <View style={styles.chipsContainer}>
-              {CATEGORIES.map((cat) => (
-                <Chip
-                  key={cat}
-                  label={cat}
-                  selected={selectedCategory === cat}
-                  onPress={() => setSelectedCategory(cat)}
-                />
+            <View style={styles.filterPills}>
+              {CATEGORY_PILLS.map((pill) => (
+                <Pressable
+                  key={pill.key}
+                  onPress={() => setSelectedCategory(pill.key)}
+                  style={[
+                    styles.filterPill,
+                    selectedCategory === pill.key && styles.filterPillActive,
+                  ]}
+                >
+                  <Ionicons
+                    name={pill.icon}
+                    size={13}
+                    color={selectedCategory === pill.key ? Colors.bg : Colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      selectedCategory === pill.key && styles.filterPillTextActive,
+                    ]}
+                  >
+                    {pill.label}
+                  </Text>
+                </Pressable>
               ))}
             </View>
           </View>
@@ -235,6 +272,8 @@ export default function BaseLibraryScreen() {
           <ScrollView
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
           >
             {currentBases.length === 0 ? (
               <EmptyState
@@ -255,7 +294,7 @@ export default function BaseLibraryScreen() {
                 }
               />
             ) : (
-              currentBases.map((base) => {
+              visibleBases.map((base) => {
                 if (selectedFilter === 'saved') {
                   const savedBase = base as SavedBase;
                   return (
@@ -345,10 +384,6 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     paddingBottom: 80,
   },
-  loadingText: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
-  },
   errorText: {
     ...Typography.subhead,
     color: Colors.textTertiary,
@@ -400,10 +435,13 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
-    backgroundColor: Colors.bgCard,
+    backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -412,17 +450,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.textPrimary,
   },
   filterPillText: {
-    ...Typography.subhead,
+    ...Typography.caption,
     color: Colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   filterPillTextActive: {
     color: Colors.bg,
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
   },
   list: {
     paddingHorizontal: Spacing.base,
