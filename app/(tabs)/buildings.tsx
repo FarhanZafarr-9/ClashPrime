@@ -170,14 +170,10 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
             </View>
             {displayLevels.map((levelData: any) => {
               const lvl = levelData.Level;
-              const iconSource = getBuildingLevelImageSource(lookupName, lvl);
               const isCurrentLevel = lvl === maxLvl;
               return (
                 <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
                   <View style={styles.buildingStatCellIcon}>
-                    {iconSource ? (
-                      <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
-                    ) : null}
                     <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
                   </View>
                   {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
@@ -505,12 +501,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
     fontSize: 9,
-  },
-  buildingStatIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 3,
-    backgroundColor: Colors.bgSubtle,
   },
   buildingStatLvlNum: {
     fontSize: 8,
