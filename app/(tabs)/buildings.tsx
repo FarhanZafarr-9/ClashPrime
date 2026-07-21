@@ -78,7 +78,7 @@ function LevelThumb({ name, level, isCurrent, isNextTH }: { name: string; level:
 }
 
 function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: number; isMaxed: boolean; th: number }) {
-  const [expanded, setExpanded] = useState(false);
+  const [showFullTable, setShowFullTable] = useState(false);
   const lookupName = NAME_FIX[name] ?? name;
   const availableLevels = getBuildingAvailableLevels(lookupName);
   const levelsToShow = availableLevels.filter((l) => l <= maxLvl + 1);
@@ -104,9 +104,22 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
     return null;
   }, [name, th]);
 
+  const allLevels = buildingStats?.levels ?? [];
+  const showExpand = allLevels.length > 3;
+
+  let displayLevels: any[];
+  if (showFullTable || !showExpand) {
+    displayLevels = allLevels;
+  } else {
+    const currentIdx = allLevels.findIndex((l: any) => l.Level === maxLvl);
+    const start = Math.max(0, currentIdx - 1);
+    const end = Math.min(allLevels.length, currentIdx + 2);
+    displayLevels = allLevels.slice(start, end);
+  }
+
   return (
     <Card style={styles.itemCard}>
-      <Pressable onPress={() => setExpanded(!expanded)}>
+      <Pressable onPress={() => setShowFullTable((s) => !s)}>
         <View style={styles.itemRow}>
           {mainImgSource ? (
             <Image source={mainImgSource} style={styles.itemIcon} resizeMode="contain" />
@@ -136,7 +149,7 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
             </View>
           </View>
           <Ionicons
-            name={expanded ? 'chevron-down' : 'chevron-forward'}
+            name={showFullTable ? 'chevron-down' : 'chevron-forward'}
             size={16}
             color={Colors.textTertiary}
             style={styles.expandArrow}
@@ -144,56 +157,63 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
         </View>
       </Pressable>
 
-      {expanded && levelsToShow.length > 0 && (
-        <>
-          <View style={styles.levelStrip}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelStripContent}>
-              {levelsToShow.map((lvl) => (
-                <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} isNextTH={lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0)} />
-              ))}
-            </ScrollView>
-          </View>
+      <View style={styles.levelStrip}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelStripContent}>
+          {levelsToShow.map((lvl) => (
+            <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} isNextTH={lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0)} />
+          ))}
+        </ScrollView>
+      </View>
 
-          {buildingStats && buildingStats.levels.length > 0 && (
-            <View style={styles.buildingStatsTable}>
-              <View style={styles.buildingStatRow}>
-                <View style={styles.buildingStatCellIcon}>
-                  <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
-                </View>
-                {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
-                  <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
-                    {COL_ABBREV[col] || col}
-                  </Text>
-                ))}
-              </View>
-              {buildingStats.levels.map((levelData: any, _idx: number) => {
-                const lvl = levelData.Level;
-                const iconSource = getBuildingLevelImageSource(lookupName, lvl);
-                const isCurrentLevel = lvl === maxLvl;
-                const isNextLevel = lvl === maxLvl + 1;
-                return (
-                  <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
-                    <View style={styles.buildingStatCellIcon}>
-                      {iconSource ? (
-                        <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
-                      ) : null}
-                      <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
-                    </View>
-                    {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
-                      const val = levelData[col] ?? '—';
-                      const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
-                      return (
-                        <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
-                          {formatted}
-                        </Text>
-                      );
-                    })}
-                  </View>
-                );
-              })}
+      {buildingStats && displayLevels.length > 0 && (
+        <View style={styles.buildingStatsTable}>
+          <View style={styles.buildingStatRow}>
+            <View style={styles.buildingStatCellIcon}>
+              <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
             </View>
+            {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
+              <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
+                {COL_ABBREV[col] || col}
+              </Text>
+            ))}
+          </View>
+          {displayLevels.map((levelData: any) => {
+            const lvl = levelData.Level;
+            const iconSource = getBuildingLevelImageSource(lookupName, lvl);
+            const isCurrentLevel = lvl === maxLvl;
+            return (
+              <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
+                <View style={styles.buildingStatCellIcon}>
+                  {iconSource ? (
+                    <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
+                  ) : null}
+                  <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+                </View>
+                {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
+                  const val = levelData[col] ?? '—';
+                  const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                  return (
+                    <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
+                      {formatted}
+                    </Text>
+                  );
+                })}
+              </View>
+            );
+          })}
+          {showExpand && !showFullTable && (
+            <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(true)}>
+              <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
+              <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
+            </Pressable>
           )}
-        </>
+          {showExpand && showFullTable && (
+            <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(false)}>
+              <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
+              <Text style={styles.expandTableText}>Show fewer</Text>
+            </Pressable>
+          )}
+        </View>
       )}
     </Card>
   );
@@ -216,7 +236,7 @@ export default function BuildingsScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <Text style={styles.title}>Buildings</Text>
-          <Text style={styles.subtitle}>Max levels for TH{th} · Tap to expand</Text>
+          <Text style={styles.subtitle}>Max levels for TH{th} · Stats shown around current level</Text>
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, styles.legendDotCurrent]} />
@@ -487,5 +507,17 @@ const styles = StyleSheet.create({
   },
   buildingStatLvlNumCurrent: {
     color: Colors.textPrimary,
+  },
+  expandTableBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.md,
+  },
+  expandTableText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });
