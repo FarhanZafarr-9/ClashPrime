@@ -8,11 +8,12 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 
 ## Features
 
-- **Home Dashboard** — overview of your village with progress rings, resource counters, and building stats
-- **Base Library** — browse TH-level base layouts with community ratings from ClashLy
-- **Player Profile** — troops, heroes, spells, pets, equipment with images and level progress
-- **Buildings** — expandable cards showing all 75+ buildings with level model progression (Home Village + Builder Base)
+- **Home Dashboard** — overview of your village with progress cards, quick stats, and quick actions
+- **Player Profile** — troops, heroes, spells, pets, equipment with images, level stats tables, and collapsible progress section
+- **Buildings** — expandable cards showing all 80+ buildings with level model progression and stat tables (Home Village + Builder Base)
 - **Events** — upcoming in-game events with countdown timers and progress bars
+- **Base Library** — browse TH-level base layouts with community ratings from ClashLy (paginated, category filters)
+- **Achievements** — standalone tab with star summary and village-filtered achievement list
 - **Settings** — API token & dark mode, plus Credits, Privacy Policy and Feedback (reach us at farhanzafarr.9@gmail.com)
 - **Onboarding** — guided first-run flow for entering API token and player tag
 
@@ -66,10 +67,11 @@ ClashPrime/
 │   └── (tabs)/             # Tab screens
 │       ├── _layout.tsx     # Bottom tab navigator
 │       ├── index.tsx       # Home Dashboard
-│       ├── bases.tsx       # Base Library
 │       ├── profile.tsx     # Player Profile
-│       ├── events.tsx      # Events
 │       ├── buildings.tsx   # Buildings
+│       ├── events.tsx      # Events
+│       ├── bases.tsx       # Base Library
+│       ├── achievements.tsx# Achievements
 │       └── settings.tsx    # Settings
 ├── src/
 │   ├── api/                # API clients and scrapers
