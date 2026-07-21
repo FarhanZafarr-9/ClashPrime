@@ -15,7 +15,7 @@ import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
-import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug, setTroopImageOverride } from '../../src/utils/troopImages';
+import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { Card } from '../../src/components/Card';
@@ -24,8 +24,12 @@ import { ProgressRing } from '../../src/components/ProgressRing';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
+import { AchievementCard } from '../../src/components/AchievementCard';
+import { groupAchievements, getTotalStars } from '../../src/utils/achievements';
+import type { Village } from '../../src/types/clash';
 
 type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment' | 'achievements';
+type AchievementVillageFilter = 'all' | Village;
 
 // Decodes an "Unlock Requirement" value (e.g. "Buy in X event for 3,100 ... or
 // purchasable from the Trader for 1,500") into discrete unlock methods.
@@ -53,10 +57,64 @@ export default function PlayerProfileScreen() {
   const { isDark, colors } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('heroes');
   const [refreshing, setRefreshing] = useState(false);
-  // Name of the item whose detail panel is currently expanded inline.
   const [expandedName, setExpandedName] = useState<string | null>(null);
-  // Detail cache keyed by name so re-expansion is instant; null = not yet fetched.
+  const [expandedAchievement, setExpandedAchievement] = useState<string | null>(null);
+  const [achievementVillageFilter, setAchievementVillageFilter] = useState<AchievementVillageFilter>('all');
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
+
+  type StatPill = { icon: keyof typeof Ionicons.glyphMap; value: string };
+
+  function formatStatPills(info: TroopDetail['info']): StatPill[] {
+    const pills: StatPill[] = [];
+
+    if (info.damageType) {
+      const dt = info.damageType.toLowerCase();
+      let icon: keyof typeof Ionicons.glyphMap = 'flash-outline';
+      let label = '';
+
+      if (dt.includes('melee')) { icon = 'cut-outline'; label = 'Melee'; }
+      else if (dt.includes('ranged')) { icon = 'arrow-up-outline'; label = 'Ranged'; }
+      else if (dt.includes('splash')) {
+        icon = 'flame-outline';
+        const r = dt.match(/[\d.]+/);
+        label = r ? `Splash ${r[0]}` : 'Splash';
+      }
+      else if (dt.includes('single')) { icon = 'locate-outline'; label = 'Single'; }
+      else { label = dt.replace(/tile radius/i, '').trim(); }
+
+      if (info.targetType) {
+        const tt = info.targetType.toLowerCase();
+        if (tt.includes('ground') && tt.includes('air')) label += ' · All';
+        else if (tt.includes('ground')) label += ' · Ground';
+        else if (tt.includes('air')) label += ' · Air';
+      }
+      pills.push({ icon, value: label });
+    }
+
+    if (info.attackSpeed) {
+      const speedVal = info.attackSpeed.toLowerCase();
+      const damageKeywords = /melee|ranged|splash|tile|radius|ground|air|single/i;
+      if (!damageKeywords.test(speedVal)) {
+        const s = speedVal.replace(/ seconds?/i, 's');
+        pills.push({ icon: 'time-outline', value: s });
+      }
+    }
+
+    if (info.range) {
+      const r = info.range.replace(/ tiles?/i, '').trim();
+      pills.push({ icon: 'radio-outline', value: r });
+    }
+
+    if (info.housingSpace > 0) {
+      pills.push({ icon: 'cube-outline', value: `${info.housingSpace}` });
+    }
+
+    if (info.favoriteTarget) {
+      pills.push({ icon: 'heart-half-outline', value: info.favoriteTarget });
+    }
+
+    return pills;
+  }
 
   const toggleDetail = useCallback(async (name: string) => {
     // Collapse if already open.
@@ -69,7 +127,6 @@ export default function PlayerProfileScreen() {
     if (details[name] === undefined) {
       let detail = await getTroopDetail(name);
       if (detail) {
-        if (detail.imageUrl) setTroopImageOverride(name, detail.imageUrl);
         const allItems = player
           ? [
             ...player.heroes,
@@ -132,7 +189,6 @@ export default function PlayerProfileScreen() {
       const nextDetails: Record<string, TroopDetail | null> = {};
       fetched.forEach((detail) => {
         if (detail) {
-          if (detail.imageUrl) setTroopImageOverride(detail.name, detail.imageUrl);
           nextDetails[detail.name] = detail;
         }
       });
@@ -154,7 +210,17 @@ export default function PlayerProfileScreen() {
   const homeTroops = filterHomeTroops(player.troops);
   const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
   const homePets = (player.pets ?? []).filter((p) => p.village === 'home' || !p.village);
-  const homeAchievements = player.achievements.filter((a) => a.village === 'home');
+  const filteredAchievements = achievementVillageFilter === 'all'
+    ? player.achievements
+    : player.achievements.filter((a) => a.village === achievementVillageFilter);
+  const achievementGroups = groupAchievements(filteredAchievements);
+  const starTotals = getTotalStars(filteredAchievements);
+  const achievementVillageCounts = {
+    all: player.achievements.length,
+    home: player.achievements.filter((a) => a.village === 'home').length,
+    builderBase: player.achievements.filter((a) => a.village === 'builderBase').length,
+    clanCapital: player.achievements.filter((a) => a.village === 'clanCapital').length,
+  };
 
   const overallProgress = (() => {
     const th = player.townHallLevel;
@@ -228,33 +294,14 @@ export default function PlayerProfileScreen() {
     const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
     const visibleDetailLevels = getVisibleLevels(detail);
 
-    const structuredItems: { label: string; value: string }[] = [];
-    if (detail.info.housingSpace > 0) structuredItems.push({ label: 'Housing', value: String(detail.info.housingSpace) });
-    if (detail.info.attackSpeed) structuredItems.push({ label: 'Speed', value: detail.info.attackSpeed });
-    if (detail.info.targetType) structuredItems.push({ label: 'Target', value: detail.info.targetType });
-    if (detail.info.range) structuredItems.push({ label: 'Range', value: detail.info.range });
-    if (detail.info.favoriteTarget) structuredItems.push({ label: 'Fav. Target', value: detail.info.favoriteTarget });
-    if (detail.info.damageType) structuredItems.push({ label: 'Damage Type', value: detail.info.damageType });
-    // Spells/equipment have no structured troop fields, so fall back to generic label/value pairs.
-    const infoItems = structuredItems.length ? structuredItems : (detail.infoPairs ?? []);
-    // Equipment carries an "Unlock Requirement" entry whose value is a long, concatenated
-    // string (multiple events + a shop source). Render it as a dedicated, decoded list
-    // rather than a generic info box.
-    const unlockReq = infoItems.find((i) => i.label === 'Unlock Requirement');
-    const gridItems = infoItems.filter((i) => i.label !== 'Unlock Requirement');
+    const pills = formatStatPills(detail.info);
+    const infoItems = pills.length ? pills : (detail.infoPairs ?? []).map((p) => ({ icon: 'information-circle-outline' as const, value: `${p.label}: ${p.value}` }));
+    const unlockReq = detail.infoPairs?.find((i) => i.label === 'Unlock Requirement');
     const unlockReqItems = unlockReq ? parseUnlockRequirements(unlockReq.value) : [];
     const unlockHasCost = unlockReqItems.some((r) => r.cost);
 
-    // Troop/hero/pet tables show DPS/HP; spells/equipment show their own per-level columns.
     const isTroopLike = (detail.levels[0]?.dps ?? 0) > 0 || (detail.levels[0]?.hitpoints ?? 0) > 0;
     const extraLabels = detail.levels[0]?.extra?.map((e) => e.label) ?? [];
-
-    const chunkedInfoItems: typeof gridItems[] = [];
-    for (let i = 0; i < gridItems.length; i += 2) {
-      chunkedInfoItems.push(gridItems.slice(i, i + 2));
-    }
-    const getFlex = (item: { label: string; value: string }) =>
-      (item.label.length + item.value.length) > 12 ? 2 : 1;
 
     return (
       <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
@@ -264,17 +311,12 @@ export default function PlayerProfileScreen() {
           </View>
         ) : null}
 
-        {gridItems.length > 0 && (
-          <View style={styles.panelStatsGrid}>
-            {chunkedInfoItems.map((chunk, rowIdx) => (
-              <View key={rowIdx} style={styles.panelInfoRow}>
-                {chunk.map((item) => (
-                  <View key={item.label} style={[styles.panelInfoItem, { flex: getFlex(item), backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <Text style={[styles.panelInfoLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                    <Text style={[styles.panelInfoValue, { color: colors.textPrimary }]}>{item.value}</Text>
-                  </View>
-                ))}
-                {chunk.length === 1 && <View style={{ flex: 1 }} />}
+        {pills.length > 0 && (
+          <View style={styles.panelPillsRow}>
+            {pills.map((pill) => (
+              <View key={pill.value} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
+                <Text style={[styles.panelPillText, { color: colors.textPrimary }]}>{pill.value}</Text>
               </View>
             ))}
           </View>
@@ -394,7 +436,6 @@ export default function PlayerProfileScreen() {
   const hasTroops = homeTroops.length + builderTroops.length > 0;
   const hasSpells = player.spells.filter((s) => s.village === 'home' || !s.village).length > 0;
   const hasEquipment = player.heroEquipment.length > 0;
-  const hasAchievements = homeAchievements.length > 0;
 
   const visibleTabs = TABS.filter((tab) => {
     if (tab.key === 'heroes') return hasHeroes;
@@ -402,7 +443,6 @@ export default function PlayerProfileScreen() {
     if (tab.key === 'troops') return hasTroops;
     if (tab.key === 'spells') return hasSpells;
     if (tab.key === 'equipment') return hasEquipment;
-    if (tab.key === 'achievements') return hasAchievements;
     return true;
   });
 
@@ -756,41 +796,90 @@ export default function PlayerProfileScreen() {
 
           {activeTab === 'achievements' && (
             <>
-              {homeAchievements.length === 0 ? (
+              {player.achievements.length === 0 ? (
                 <EmptyState
                   icon="🏆"
-                  title="No achievements"
-                  description="Achievements are earned by completing in-game milestones. They will appear here once synced."
+                  title="No achievements yet"
+                  description="Complete in-game milestones to earn achievements. Pull to refresh after playing."
                 />
               ) : (
                 <>
-                  <SectionHeader title={`Achievements (${homeAchievements.length})`} />
-                  {homeAchievements.map((a, idx) => (
-                    <View key={`${a.name}-${a.village}-${idx}`} style={styles.achievementCard}>
-                      <View style={styles.achievementIcon}>
-                        <Ionicons name="trophy-outline" size={16} color={Colors.textSecondary} />
-                      </View>
-                      <View style={styles.achieveLeft}>
-                        <Text style={styles.achieveName}>{a.name}</Text>
-                        <Text style={styles.achieveInfo} numberOfLines={1}>
-                          {a.completionInfo || a.info}
-                        </Text>
-                      </View>
-                      <View style={styles.achieveRight}>
-                        <View style={styles.starsRow}>
-                          {[1, 2, 3].map((s) => (
-                            <Ionicons
-                              key={s}
-                              name={s <= a.stars ? 'star' : 'star-outline'}
-                              size={12}
-                              color={s <= a.stars ? Colors.textPrimary : Colors.textMuted}
-                            />
-                          ))}
-                        </View>
-                        <Text style={styles.achieveBadge}>{a.stars}/3</Text>
-                      </View>
+                  <View style={styles.achievementSummary}>
+                    <View style={styles.achievementSummaryTop}>
+                      <Text style={styles.achievementSummaryTitle}>
+                        {starTotals.earned} / {starTotals.max} stars
+                      </Text>
+                      <Text style={styles.achievementSummarySub}>
+                        {filteredAchievements.filter((a) => a.stars === 3).length} complete
+                      </Text>
                     </View>
-                  ))}
+                    <View style={styles.achievementSummaryBar}>
+                      <View
+                        style={[
+                          styles.achievementSummaryFill,
+                          { width: `${starTotals.max > 0 ? (starTotals.earned / starTotals.max) * 100 : 0}%` },
+                        ]}
+                      />
+                    </View>
+                  </View>
+
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.achievementFilters}
+                  >
+                    {([
+                      { key: 'all' as const, label: 'All' },
+                      { key: 'home' as const, label: 'Home' },
+                      { key: 'builderBase' as const, label: 'Builder' },
+                      { key: 'clanCapital' as const, label: 'Capital' },
+                    ]).filter((f) => f.key === 'all' || achievementVillageCounts[f.key] > 0).map((f) => (
+                      <Pressable
+                        key={f.key}
+                        onPress={() => setAchievementVillageFilter(f.key)}
+                        style={[
+                          styles.achievementFilterPill,
+                          achievementVillageFilter === f.key && styles.achievementFilterPillActive,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.achievementFilterText,
+                            achievementVillageFilter === f.key && styles.achievementFilterTextActive,
+                          ]}
+                        >
+                          {f.label}
+                          {f.key !== 'all' ? ` (${achievementVillageCounts[f.key]})` : ''}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+
+                  {filteredAchievements.length === 0 ? (
+                    <EmptyState
+                      icon="🏆"
+                      title="No achievements in this village"
+                      description="Try another filter or sync your profile."
+                    />
+                  ) : (
+                    achievementGroups.map((group) => (
+                      <View key={group.group}>
+                        <SectionHeader title={`${group.label} (${group.items.length})`} />
+                        {group.items.map((a, idx) => {
+                          const key = `${a.name}-${a.village}-${idx}`;
+                          return (
+                            <AchievementCard
+                              key={key}
+                              achievement={a}
+                              expanded={expandedAchievement === key}
+                              showVillage={achievementVillageFilter === 'all'}
+                              onPress={() => setExpandedAchievement(expandedAchievement === key ? null : key)}
+                            />
+                          );
+                        })}
+                      </View>
+                    ))
+                  )}
                 </>
               )}
             </>
@@ -963,52 +1052,62 @@ const styles = StyleSheet.create({
   tabContent: {
     paddingHorizontal: Spacing.base,
   },
-  achievementCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  achievementSummary: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    padding: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  achievementSummaryTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  achievementIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  achieveLeft: {
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  achieveName: {
-    ...Typography.subhead,
+  achievementSummaryTitle: {
+    ...Typography.headline,
     color: Colors.textPrimary,
-    fontWeight: '600',
   },
-  achieveInfo: {
-    ...Typography.footnote,
+  achievementSummarySub: {
+    ...Typography.caption,
     color: Colors.textTertiary,
-    marginTop: 2,
   },
-  achieveRight: {
-    alignItems: 'flex-end',
-    gap: 4,
+  achievementSummaryBar: {
+    height: 4,
+    backgroundColor: Colors.borderSubtle,
+    borderRadius: 2,
+    overflow: 'hidden',
   },
-  starsRow: {
-    flexDirection: 'row',
-    gap: 2,
+  achievementSummaryFill: {
+    height: '100%',
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 2,
   },
-  achieveBadge: {
+  achievementFilters: {
+    gap: Spacing.sm,
+    paddingBottom: Spacing.md,
+  },
+  achievementFilterPill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  achievementFilterPillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  achievementFilterText: {
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '600',
+  },
+  achievementFilterTextActive: {
+    color: Colors.bg,
   },
   // ── Inline detail panel (expands below a tapped card) ──
   panel: {
@@ -1057,35 +1156,26 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     flex: 1,
   },
-  // ── Unlock requirements (decoded list for equipment) ──
-  // ── Reusable: info grid + stats table used inside the panel ──
-  panelStatsGrid: {
-    gap: Spacing.sm,
+  // ── Stat pills (icon + concise tag) ──
+  panelPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
     marginBottom: Spacing.base,
   },
-  panelInfoRow: {
+  panelPill: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  panelInfoItem: {
     alignItems: 'center',
-    backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.sm,
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.sm,
   },
-  panelInfoLabel: {
+  panelPillText: {
     ...Typography.caption,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  panelInfoValue: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
     fontWeight: '600',
-    marginTop: 2,
+    fontSize: 10,
   },
   panelNote: {
     ...Typography.caption,
