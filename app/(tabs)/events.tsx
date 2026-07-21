@@ -6,13 +6,17 @@ import {
   StyleSheet,
   Pressable,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { Card } from '../../src/components/Card';
 import { fetchEvents, ClashEvent, formatCountdown } from '../../src/api/eventsScraper';
+import { fetchNews, NewsItem } from '../../src/api/newsScraper';
 import { EventsScreenSkeleton } from '../../src/components/SkeletonScreens';
+
+type ViewMode = 'events' | 'news';
 
 const EVENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   'Raid Weekend': 'skull-outline',
@@ -40,7 +44,9 @@ function CountdownBar({ remaining, total }: { remaining: number; total: number }
 }
 
 export default function EventsScreen() {
+  const [view, setView] = useState<ViewMode>('events');
   const [events, setEvents] = useState<ClashEvent[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,29 +58,30 @@ export default function EventsScreen() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
 
-  const loadEvents = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setError(null);
-      const { events: data } = await fetchEvents();
-      setEvents(data);
-      if (data.length === 0) setError('No events found. Try refreshing.');
+      const [eventsData, newsData] = await Promise.all([fetchEvents(), fetchNews()]);
+      setEvents(eventsData.events);
+      setNews(newsData);
+      if (view === 'events' && eventsData.events.length === 0) setError('No events found. Try refreshing.');
     } catch {
-      setError('Failed to load events. Check your connection.');
+      setError('Failed to load data. Check your connection.');
     }
-  }, []);
+  }, [view]);
 
   useEffect(() => {
     (async () => {
-      await loadEvents();
+      await loadData();
       setLoading(false);
     })();
-  }, [loadEvents]);
+  }, [loadData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadEvents();
+    await loadData();
     setRefreshing(false);
-  }, [loadEvents]);
+  }, [loadData]);
 
   const activeEvents = events.filter((e) => e.isActive && e.remainingSeconds > 0);
   const upcomingEvents = events.filter((e) => !e.isActive && e.remainingSeconds > 0);
@@ -103,51 +110,99 @@ export default function EventsScreen() {
           <Text style={styles.subtitle}>Upcoming in-game events</Text>
         </View>
 
-        {error && (
+        <View style={styles.pillRow}>
+          <Pressable
+            style={[styles.pill, view === 'events' && styles.pillActive]}
+            onPress={() => setView('events')}
+          >
+            <Ionicons
+              name="calendar-outline"
+              size={14}
+              color={view === 'events' ? Colors.bg : Colors.textSecondary}
+            />
+            <Text style={[styles.pillText, view === 'events' && styles.pillTextActive]}>Events</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.pill, view === 'news' && styles.pillActive]}
+            onPress={() => setView('news')}
+          >
+            <Ionicons
+              name="newspaper-outline"
+              size={14}
+              color={view === 'news' ? Colors.bg : Colors.textSecondary}
+            />
+            <Text style={[styles.pillText, view === 'news' && styles.pillTextActive]}>News</Text>
+          </Pressable>
+        </View>
+
+        {error && view === 'events' && (
           <Card style={styles.errorCard}>
             <View style={styles.errorRow}>
               <Ionicons name="alert-circle-outline" size={18} color={Colors.textTertiary} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
-            <Pressable style={styles.retryBtn} onPress={loadEvents}>
+            <Pressable style={styles.retryBtn} onPress={loadData}>
               <Text style={styles.retryText}>Retry</Text>
             </Pressable>
           </Card>
         )}
 
-        {activeEvents.length > 0 && (
+        {view === 'events' ? (
           <>
-            <View style={styles.sectionRow}>
-              <View style={[styles.sectionDot, styles.dotActive]} />
-              <Text style={styles.sectionTitle}>Active Now</Text>
-            </View>
-            {activeEvents.map((event) => (
-              <EventCard key={event.name} event={event} featured />
-            ))}
-          </>
-        )}
+            {activeEvents.length > 0 && (
+              <>
+                <View style={styles.sectionRow}>
+                  <View style={[styles.sectionDot, styles.dotActive]} />
+                  <Text style={styles.sectionTitle}>Active Now</Text>
+                </View>
+                {activeEvents.map((event) => (
+                  <EventCard key={event.name} event={event} featured />
+                ))}
+              </>
+            )}
 
-        {upcomingEvents.length > 0 && (
-          <>
-            <View style={styles.sectionRow}>
-              <View style={[styles.sectionDot, styles.dotUpcoming]} />
-              <Text style={styles.sectionTitle}>Upcoming</Text>
-            </View>
-            {upcomingEvents.map((event) => (
-              <EventCard key={event.name} event={event} />
-            ))}
-          </>
-        )}
+            {upcomingEvents.length > 0 && (
+              <>
+                <View style={styles.sectionRow}>
+                  <View style={[styles.sectionDot, styles.dotUpcoming]} />
+                  <Text style={styles.sectionTitle}>Upcoming</Text>
+                </View>
+                {upcomingEvents.map((event) => (
+                  <EventCard key={event.name} event={event} />
+                ))}
+              </>
+            )}
 
-        {endedEvents.length > 0 && (
+            {endedEvents.length > 0 && (
+              <>
+                <View style={styles.sectionRow}>
+                  <View style={[styles.sectionDot, styles.dotEnded]} />
+                  <Text style={styles.sectionTitle}>Recently Ended</Text>
+                </View>
+                {endedEvents.map((event) => (
+                  <EventCard key={event.name} event={event} ended />
+                ))}
+              </>
+            )}
+          </>
+        ) : (
           <>
-            <View style={styles.sectionRow}>
-              <View style={[styles.sectionDot, styles.dotEnded]} />
-              <Text style={styles.sectionTitle}>Recently Ended</Text>
-            </View>
-            {endedEvents.map((event) => (
-              <EventCard key={event.name} event={event} ended />
-            ))}
+            {news.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="newspaper-outline" size={36} color={Colors.textMuted} />
+                <Text style={styles.emptyText}>No news yet</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.sectionRow}>
+                  <View style={[styles.sectionDot, styles.dotActive]} />
+                  <Text style={styles.sectionTitle}>Latest News</Text>
+                </View>
+                {news.slice(0, 15).map((item) => (
+                  <NewsCard key={item.link} item={item} />
+                ))}
+              </>
+            )}
           </>
         )}
 
@@ -203,6 +258,51 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
   );
 }
 
+function NewsCard({ item }: { item: NewsItem }) {
+  const daysAgo = Math.floor((Date.now() - item.pubDate) / 86400000);
+  const dateLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
+
+  return (
+    <Pressable onPress={() => item.link ? Linking.openURL(item.link) : null}>
+      <View style={styles.eventCard}>
+        <View style={styles.eventTop}>
+          <View style={styles.newsIconWrap}>
+            <Ionicons name="newspaper-outline" size={20} color={Colors.textSecondary} />
+          </View>
+          <View style={styles.eventInfo}>
+            <Text style={styles.eventName} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.eventStatus}>
+              {item.category} · {item.author}
+            </Text>
+          </View>
+          <View style={styles.newsBadge}>
+            <Text style={styles.countdownText}>{dateLabel}</Text>
+          </View>
+        </View>
+
+        {item.description ? (
+          <Text style={styles.eventDesc} numberOfLines={2}>{item.description}</Text>
+        ) : null}
+
+        <View style={styles.eventFooter}>
+          <Ionicons name="time-outline" size={12} color={Colors.textMuted} />
+          <Text style={styles.eventDate}>
+            {new Date(item.pubDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </Text>
+          <View style={styles.newsLink}>
+            <Text style={styles.newsLinkText}>Open</Text>
+            <Ionicons name="open-outline" size={10} color={Colors.textSecondary} />
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -224,6 +324,44 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textTertiary,
     marginTop: 2,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  pillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  pillText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  pillTextActive: {
+    color: Colors.bg,
+  },
+  emptyState: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 60,
+  },
+  emptyText: {
+    ...Typography.subhead,
+    color: Colors.textMuted,
   },
   errorCard: {
     marginHorizontal: Spacing.base,
@@ -324,6 +462,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     borderColor: 'transparent',
   },
+  newsIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   eventInfo: {
     flex: 1,
   },
@@ -403,5 +551,24 @@ const styles = StyleSheet.create({
   eventDate: {
     ...Typography.caption,
     color: Colors.textMuted,
+  },
+  newsBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  newsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginLeft: 'auto',
+  },
+  newsLinkText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });
