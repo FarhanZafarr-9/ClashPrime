@@ -33,8 +33,6 @@ const COL_ABBREV: Record<string, string> = {
   'Repair per Hit': 'RPR',
 };
 
-// Siege Machines are Workshop-produced home-village troops (shown on the
-// Profile troops list), not buildings — excluded here.
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -51,15 +49,15 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function LevelThumb({ name, level, isCurrent }: { name: string; level: number; isCurrent: boolean }) {
+function LevelThumb({ name, level, isCurrent, isNextTH }: { name: string; level: number; isCurrent: boolean; isNextTH?: boolean }) {
   const lookupName = NAME_FIX[name] ?? name;
   const imgSource = getBuildingLevelImageSource(lookupName, level);
 
   if (imgSource) {
     return (
-      <View style={[styles.levelThumbWrap, isCurrent && styles.levelThumbCurrent]}>
+      <View style={[styles.levelThumbWrap, isCurrent && styles.levelThumbCurrent, isNextTH && styles.levelThumbNextTH]}>
         <Image source={imgSource} style={styles.levelThumbImg} resizeMode="contain" />
-        <Text style={[styles.levelThumbLabel, isCurrent && styles.levelThumbLabelCurrent]}>
+        <Text style={[styles.levelThumbLabel, isCurrent && styles.levelThumbLabelCurrent, isNextTH && styles.levelThumbLabelNextTH]}>
           {level}
         </Text>
       </View>
@@ -68,11 +66,11 @@ function LevelThumb({ name, level, isCurrent }: { name: string; level: number; i
 
   const initials = name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   return (
-    <View style={[styles.levelThumbWrap, isCurrent && styles.levelThumbCurrent]}>
+    <View style={[styles.levelThumbWrap, isCurrent && styles.levelThumbCurrent, isNextTH && styles.levelThumbNextTH]}>
       <View style={[styles.levelThumbImg, styles.levelThumbFallback]}>
         <Text style={styles.levelThumbFallbackText}>{initials}</Text>
       </View>
-      <Text style={[styles.levelThumbLabel, isCurrent && styles.levelThumbLabelCurrent]}>
+      <Text style={[styles.levelThumbLabel, isCurrent && styles.levelThumbLabelCurrent, isNextTH && styles.levelThumbLabelNextTH]}>
         {level}
       </Text>
     </View>
@@ -83,7 +81,7 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
   const [expanded, setExpanded] = useState(false);
   const lookupName = NAME_FIX[name] ?? name;
   const availableLevels = getBuildingAvailableLevels(lookupName);
-  const levelsToShow = availableLevels.filter((l) => l <= maxLvl);
+  const levelsToShow = availableLevels.filter((l) => l <= maxLvl + 1);
 
   const buildingStats = useMemo(() => {
     const match = (buildingLevelsData as any).find((b: any) => {
@@ -94,6 +92,17 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
   }, [name, lookupName]);
 
   const mainImgSource = getBuildingLevelImageSource(lookupName, maxLvl);
+
+  const thNext = useMemo(() => {
+    const cats = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
+    for (const cat of Object.values(cats)) {
+      if (cat[name]) {
+        const thData = cat[name][String(th + 1)];
+        if (thData) return thData;
+      }
+    }
+    return null;
+  }, [name, th]);
 
   return (
     <Card style={styles.itemCard}>
@@ -110,11 +119,21 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
           )}
           <View style={styles.itemInfo}>
             <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
-            <Text style={styles.itemLevel}>
-              Max Lv {maxLvl}
-              {isMaxed ? '  · Maxed' : ''}
-              {availableLevels.length > 0 ? `  · ${levelsToShow.length} models` : ''}
-            </Text>
+            <View style={styles.levelBadgeRow}>
+              <Text style={styles.itemLevel}>
+                Max Lv {maxLvl}
+              </Text>
+              {isMaxed && (
+                <View style={styles.maxedBadge}>
+                  <Text style={styles.maxedText}>Maxed</Text>
+                </View>
+              )}
+              {thNext && (
+                <View style={styles.nextTHBadge}>
+                  <Text style={styles.nextTHText}>TH{th + 1}</Text>
+                </View>
+              )}
+            </View>
           </View>
           <Ionicons
             name={expanded ? 'chevron-down' : 'chevron-forward'}
@@ -130,14 +149,13 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
           <View style={styles.levelStrip}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelStripContent}>
               {levelsToShow.map((lvl) => (
-                <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} />
+                <LevelThumb key={lvl} name={name} level={lvl} isCurrent={lvl === maxLvl} isNextTH={lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0)} />
               ))}
             </ScrollView>
           </View>
 
           {buildingStats && buildingStats.levels.length > 0 && (
             <View style={styles.buildingStatsTable}>
-              {/* Header row */}
               <View style={styles.buildingStatRow}>
                 <View style={styles.buildingStatCellIcon}>
                   <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
@@ -148,17 +166,18 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
                   </Text>
                 ))}
               </View>
-              {/* Data rows — use all levels from scraper data, not only image-available levels */}
               {buildingStats.levels.map((levelData: any, _idx: number) => {
                 const lvl = levelData.Level;
                 const iconSource = getBuildingLevelImageSource(lookupName, lvl);
+                const isCurrentLevel = lvl === maxLvl;
+                const isNextLevel = lvl === maxLvl + 1;
                 return (
-                  <View key={lvl} style={styles.buildingStatRow}>
+                  <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
                     <View style={styles.buildingStatCellIcon}>
                       {iconSource ? (
                         <Image source={iconSource} style={styles.buildingStatIcon} resizeMode="contain" />
                       ) : null}
-                      <Text style={styles.buildingStatLvlNum}>{lvl}</Text>
+                      <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
                     </View>
                     {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
                       const val = levelData[col] ?? '—';
@@ -190,14 +209,24 @@ function formatCostShort(cost: number): string {
 export default function BuildingsScreen() {
   const { player } = usePlayer();
   const th = player?.townHallLevel ?? 1;
-  const categories = thLevelsData.categories as any as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
+  const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <Text style={styles.title}>Buildings</Text>
-          <Text style={styles.subtitle}>Max levels for TH{th} · Tap to see models</Text>
+          <Text style={styles.subtitle}>Max levels for TH{th} · Tap to expand</Text>
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, styles.legendDotCurrent]} />
+              <Text style={styles.legendText}>Current max</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, styles.legendDotNext]} />
+              <Text style={styles.legendText}>Unlocks at TH{th + 1}</Text>
+            </View>
+          </View>
         </View>
 
         {SHOW_CATEGORIES.map((cat) => {
@@ -259,6 +288,31 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
+  legendRow: {
+    flexDirection: 'row',
+    gap: Spacing.base,
+    marginTop: Spacing.sm,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendDotCurrent: {
+    backgroundColor: Colors.textPrimary,
+  },
+  legendDotNext: {
+    backgroundColor: Colors.warning,
+  },
+  legendText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
   itemCard: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.xs,
@@ -294,10 +348,42 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
   },
+  levelBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: 2,
+  },
   itemLevel: {
     ...Typography.footnote,
     color: Colors.textTertiary,
-    marginTop: 1,
+  },
+  maxedBadge: {
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.accentGhost,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  maxedText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 9,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  nextTHBadge: {
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.warning,
+  },
+  nextTHText: {
+    ...Typography.caption,
+    color: Colors.bg,
+    fontSize: 9,
+    fontWeight: '700',
   },
   expandArrow: {
     width: 24,
@@ -319,6 +405,9 @@ const styles = StyleSheet.create({
   },
   levelThumbCurrent: {
     opacity: 1,
+  },
+  levelThumbNextTH: {
+    opacity: 0.7,
   },
   levelThumbImg: {
     width: 52,
@@ -344,6 +433,10 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '700',
   },
+  levelThumbLabelNextTH: {
+    color: Colors.warning,
+    fontWeight: '600',
+  },
   buildingStatsTable: {
     marginTop: Spacing.sm,
     borderWidth: 1,
@@ -355,6 +448,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+  },
+  buildingStatRowCurrent: {
+    backgroundColor: Colors.accentGhost,
   },
   buildingStatCellIcon: {
     width: 46,
@@ -388,5 +484,8 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: Colors.textTertiary,
     fontWeight: '600',
+  },
+  buildingStatLvlNumCurrent: {
+    color: Colors.textPrimary,
   },
 });
