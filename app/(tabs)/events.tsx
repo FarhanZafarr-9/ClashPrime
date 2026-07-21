@@ -4,12 +4,12 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
   Pressable,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { Card } from '../../src/components/Card';
 import { fetchEvents, ClashEvent, formatCountdown } from '../../src/api/eventsScraper';
@@ -24,11 +24,36 @@ const EVENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   'League Reset': 'refresh-outline',
 };
 
+const EVENT_EXPLAINERS: Record<string, { desc: string; tab?: string }> = {
+  'Raid Weekend': { desc: 'Earn Raid Medals by attacking enemy Capital Districts', tab: 'profile' },
+  'Trader Refresh': { desc: 'New deals from the Trader every 24h', tab: 'events' },
+  'Clan Games': { desc: 'Complete challenges for Clan Points and rewards', tab: 'events' },
+  'Season End': { desc: 'Last chance to claim your Gold Pass rewards', tab: 'profile' },
+  'CWL': { desc: '7-day Clan War League — earn medals and promote', tab: 'events' },
+  'League Reset': { desc: 'War leagues reset, new season begins', tab: 'events' },
+};
+
 function getEventIcon(name: string): keyof typeof Ionicons.glyphMap {
   for (const [key, icon] of Object.entries(EVENT_ICONS)) {
     if (name.toLowerCase().includes(key.toLowerCase())) return icon;
   }
   return 'calendar-outline';
+}
+
+function getEventLink(name: string): { tab: string; label: string } | null {
+  for (const [key, link] of Object.entries(EVENT_EXPLAINERS)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) {
+      if (link.tab) {
+        const tabLabels: Record<string, string> = {
+          profile: 'View Profile',
+          bases: 'View Bases',
+          buildings: 'View Buildings',
+        };
+        return { tab: link.tab, label: tabLabels[link.tab] || 'View Details' };
+      }
+    }
+  }
+  return null;
 }
 
 function CountdownBar({ remaining, total }: { remaining: number; total: number }) {
@@ -41,6 +66,7 @@ function CountdownBar({ remaining, total }: { remaining: number; total: number }
 }
 
 export default function EventsScreen() {
+  const router = useRouter();
   const [events, setEvents] = useState<ClashEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -123,7 +149,7 @@ export default function EventsScreen() {
               <Text style={styles.sectionTitle}>Active Now</Text>
             </View>
             {activeEvents.map((event) => (
-              <EventCard key={event.name} event={event} featured />
+              <EventCard key={event.name} event={event} featured router={router} />
             ))}
           </>
         )}
@@ -135,7 +161,7 @@ export default function EventsScreen() {
               <Text style={styles.sectionTitle}>Upcoming</Text>
             </View>
             {upcomingEvents.map((event) => (
-              <EventCard key={event.name} event={event} />
+              <EventCard key={event.name} event={event} router={router} />
             ))}
           </>
         )}
@@ -147,7 +173,7 @@ export default function EventsScreen() {
               <Text style={styles.sectionTitle}>Recently Ended</Text>
             </View>
             {endedEvents.map((event) => (
-              <EventCard key={event.name} event={event} ended />
+              <EventCard key={event.name} event={event} ended router={router} />
             ))}
           </>
         )}
@@ -158,10 +184,10 @@ export default function EventsScreen() {
   );
 }
 
-function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: boolean; ended?: boolean }) {
+function EventCard({ event, featured, ended, router }: { event: ClashEvent; featured?: boolean; ended?: boolean; router: any }) {
   const icon = getEventIcon(event.name);
   const countdown = event.remainingSeconds > 0 ? formatCountdown(event.remainingSeconds) : null;
-
+  const link = getEventLink(event.name);
   const totalDuration = 7 * 86400;
 
   return (
@@ -184,7 +210,7 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
       </View>
 
       {event.description ? (
-        <Text style={[styles.eventDesc, ended && styles.eventDescEnded]} numberOfLines={2}>{event.description}</Text>
+        <Text style={[styles.eventDesc, ended && styles.eventDescEnded]} numberOfLines={1}>{event.description}</Text>
       ) : null}
 
       {!ended && event.remainingSeconds > 0 && (
@@ -200,6 +226,15 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
             year: 'numeric',
           })}
         </Text>
+        {link && !ended && (
+          <Pressable
+            onPress={() => router.push(`/(tabs)/${link.tab}`)}
+            style={styles.eventLink}
+          >
+            <Text style={styles.eventLinkText}>{link.label}</Text>
+            <Ionicons name="chevron-forward" size={10} color={Colors.textSecondary} />
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -212,16 +247,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: 20,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.md,
-  },
-  loadingText: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
   },
   header: {
     paddingHorizontal: Spacing.base,
@@ -415,5 +440,20 @@ const styles = StyleSheet.create({
   eventDate: {
     ...Typography.caption,
     color: Colors.textMuted,
+  },
+  eventLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginLeft: 'auto',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+  },
+  eventLinkText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });
