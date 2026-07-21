@@ -135,30 +135,37 @@ export function HomeScreenSkeleton() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={{ flex: 1, paddingBottom: 64 }}>
+        {/* Header: title + timestamp */}
         <View style={styles.header}>
-          <Skeleton width={120} height={20} borderRadius={6} />
-          <Skeleton width={80} height={12} borderRadius={4} />
+          <Skeleton width={130} height={20} borderRadius={6} />
+          <Skeleton width={100} height={12} borderRadius={4} style={{ marginTop: 4 }} />
         </View>
+        {/* Player card */}
         <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <View style={styles.playerRow}>
-            <Skeleton width={52} height={52} borderRadius={26} />
-            <View style={{ flex: 1, gap: 8 }}>
+            <Skeleton width={52} height={52} borderRadius={Radius.lg} />
+            <View style={{ flex: 1, gap: 6 }}>
               <Skeleton width="55%" height={16} borderRadius={5} />
               <Skeleton width="35%" height={12} borderRadius={4} />
               <View style={{ flexDirection: 'row', gap: 6 }}>
-                <Skeleton width={40} height={18} borderRadius={9} />
-                <Skeleton width={50} height={18} borderRadius={9} />
+                <Skeleton width={80} height={14} borderRadius={7} />
               </View>
             </View>
+            <Skeleton width={48} height={48} borderRadius={Radius.md} />
           </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: Spacing.md }}>
-            {[0, 1, 2].map((i) => (
-              <View key={i} style={{ alignItems: 'center', gap: 6 }}>
-                <Skeleton width={40} height={40} borderRadius={20} />
-                <Skeleton width={36} height={10} borderRadius={3} />
+          {/* Stats row */}
+          <View style={[styles.statsRowOuter, { borderTopColor: colors.border }]}>
+            {[70, 60, 50, 80].map((w, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Skeleton width={14} height={14} borderRadius={7} />
+                <Skeleton width={w} height={12} borderRadius={4} />
               </View>
             ))}
           </View>
+        </View>
+        {/* Section: Progress Overview */}
+        <View style={styles.sectionLabel}>
+          <Skeleton width={140} height={14} borderRadius={4} />
         </View>
         <View style={styles.progressGrid}>
           {[0, 1, 2, 3].map((i) => (
@@ -169,14 +176,35 @@ export function HomeScreenSkeleton() {
             </View>
           ))}
         </View>
-        <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          {[0, 1, 2, 3, 4].map((i) => (
+        {/* Section: Quick Stats */}
+        <View style={styles.sectionLabel}>
+          <Skeleton width={90} height={14} borderRadius={4} />
+        </View>
+        <View style={[styles.statsTable, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+          <View style={[styles.statRow, { backgroundColor: colors.bgSubtle, borderBottomColor: colors.border }]}>
+            <Skeleton width={50} height={12} borderRadius={4} />
+            <Skeleton width={60} height={12} borderRadius={4} />
+          </View>
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
             <View key={i} style={[styles.statRow, { borderBottomColor: colors.borderSubtle }]}>
               <Skeleton width="40%" height={12} borderRadius={4} />
-              <Skeleton width="25%" height={12} borderRadius={4} />
+              <Skeleton width="20%" height={12} borderRadius={4} />
             </View>
           ))}
         </View>
+        {/* Section: Quick Actions */}
+        <View style={styles.sectionLabel}>
+          <Skeleton width={100} height={14} borderRadius={4} />
+        </View>
+        <View style={styles.actionsRow}>
+          {[0, 1].map((i) => (
+            <View key={i} style={[styles.actionBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <Skeleton width={20} height={20} borderRadius={10} />
+              <Skeleton width={60} height={12} borderRadius={4} />
+            </View>
+          ))}
+        </View>
+        <View style={{ height: 100 }} />
       </View>
     </SafeAreaView>
   );
@@ -295,6 +323,40 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
+  },
+  statsRowOuter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.base,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  sectionLabel: {
+    paddingHorizontal: Spacing.base,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.sm,
+  },
+  statsTable: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.base,
+    borderWidth: 1,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  actionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    paddingVertical: Spacing.base,
+    borderRadius: Radius.lg,
   },
   navBar: {
     position: 'absolute',
