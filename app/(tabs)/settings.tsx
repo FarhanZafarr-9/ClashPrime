@@ -11,11 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Share,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
+const heartImg = require('../../images/heart.png') as any;
 import {
   getPlayerTag,
   setPlayerTag,
@@ -36,11 +38,11 @@ interface SettingItemProps {
   danger?: boolean;
 }
 
-function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: SettingItemProps) {
+function SettingItem({ icon, label, value, onPress, showArrow = true, danger, borderColor: bc, bgColor }: SettingItemProps & { borderColor: string; bgColor: string }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.settingItem, pressed && styles.settingPressed]}
+      style={({ pressed }) => [styles.settingItem, { borderColor: bc, backgroundColor: bgColor }, pressed && styles.settingPressed]}
     >
       <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
         <Ionicons name={icon as any} size={16} color={danger ? Colors.bg : Colors.textSecondary} />
@@ -115,7 +117,8 @@ export default function SettingsScreen() {
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
-  const { isDark, setThemeMode } = useTheme();
+  const { isDark, colors, setThemeMode } = useTheme();
+  const lightBorder = isDark ? '#383838' : '#E0E0E5';
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'tag' | 'token'>('tag');
   const [modalTitle, setModalTitle] = useState('');
@@ -252,6 +255,11 @@ export default function SettingsScreen() {
               </View>
             </View>
           ))}
+          <View style={styles.creditMadeRow}>
+            <Text style={styles.creditMadeText}>Made with </Text>
+            <Image source={heartImg} style={styles.creditHeart} />
+            <Text style={styles.creditMadeText}> by Parzival</Text>
+          </View>
         </View>
       ),
       [
@@ -323,12 +331,16 @@ export default function SettingsScreen() {
             label="Player Tag"
             value={playerTag}
             onPress={handleEditTag}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="key-outline"
             label="API Token"
             value={apiToken}
             onPress={handleEditToken}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="sync-outline"
@@ -337,11 +349,13 @@ export default function SettingsScreen() {
               bumpTagVersion();
               showDialog({ title: 'Sync', message: 'Data will refresh now.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
             }}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
         </SettingGroup>
 
         <SettingGroup title="Appearance">
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { borderColor: lightBorder, backgroundColor: colors.bgCard }]}>
             <View style={styles.settingIcon}>
               <Ionicons name="moon-outline" size={16} color={Colors.textSecondary} />
             </View>
@@ -361,11 +375,15 @@ export default function SettingsScreen() {
             icon="cloud-download-outline"
             label="Clear Cache"
             onPress={handleClearCache}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="download-outline"
             label="Export Data"
             onPress={handleExportData}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
         </SettingGroup>
 
@@ -375,27 +393,39 @@ export default function SettingsScreen() {
             label="About ClashPrime"
             value="v1.0.0"
             onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="document-text-outline"
             label="Privacy Policy"
             onPress={openPrivacy}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="heart-outline"
             label="Credits"
             onPress={openCredits}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="chatbubble-outline"
             label="Send Feedback"
             onPress={openFeedback}
+            borderColor={lightBorder}
+            bgColor={colors.bgCard}
           />
         </SettingGroup>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>ClashPrime v1.0.0</Text>
-          <Text style={styles.footerSubtext}>Built by @FarhanZafarr-9</Text>
+          <View style={styles.footerMadeRow}>
+            <Text style={styles.footerSubtext}>Made with </Text>
+            <Image source={heartImg} style={styles.footerHeart} />
+            <Text style={styles.footerSubtext}> by Parzival</Text>
+          </View>
         </View>
 
         <View style={{ height: 100 }} />
@@ -564,6 +594,11 @@ export default function SettingsScreen() {
             >
               <Text style={styles.onboardingSkipText}>Skip for now</Text>
             </Pressable>
+            <View style={styles.onboardingMadeRow}>
+              <Text style={styles.onboardingMadeText}>Made with </Text>
+              <Image source={heartImg} style={styles.onboardingHeart} />
+              <Text style={styles.onboardingMadeText}> by Parzival</Text>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -607,7 +642,6 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
@@ -659,6 +693,47 @@ const styles = StyleSheet.create({
   footerSubtext: {
     ...Typography.caption,
     color: Colors.textMuted,
+  },
+  footerMadeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerHeart: {
+    width: 12,
+    height: 12,
+    marginBottom: 1,
+  },
+  creditMadeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.base,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+  },
+  creditMadeText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  creditHeart: {
+    width: 12,
+    height: 12,
+    marginBottom: 1,
+  },
+  onboardingMadeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+  },
+  onboardingMadeText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  onboardingHeart: {
+    width: 12,
+    height: 12,
+    marginBottom: 1,
   },
   modalOverlay: {
     flex: 1,
