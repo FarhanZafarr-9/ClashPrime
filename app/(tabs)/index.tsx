@@ -98,7 +98,7 @@ export default function HomeScreen() {
           <Text style={styles.timestamp}>
             {lastSync
               ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : 'Pull to refresh'}
+              : 'The Prime Clash experience, like never before'}
           </Text>
         </View>
 
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   statsCell: {
