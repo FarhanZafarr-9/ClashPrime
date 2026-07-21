@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
+import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import thLevelsData from '../../src/data/th-levels.json';
@@ -73,7 +73,8 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
     return null;
   }, [name, th]);
 
-  const allLevels = buildingStats?.levels ?? [];
+  const availableLevels = getBuildingAvailableLevels(lookupName);
+  const allLevels = buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l }));
   const showExpand = allLevels.length > 3;
 
   let displayLevels: any[];
@@ -85,6 +86,54 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
     const end = Math.min(allLevels.length, currentIdx + 2);
     displayLevels = allLevels.slice(start, end);
   }
+
+  const renderGrid = () => (
+    <View style={styles.levelGrid}>
+      {displayLevels.map((levelData: any) => {
+        const lvl = levelData.Level;
+        const cellSource = getBuildingLevelImageSource(lookupName, lvl);
+        const isCurrent = lvl === maxLvl;
+        const isNext = lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0);
+        return (
+          <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
+            <View style={styles.levelGridImgWrap}>
+              {cellSource ? (
+                <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
+              ) : (
+                <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
+                  <Text style={styles.levelGridFallbackText}>
+                    {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.levelGridBadge, isNext && styles.levelGridBadgeNext]}>
+                <Text style={[styles.levelGridBadgeText, isCurrent && styles.levelGridBadgeTextCurrent, isNext && styles.levelGridBadgeTextNext]}>
+                  {lvl}
+                </Text>
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+
+  const renderExpandBtn = () => (
+    <>
+      {showExpand && !showFullTable && (
+        <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(true)}>
+          <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
+          <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
+        </Pressable>
+      )}
+      {showExpand && showFullTable && (
+        <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(false)}>
+          <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
+          <Text style={styles.expandTableText}>Show fewer</Text>
+        </Pressable>
+      )}
+    </>
+  );
 
   return (
     <Card style={styles.itemCard}>
@@ -126,81 +175,44 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
         </View>
       </Pressable>
 
-      {buildingStats && displayLevels.length > 0 && (
+      {displayLevels.length > 0 && (
         <>
-          <View style={styles.levelGrid}>
-            {displayLevels.map((levelData: any) => {
-              const lvl = levelData.Level;
-              const cellSource = getBuildingLevelImageSource(lookupName, lvl);
-              const isCurrent = lvl === maxLvl;
-              const isNext = lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0);
-              return (
-                <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
-                  <View style={styles.levelGridImgWrap}>
-                    {cellSource ? (
-                      <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
-                    ) : (
-                      <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
-                        <Text style={styles.levelGridFallbackText}>
-                          {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
-                    <View style={[styles.levelGridBadge, isNext && styles.levelGridBadgeNext]}>
-                      <Text style={[styles.levelGridBadgeText, isCurrent && styles.levelGridBadgeTextCurrent, isNext && styles.levelGridBadgeTextNext]}>
-                        {lvl}
-                      </Text>
-                    </View>
-                  </View>
+          {renderGrid()}
+          {buildingStats && (
+            <View style={styles.buildingStatsTable}>
+              <View style={styles.buildingStatRow}>
+                <View style={styles.buildingStatCellIcon}>
+                  <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
                 </View>
-              );
-            })}
-          </View>
-
-          <View style={styles.buildingStatsTable}>
-            <View style={styles.buildingStatRow}>
-              <View style={styles.buildingStatCellIcon}>
-                <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
+                {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
+                  <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
+                    {COL_ABBREV[col] || col}
+                  </Text>
+                ))}
               </View>
-              {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
-                <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
-                  {COL_ABBREV[col] || col}
-                </Text>
-              ))}
-            </View>
-            {displayLevels.map((levelData: any) => {
-              const lvl = levelData.Level;
-              const isCurrentLevel = lvl === maxLvl;
-              return (
-                <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
-                  <View style={styles.buildingStatCellIcon}>
-                    <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+              {displayLevels.map((levelData: any) => {
+                const lvl = levelData.Level;
+                const isCurrentLevel = lvl === maxLvl;
+                return (
+                  <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
+                    <View style={styles.buildingStatCellIcon}>
+                      <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+                    </View>
+                    {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
+                      const val = levelData[col] ?? '—';
+                      const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                      return (
+                        <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
+                          {formatted}
+                        </Text>
+                      );
+                    })}
                   </View>
-                  {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
-                    const val = levelData[col] ?? '—';
-                    const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
-                    return (
-                      <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
-                        {formatted}
-                      </Text>
-                    );
-                  })}
-                </View>
-              );
-            })}
-            {showExpand && !showFullTable && (
-              <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(true)}>
-                <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
-                <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
-              </Pressable>
-            )}
-            {showExpand && showFullTable && (
-              <Pressable style={styles.expandTableBtn} onPress={() => setShowFullTable(false)}>
-                <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
-                <Text style={styles.expandTableText}>Show fewer</Text>
-              </Pressable>
-            )}
-          </View>
+                );
+              })}
+            </View>
+          )}
+          {renderExpandBtn()}
         </>
       )}
     </Card>
