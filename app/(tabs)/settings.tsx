@@ -430,8 +430,8 @@ export default function SettingsScreen() {
             <Text style={styles.modalTitle}>{modalTitle}</Text>
             <Text style={styles.modalHint}>
               {modalType === 'tag'
-                ? 'Find your tag in-game under Settings → More → Show Tag'
-                : 'Get your token from clashofclans.com → API → My API Tokens'}
+                ? 'Your unique player identifier starting with #. Find it in-game under Settings → More → Show Tag.'
+                : 'A long alphanumeric string that grants read-only access to your profile. Generate one at clashofclans.com → API → My API Tokens.'}
             </Text>
             <View style={styles.modalInputRow}>
               <TextInput
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   modalIconWrap: {
     width: 44,
     height: 44,
-    borderRadius: Radius.full,
+    borderRadius: Radius.lg,
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',

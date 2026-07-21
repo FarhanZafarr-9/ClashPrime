@@ -30,6 +30,30 @@ const COL_ABBREV: Record<string, string> = {
   'Splash Damage**': 'Splash',
   'Repair per Second': 'Repair',
   'Repair per Hit': 'RPR',
+  // Non-defense columns
+  'Capacity': 'Cap',
+  'Production Rate': 'Rate',
+  'Boost Cost': 'Boost',
+  'Time to Fill': 'Fill',
+  'Catch-Up Point*': 'Catch-Up',
+  'Troop Capacity': 'TropCp',
+  'Spell Capacity': 'SpellCp',
+  'Siege Machine Capacity': 'SiegeCp',
+  'Unlocked Unit': 'Unit',
+  'Unlocked Siege Machine': 'Siege',
+  'Unlocked Pet': 'Pet',
+  'Equipment Unlocked': 'Equip',
+  'Spell(s) Unlocked': 'Spells',
+  'Spell Storage Capacity': 'SpellCp',
+  'Ore Capacity': 'OreCp',
+  'Number of Army Camps': '#Camps',
+  'Spring Capacity': 'SprCap',
+  'Damage': 'DMG',
+  'Secondary Chain Damage': 'Chain',
+  'Burst Fire (Shots)': 'Burst',
+  'Spawned Zappies': 'Zap',
+  'Total Burn Damage': 'Burn',
+  'Burn Damage per Tick': 'Burn/Tk',
 };
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
@@ -345,6 +369,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.base,
+    marginTop: Spacing.sm,
     marginBottom: Spacing.md,
   },
   pill: {

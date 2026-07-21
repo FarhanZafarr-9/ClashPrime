@@ -237,7 +237,7 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
       </View>
 
       {event.description ? (
-        <Text style={[styles.eventDesc, ended && styles.eventDescEnded]} numberOfLines={1}>{event.description}</Text>
+        <Text style={[styles.eventDesc, ended && styles.eventDescEnded]} numberOfLines={2}>{event.description}</Text>
       ) : null}
 
       {!ended && event.remainingSeconds > 0 && (
@@ -270,13 +270,10 @@ function NewsCard({ item }: { item: NewsItem }) {
             <Ionicons name="newspaper-outline" size={20} color={Colors.textSecondary} />
           </View>
           <View style={styles.eventInfo}>
-            <Text style={styles.eventName} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.newsTitle} numberOfLines={1}>{item.title}</Text>
             <Text style={styles.eventStatus}>
               {item.category} · {item.author}
             </Text>
-          </View>
-          <View style={styles.newsBadge}>
-            <Text style={styles.countdownText}>{dateLabel}</Text>
           </View>
         </View>
 
@@ -293,6 +290,9 @@ function NewsCard({ item }: { item: NewsItem }) {
               year: 'numeric',
             })}
           </Text>
+          <View style={styles.newsBadge}>
+            <Text style={styles.countdownText}>{dateLabel}</Text>
+          </View>
           <View style={styles.newsLink}>
             <Text style={styles.newsLinkText}>Open</Text>
             <Ionicons name="open-outline" size={10} color={Colors.textSecondary} />
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   pill: {
     flexDirection: 'row',
@@ -477,6 +477,11 @@ const styles = StyleSheet.create({
   },
   eventName: {
     ...Typography.headline,
+    color: Colors.textPrimary,
+  },
+  newsTitle: {
+    ...Typography.body,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   eventNameFeatured: {
