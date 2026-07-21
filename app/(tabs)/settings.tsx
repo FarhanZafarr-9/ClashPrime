@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -120,10 +120,14 @@ export default function SettingsScreen() {
   const [apiToken, setApiTokenState] = useState('');
   const { isDark, setThemeMode } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<'tag' | 'token'>('tag');
   const [modalTitle, setModalTitle] = useState('');
   const [modalValue, setModalValue] = useState('');
   const [modalPlaceholder, setModalPlaceholder] = useState('');
+  const [modalError, setModalError] = useState('');
+  const [showToken, setShowToken] = useState(false);
   const [modalOnSave, setModalOnSave] = useState<(text: string) => void>(() => { });
+  const modalInputRef = useRef<TextInput>(null);
 
   const [contentVisible, setContentVisible] = useState(false);
   const [contentTitle, setContentTitle] = useState('');
@@ -147,12 +151,16 @@ export default function SettingsScreen() {
     });
   }, []);
 
-  const openModal = (title: string, placeholder: string, current: string, onSave: (text: string) => void) => {
+  const openModal = (type: 'tag' | 'token', title: string, placeholder: string, current: string, onSave: (text: string) => void) => {
+    setModalType(type);
     setModalTitle(title);
     setModalValue(current);
     setModalPlaceholder(placeholder);
+    setModalError('');
+    setShowToken(false);
     setModalOnSave(() => onSave);
     setModalVisible(true);
+    setTimeout(() => modalInputRef.current?.focus(), 300);
   };
 
   const showContent = (title: string, body: React.ReactNode, actions: ContentAction[]) => {
@@ -163,22 +171,25 @@ export default function SettingsScreen() {
   };
 
   const handleEditTag = () => {
-    openModal('Player Tag', '#PG8U2LR00', playerTag, async (text) => {
-      if (text && text.startsWith('#')) {
-        await setPlayerTag(text);
-        setPlayerTagState(text);
-        bumpTagVersion();
-      }
+    openModal('tag', 'Player Tag', '#PG8U2LR00', playerTag, async (text) => {
+      const trimmed = text.trim();
+      if (!trimmed) { setModalError('Tag cannot be empty'); return; }
+      const prefixed = trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+      await setPlayerTag(prefixed);
+      setPlayerTagState(prefixed);
+      bumpTagVersion();
+      setModalVisible(false);
     });
   };
 
   const handleEditToken = () => {
-    openModal('API Token', 'Paste your API token', '', async (text) => {
-      if (text) {
-        await setApiToken(text);
-        setApiTokenState(maskSecret(text));
-        bumpTagVersion();
-      }
+    openModal('token', 'API Token', 'Paste your API token', '', async (text) => {
+      const trimmed = text.trim();
+      if (!trimmed) { setModalError('Token cannot be empty'); return; }
+      await setApiToken(trimmed);
+      setApiTokenState(maskSecret(trimmed));
+      bumpTagVersion();
+      setModalVisible(false);
     });
   };
 
@@ -401,6 +412,7 @@ export default function SettingsScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
+        onShow={() => modalInputRef.current?.focus()}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -408,16 +420,46 @@ export default function SettingsScreen() {
         >
           <Pressable style={styles.modalBackdrop} onPress={() => setModalVisible(false)} />
           <View style={styles.modalContent}>
+            <View style={styles.modalIconWrap}>
+              <Ionicons
+                name={modalType === 'tag' ? 'person-outline' : 'key-outline'}
+                size={22}
+                color={Colors.textPrimary}
+              />
+            </View>
             <Text style={styles.modalTitle}>{modalTitle}</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={modalValue}
-              onChangeText={setModalValue}
-              placeholder={modalPlaceholder}
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <Text style={styles.modalHint}>
+              {modalType === 'tag'
+                ? 'Find your tag in-game under Settings → More → Show Tag'
+                : 'Get your token from clashofclans.com → API → My API Tokens'}
+            </Text>
+            <View style={styles.modalInputRow}>
+              <TextInput
+                ref={modalInputRef}
+                style={styles.modalInput}
+                value={modalValue}
+                onChangeText={(t) => { setModalValue(t); setModalError(''); }}
+                placeholder={modalPlaceholder}
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry={modalType === 'token' && !showToken}
+                keyboardAppearance="dark"
+              />
+              {modalValue.length > 0 && (
+                <Pressable style={styles.modalClearBtn} onPress={() => setModalValue('')} hitSlop={8}>
+                  <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+                </Pressable>
+              )}
+              {modalType === 'token' && (
+                <Pressable style={styles.modalToggleBtn} onPress={() => setShowToken((s) => !s)} hitSlop={8}>
+                  <Ionicons name={showToken ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.textMuted} />
+                </Pressable>
+              )}
+            </View>
+            {modalError ? (
+              <Text style={styles.modalErrorText}>{modalError}</Text>
+            ) : null}
             <View style={styles.modalActions}>
               <Pressable
                 style={styles.modalCancelBtn}
@@ -427,10 +469,7 @@ export default function SettingsScreen() {
               </Pressable>
               <Pressable
                 style={styles.modalSaveBtn}
-                onPress={() => {
-                  modalOnSave(modalValue);
-                  setModalVisible(false);
-                }}
+                onPress={() => modalOnSave(modalValue)}
               >
                 <Text style={styles.modalSaveText}>Save</Text>
               </Pressable>
@@ -660,26 +699,60 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.xl,
-    gap: Spacing.base,
+    gap: Spacing.sm,
+  },
+  modalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xs,
   },
   modalTitle: {
-    ...Typography.headline,
+    ...Typography.title3,
     color: Colors.textPrimary,
   },
-  modalInput: {
-    ...Typography.body,
-    color: Colors.textPrimary,
+  modalHint: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    lineHeight: 16,
+    marginBottom: Spacing.xs,
+  },
+  modalInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
+    paddingRight: Spacing.sm,
+  },
+  modalInput: {
+    flex: 1,
+    ...Typography.body,
+    color: Colors.textPrimary,
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
+  },
+  modalClearBtn: {
+    padding: 4,
+  },
+  modalToggleBtn: {
+    padding: 4,
+    marginLeft: 2,
+  },
+  modalErrorText: {
+    ...Typography.caption,
+    color: Colors.destructive,
+    marginTop: -4,
   },
   modalActions: {
     flexDirection: 'row',
     gap: Spacing.sm,
     justifyContent: 'flex-end',
+    marginTop: Spacing.sm,
   },
   modalCancelBtn: {
     paddingHorizontal: Spacing.base,
@@ -814,6 +887,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   creditSourceIcon: {
     marginTop: 2,
