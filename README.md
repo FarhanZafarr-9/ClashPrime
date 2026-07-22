@@ -1,6 +1,6 @@
 # ClashPrime
 
-A premium monochrome companion app for Clash of Clans — track your progress, manage bases, explore building levels, and stay on top of events.
+A premium monochrome companion app for Clash of Clans — track your progress, manage armies and bases, explore building levels, and stay on top of events.
 
 <p align="center">
   <img src="images/rounded-icon.png" width="120" alt="ClashPrime Icon" />
@@ -8,12 +8,14 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 
 ## Features
 
-- **Home Dashboard** — overview of your village with progress cards, quick stats, and quick actions
-- **Player Profile** — troops, heroes, spells, pets, equipment with images, level stats tables, and collapsible progress section
+- **Home Dashboard** — overview of your village with progress cards, quick actions, and quick stats
+- **Army** — troops, heroes, spells, pets, equipment with images, level stats tables, and progress tracking
 - **Buildings** — expandable cards showing all 80+ buildings with level model progression and stat tables (Home Village + Builder Base)
 - **Events** — upcoming in-game events with countdown timers and progress bars
 - **Base Library** — browse TH-level base layouts with community ratings from ClashLy (paginated, category filters)
-- **Achievements** — standalone tab with star summary and village-filtered achievement list
+- **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, and in-game copy
+- **Saved** — quick access to saved and favorited bases and armies
+- **Awards** — standalone tab with star summary and village-filtered achievement list
 - **Settings** — API token & dark mode, plus Credits, Privacy Policy and Feedback (reach us at farhanzafarr.9@gmail.com)
 - **Onboarding** — guided first-run flow for entering API token and player tag
 
@@ -22,7 +24,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 Monochrome palette (`#0A0A0A` → `#FAFAFA`), 8pt spacing system, decreased roundedness, and icon-only bottom navigation.
 
 - **Dynamic Theme Engine** — Full runtime support for switching between Dark Mode and Light Mode, utilizing a dynamic StyleSheet proxy that maps color tokens instantly across all components.
-- **Theme-Aware Skeletons** — Custom animated skeleton loaders that mimic tab structures (Home, Profile, Bases, Events) and transition smoothly between themes.
+- **Theme-Aware Skeletons** — Custom animated skeleton loaders that mimic tab structures (Home, Army, Bases, Armies, Events) and transition smoothly between themes.
 
 ## Tech Stack
 
@@ -49,6 +51,7 @@ Uses the official Clash of Clans API:
 |------|--------|--------|
 | Player data | CoC API | REST fetch (Bearer token) |
 | Base layouts | ClashLy API | REST fetch (Parse server) |
+| Community armies | ClashArmies | Devalue-format REST fetch with 30-min cache |
 | TH max levels | clash.ninja | CLI scraper → static JSON |
 | Troop & hero details (images, descriptions, stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
@@ -64,17 +67,20 @@ ClashPrime/
 │   └── (tabs)/             # Tab screens
 │       ├── _layout.tsx     # Bottom tab navigator
 │       ├── index.tsx       # Home Dashboard
-│       ├── profile.tsx     # Player Profile
+│       ├── army.tsx        # Player Army
 │       ├── buildings.tsx   # Buildings
 │       ├── events.tsx      # Events
 │       ├── bases.tsx       # Base Library
-│       ├── achievements.tsx# Achievements
+│       ├── armies.tsx      # Army Library (ClashArmies)
+│       ├── saved.tsx       # Saved & Favorites
+│       ├── achievements.tsx# Awards
 │       └── settings.tsx    # Settings
 ├── src/
 │   ├── api/                # API clients and scrapers
 │   │   ├── clash.ts        # CoC API client
 │   │   ├── baseScraper.ts  # ClashLy API base layout fetcher
-│   │   ├── troopDetail.ts  # On-demand troop detail fetcher
+│   │   ├── clashArmies.ts  # ClashArmies popular armies fetcher with devalue parser
+│   │   ├── troopDetail.ts  # On-demand troop detail fetcher (Fandom Wiki)
 │   │   └── eventsScraper.ts# Events scraper
 │   ├── components/         # Shared UI components
 │   ├── data/               # Static scraped data + building assets

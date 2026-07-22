@@ -91,7 +91,7 @@ export default function OnboardingScreen() {
               secureTextEntry
               editable={!loading}
             />
-            <Text style={styles.hint}>Get it from clashofclans.com → Settings → API</Text>
+            <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys</Text>
 
             {error ? (
               <View style={styles.errorBox}>

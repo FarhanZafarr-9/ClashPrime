@@ -78,6 +78,7 @@ interface ContentAction {
 const DATA_SOURCES: { name: string; use: string }[] = [
   { name: 'Clash of Clans API', use: 'Player stats & progress' },
   { name: 'ClashLy', use: 'Base layout library & ratings' },
+  { name: 'ClashArmies', use: 'Community army compositions & sharing' },
   { name: 'clash.ninja', use: 'TH max levels & in-game events' },
   { name: 'Fandom Wiki', use: 'Building images, troop, hero & pet details' },
 ];
@@ -93,7 +94,7 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Third-Party Services',
-    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building images, troop details and events is fetched from public sources including ClashLy, clash.ninja and the Fandom Wiki.',
+    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building images, troop details, events and community armies is fetched from public sources including ClashLy, ClashArmies, clash.ninja and the Fandom Wiki.',
   },
   {
     title: 'Local Storage',
@@ -444,7 +445,7 @@ export default function SettingsScreen() {
             <Text style={styles.modalHint}>
               {modalType === 'tag'
                 ? 'Your unique player identifier starting with #. Find it in-game under Settings → More → Show Tag.'
-                : 'A long alphanumeric string that grants read-only access to your profile. Generate one at clashofclans.com → API → My API Tokens.'}
+                : 'A long alphanumeric string that grants read-only access to your profile. Generate one at developer.clashofclans.com → My Account → API Keys'}
             </Text>
             <View style={styles.modalInputRow}>
               <TextInput
@@ -556,7 +557,7 @@ export default function SettingsScreen() {
             <Text style={styles.onboardingDesc}>
               {onboardingStep === 0
                 ? 'Find your tag in-game under Settings → More → Show Tag'
-                : 'Get your token from clashofclans.com → API → My API Tokens'}
+                : 'Get your token from developer.clashofclans.com → My Account → API Keys'}
             </Text>
             <TextInput
               style={styles.onboardingInput}

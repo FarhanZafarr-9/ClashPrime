@@ -42,6 +42,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         const cached = await getCachedPlayer();
         if (cached) {
           setPlayer(cached);
+          setLastSync(null);
+          setLoading(false);
+          return;
+        }
+        // Retry cache once after a short delay (race condition on first login)
+        await new Promise((r) => setTimeout(r, 300));
+        const retryCached = await getCachedPlayer();
+        if (retryCached) {
+          setPlayer(retryCached);
+          setLastSync(null);
           setLoading(false);
           return;
         }

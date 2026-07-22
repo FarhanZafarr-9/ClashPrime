@@ -164,7 +164,7 @@ export function HomeScreenSkeleton() {
           </View>
         </View>
         {/* Section: Progress Overview */}
-        <View style={styles.sectionLabel}>
+        <View style={[styles.sectionLabel, { marginTop: Spacing.md, marginBottom: Spacing.xs }]}>
           <Skeleton width={140} height={14} borderRadius={4} />
         </View>
         <View style={styles.progressGrid}>
@@ -182,8 +182,20 @@ export function HomeScreenSkeleton() {
             </View>
           ))}
         </View>
+        {/* Section: Quick Actions */}
+        <View style={[styles.sectionLabel, { marginTop: Spacing.md, marginBottom: Spacing.xs }]}>
+          <Skeleton width={110} height={14} borderRadius={4} />
+        </View>
+        <View style={styles.homeActionsRow}>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={[styles.homeActionBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <Skeleton width={16} height={16} borderRadius={4} />
+              <Skeleton width={36} height={11} borderRadius={3} />
+            </View>
+          ))}
+        </View>
         {/* Section: Quick Stats */}
-        <View style={styles.sectionLabel}>
+        <View style={[styles.sectionLabel, { marginTop: Spacing.md, marginBottom: Spacing.xs }]}>
           <Skeleton width={90} height={14} borderRadius={4} />
         </View>
         <View style={[styles.statsTable, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -195,18 +207,6 @@ export function HomeScreenSkeleton() {
             <View key={i} style={[styles.statRow, { borderBottomColor: colors.borderSubtle }]}>
               <Skeleton width="40%" height={12} borderRadius={4} />
               <Skeleton width="20%" height={12} borderRadius={4} />
-            </View>
-          ))}
-        </View>
-        {/* Section: Quick Actions */}
-        <View style={styles.sectionLabel}>
-          <Skeleton width={100} height={14} borderRadius={4} />
-        </View>
-        <View style={styles.actionsRow}>
-          {[0, 1].map((i) => (
-            <View key={i} style={[styles.actionBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Skeleton width={20} height={20} borderRadius={10} />
-              <Skeleton width={60} height={12} borderRadius={4} />
             </View>
           ))}
         </View>
@@ -274,28 +274,51 @@ export function ArmiesScreenSkeleton() {
           </View>
           <Skeleton width={36} height={36} borderRadius={18} />
         </View>
-        <View style={styles.chipsRow}>
-          {[40, 50, 70, 45, 55].map((w, i) => (
-            <Skeleton key={i} width={w} height={28} borderRadius={14} />
-          ))}
-        </View>
         {[0, 1, 2].map((i) => (
-          <View key={i} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-              <Skeleton width={36} height={20} borderRadius={4} />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Skeleton width="55%" height={14} borderRadius={4} />
-                <Skeleton width="30%" height={10} borderRadius={3} />
+          <View key={i} style={[styles.armyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            {/* Top row: TH icon + name/author + score */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <Skeleton width={32} height={32} borderRadius={4} />
+              <View style={{ flex: 1, gap: 3 }}>
+                <Skeleton width="60%" height={15} borderRadius={4} />
+                <Skeleton width="35%" height={10} borderRadius={3} />
               </View>
-              <Skeleton width={40} height={14} borderRadius={4} />
+              <Skeleton width={40} height={12} borderRadius={4} />
             </View>
-            <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md }}>
-              {[0, 1, 2, 3, 4].map((j) => (
-                <View key={j} style={{ alignItems: 'center', gap: 2 }}>
-                  <Skeleton width={32} height={32} borderRadius={Radius.md} />
-                  <Skeleton width={16} height={10} borderRadius={3} />
+            {/* Grid area: 6 blank cells */}
+            <View style={{ flexDirection: 'row', gap: 4, marginTop: Spacing.sm }}>
+              {[0, 1, 2, 3, 4, 5].map((j) => (
+                <View key={j} style={{ flex: 1, alignItems: 'center' }}>
+                  <Skeleton width={40} height={40} borderRadius={0} />
                 </View>
               ))}
+            </View>
+            {/* Detail table: bordered box with 2 columns */}
+            <View style={{ flexDirection: 'row', marginTop: Spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+              <View style={{ flex: 1 }}>
+                {[0, 1, 2, 3].map((r) => (
+                  <View key={r} style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+                    <Skeleton width="60%" height={10} borderRadius={3} />
+                    <Skeleton width={20} height={10} borderRadius={3} style={{ marginLeft: 'auto' }} />
+                  </View>
+                ))}
+              </View>
+              <View style={{ width: 1, backgroundColor: colors.border }} />
+              <View style={{ flex: 1 }}>
+                {[0, 1, 2, 3].map((r) => (
+                  <View key={r} style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+                    <Skeleton width="60%" height={10} borderRadius={3} />
+                    <Skeleton width={20} height={10} borderRadius={3} style={{ marginLeft: 'auto' }} />
+                  </View>
+                ))}
+              </View>
+            </View>
+            {/* Actions row */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: Spacing.sm }}>
+              <Skeleton width={18} height={18} borderRadius={4} />
+              <Skeleton width={18} height={18} borderRadius={4} />
+              <View style={{ flex: 1 }} />
+              <Skeleton width={80} height={26} borderRadius={6} />
             </View>
           </View>
         ))}
@@ -406,6 +429,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: Spacing.base,
     borderRadius: Radius.lg,
+  },
+  homeActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+  },
+  homeActionBtn: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: Radius.sm,
+  },
+  armyCard: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.base,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.base,
   },
   navBar: {
     position: 'absolute',
