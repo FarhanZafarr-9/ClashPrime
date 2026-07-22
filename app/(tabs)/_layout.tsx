@@ -50,7 +50,7 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="home" size={22} color={color} />
+              <Ionicons name="home" size={20} color={color} />
             </View>
           ),
         }}
@@ -61,7 +61,7 @@ export default function TabLayout() {
           title: 'Army',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <MaterialCommunityIcons name="sword-cross" size={22} color={color} />
+              <MaterialCommunityIcons name="sword-cross" size={20} color={color} />
             </View>
           ),
         }}
@@ -72,7 +72,7 @@ export default function TabLayout() {
           title: 'Buildings',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <MaterialCommunityIcons name="castle" size={22} color={color} />
+              <MaterialCommunityIcons name="castle" size={20} color={color} />
             </View>
           ),
         }}
@@ -90,7 +90,7 @@ export default function TabLayout() {
           title: 'Bases',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="grid" size={22} color={color} />
+              <Ionicons name="grid" size={20} color={color} />
             </View>
           ),
         }}
@@ -101,7 +101,7 @@ export default function TabLayout() {
           title: 'Armies',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="shield-half-outline" size={22} color={color} />
+              <Ionicons name="shield-half-outline" size={20} color={color} />
             </View>
           ),
         }}
@@ -126,7 +126,7 @@ export default function TabLayout() {
           title: 'Settings',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="settings-sharp" size={22} color={color} />
+              <Ionicons name="settings-sharp" size={20} color={color} />
             </View>
           ),
         }}
