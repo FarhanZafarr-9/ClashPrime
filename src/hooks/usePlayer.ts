@@ -105,7 +105,7 @@ export async function toggleFavorite(id: string): Promise<boolean> {
 }
 
 const CACHE_KEY_PREFIXES = [
-  'troop_detail_v6_',
+  'troop_detail_v7_',
   'bases_clashly_th_',
   'events_data_v1',
 ];

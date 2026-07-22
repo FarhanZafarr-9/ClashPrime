@@ -50,10 +50,7 @@ Uses the official Clash of Clans API:
 | Player data | CoC API | REST fetch (Bearer token) |
 | Base layouts | ClashLy API | REST fetch (Parse server) |
 | TH max levels | clash.ninja | CLI scraper → static JSON |
-| Troop list | coc.guide | CLI scraper → static JSON |
-| Troop details (images + descriptions + stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
-| Hero details (portraits) | coc.guide | On-demand JSON/static image fetch |
-| Hero & troop descriptions, infobox images | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch |
+| Troop & hero details (images, descriptions, stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
 | Events | clash.ninja | Runtime HTML scraper |
 
@@ -116,9 +113,6 @@ npx expo start --ios
 ```bash
 # Scrape TH max levels from clash.ninja
 npx tsx scraper/run-th-levels.ts
-
-# Scrape troop list from coc.guide
-npx tsx scraper/run-troops.ts
 
 # Scrape building images from Fandom wiki
 npx tsx scraper/fandom-buildings.ts

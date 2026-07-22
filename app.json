@@ -12,8 +12,7 @@
       "bundleIdentifier": "com.clashprime.app"
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#000000"
+      "adaptiveIcon": { "foregroundImage": "./images/adaptive-icon.png", "backgroundColor": "#000000"
       },
       "package": "com.clashprime.app",
       "predictiveBackGestureEnabled": false
@@ -44,3 +43,4 @@
     "owner": "parzival_89"
   }
 }
+
