@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../src/theme';
 
@@ -55,12 +55,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="army"
         options={{
-          title: 'Profile',
+          title: 'Army',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="person" size={18} color={color} />
+              <MaterialCommunityIcons name="sword-cross" size={18} color={color} />
             </View>
           ),
         }}
@@ -71,7 +71,7 @@ export default function TabLayout() {
           title: 'Buildings',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="business" size={18} color={color} />
+              <MaterialCommunityIcons name="castle" size={18} color={color} />
             </View>
           ),
         }}
@@ -80,11 +80,7 @@ export default function TabLayout() {
         name="events"
         options={{
           title: 'Events',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="calendar" size={18} color={color} />
-            </View>
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -99,14 +95,28 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="armies"
+        options={{
+          title: 'Armies',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
+              <Ionicons name="shield-half-outline" size={18} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="saved"
+        options={{
+          title: 'Saved',
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="achievements"
         options={{
           title: 'Awards',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="trophy" size={18} color={color} />
-            </View>
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
