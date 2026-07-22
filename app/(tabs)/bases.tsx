@@ -15,9 +15,14 @@ import { BaseCard } from '../../src/components/BaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import type { ScrapedBase, ScrapeResult } from '../../src/types/bases';
 import { scrapeBasesForTH } from '../../src/api/baseScraper';
-import { useDialog } from '../../src/components/AlertDialog';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
-import { getSavedBases, getFavorites, saveBase, removeBase, toggleFavorite } from '../../src/hooks/usePlayer';
+import {
+  getSavedBases,
+  getFavorites,
+  saveBase,
+  removeBase,
+  toggleFavorite,
+} from '../../src/hooks/usePlayer';
 import type { SavedBase } from '../../src/hooks/usePlayer';
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -38,22 +43,16 @@ const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
   { key: 'Hybrid', label: 'Hybrid', icon: 'layers-outline' },
   { key: 'CWL', label: 'CWL', icon: 'medal-outline' },
 ];
-const FILTER_PILLS: { key: 'library' | 'saved' | 'favorites'; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'library', label: 'Library', icon: 'library-outline' },
-  { key: 'saved', label: 'Saved', icon: 'bookmark-outline' },
-  { key: 'favorites', label: 'Favorites', icon: 'heart-outline' },
-];
 
 export default function BaseLibraryScreen() {
-  const { player, refresh: refreshPlayer } = usePlayer();
-  const { show: showDialog, Dialog } = useDialog();
+  const { player } = usePlayer();
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedFilter, setSelectedFilter] = useState<FILTER_PILLS[number]['key']>('library');
   const [baseData, setBaseData] = useState<ScrapeResult | null>(null);
-  const [loadingBases, setLoadingBases] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [savedBases, setSavedBases] = useState<SavedBase[]>([]);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [baseFavorites, setBaseFavorites] = useState<Set<string>>(new Set());
+
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
 
@@ -61,21 +60,24 @@ export default function BaseLibraryScreen() {
 
   const fetchBases = useCallback(async () => {
     try {
-      setLoadingBases(true);
+      setLoading(true);
       setScrapeError(null);
       const data = await scrapeBasesForTH(thLevel, { maxPages: 2 });
       setBaseData(data);
     } catch (e: any) {
       setScrapeError(e.message || 'Failed to load bases');
     } finally {
-      setLoadingBases(false);
+      setLoading(false);
     }
   }, [thLevel]);
 
   const loadSavedData = useCallback(async () => {
-    const [saved, favs] = await Promise.all([getSavedBases(), getFavorites()]);
+    const [saved, favs] = await Promise.all([
+      getSavedBases(),
+      getFavorites(),
+    ]);
     setSavedBases(saved);
-    setFavorites(new Set(favs));
+    setBaseFavorites(new Set(favs));
   }, []);
 
   useEffect(() => {
@@ -92,9 +94,7 @@ export default function BaseLibraryScreen() {
     return bases;
   }, [baseData]);
 
-  const savedBaseIds = useMemo(() => new Set(savedBases.map((b) => b.id)), [savedBases]);
-
-  const filtered = useMemo(() => {
+  const filteredBases = useMemo(() => {
     const catLower = selectedCategory.toLowerCase();
     return allBases.filter((b) => {
       if (selectedCategory !== 'All') {
@@ -107,15 +107,15 @@ export default function BaseLibraryScreen() {
   const isSaved = (detailUrl: string) => savedBases.some((b) => b.url === detailUrl);
 
   const handleFavorite = async (detailUrl: string) => {
-    const isFav = favorites.has(detailUrl);
-    const newFavs = new Set(favorites);
+    const isFav = baseFavorites.has(detailUrl);
+    const newFavs = new Set(baseFavorites);
     if (isFav) newFavs.delete(detailUrl);
     else newFavs.add(detailUrl);
-    setFavorites(newFavs);
+    setBaseFavorites(newFavs);
     await toggleFavorite(detailUrl);
   };
 
-  const handleSaveBase = async (base: ScrapedBase) => {
+  const handleSave = async (base: ScrapedBase) => {
     const newBase: SavedBase = {
       id: base.detail_url,
       name: base.title,
@@ -139,28 +139,14 @@ export default function BaseLibraryScreen() {
   const handleCopy = (base: ScrapedBase) => {
     if (base.game_copy_link) {
       Linking.openURL(base.game_copy_link);
-    } else {
-      showDialog({ title: 'No Copy Link', message: 'This base does not have an in-game copy link.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
-    }
-  };
-
-  const getFilteredBases = () => {
-    switch (selectedFilter) {
-      case 'saved':
-        return savedBases;
-      case 'favorites':
-        return filtered.filter((b) => favorites.has(b.detail_url));
-      case 'library':
-      default:
-        return filtered;
     }
   };
 
   React.useEffect(() => {
     setDisplayCount(PAGE_SIZE);
-  }, [selectedCategory, selectedFilter]);
+  }, [selectedCategory]);
 
-  const currentBases = getFilteredBases();
+  const currentBases = filteredBases;
   const visibleBases = currentBases.slice(0, displayCount);
   const hasMore = displayCount < currentBases.length;
 
@@ -176,16 +162,38 @@ export default function BaseLibraryScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
-          {loadingBases ? null : (
-            <Text style={styles.subtitle}>TH{thLevel} layouts from ClashLy</Text>
-          )}
+          {loading ? null : <Text style={styles.subtitle}>TH{thLevel} layouts from ClashLy</Text>}
         </View>
-        <Pressable onPress={fetchBases} style={styles.refreshBtn}>
-          <Ionicons name="refresh" size={18} color={Colors.textPrimary} />
+        <Pressable onPress={fetchBases} hitSlop={12} style={styles.refreshBtn}>
+          <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
         </Pressable>
       </View>
 
-      {loadingBases ? (
+      {/* Category filter */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Category</Text>
+        <View style={styles.filterPills}>
+          {CATEGORY_PILLS.map((pill) => (
+            <Pressable
+              key={pill.key}
+              onPress={() => setSelectedCategory(pill.key)}
+              style={[styles.filterPill, selectedCategory === pill.key && styles.filterPillActive]}
+            >
+              <Ionicons
+                name={pill.icon}
+                size={13}
+                color={selectedCategory === pill.key ? Colors.bg : Colors.textSecondary}
+              />
+              <Text style={[styles.filterPillText, selectedCategory === pill.key && styles.filterPillTextActive]}>
+                {pill.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Content */}
+      {loading ? (
         <BasesScreenSkeleton />
       ) : scrapeError ? (
         <View style={styles.loadingContainer}>
@@ -202,71 +210,6 @@ export default function BaseLibraryScreen() {
               {currentBases.length} base{currentBases.length !== 1 ? 's' : ''}
               {currentBases.length > PAGE_SIZE && ` · showing ${Math.min(displayCount, currentBases.length)}`}
             </Text>
-            {selectedFilter === 'library' && (baseData?.total_bases || 0) !== filtered.length && (
-              <Text style={styles.countSubtext}>
-                {baseData?.total_bases || 0} total
-              </Text>
-            )}
-          </View>
-
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>View</Text>
-            <View style={styles.filterPills}>
-              {FILTER_PILLS.map((pill) => (
-                <Pressable
-                  key={pill.key}
-                  onPress={() => setSelectedFilter(pill.key)}
-                  style={[
-                    styles.filterPill,
-                    selectedFilter === pill.key && styles.filterPillActive,
-                  ]}
-                >
-                  <Ionicons
-                    name={pill.icon}
-                    size={13}
-                    color={selectedFilter === pill.key ? Colors.bg : Colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.filterPillText,
-                      selectedFilter === pill.key && styles.filterPillTextActive,
-                    ]}
-                  >
-                    {pill.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Category</Text>
-            <View style={styles.filterPills}>
-              {CATEGORY_PILLS.map((pill) => (
-                <Pressable
-                  key={pill.key}
-                  onPress={() => setSelectedCategory(pill.key)}
-                  style={[
-                    styles.filterPill,
-                    selectedCategory === pill.key && styles.filterPillActive,
-                  ]}
-                >
-                  <Ionicons
-                    name={pill.icon}
-                    size={13}
-                    color={selectedCategory === pill.key ? Colors.bg : Colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.filterPillText,
-                      selectedCategory === pill.key && styles.filterPillTextActive,
-                    ]}
-                  >
-                    {pill.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
           </View>
 
           <ScrollView
@@ -277,44 +220,14 @@ export default function BaseLibraryScreen() {
           >
             {currentBases.length === 0 ? (
               <EmptyState
-                icon={selectedFilter === 'library' ? '🔍' : selectedFilter === 'saved' ? '🔖' : '♡'}
-                title={
-                  selectedFilter === 'library'
-                    ? 'No bases found'
-                    : selectedFilter === 'saved'
-                    ? 'No saved bases'
-                    : 'No favorites yet'
-                }
-                description={
-                  selectedFilter === 'library'
-                    ? `No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for TH${thLevel}. Try a different filter.`
-                    : selectedFilter === 'saved'
-                    ? 'Save bases from the Library to access them quickly.'
-                    : 'Tap the heart icon on any base to add it to your favorites.'
-                }
+                icon={'🔍'}
+                title={'No bases found'}
+                description={`No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for TH${thLevel}. Try a different filter.`}
               />
             ) : (
               visibleBases.map((base) => {
-                if (selectedFilter === 'saved') {
-                  const savedBase = base as SavedBase;
-                  return (
-                    <View key={savedBase.id} style={styles.savedItem}>
-                      <View style={styles.itemIcon}>
-                        <Text style={styles.itemIconText}>TH{savedBase.townHallLevel}</Text>
-                      </View>
-                      <View style={styles.itemInfo}>
-                        <Text style={styles.itemName}>{savedBase.name}</Text>
-                        <Text style={styles.itemMeta}>{savedBase.category} · Rating {savedBase.rating}</Text>
-                      </View>
-                      <Pressable onPress={() => handleRemoveSaved(savedBase.id)} hitSlop={8}>
-                        <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
-                      </Pressable>
-                    </View>
-                  );
-                }
-
                 const scrapedBase = base as ScrapedBase;
-                const isFav = favorites.has(scrapedBase.detail_url);
+                const isFav = baseFavorites.has(scrapedBase.detail_url);
                 const isSavedBase = isSaved(scrapedBase.detail_url);
                 return (
                   <BaseCard
@@ -334,7 +247,7 @@ export default function BaseLibraryScreen() {
                     isSaved={isSavedBase}
                     onFavorite={() => handleFavorite(scrapedBase.detail_url)}
                     onCopy={() => handleCopy(scrapedBase)}
-                    onSave={() => handleSaveBase(scrapedBase)}
+                    onSave={() => handleSave(scrapedBase)}
                   />
                 );
               })
@@ -343,12 +256,9 @@ export default function BaseLibraryScreen() {
           </ScrollView>
         </>
       )}
-      <Dialog />
     </SafeAreaView>
   );
 }
-
-type FILTER_PILLS = typeof FILTER_PILLS;
 
 const styles = StyleSheet.create({
   container: {
@@ -374,8 +284,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   refreshBtn: {
-    padding: Spacing.sm,
-    marginTop: Spacing.xs,
+    padding: Spacing.xs,
   },
   loadingContainer: {
     flex: 1,
@@ -412,10 +321,6 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textSecondary,
     fontWeight: '500',
-  },
-  countSubtext: {
-    ...Typography.caption,
-    color: Colors.textMuted,
   },
   filterSection: {
     paddingHorizontal: Spacing.base,
