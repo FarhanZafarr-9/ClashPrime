@@ -1113,6 +1113,71 @@ const buildingAssets: Record<string, { main: any; levels: Record<number, any> }>
     levels: {
     },
   },
+  'BB Hidden Tesla': {
+    main: null,
+    levels: {
+    1: require('../../assets/buildings/BB_Hidden_Tesla/level_1.webp'),
+    2: require('../../assets/buildings/BB_Hidden_Tesla/level_2.webp'),
+    3: require('../../assets/buildings/BB_Hidden_Tesla/level_3.webp'),
+    4: require('../../assets/buildings/BB_Hidden_Tesla/level_4.webp'),
+    5: require('../../assets/buildings/BB_Hidden_Tesla/level_5.webp'),
+    6: require('../../assets/buildings/BB_Hidden_Tesla/level_6.webp'),
+    7: require('../../assets/buildings/BB_Hidden_Tesla/level_7.webp'),
+    8: require('../../assets/buildings/BB_Hidden_Tesla/level_8.webp'),
+    9: require('../../assets/buildings/BB_Hidden_Tesla/level_9.webp'),
+    10: require('../../assets/buildings/BB_Hidden_Tesla/level_10.webp')
+    },
+  },
+  'Mine': {
+    main: null,
+    levels: {
+    1: require('../../assets/buildings/Mine/level_1.webp'),
+    2: require('../../assets/buildings/Mine/level_2.webp'),
+    3: require('../../assets/buildings/Mine/level_3.webp'),
+    4: require('../../assets/buildings/Mine/level_4.webp'),
+    5: require('../../assets/buildings/Mine/level_5.webp'),
+    6: require('../../assets/buildings/Mine/level_6.webp'),
+    7: require('../../assets/buildings/Mine/level_7.webp'),
+    8: require('../../assets/buildings/Mine/level_8.webp'),
+    9: require('../../assets/buildings/Mine/level_9.webp'),
+    10: require('../../assets/buildings/Mine/level_10.webp')
+    },
+  },
+  'BB Gold Mine': {
+    main: null,
+    levels: {
+    1: require('../../assets/buildings/BB_Gold_Mine/level_1.webp'),
+    2: require('../../assets/buildings/BB_Gold_Mine/level_2.webp'),
+    3: require('../../assets/buildings/BB_Gold_Mine/level_3.webp'),
+    4: require('../../assets/buildings/BB_Gold_Mine/level_4.webp'),
+    5: require('../../assets/buildings/BB_Gold_Mine/level_5.webp'),
+    6: require('../../assets/buildings/BB_Gold_Mine/level_6.webp'),
+    7: require('../../assets/buildings/BB_Gold_Mine/level_7.webp'),
+    8: require('../../assets/buildings/BB_Gold_Mine/level_8.webp'),
+    9: require('../../assets/buildings/BB_Gold_Mine/level_9.webp'),
+    10: require('../../assets/buildings/BB_Gold_Mine/level_10.webp')
+    },
+  },
+  'BB Walls': {
+    main: require('../../assets/buildings/BB_Walls/main.webp'),
+    levels: {
+    1: require('../../assets/buildings/BB_Walls/level_1.webp'),
+    2: require('../../assets/buildings/BB_Walls/level_2.webp'),
+    3: require('../../assets/buildings/BB_Walls/level_3.webp'),
+    4: require('../../assets/buildings/BB_Walls/level_4.webp'),
+    5: require('../../assets/buildings/BB_Walls/level_5.webp'),
+    6: require('../../assets/buildings/BB_Walls/level_6.webp'),
+    7: require('../../assets/buildings/BB_Walls/level_7.webp'),
+    8: require('../../assets/buildings/BB_Walls/level_8.webp'),
+    9: require('../../assets/buildings/BB_Walls/level_9.webp'),
+    10: require('../../assets/buildings/BB_Walls/level_10.webp')
+    },
+  },
+  'BB Army Camp': {
+    main: null,
+    levels: {
+    },
+  },
 };
 
 export default buildingAssets;

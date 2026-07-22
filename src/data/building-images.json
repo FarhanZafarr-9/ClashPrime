@@ -3397,6 +3397,194 @@
     {
       "name": "B.O.T.O's Shack",
       "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c8/B.O.T.O%27s_Shack.png/revision/latest/scale-to-width-down/96?cb=20260530204949"
+    },
+    {
+      "name": "BB Hidden Tesla",
+      "imageUrl": "Hidden Tesla10.png",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/81/Hidden_Tesla1.png/revision/latest?cb=20180606190107"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e4/Hidden_Tesla2.png/revision/latest?cb=20180606190121"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/Hidden_Tesla3.png/revision/latest?cb=20180606190137"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/54/Hidden_Tesla4.png/revision/latest?cb=20180606190150"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e9/Hidden_Tesla5.png/revision/latest?cb=20180606190204"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/d7/Hidden_Tesla6.png/revision/latest?cb=20180606190216"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/79/Hidden_Tesla7.png/revision/latest?cb=20180606190230"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Hidden_Tesla8.png/revision/latest?cb=20180606190243"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e3/Hidden_Tesla9.png/revision/latest?cb=20180606190256"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/37/Hidden_Tesla10.png/revision/latest?cb=20180604161808"
+        }
+      ]
+    },
+    {
+      "name": "Mine",
+      "imageUrl": "Mine10 Ground.png",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/69/Mine1_Ground.png/revision/latest?cb=20171130165533"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/9c/Mine2_Ground.png/revision/latest?cb=20171130165533"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/85/Mine3_Ground.png/revision/latest?cb=20171130165533"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Mine4_Ground.png/revision/latest?cb=20171130165532"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b5/Mine5_Ground.png/revision/latest?cb=20171130165532"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c6/Mine6_Ground.png/revision/latest?cb=20171130165532"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/3/36/Mine7_Ground.png/revision/latest?cb=20171130165531"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/55/Mine8_Ground.png/revision/latest?cb=20171130165531"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c8/Mine9_Ground.png/revision/latest?cb=20190617033508"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/cd/Mine10_Ground.png/revision/latest?cb=20230520053507"
+        }
+      ]
+    },
+    {
+      "name": "BB Gold Mine",
+      "imageUrl": "Gold Mine10.png",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bf/Gold_Mine1.png/revision/latest?cb=20180110120430"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/55/Gold_Mine2.png/revision/latest?cb=20180110120444"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e4/Gold_Mine3.png/revision/latest?cb=20180110120457"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/97/Gold_Mine4.png/revision/latest?cb=20180110120510"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1a/Gold_Mine5.png/revision/latest?cb=20180110120533"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/86/Gold_Mine6.png/revision/latest?cb=20180110120552"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/11/Gold_Mine7.png/revision/latest?cb=20180110120611"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/52/Gold_Mine8.png/revision/latest?cb=20180110120627"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bf/Gold_Mine9.png/revision/latest?cb=20180110120642"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/eb/Gold_Mine10.png/revision/latest?cb=20180110120703"
+        }
+      ]
+    },
+    {
+      "name": "BB Walls",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/Wall1B.png/revision/latest?cb=20170927102315",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/fb/Wall1B.png/revision/latest?cb=20170927102315"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/99/Wall2B.png/revision/latest?cb=20170927102333"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/91/Wall3B.png/revision/latest?cb=20170927102352"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b6/Wall4B.png/revision/latest?cb=20170927102413"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4f/Wall5B.png/revision/latest?cb=20170927102434"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f3/Wall6B.png/revision/latest?cb=20170927102501"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a2/Wall7B.png/revision/latest?cb=20170927102546"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b7/Wall8B.png/revision/latest?cb=20170927102606"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Wall9B.png/revision/latest?cb=20190616234919"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Wall10B.png/revision/latest?cb=20230517053328"
+        }
+      ]
+    },
+    {
+      "name": "BB Army Camp",
+      "imageUrl": "Army CampB.png"
     }
   ]
 }

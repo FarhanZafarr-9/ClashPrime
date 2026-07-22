@@ -7977,9 +7977,119 @@
     "name": "BB Walls",
     "village": "builderBase",
     "description": "",
-    "maxLevel": 0,
-    "statsColumns": [],
-    "levels": []
+    "maxLevel": 10,
+    "statsColumns": [
+      "Level",
+      "Hitpoints",
+      "Build Cost",
+      "Cumulative Gold Cost",
+      "Build Cost (Elixir)",
+      "Cumulative Elixir Cost",
+      "Wall Ring Cost",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Hitpoints": 900,
+        "Build Cost": 0,
+        "Cumulative Gold Cost": 0,
+        "Build Cost (Elixir)": "N/A",
+        "Cumulative Elixir Cost": "N/A",
+        "Wall Ring Cost": "N/A",
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Hitpoints": 1100,
+        "Build Cost": 2000,
+        "Cumulative Gold Cost": 2000,
+        "Build Cost (Elixir)": "N/A",
+        "Cumulative Elixir Cost": "N/A",
+        "Wall Ring Cost": 1,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Hitpoints": 1300,
+        "Build Cost": 10000,
+        "Cumulative Gold Cost": 12000,
+        "Build Cost (Elixir)": "N/A",
+        "Cumulative Elixir Cost": "N/A",
+        "Wall Ring Cost": 1,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Hitpoints": 1600,
+        "Build Cost": 50000,
+        "Cumulative Gold Cost": 62000,
+        "Build Cost (Elixir)": "N/A",
+        "Cumulative Elixir Cost": "N/A",
+        "Wall Ring Cost": 1,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Hitpoints": 1900,
+        "Build Cost": 150000,
+        "Cumulative Gold Cost": 212000,
+        "Build Cost (Elixir)": "N/A",
+        "Cumulative Elixir Cost": "N/A",
+        "Wall Ring Cost": 1,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Hitpoints": 2200,
+        "Build Cost": 240000,
+        "Cumulative Gold Cost": 452000,
+        "Build Cost (Elixir)": "N/A",
+        "Cumulative Elixir Cost": "N/A",
+        "Wall Ring Cost": 1,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Hitpoints": 2500,
+        "Build Cost": 400000,
+        "Cumulative Gold Cost": 852000,
+        "Build Cost (Elixir)": 400000,
+        "Cumulative Elixir Cost": 400000,
+        "Wall Ring Cost": 1,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Hitpoints": 2750,
+        "Build Cost": 600000,
+        "Cumulative Gold Cost": 1452000,
+        "Build Cost (Elixir)": 600000,
+        "Cumulative Elixir Cost": 1000000,
+        "Wall Ring Cost": 2,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Hitpoints": 3050,
+        "Build Cost": 800000,
+        "Cumulative Gold Cost": 2252000,
+        "Build Cost (Elixir)": 800000,
+        "Cumulative Elixir Cost": 1800000,
+        "Wall Ring Cost": 2,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Hitpoints": 3350,
+        "Build Cost": 1000000,
+        "Cumulative Gold Cost": 3252000,
+        "Build Cost (Elixir)": 1000000,
+        "Cumulative Elixir Cost": 2800000,
+        "Wall Ring Cost": 2,
+        "Town Hall Level": 10
+      }
+    ]
   },
   {
     "name": "Push Trap",
