@@ -64,6 +64,7 @@ export default function PlayerProfileScreen() {
 
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
   const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
+  const [tableViewportW, setTableViewportW] = useState(0);
 
   type StatPill = { icon: keyof typeof Ionicons.glyphMap; value: string };
 
@@ -239,6 +240,22 @@ export default function PlayerProfileScreen() {
     player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
     player.heroes.some((h) => h.name === name && h.village === 'builderBase');
 
+  const isSiegeMachine = (name: string) =>
+    ['Wall Wrecker', 'Battle Blimp', 'Stone Slammer', 'Siege Barracks', 'Log Launcher', 'Flame Flinger', 'Battle Drill'].includes(name);
+
+  const getLabBuilding = (name: string, tab: Tab): string => {
+    switch (tab) {
+      case 'heroes': return 'Hero Hall';
+      case 'pets': return 'Pet House';
+      case 'equipment': return 'Blacksmith';
+      case 'spells': return 'Laboratory';
+      case 'troops':
+        if (isBuilderBaseName(name)) return 'Star Laboratory';
+        if (isSiegeMachine(name)) return 'Workshop';
+        return 'Laboratory';
+    }
+  };
+
   // Returns the level rows to show for an expanded item, applying the right
   // gating per village/hero. Builder Base units are never filtered by the Home Lab.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
@@ -337,6 +354,7 @@ export default function PlayerProfileScreen() {
 
     const isTroopLike = (detail.levels[0]?.dps ?? 0) > 0 || (detail.levels[0]?.hitpoints ?? 0) > 0;
     const extraLabels = detail.levels[0]?.extra?.map((e) => e.label) ?? [];
+    const contentMinW = 28 + 56 + 48 + 72 + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 48);
 
     return (
       <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
@@ -402,47 +420,51 @@ export default function PlayerProfileScreen() {
         {visibleDetailLevels.length > 0 && (
           <>
             <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
-            <View style={[styles.panelTable, { borderColor: colors.border }]}>
-              <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Lvl</Text>
-                {isTroopLike ? (
-                  <>
-                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>DPS</Text>
-                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>HP</Text>
-                  </>
-                ) : (
-                  extraLabels.map((lbl) => (
-                    <Text key={lbl} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{lbl}</Text>
-                  ))
-                )}
-                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
-                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
-                <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>{isHero ? 'Hero Hall' : isBB ? 'Star Laboratory' : 'Laboratory'}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.base }} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
+              <View style={[styles.panelTable, { borderColor: colors.border, minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
+                <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 28 }]}>Lvl</Text>
+                  {isTroopLike ? (
+                    <>
+                      <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>DPS</Text>
+                      <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>HP</Text>
+                    </>
+                  ) : (
+                    (extraLabels.length ? extraLabels : ['Value']).map((lbl) => (
+                      <Text key={lbl} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>{lbl}</Text>
+                    ))
+                  )}
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 56 }]}>Cost</Text>
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>Time</Text>
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 72 }]}>
+                    {getLabBuilding(detail.name, activeTab)}
+                  </Text>
+                </View>
+                {displayLevels.map((l) => {
+                  const isCurrentRow = l.level === currentLevel;
+                  return (
+                    <View key={l.level} style={[styles.panelTableRow, { borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 28 }]}>{l.level}</Text>
+                      {isTroopLike ? (
+                        <>
+                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.dps}</Text>
+                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.hitpoints}</Text>
+                        </>
+                      ) : (
+                        (extraLabels.length ? extraLabels : ['Value']).map((lbl) => (
+                          <Text key={lbl} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 48 }]}>
+                            {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
+                          </Text>
+                        ))
+                      )}
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 56 }]}>{l.upgradeCost || '—'}</Text>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 48 }]}>{l.upgradeTime || '—'}</Text>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
+                    </View>
+                  );
+                })}
               </View>
-              {displayLevels.map((l) => {
-                const isCurrentRow = l.level === currentLevel;
-                return (
-                  <View key={l.level} style={[styles.panelTableRow, { borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
-                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.level}</Text>
-                    {isTroopLike ? (
-                      <>
-                        <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.dps}</Text>
-                        <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.hitpoints}</Text>
-                      </>
-                    ) : (
-                      extraLabels.map((lbl) => (
-                        <Text key={lbl} style={[styles.panelTableCell, { color: colors.textSecondary }]}>
-                          {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
-                        </Text>
-                      ))
-                    )}
-                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeCost || '—'}</Text>
-                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.upgradeTime || '—'}</Text>
-                    <Text style={[styles.panelTableCell, { color: colors.textSecondary }]}>{l.labLevel ?? '—'}</Text>
-                  </View>
-                );
-              })}
-            </View>
+            </ScrollView>
             {visibleDetailLevels.length > 3 && (
               <Pressable
                 style={styles.expandTableBtn}
@@ -462,7 +484,7 @@ export default function PlayerProfileScreen() {
                     ? `Showing all hero levels that are reachable at TH ${player.townHallLevel} (Max Lv${maxHeroLevel})`
                     : `Showing all hero levels that are reachable with Hero Hall Lv${heroHallMaxLevel}`
                   : isTroopLike
-                    ? `Showing all troop levels that are reachable with Lab Lv${laboratoryMaxLevel}`
+                    ? `Showing all troop levels that are reachable with ${getLabBuilding(detail.name, activeTab)} Lv${laboratoryMaxLevel}`
                     : `Showing all levels for ${detail.name}`}
             </Text>
           </>
