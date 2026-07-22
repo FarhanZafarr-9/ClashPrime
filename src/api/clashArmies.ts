@@ -45,6 +45,7 @@ function parseDefinitions(data: any[]): { unitsById: Map<number, UnitDef>; equip
         if (!raw || !raw.name) break;
         unitsById.set(raw.id, {
           id: raw.id,
+          clashId: raw.clashId ?? raw.id,
           type: raw.type === 'Siege' ? 'Siege' : raw.type === 'Spell' ? 'Spell' : 'Troop',
           name: raw.name,
           housingSpace: raw.housingSpace ?? 0,

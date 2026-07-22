@@ -40,6 +40,7 @@ export interface ClashArmy {
 
 export interface UnitDef {
   id: number;
+  clashId: number;
   type: 'Troop' | 'Spell' | 'Siege';
   name: string;
   housingSpace: number;

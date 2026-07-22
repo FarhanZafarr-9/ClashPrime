@@ -133,15 +133,20 @@ export default function ArmiesScreen() {
   };
 
   const handleCopyArmy = (army: ClashArmy) => {
-    const troopEntries = army.units.map((u) => {
+    const campTroops = army.units.filter((u) => u.home === 'armyCamp' && unitsById.get(u.unitId)?.type !== 'Spell');
+    const campSpells = army.units.filter((u) => u.home === 'armyCamp' && unitsById.get(u.unitId)?.type === 'Spell');
+    const ccTroops = army.units.filter((u) => u.home === 'clanCastle' && unitsById.get(u.unitId)?.type !== 'Spell');
+    const ccSpells = army.units.filter((u) => u.home === 'clanCastle' && unitsById.get(u.unitId)?.type === 'Spell');
+    const toStr = (list: typeof army.units) => list.map((u) => {
       const def = unitsById.get(u.unitId);
-      if (!def) return null;
-      return { name: def.name, level: 1, maxLevel: 1, count: u.amount };
-    }).filter(Boolean) as { name: string; level: number; maxLevel: number; count: number }[];
-    if (troopEntries.length > 0) {
-      const encoded = btoa(JSON.stringify(troopEntries));
-      Linking.openURL(`https://link.clashofclans.com/en?action=CopyArmy&army=${encoded}`);
-    }
+      return def ? `${u.amount}x${def.clashId}` : null;
+    }).filter(Boolean).join('-');
+    let link = 'https://link.clashofclans.com/en?action=CopyArmy&army=';
+    if (ccTroops.length) link += `i${toStr(ccTroops)}`;
+    if (ccSpells.length) link += `d${toStr(ccSpells)}`;
+    link += `u${toStr(campTroops)}`;
+    link += `s${toStr(campSpells)}`;
+    Linking.openURL(link);
   };
 
   React.useEffect(() => {
