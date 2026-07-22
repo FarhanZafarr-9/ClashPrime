@@ -62,6 +62,15 @@ async function toggleArmyFavorite(id: string): Promise<boolean> {
   else { favs.push(id); await AsyncStorage.setItem(ARMY_FAVORITES_KEY, JSON.stringify(favs)); return true; }
 }
 
+const ARMY_TAG_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'All', label: 'All', icon: 'apps-outline' },
+  { key: 'CWL/War', label: 'CWL/War', icon: 'shield-outline' },
+  { key: 'Legends League', label: 'Legends', icon: 'trophy-outline' },
+  { key: 'Farming', label: 'Farming', icon: 'leaf-outline' },
+  { key: 'Spam', label: 'Spam', icon: 'flash-outline' },
+  { key: 'Beginner Friendly', label: 'Beginner', icon: 'happy-outline' },
+];
+
 export default function ArmiesScreen() {
   const { player } = usePlayer();
   const [armies, setArmies] = useState<ClashArmy[]>([]);
@@ -73,6 +82,7 @@ export default function ArmiesScreen() {
 
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
+  const [selectedTag, setSelectedTag] = useState('All');
 
   const thLevel = player?.townHallLevel || 16;
 
@@ -153,7 +163,10 @@ export default function ArmiesScreen() {
     setDisplayCount(PAGE_SIZE);
   }, []);
 
-  const currentArmies = armies.filter((a) => a.townHall === thLevel);
+  const thArmies = armies.filter((a) => a.townHall === thLevel);
+  const currentArmies = selectedTag === 'All'
+    ? thArmies
+    : thArmies.filter((a) => a.tags.includes(selectedTag));
   const visibleArmies = currentArmies.slice(0, displayCount);
   const hasMore = displayCount < currentArmies.length;
 
@@ -194,6 +207,28 @@ export default function ArmiesScreen() {
               {currentArmies.length} arm{currentArmies.length !== 1 ? 'ies' : 'y'}
               {currentArmies.length > PAGE_SIZE && ` · showing ${Math.min(displayCount, currentArmies.length)}`}
             </Text>
+          </View>
+
+          {/* Tag filter pills */}
+          <View style={styles.filterSection}>
+            <View style={styles.filterPills}>
+              {ARMY_TAG_PILLS.map((pill) => (
+                <Pressable
+                  key={pill.key}
+                  onPress={() => { setSelectedTag(pill.key); setDisplayCount(PAGE_SIZE); }}
+                  style={[styles.filterPill, selectedTag === pill.key && styles.filterPillActive]}
+                >
+                  <Ionicons
+                    name={pill.icon}
+                    size={13}
+                    color={selectedTag === pill.key ? Colors.bg : Colors.textSecondary}
+                  />
+                  <Text style={[styles.filterPillText, selectedTag === pill.key && styles.filterPillTextActive]}>
+                    {pill.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
           <ScrollView
