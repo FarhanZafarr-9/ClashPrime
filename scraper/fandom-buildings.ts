@@ -70,7 +70,7 @@ const HOME_VILLAGE_BUILDINGS: Record<string, string> = {
   'Mega Tesla': 'Mega_Tesla',
   'BB Lava Launcher': 'Lava_Launcher/Builder_Base',
   'BB X-Bow': 'X-Bow/Builder_Base',
-  'BB Walls': 'Walls/Builder_Base',
+  'BB Walls': 'Wall/Builder_Base',
   // Builder Base - Traps
   'Push Trap': 'Push_Trap',
   'BB Spring Trap': 'Spring_Trap/Builder_Base',

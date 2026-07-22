@@ -75,7 +75,7 @@ const ALL_BUILDINGS: Record<string, string> = {
   'BB Lava Launcher': 'Lava_Launcher/Builder_Base',
   'BB X-Bow': 'X-Bow/Builder_Base',
   // Builder Base - Walls
-  'BB Walls': 'Walls/Builder_Base',
+  'BB Walls': 'Wall/Builder_Base',
   // Builder Base - Traps
   'Push Trap': 'Push_Trap',
   'BB Spring Trap': 'Spring_Trap/Builder_Base',
