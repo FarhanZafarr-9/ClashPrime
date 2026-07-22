@@ -54,9 +54,87 @@ const COL_ABBREV: Record<string, string> = {
   'Spawned Zappies': 'Zap',
   'Total Burn Damage': 'Burn',
   'Burn Damage per Tick': 'Burn/Tk',
+  // Builder Base wall columns
+  'Cumulative Gold Cost': 'Cum.Gld',
+  'Build Cost (Elixir)': 'Cost (Elx)',
+  'Cumulative Elixir Cost': 'Cum.Elx',
+  'Wall Ring Cost': 'Ring',
 };
 
+// Per-column widths, sized to actual content instead of one flat width for every column
+// (mirrors how army.tsx sizes its stat table).
+const COL_WIDTH: Record<string, number> = {
+  'Damage per Second': 40,
+  'Damage per Shot': 40,
+  'Damage per Hit': 40,
+  'Hitpoints': 44,
+  'Build Cost': 56,
+  'Build Time': 48,
+  'Experience': 40,
+  'Town Hall Level': 32,
+  'Damage when destroyed': 56,
+  'Shockwave Damage': 48,
+  'Splash Damage**': 48,
+  'Repair per Second': 48,
+  'Repair per Hit': 44,
+  'Capacity': 56,
+  'Production Rate': 56,
+  'Boost Cost': 56,
+  'Time to Fill': 48,
+  'Catch-Up Point*': 64,
+  'Troop Capacity': 56,
+  'Spell Capacity': 56,
+  'Siege Machine Capacity': 60,
+  'Unlocked Unit': 76,
+  'Unlocked Siege Machine': 76,
+  'Unlocked Pet': 64,
+  'Equipment Unlocked': 72,
+  'Spell(s) Unlocked': 72,
+  'Spell Storage Capacity': 60,
+  'Ore Capacity': 56,
+  'Number of Army Camps': 52,
+  'Spring Capacity': 56,
+  'Damage': 40,
+  'Secondary Chain Damage': 52,
+  'Burst Fire (Shots)': 48,
+  'Spawned Zappies': 48,
+  'Total Burn Damage': 52,
+  'Burn Damage per Tick': 56,
+  'Cumulative Gold Cost': 64,
+  'Build Cost (Elixir)': 64,
+  'Cumulative Elixir Cost': 64,
+  'Wall Ring Cost': 56,
+};
+const DEFAULT_COL_WIDTH = 56;
+
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
+
+const BB_CATEGORY_MAP: Record<string, string[]> = {
+  Defenses: ['BB Archer Tower', 'BB Hidden Tesla', 'Crusher', 'BB Air Bombs', 'Multi Mortar', 'BB Roaster', 'Giant Cannon', 'BB Lava Launcher', 'BB X-Bow'],
+  Traps: ['BB Spring Trap', 'Mine', 'Mega Mine'],
+  Resources: ['BB Gold Mine', 'BB Elixir Collector', 'BB Gold Storage', 'BB Elixir Storage'],
+  Army: ['BB Army Camp'],
+  Walls: ['BB Walls'],
+};
+
+function buildBBCategories(builderHallLevel: number): Record<string, { level: number | null; isMaxLevel: boolean }> {
+  const bbBuildings = (buildingLevelsData as any[]).filter((b: any) => b.village === 'builderBase');
+  const entries: Record<string, { level: number | null; isMaxLevel: boolean }> = {};
+  for (const building of bbBuildings) {
+    const levelsAtOrBelow = building.levels.filter((l: any) => {
+      const bh = l['Town Hall Level'];
+      return bh != null && bh <= builderHallLevel;
+    });
+    if (levelsAtOrBelow.length === 0) continue;
+    const maxLevel = levelsAtOrBelow.reduce((a: any, b: any) => (a.Level > b.Level ? a : b));
+    const isMaxed = building.levels.every((l: any) => {
+      const bh = l['Town Hall Level'];
+      return bh == null || bh <= builderHallLevel;
+    });
+    entries[building.name] = { level: maxLevel.Level ?? 0, isMaxLevel: isMaxed };
+  }
+  return entries;
+}
 
 const CATEGORY_ICONS: Record<string, { set: 'ion' | 'mc'; name: string }> = {
   'Defenses': { set: 'ion', name: 'shield-half-outline' },
@@ -64,6 +142,7 @@ const CATEGORY_ICONS: Record<string, { set: 'ion' | 'mc'; name: string }> = {
   'Traps': { set: 'mc', name: 'bomb' },
   'Army': { set: 'mc', name: 'sword-cross' },
   'Walls': { set: 'mc', name: 'wall' },
+  'Builder Base': { set: 'mc', name: 'castle' },
 };
 
 const NAME_FIX: Record<string, string> = {
@@ -72,10 +151,12 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed }: { name: string; maxLvl: number; isMaxed: boolean }) {
+function BuildingCard({ name, maxLvl, isMaxed, isBB }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
+  const [tableViewportW, setTableViewportW] = useState(0);
   const lookupName = NAME_FIX[name] ?? name;
+
   const buildingStats = useMemo(() => {
     const match = (buildingLevelsData as any).find((b: any) => {
       const bName = b.name.toLowerCase();
@@ -101,6 +182,9 @@ function BuildingCard({ name, maxLvl, isMaxed }: { name: string; maxLvl: number;
     const end = Math.min(allLevels.length, currentIdx + 2);
     displayLevels = allLevels.slice(start, end);
   }
+
+  const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
+  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
   const renderGrid = () => (
     <View style={styles.levelGrid}>
@@ -175,38 +259,52 @@ function BuildingCard({ name, maxLvl, isMaxed }: { name: string; maxLvl: number;
         <>
           {renderGrid()}
           {buildingStats && (
-            <View style={styles.buildingStatsTable}>
-              <View style={styles.buildingStatRow}>
-                <View style={styles.buildingStatCellIcon}>
-                  <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
-                </View>
-                {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => (
-                  <Text key={col} style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted }]} numberOfLines={1}>
-                    {COL_ABBREV[col] || col}
-                  </Text>
-                ))}
-              </View>
-              {displayLevels.map((levelData: any) => {
-                const lvl = levelData.Level;
-                const isCurrentLevel = lvl === maxLvl;
-                return (
-                  <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
-                    <View style={styles.buildingStatCellIcon}>
-                      <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
-                    </View>
-                    {buildingStats.statsColumns.filter((c: string) => c !== 'Level').map((col: string) => {
-                      const val = levelData[col] ?? '—';
-                      const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
-                      return (
-                        <Text key={col} style={[styles.buildingStatCell, { color: Colors.textSecondary }]} numberOfLines={1}>
-                          {formatted}
-                        </Text>
-                      );
-                    })}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
+              <View style={[styles.buildingStatsTable, { minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
+                <View style={styles.buildingStatRow}>
+                  <View style={styles.buildingStatCellIcon}>
+                    <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
                   </View>
-                );
-              })}
-            </View>
+                  {statCols.map((col: string) => {
+                    const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
+                    return (
+                      <Text
+                        key={col}
+                        style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                        numberOfLines={1}
+                      >
+                        {label}
+                      </Text>
+                    );
+                  })}
+                </View>
+                {displayLevels.map((levelData: any) => {
+                  const lvl = levelData.Level;
+                  const isCurrentLevel = lvl === maxLvl;
+                  return (
+                    <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
+                      <View style={styles.buildingStatCellIcon}>
+                        <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+                      </View>
+                      {
+                        statCols.map((col: string) => {
+                          const val = levelData[col] ?? '—';
+                          const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                          return (
+                            <Text
+                              key={col}
+                              style={[styles.buildingStatCell, { color: Colors.textSecondary, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                              numberOfLines={1}
+                            >
+                              {formatted}
+                            </Text>
+                          );
+                        })}
+                    </View>
+                  );
+                })}
+              </View>
+            </ScrollView>
           )}
           {showExpand && !showFull && (
             <Pressable style={styles.expandTableBtn} onPress={() => setShowFull(true)}>
@@ -246,31 +344,48 @@ function formatCostShort(cost: number): string {
 export default function BuildingsScreen() {
   const { player } = usePlayer();
   const th = player?.townHallLevel ?? 1;
+  const bh = player?.builderHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
   const [selectedCat, setSelectedCat] = useState('');
 
-  const availableCats = SHOW_CATEGORIES.filter((cat) => {
-    const items = categories[cat];
-    if (!items) return false;
-    return Object.entries(items).some(([, thData]) => {
-      const thEntry = thData[String(th)];
-      return thEntry != null && (thEntry.level ?? 0) > 0;
-    });
-  });
+  const bbEntries = useMemo(() => {
+    if (!player || th < 6) return [];
+    const entries = buildBBCategories(bh);
+    return Object.entries(entries).filter(([, entry]) => (entry.level ?? 0) > 0);
+  }, [player, th, bh]);
 
+  const availableCats = [
+    ...SHOW_CATEGORIES.filter((cat) => {
+      const items = categories[cat];
+      if (!items) return false;
+      return Object.entries(items).some(([, thData]) => {
+        const thEntry = thData[String(th)];
+        return thEntry != null && (thEntry.level ?? 0) > 0;
+      });
+    }),
+    ...(th >= 6 ? ['Builder Base'] : []),
+  ];
+
+  const isBB = selectedCat === 'Builder Base';
   const activeCat = selectedCat || availableCats[0] || '';
 
-  const entries = activeCat ? Object.entries(categories[activeCat] ?? {}).filter(([, thData]) => {
-    const thEntry = thData[String(th)];
-    return thEntry != null && (thEntry.level ?? 0) > 0;
-  }) : [];
+  const entries = isBB
+    ? bbEntries
+    : activeCat
+      ? Object.entries(categories[activeCat] ?? {}).filter(([, thData]) => {
+        const thEntry = thData[String(th)];
+        return thEntry != null && (thEntry.level ?? 0) > 0;
+      })
+      : [];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <Text style={styles.title}>Buildings</Text>
-          <Text style={styles.subtitle}>Max levels for TH{th} · Tap to expand</Text>
+          <Text style={styles.subtitle}>
+            {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
+          </Text>
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, styles.legendDotCurrent]} />
@@ -295,16 +410,16 @@ export default function BuildingsScreen() {
           })}
         </View>
 
-        {entries.map(([name, thData]) => {
-          const thEntry = thData[String(th)];
-          const maxLvl = thEntry?.level ?? 0;
-          const isMaxed = thEntry?.isMaxLevel ?? false;
+        {entries.map(([name, entry]) => {
+          const maxLvl = isBB ? (entry as any).level ?? 0 : (entry as any)[String(th)]?.level ?? 0;
+          const isMaxed = isBB ? (entry as any).isMaxLevel ?? false : (entry as any)[String(th)]?.isMaxLevel ?? false;
           return (
             <BuildingCard
               key={name}
               name={name}
               maxLvl={maxLvl}
               isMaxed={isMaxed}
+              isBB={isBB}
             />
           );
         })}
@@ -449,7 +564,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   levelGridCell: {
-    width: '25%',
+    width: '20%',
     borderRightWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
@@ -467,7 +582,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
   },
   levelGridImgFallback: {
     alignItems: 'center',
