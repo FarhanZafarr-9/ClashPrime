@@ -385,7 +385,7 @@ export default function SettingsScreen() {
           <SettingItem
             icon="information-circle-outline"
             label="About ClashPrime"
-            value="v1.0.0"
+            value="v2.0.0"
             onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
             bgColor={colors.bgCard}
           />

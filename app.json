@@ -2,7 +2,7 @@
   "expo": {
     "name": "ClashPrime",
     "slug": "ClashPrime",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "clashprime",
@@ -12,10 +12,10 @@
       "bundleIdentifier": "com.clashprime.app"
     },
     "android": {
-      "adaptiveIcon": { "foregroundImage": "./images/adaptive-icon.png", "backgroundColor": "#000000"
+      "adaptiveIcon": { "foregroundImage": "./images/icon.png", "backgroundColor": "#ffffff"
       },
       "package": "com.clashprime.app",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": true
     },
     "web": {
       "favicon": "./images/favicon.png",
