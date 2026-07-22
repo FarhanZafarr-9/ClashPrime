@@ -188,6 +188,37 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.sectionLabel}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+        </View>
+
+        <View style={styles.actionsRow}>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/bases')}>
+            <Ionicons name="grid-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Bases</Text>
+          </Pressable>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/armies')}>
+            <Ionicons name="shield-half-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Armies</Text>
+          </Pressable>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
+            <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Saved</Text>
+          </Pressable>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/events')}>
+            <Ionicons name="calendar-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Events</Text>
+          </Pressable>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/achievements')}>
+            <Ionicons name="trophy-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Awards</Text>
+          </Pressable>
+          <Pressable style={styles.actionBtn} onPress={onRefresh}>
+            <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Refresh</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.sectionLabel}>
           <Text style={styles.sectionTitle}>Quick Stats</Text>
         </View>
 
@@ -222,21 +253,6 @@ export default function HomeScreen() {
               </Text>
             </View>
           ))}
-        </View>
-
-        <View style={styles.sectionLabel}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-        </View>
-
-        <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/bases')}>
-            <Ionicons name="grid-outline" size={20} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>View Bases</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn} onPress={onRefresh}>
-            <Ionicons name="refresh-outline" size={20} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Refresh</Text>
-          </Pressable>
         </View>
 
         <View style={{ height: 100 }} />
@@ -304,6 +320,7 @@ const styles = StyleSheet.create({
   },
   playerCard: {
     marginHorizontal: Spacing.base,
+    marginBottom: Spacing.sm
   },
   playerRow: {
     flexDirection: 'row',
@@ -395,8 +412,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     paddingHorizontal: Spacing.base,
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     ...Typography.headline,
@@ -407,10 +424,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
+    gap: Spacing.xs,
   },
   statsTable: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.base,
+    marginBottom: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
@@ -436,23 +454,29 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.base,
   },
   actionBtn: {
-    flex: 1,
+    width: '48%',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
+    gap: 6,
     backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingVertical: Spacing.base,
-    borderRadius: Radius.lg,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: Radius.sm,
   },
   actionText: {
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '500',
+    fontSize: 11,
+    textAlign: 'left',
+    marginLeft: 24,
   },
 });
