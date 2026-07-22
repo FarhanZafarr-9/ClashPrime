@@ -170,9 +170,15 @@ export function HomeScreenSkeleton() {
         <View style={styles.progressGrid}>
           {[0, 1, 2, 3].map((i) => (
             <View key={i} style={[styles.progressCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Skeleton width="60%" height={12} borderRadius={4} />
-              <Skeleton width="40%" height={20} borderRadius={5} style={{ marginTop: 8 }} />
-              <Skeleton width="100%" height={4} borderRadius={2} style={{ marginTop: 8 }} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Skeleton width="60%" height={13} borderRadius={4} />
+                <Skeleton width={14} height={14} borderRadius={7} />
+              </View>
+              <Skeleton width="35%" height={22} borderRadius={5} style={{ marginTop: 4, marginBottom: 8 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Skeleton style={{ flex: 1 }} height={4} borderRadius={2} />
+                <Skeleton width={30} height={10} borderRadius={3} />
+              </View>
             </View>
           ))}
         </View>
@@ -250,6 +256,49 @@ export function ProfileScreenSkeleton() {
             </View>
           ))}
         </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Armies tab skeleton ──────────────────────────────────────────────────────
+export function ArmiesScreenSkeleton() {
+  const { colors } = useTheme();
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={{ flex: 1, paddingBottom: 64 }}>
+        <View style={styles.header}>
+          <View style={{ gap: 6 }}>
+            <Skeleton width={130} height={20} borderRadius={6} />
+            <Skeleton width={180} height={12} borderRadius={4} />
+          </View>
+          <Skeleton width={36} height={36} borderRadius={18} />
+        </View>
+        <View style={styles.chipsRow}>
+          {[40, 50, 70, 45, 55].map((w, i) => (
+            <Skeleton key={i} width={w} height={28} borderRadius={14} />
+          ))}
+        </View>
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+              <Skeleton width={36} height={20} borderRadius={4} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="55%" height={14} borderRadius={4} />
+                <Skeleton width="30%" height={10} borderRadius={3} />
+              </View>
+              <Skeleton width={40} height={14} borderRadius={4} />
+            </View>
+            <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md }}>
+              {[0, 1, 2, 3, 4].map((j) => (
+                <View key={j} style={{ alignItems: 'center', gap: 2 }}>
+                  <Skeleton width={32} height={32} borderRadius={Radius.md} />
+                  <Skeleton width={16} height={10} borderRadius={3} />
+                </View>
+              ))}
+            </View>
+          </View>
+        ))}
       </View>
     </SafeAreaView>
   );
