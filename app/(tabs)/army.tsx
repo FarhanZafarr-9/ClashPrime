@@ -16,9 +16,7 @@ import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
-import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
-import { Card } from '../../src/components/Card';
 import { ItemCard } from '../../src/components/ItemCard';
 
 import { SectionHeader } from '../../src/components/SectionHeader';
@@ -64,7 +62,6 @@ export default function PlayerProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedName, setExpandedName] = useState<string | null>(null);
 
-  const [progressExpanded, setProgressExpanded] = useState(false);
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
   const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
 
@@ -180,7 +177,7 @@ export default function PlayerProfileScreen() {
         getPetImageUrl(name),
         getEquipmentImageUrl(name),
       ].filter((u): u is string => !!u);
-      urls.forEach((url) => Image.prefetch(url));
+      urls.forEach((url) => Image.prefetch(url).catch(() => {}));
     }
   }, [expandedName, details, player]);
 
@@ -214,7 +211,7 @@ export default function PlayerProfileScreen() {
             getPetImageUrl(detail.name),
             getEquipmentImageUrl(detail.name),
           ].filter((u): u is string => !!u);
-          urls.forEach((url) => Image.prefetch(url));
+          urls.forEach((url) => Image.prefetch(url).catch(() => {}));
         }
       });
       setDetails((prev) => ({ ...prev, ...nextDetails }));
@@ -222,10 +219,6 @@ export default function PlayerProfileScreen() {
 
     setRefreshing(false);
   }, [refresh, player]);
-
-  // Prefetch the TH image on load for caching
-  const thImageUrl = getTownHallImageUrl(player?.townHallLevel ?? 1);
-  if (thImageUrl) Image.prefetch(thImageUrl);
 
   if (loading && !player) {
     return <ProfileScreenSkeleton />;
@@ -239,21 +232,6 @@ export default function PlayerProfileScreen() {
   const homeTroops = filterHomeTroops(player.troops);
   const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
   const homePets = (player.pets ?? []).filter((p) => p.village === 'home' || !p.village);
-  const overallProgress = (() => {
-    const th = player.townHallLevel;
-    const all = [
-      ...filterHomeTroops(player.troops),
-      ...player.spells.filter((s) => s.village === 'home' || !s.village),
-      ...player.heroes.filter((h) => h.village === 'home'),
-      ...player.heroEquipment,
-    ];
-    const maxed = all.filter((i) => {
-      const thMax = getMaxLevelAtTH(i.name, th);
-      return thMax !== null ? i.level >= thMax : i.level >= i.maxLevel;
-    }).length;
-    return all.length > 0 ? maxed / all.length : 0;
-  })();
-
   const laboratoryMaxLevel = getMaxLevelAtTH('Lab', player.townHallLevel) ?? 0;
   const heroHallMaxLevel = getMaxLevelAtTH('Hero Hall', player.townHallLevel) ?? 0;
 
@@ -511,8 +489,8 @@ export default function PlayerProfileScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>Profile</Text>
-            <Text style={styles.subtitle}>Your units, heroes, spells & equipment</Text>
+            <Text style={styles.title}>Army</Text>
+            <Text style={styles.subtitle}>All your troops, heroes, spells & equipment</Text>
           </View>
           <Pressable
             onPress={onRefresh}
@@ -529,102 +507,6 @@ export default function PlayerProfileScreen() {
             />
           </Pressable>
         </View>
-
-        <Card style={styles.profileCard}>
-          <View style={styles.profileRow}>
-            <View style={styles.avatar}>
-              {getTownHallImageUrl(player.townHallLevel) ? (
-                <Image
-                  source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
-                  style={styles.avatarImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
-              )}
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{player.name}</Text>
-              <Text style={styles.profileTag}>{player.tag}</Text>
-              {player.clan && (
-                <View style={styles.profileClanRow}>
-                  <Text style={styles.profileClanText} numberOfLines={1}>
-                    {player.clan.name}
-                  </Text>
-                  <View style={styles.profileClanDot} />
-                  <Text style={styles.profileClanText}>{player.role || 'Member'}</Text>
-                  <View style={styles.profileClanDot} />
-                  <Ionicons name="star" size={10} color={Colors.warning} />
-                  <Text style={styles.profileClanText}>{player.warStars.toLocaleString()}</Text>
-                </View>
-              )}
-              <View style={styles.profileBadges}>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>TH{player.townHallLevel}</Text>
-                </View>
-                {player.leagueTier && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>
-                      {player.leagueTier.name.split(' ').slice(0, 2).join(' ')}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-
-          <Pressable style={styles.progressSection} onPress={() => setProgressExpanded((p) => !p)}>
-            <View style={styles.progressOverallRow}>
-              <View style={styles.progressOverallTrack}>
-                <View style={[styles.progressOverallFill, { width: `${overallProgress * 100}%` }]} />
-              </View>
-              <Text style={styles.progressOverallLabel}>{Math.round(overallProgress * 100)}%</Text>
-              <Ionicons
-                name={progressExpanded ? 'chevron-up' : 'chevron-down'}
-                size={14}
-                color={Colors.textTertiary}
-              />
-            </View>
-            {progressExpanded && (() => {
-              const th = player.townHallLevel;
-              const cats: { label: string; items: { level: number; maxLevel: number; name: string }[] }[] = [
-                { label: 'Troops', items: filterHomeTroops(player.troops) },
-                { label: 'Spells', items: player.spells.filter((s) => s.village === 'home' || !s.village) },
-                { label: 'Heroes', items: player.heroes.filter((h) => h.village === 'home') },
-                { label: 'Gear', items: player.heroEquipment },
-              ];
-              const all = cats.flatMap((c) => c.items);
-              const allMaxed = all.filter((i) => {
-                const thMax = getMaxLevelAtTH(i.name, th);
-                return thMax !== null ? i.level >= thMax : i.level >= i.maxLevel;
-              }).length;
-              return (
-                <View style={styles.progressStats}>
-                  {cats.map((cat) => {
-                    const maxed = cat.items.filter((i) => {
-                      const thMax = getMaxLevelAtTH(i.name, th);
-                      return thMax !== null ? i.level >= thMax : i.level >= i.maxLevel;
-                    }).length;
-                    const pct = cat.items.length > 0 ? maxed / cat.items.length : 0;
-                    return (
-                      <View key={cat.label} style={styles.progressCatRow}>
-                        <Text style={styles.progressCatLabel}>{cat.label}</Text>
-                        <View style={styles.progressCatTrack}>
-                          <View style={[styles.progressCatFill, { width: `${pct * 100}%` }]} />
-                        </View>
-                        <Text style={styles.progressCatCount}>{maxed}/{cat.items.length}</Text>
-                      </View>
-                    );
-                  })}
-                  <Text style={styles.progressDetail}>
-                    {allMaxed} / {all.length} items maxed
-                  </Text>
-                </View>
-              );
-            })()}
-          </Pressable>
-
-        </Card>
 
         <ScrollView
           horizontal
@@ -893,153 +775,6 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
-  profileCard: {
-    marginHorizontal: Spacing.base,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    marginBottom: Spacing.base,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: Radius.xl,
-  },
-  avatarText: {
-    ...Typography.title1,
-    color: Colors.textTertiary,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-  },
-  profileTag: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 2,
-  },
-  profileBadges: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    marginTop: Spacing.sm,
-  },
-  badge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    backgroundColor: Colors.accentSubtle,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  badgeText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  profileClanRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: 3,
-  },
-  profileClanText: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    fontWeight: '500',
-  },
-  profileClanDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: Colors.textMuted,
-  },
-  progressSection: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    marginTop: Spacing.sm,
-    paddingTop: Spacing.sm,
-  },
-  progressOverallRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  progressOverallTrack: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.bgSubtle,
-    overflow: 'hidden',
-  },
-  progressOverallFill: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: Colors.textPrimary,
-  },
-  progressOverallLabel: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    width: 36,
-    textAlign: 'right',
-    fontVariant: ['tabular-nums'],
-  },
-  progressStats: {
-    marginTop: 6,
-  },
-  progressCatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 5,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  progressCatLabel: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    width: 48,
-    fontWeight: '500',
-  },
-  progressCatTrack: {
-    flex: 1,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: Colors.bgSubtle,
-    overflow: 'hidden',
-    marginHorizontal: Spacing.sm,
-  },
-  progressCatFill: {
-    height: '100%',
-    borderRadius: 2.5,
-    backgroundColor: Colors.textPrimary,
-  },
-  progressCatCount: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    width: 36,
-    textAlign: 'right',
-    fontVariant: ['tabular-nums'],
-    fontWeight: '600',
-  },
-  progressDetail: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 6,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-
   tabsContainer: {
     paddingHorizontal: Spacing.base,
     gap: Spacing.sm,
