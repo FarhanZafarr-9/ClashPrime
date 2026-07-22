@@ -38,11 +38,11 @@ interface SettingItemProps {
   danger?: boolean;
 }
 
-function SettingItem({ icon, label, value, onPress, showArrow = true, danger, borderColor: bc, bgColor }: SettingItemProps & { borderColor: string; bgColor: string }) {
+function SettingItem({ icon, label, value, onPress, showArrow = true, danger, bgColor }: SettingItemProps & { bgColor: string }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.settingItem, { borderColor: bc, backgroundColor: bgColor }, pressed && styles.settingPressed]}
+      style={({ pressed }) => [styles.settingItem, { backgroundColor: bgColor }, pressed && styles.settingItemPressed]}
     >
       <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
         <Ionicons name={icon as any} size={16} color={danger ? Colors.bg : Colors.textSecondary} />
@@ -50,7 +50,7 @@ function SettingItem({ icon, label, value, onPress, showArrow = true, danger, bo
       <Text style={[styles.settingLabel, danger && styles.settingLabelDanger]}>{label}</Text>
       <View style={styles.settingSpacer} />
       {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
-      {showArrow && <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />}
+      {showArrow && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />}
     </Pressable>
   );
 }
@@ -79,8 +79,7 @@ const DATA_SOURCES: { name: string; use: string }[] = [
   { name: 'Clash of Clans API', use: 'Player stats & progress' },
   { name: 'ClashLy', use: 'Base layout library & ratings' },
   { name: 'clash.ninja', use: 'TH max levels & in-game events' },
-  { name: 'coc.guide', use: 'Troop, hero & pet image list' },
-  { name: 'Fandom Wiki', use: 'Building images, troop & hero details' },
+  { name: 'Fandom Wiki', use: 'Building images, troop, hero & pet details' },
 ];
 
 const PRIVACY_SECTIONS: { title: string; body: string }[] = [
@@ -94,7 +93,7 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Third-Party Services',
-    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building images, troop details and events is fetched from public sources including ClashLy, clash.ninja, coc.guide and the Fandom Wiki.',
+    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building images, troop details and events is fetched from public sources including ClashLy, clash.ninja and the Fandom Wiki.',
   },
   {
     title: 'Local Storage',
@@ -118,7 +117,6 @@ export default function SettingsScreen() {
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
   const { isDark, colors, setThemeMode } = useTheme();
-  const lightBorder = isDark ? '#383838' : '#E0E0E5';
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'tag' | 'token'>('tag');
   const [modalTitle, setModalTitle] = useState('');
@@ -331,7 +329,6 @@ export default function SettingsScreen() {
             label="Player Tag"
             value={playerTag}
             onPress={handleEditTag}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
           <SettingItem
@@ -339,7 +336,6 @@ export default function SettingsScreen() {
             label="API Token"
             value={apiToken}
             onPress={handleEditToken}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
           <SettingItem
@@ -349,13 +345,12 @@ export default function SettingsScreen() {
               bumpTagVersion();
               showDialog({ title: 'Sync', message: 'Data will refresh now.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
             }}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
         </SettingGroup>
 
         <SettingGroup title="Appearance">
-          <View style={[styles.settingItem, { borderColor: lightBorder, backgroundColor: colors.bgCard }]}>
+          <View style={[styles.settingItem, { backgroundColor: colors.bgCard }]}>
             <View style={styles.settingIcon}>
               <Ionicons name="moon-outline" size={16} color={Colors.textSecondary} />
             </View>
@@ -375,14 +370,12 @@ export default function SettingsScreen() {
             icon="cloud-download-outline"
             label="Clear Cache"
             onPress={handleClearCache}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
           <SettingItem
             icon="download-outline"
             label="Export Data"
             onPress={handleExportData}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
         </SettingGroup>
@@ -393,28 +386,24 @@ export default function SettingsScreen() {
             label="About ClashPrime"
             value="v1.0.0"
             onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
           <SettingItem
             icon="document-text-outline"
             label="Privacy Policy"
             onPress={openPrivacy}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
           <SettingItem
             icon="heart-outline"
             label="Credits"
             onPress={openCredits}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
           <SettingItem
             icon="chatbubble-outline"
             label="Send Feedback"
             onPress={openFeedback}
-            borderColor={lightBorder}
             bgColor={colors.bgCard}
           />
         </SettingGroup>
@@ -629,9 +618,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   groupTitle: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
+    ...Typography.footnote,
+    color: Colors.textMuted,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
     paddingHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
   },
@@ -642,19 +633,18 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
     gap: Spacing.md,
   },
-  settingPressed: {
-    opacity: 0.8,
+  settingItemPressed: {
+    opacity: 0.7,
+    backgroundColor: Colors.bgSubtle,
   },
   settingIcon: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: Radius.md,
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
@@ -666,7 +656,7 @@ const styles = StyleSheet.create({
   settingLabel: {
     ...Typography.subhead,
     color: Colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   settingLabelDanger: {
     color: Colors.bg,
@@ -675,9 +665,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingValue: {
-    ...Typography.subhead,
-    color: Colors.textSecondary,
+    ...Typography.footnote,
+    color: Colors.textMuted,
     flexShrink: 1,
+    fontWeight: '500',
+    maxWidth: 160,
   },
   footer: {
     alignItems: 'center',

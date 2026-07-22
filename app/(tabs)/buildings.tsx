@@ -72,7 +72,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: number; isMaxed: boolean; th: number }) {
+function BuildingCard({ name, maxLvl, isMaxed }: { name: string; maxLvl: number; isMaxed: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const lookupName = NAME_FIX[name] ?? name;
@@ -85,17 +85,6 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
   }, [name, lookupName]);
 
   const mainImgSource = getBuildingLevelImageSource(lookupName, maxLvl);
-
-  const thNext = useMemo(() => {
-    const cats = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
-    for (const cat of Object.values(cats)) {
-      if (cat[name]) {
-        const thData = cat[name][String(th + 1)];
-        if (thData) return thData;
-      }
-    }
-    return null;
-  }, [name, th]);
 
   const availableLevels = getBuildingAvailableLevels(lookupName);
   const allLevels = buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l }));
@@ -119,7 +108,6 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
         const lvl = levelData.Level;
         const cellSource = getBuildingLevelImageSource(lookupName, lvl);
         const isCurrent = lvl === maxLvl;
-        const isNext = lvl === maxLvl + 1 && lvl <= (thNext?.level ?? 0);
         return (
           <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
             <View style={styles.levelGridImgWrap}>
@@ -132,8 +120,8 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
                   </Text>
                 </View>
               )}
-              <View style={[styles.levelGridBadge, isNext && styles.levelGridBadgeNext]}>
-                <Text style={[styles.levelGridBadgeText, isCurrent && styles.levelGridBadgeTextCurrent, isNext && styles.levelGridBadgeTextNext]}>
+              <View style={styles.levelGridBadge}>
+                <Text style={[styles.levelGridBadgeText, isCurrent && styles.levelGridBadgeTextCurrent]}>
                   {lvl}
                 </Text>
               </View>
@@ -172,16 +160,6 @@ function BuildingCard({ name, maxLvl, isMaxed, th }: { name: string; maxLvl: num
               <Text style={styles.itemLevel}>
                 Max Lv {maxLvl}
               </Text>
-              {isMaxed && (
-                <View style={styles.maxedBadge}>
-                  <Text style={styles.maxedText}>Maxed</Text>
-                </View>
-              )}
-              {thNext && (
-                <View style={styles.nextTHBadge}>
-                  <Text style={styles.nextTHText}>TH{th + 1}</Text>
-                </View>
-              )}
             </View>
           </View>
           <Ionicons
@@ -298,10 +276,6 @@ export default function BuildingsScreen() {
               <View style={[styles.legendDot, styles.legendDotCurrent]} />
               <Text style={styles.legendText}>Current max</Text>
             </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, styles.legendDotNext]} />
-              <Text style={styles.legendText}>Unlocks at TH{th + 1}</Text>
-            </View>
           </View>
         </View>
 
@@ -331,7 +305,6 @@ export default function BuildingsScreen() {
               name={name}
               maxLvl={maxLvl}
               isMaxed={isMaxed}
-              th={th}
             />
           );
         })}
@@ -413,9 +386,6 @@ const styles = StyleSheet.create({
   legendDotCurrent: {
     backgroundColor: Colors.textPrimary,
   },
-  legendDotNext: {
-    backgroundColor: Colors.warning,
-  },
   legendText: {
     ...Typography.caption,
     color: Colors.textMuted,
@@ -464,33 +434,6 @@ const styles = StyleSheet.create({
   itemLevel: {
     ...Typography.footnote,
     color: Colors.textTertiary,
-  },
-  maxedBadge: {
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 1,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.accentGhost,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  maxedText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 9,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  nextTHBadge: {
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 1,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.warning,
-  },
-  nextTHText: {
-    ...Typography.caption,
-    color: Colors.bg,
-    fontSize: 9,
-    fontWeight: '700',
   },
   expandArrow: {
     width: 24,
@@ -557,12 +500,6 @@ const styles = StyleSheet.create({
   },
   levelGridBadgeTextCurrent: {
     color: Colors.textPrimary,
-  },
-  levelGridBadgeNext: {
-    borderColor: Colors.warning,
-  },
-  levelGridBadgeTextNext: {
-    color: Colors.warning,
   },
   buildingStatsTable: {
     marginTop: Spacing.sm,

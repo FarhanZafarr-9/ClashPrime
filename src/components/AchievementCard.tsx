@@ -43,7 +43,7 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
 
           </View>
           <Text style={styles.info} numberOfLines={1}>
-            {(a.completionInfo || a.info)}{a.target > 0 ? `: ${formatAchievementValue(a.value)} / ${formatAchievementValue(a.target)}` : ''}
+            {a.completionInfo || a.info}
           </Text>
 
         </View>

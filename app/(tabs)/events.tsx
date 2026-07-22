@@ -34,11 +34,11 @@ function getEventIcon(name: string): keyof typeof Ionicons.glyphMap {
   return 'calendar-outline';
 }
 
-function CountdownBar({ remaining, total }: { remaining: number; total: number }) {
+function CountdownBar({ remaining, total, featured }: { remaining: number; total: number; featured?: boolean }) {
   const progress = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
   return (
-    <View style={styles.countdownBarTrack}>
-      <View style={[styles.countdownBarFill, { width: `${progress * 100}%` }]} />
+    <View style={[styles.countdownBarTrack, featured && styles.countdownBarTrackFeatured]}>
+      <View style={[styles.countdownBarFill, featured && styles.countdownBarFillFeatured, { width: `${progress * 100}%` }]} />
     </View>
   );
 }
@@ -226,28 +226,28 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
         <View style={styles.eventInfo}>
           <Text style={[styles.eventName, featured && styles.eventNameFeatured, ended && styles.eventNameEnded]} numberOfLines={1}>{event.name}</Text>
           <Text style={[styles.eventStatus, featured && styles.eventStatusActive, ended && styles.eventStatusEnded]}>
-            {ended ? 'Ended' : featured ? 'In progress' : countdown ? `In ${countdown}` : 'Upcoming'}
+            {ended ? 'Ended' : featured ? 'In progress' : countdown ? `Starts in ${countdown}` : 'Upcoming'}
           </Text>
         </View>
         {countdown && !ended && (
           <View style={[styles.countdownBadge, featured && styles.countdownBadgeFeatured]}>
-            <Text style={[styles.countdownText, featured && styles.countdownTextActive]}>{countdown}</Text>
+            <Text style={[styles.countdownText, featured && styles.countdownTextFeatured]}>{countdown}</Text>
           </View>
         )}
       </View>
 
       {event.description ? (
-        <Text style={[styles.eventDesc, ended && styles.eventDescEnded]} numberOfLines={2}>{event.description}</Text>
+        <Text style={[styles.eventDesc, featured && styles.eventDescFeatured, ended && styles.eventDescEnded]} numberOfLines={2}>{event.description}</Text>
       ) : null}
 
-      {!ended && event.remainingSeconds > 0 && (
-        <CountdownBar remaining={event.remainingSeconds} total={totalDuration} />
+      {featured && event.remainingSeconds > 0 && (
+        <CountdownBar remaining={event.remainingSeconds} total={totalDuration} featured />
       )}
 
-      <View style={styles.eventFooter}>
-        <Ionicons name="time-outline" size={12} color={Colors.textMuted} />
-        <Text style={styles.eventDate}>
-          {ended ? 'Ended' : 'Ends'} {new Date(event.endDate).toLocaleDateString('en-US', {
+      <View style={[styles.eventFooter, featured && styles.eventFooterFeatured]}>
+        <Ionicons name="time-outline" size={12} color={featured ? Colors.bg : Colors.textMuted} />
+        <Text style={[styles.eventDate, featured && styles.eventDateFeatured]}>
+          {ended ? 'Ended' : featured ? 'Ends' : 'Starts'} {new Date(featured ? event.endDate : Date.now() + event.remainingSeconds * 1000).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -432,8 +432,8 @@ const styles = StyleSheet.create({
     padding: Spacing.base,
   },
   eventCardFeatured: {
-    borderColor: Colors.accent,
-    borderWidth: 1.5,
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
   },
   eventCardEnded: {
     opacity: 0.5,
@@ -455,8 +455,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   eventIconWrapActive: {
-    backgroundColor: Colors.accentSubtle,
-    borderColor: Colors.accent,
+    backgroundColor: 'transparent',
+    borderColor: Colors.bg,
   },
   eventIconWrapEnded: {
     backgroundColor: Colors.bgSubtle,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   eventNameFeatured: {
-    color: Colors.textPrimary,
+    color: Colors.bg,
     fontWeight: '700',
   },
   eventNameEnded: {
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   eventStatusActive: {
-    color: Colors.accent,
+    color: Colors.bg,
     fontWeight: '600',
   },
   eventStatusEnded: {
@@ -512,8 +512,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   countdownBadgeFeatured: {
-    backgroundColor: Colors.accentSubtle,
-    borderColor: Colors.accent,
+    backgroundColor: 'transparent',
+    borderColor: Colors.bg,
+    opacity: 0.7,
   },
   countdownText: {
     ...Typography.caption,
@@ -521,14 +522,18 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontVariant: ['tabular-nums'],
   },
-  countdownTextActive: {
-    color: Colors.textPrimary,
+  countdownTextFeatured: {
+    color: Colors.bg,
   },
   eventDesc: {
     ...Typography.caption,
     color: Colors.textTertiary,
     lineHeight: 16,
     marginBottom: Spacing.sm,
+  },
+  eventDescFeatured: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   eventDescEnded: {
     color: Colors.textMuted,
@@ -540,10 +545,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     overflow: 'hidden',
   },
+  countdownBarTrackFeatured: {
+    backgroundColor: Colors.bg,
+    opacity: 0.25,
+  },
   countdownBarFill: {
     height: '100%',
     backgroundColor: Colors.textSecondary,
     borderRadius: 2,
+  },
+  countdownBarFillFeatured: {
+    backgroundColor: Colors.bg,
   },
   eventFooter: {
     flexDirection: 'row',
@@ -553,9 +565,17 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     paddingTop: Spacing.sm,
   },
+  eventFooterFeatured: {
+    borderTopColor: Colors.bg,
+    opacity: 0.5,
+  },
   eventDate: {
     ...Typography.caption,
     color: Colors.textMuted,
+  },
+  eventDateFeatured: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   newsBadge: {
     paddingHorizontal: Spacing.sm,

@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.sm,
     marginTop: Spacing.md,
-    paddingHorizontal: Spacing.base,
   },
   titleRow: {
     flexDirection: 'row',
