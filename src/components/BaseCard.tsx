@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Colors, Radius, Spacing, Typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { Skeleton } from './Skeleton';
 
 interface Props {
   name: string;
@@ -41,20 +42,15 @@ export function BaseCard({
   onSave,
 }: Props) {
   const safeRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
-  const [imgRatio, setImgRatio] = useState<number | null>(null);
-
   return (
     <View style={styles.card}>
-      <View style={[styles.thumbnail, !previewImage && { aspectRatio: 1 }]}>
+      <View style={styles.thumbnail}>
+        <Skeleton width="100%" height="100%" borderRadius={0} />
         {previewImage ? (
           <Image
             source={{ uri: previewImage }}
-            style={[styles.thumbImage, { aspectRatio: imgRatio ?? 1 }]}
+            style={styles.thumbImage}
             resizeMode="cover"
-            onLoad={(e) => {
-              const { width, height } = e.nativeEvent.source;
-              if (width && height) setImgRatio(width / height);
-            }}
           />
         ) : (
           <Text style={styles.thText}>TH{townHallLevel}</Text>
@@ -140,6 +136,7 @@ const styles = StyleSheet.create({
   },
   thumbnail: {
     width: '100%',
+    aspectRatio: 1.6,
     backgroundColor: Colors.bgSubtle,
     position: 'relative',
     overflow: 'hidden',
@@ -147,7 +144,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   thumbImage: {
-    width: '100%',
+    ...StyleSheet.absoluteFill,
   },
   thText: {
     ...Typography.title1,

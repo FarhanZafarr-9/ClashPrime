@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   Image,
@@ -22,6 +21,7 @@ import { ItemCard } from '../../src/components/ItemCard';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
+import { Skeleton } from '../../src/components/Skeleton';
 
 
 type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment';
@@ -266,11 +266,38 @@ export default function PlayerProfileScreen() {
     const detail = details[name];
 
     if (detail === undefined) {
-      // Still fetching.
       return (
-        <View style={styles.panelLoading}>
-          <ActivityIndicator size="small" color={colors.textSecondary} />
-          <Text style={[styles.panelLoadingText, { color: colors.textTertiary }]}>Loading stats…</Text>
+        <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
+          {/* Description skeleton */}
+          <View style={{ marginBottom: Spacing.base, gap: 4 }}>
+            <Skeleton width="100%" height={10} borderRadius={3} />
+            <Skeleton width="75%" height={10} borderRadius={3} />
+          </View>
+          {/* Pills skeleton */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginBottom: Spacing.base }}>
+            {[60, 50, 70, 40].map((w, i) => (
+              <Skeleton key={i} width={w} height={22} borderRadius={11} />
+            ))}
+          </View>
+          {/* Stats table skeleton */}
+          <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, overflow: 'hidden' }}>
+            <View style={{ flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+              {['Lvl', 'DPS', 'HP', 'Cost', 'Time', 'Lab'].map((_, i) => (
+                <View key={i} style={{ flex: 1, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.xs, alignItems: 'center' }}>
+                  <Skeleton width={i === 0 ? 20 : 30} height={10} borderRadius={3} />
+                </View>
+              ))}
+            </View>
+            {[0, 1, 2].map((r) => (
+              <View key={r} style={{ flexDirection: 'row', borderBottomWidth: r < 2 ? StyleSheet.hairlineWidth : 0, borderBottomColor: colors.border }}>
+                {[0, 1, 2, 3, 4, 5].map((c) => (
+                  <View key={c} style={{ flex: 1, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.xs, alignItems: 'center' }}>
+                    <Skeleton width={c === 0 ? 16 : c === 3 ? 36 : 28} height={10} borderRadius={3} />
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
         </View>
       );
     }
@@ -815,16 +842,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-  },
-  panelLoading: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  panelLoadingText: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
   },
   panelEmpty: {
     paddingVertical: Spacing.base,

@@ -265,65 +265,70 @@ export function ProfileScreenSkeleton() {
 export function ArmiesScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={{ flex: 1, paddingBottom: 64 }}>
-        <View style={styles.header}>
-          <View style={{ gap: 6 }}>
-            <Skeleton width={130} height={20} borderRadius={6} />
-            <Skeleton width={180} height={12} borderRadius={4} />
-          </View>
-          <Skeleton width={36} height={36} borderRadius={18} />
+    <View style={{ flex: 1 }}>
+      {/* Header: row with title+subtitle on left, refresh on right */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: Spacing.base, paddingTop: Spacing.lg, paddingBottom: Spacing.sm }}>
+        <View>
+          <Skeleton width={130} height={22} borderRadius={6} />
+          <Skeleton width={180} height={12} borderRadius={4} style={{ marginTop: 4 }} />
         </View>
+        <Skeleton width={28} height={28} borderRadius={14} />
+      </View>
+      {/* Count bar skeleton */}
+      <View style={{ paddingHorizontal: Spacing.base, paddingBottom: Spacing.sm }}>
+        <Skeleton width={100} height={14} borderRadius={4} />
+      </View>
+      {/* Cards */}
+      <View>
         {[0, 1, 2].map((i) => (
           <View key={i} style={[styles.armyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             {/* Top row: TH icon + name/author + score */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
               <Skeleton width={32} height={32} borderRadius={4} />
-              <View style={{ flex: 1, gap: 3 }}>
-                <Skeleton width="60%" height={15} borderRadius={4} />
-                <Skeleton width="35%" height={10} borderRadius={3} />
+              <View style={{ flex: 1 }}>
+                <Skeleton width="60%" height={16} borderRadius={4} />
+                <Skeleton width="35%" height={10} borderRadius={3} style={{ marginTop: 4 }} />
               </View>
-              <Skeleton width={40} height={12} borderRadius={4} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                <Skeleton width={14} height={14} borderRadius={7} />
+                <Skeleton width={30} height={12} borderRadius={4} />
+              </View>
             </View>
-            {/* Grid area: 6 blank cells */}
-            <View style={{ flexDirection: 'row', gap: 4, marginTop: Spacing.sm }}>
-              {[0, 1, 2, 3, 4, 5].map((j) => (
-                <View key={j} style={{ flex: 1, alignItems: 'center' }}>
-                  <Skeleton width={40} height={40} borderRadius={0} />
-                </View>
-              ))}
-            </View>
+            {/* Spacer matching grid margin in actual card (blank grid cells, no visible content) */}
+            <View style={{ height: Spacing.md }} />
             {/* Detail table: bordered box with 2 columns */}
-            <View style={{ flexDirection: 'row', marginTop: Spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+            <View style={{ marginTop: 0, flexDirection: 'row', borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
               <View style={{ flex: 1 }}>
                 {[0, 1, 2, 3].map((r) => (
-                  <View key={r} style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+                  <View key={r} style={{ flexDirection: 'row', paddingVertical: 6, paddingHorizontal: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
                     <Skeleton width="60%" height={10} borderRadius={3} />
-                    <Skeleton width={20} height={10} borderRadius={3} style={{ marginLeft: 'auto' }} />
+                    <View style={{ flex: 1 }} />
+                    <Skeleton width={28} height={10} borderRadius={3} />
                   </View>
                 ))}
               </View>
               <View style={{ width: 1, backgroundColor: colors.border }} />
               <View style={{ flex: 1 }}>
                 {[0, 1, 2, 3].map((r) => (
-                  <View key={r} style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+                  <View key={r} style={{ flexDirection: 'row', paddingVertical: 6, paddingHorizontal: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
                     <Skeleton width="60%" height={10} borderRadius={3} />
-                    <Skeleton width={20} height={10} borderRadius={3} style={{ marginLeft: 'auto' }} />
+                    <View style={{ flex: 1 }} />
+                    <Skeleton width={28} height={10} borderRadius={3} />
                   </View>
                 ))}
               </View>
             </View>
             {/* Actions row */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: Spacing.sm }}>
-              <Skeleton width={18} height={18} borderRadius={4} />
-              <Skeleton width={18} height={18} borderRadius={4} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: Spacing.sm }}>
+              <Skeleton width={18} height={18} borderRadius={4} style={{ padding: Spacing.xs }} />
+              <Skeleton width={18} height={18} borderRadius={4} style={{ padding: Spacing.xs }} />
               <View style={{ flex: 1 }} />
-              <Skeleton width={80} height={26} borderRadius={6} />
+              <Skeleton width={88} height={30} borderRadius={6} />
             </View>
           </View>
         ))}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

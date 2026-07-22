@@ -21,7 +21,7 @@ export const DarkColors = {
   warning: '#D4A359', // Premium gold theme color
   destructive: '#666666',
   overlay: 'rgba(0,0,0,0.6)',
-  shimmer: '#1A1A1A',
+  shimmer: '#555555',
 };
 
 export const LightColors = {
@@ -43,7 +43,7 @@ export const LightColors = {
   warning: '#D4A359', // Premium gold theme color
   destructive: '#FF3B30',
   overlay: 'rgba(0,0,0,0.4)',
-  shimmer: '#D1D1D6',
+  shimmer: '#B0B0B5',
 };
 
 // Global theme state
