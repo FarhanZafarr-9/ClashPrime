@@ -147,8 +147,50 @@ export default function BaseLibraryScreen() {
   }, [selectedCategory]);
 
   const currentBases = filteredBases;
-  const visibleBases = currentBases.slice(0, displayCount);
-  const hasMore = displayCount < currentBases.length;
+
+  const yearSections = useMemo(() => {
+    const groups = new Map<number, ScrapedBase[]>();
+    const nullGroup: ScrapedBase[] = [];
+    for (const b of currentBases) {
+      if (b.year != null) {
+        if (!groups.has(b.year)) groups.set(b.year, []);
+        groups.get(b.year)!.push(b);
+      } else {
+        nullGroup.push(b);
+      }
+    }
+    // Sort within each year by hotScore desc
+    for (const [, arr] of groups) arr.sort((a, b) => (b.hotScore || 0) - (a.hotScore || 0));
+    nullGroup.sort((a, b) => (b.hotScore || 0) - (a.hotScore || 0));
+
+    const sections: { year: number | null; title: string; bases: ScrapedBase[] }[] = [];
+    // Years in descending order
+    const sortedYears = [...groups.keys()].sort((a, b) => b - a);
+    for (const y of sortedYears) {
+      sections.push({ year: y, title: String(y), bases: groups.get(y)! });
+    }
+    if (nullGroup.length > 0) {
+      sections.push({ year: null, title: 'Unknown', bases: nullGroup });
+    }
+    return sections;
+  }, [currentBases]);
+
+  const visibleSections = useMemo(() => {
+    let remaining = displayCount;
+    const result: typeof yearSections = [];
+    for (const section of yearSections) {
+      const take = Math.min(section.bases.length, remaining);
+      if (take > 0) {
+        result.push({ ...section, bases: section.bases.slice(0, take) });
+        remaining -= take;
+      }
+      if (remaining <= 0) break;
+    }
+    return result;
+  }, [yearSections, displayCount]);
+
+  const totalBases = currentBases.length;
+  const hasMore = displayCount < totalBases;
 
   const handleScroll = useCallback((e: any) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
@@ -207,8 +249,8 @@ export default function BaseLibraryScreen() {
         <>
           <View style={styles.countBar}>
             <Text style={styles.countText}>
-              {currentBases.length} base{currentBases.length !== 1 ? 's' : ''}
-              {currentBases.length > PAGE_SIZE && ` · showing ${Math.min(displayCount, currentBases.length)}`}
+              {totalBases} base{totalBases !== 1 ? 's' : ''}
+              {totalBases > PAGE_SIZE && ` · showing ${Math.min(displayCount, totalBases)}`}
             </Text>
           </View>
 
@@ -218,39 +260,46 @@ export default function BaseLibraryScreen() {
             onScroll={handleScroll}
             scrollEventThrottle={100}
           >
-            {currentBases.length === 0 ? (
+            {totalBases === 0 ? (
               <EmptyState
                 icon={'🔍'}
                 title={'No bases found'}
                 description={`No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for TH${thLevel}. Try a different filter.`}
               />
             ) : (
-              visibleBases.map((base) => {
-                const scrapedBase = base as ScrapedBase;
-                const isFav = baseFavorites.has(scrapedBase.detail_url);
-                const isSavedBase = isSaved(scrapedBase.detail_url);
-                return (
-                  <BaseCard
-                    key={String(scrapedBase.id)}
-                    name={scrapedBase.title}
-                    category={CATEGORY_MAP[scrapedBase.type] || scrapedBase.type}
-                    townHallLevel={scrapedBase.th_level}
-                    rating={scrapedBase.rating_out_of_5}
-                    tags={scrapedBase.tags}
-                    previewImage={scrapedBase.preview_image_url}
-                    views={scrapedBase.views_raw}
-                    downloads={scrapedBase.votes}
-                    year={scrapedBase.year}
-                    updated={scrapedBase.updated}
-                    hasLink={scrapedBase.has_link}
-                    isFavorite={isFav}
-                    isSaved={isSavedBase}
-                    onFavorite={() => handleFavorite(scrapedBase.detail_url)}
-                    onCopy={() => handleCopy(scrapedBase)}
-                    onSave={() => handleSave(scrapedBase)}
-                  />
-                );
-              })
+              visibleSections.map((section) => (
+                <View key={section.year ?? 'unknown'}>
+                  <Text style={styles.yearHeader}>
+                    {section.title}
+                    <Text style={styles.yearCount}> · {section.bases.length}</Text>
+                  </Text>
+                  {section.bases.map((scrapedBase) => {
+                    const isFav = baseFavorites.has(scrapedBase.detail_url);
+                    const isSavedBase = isSaved(scrapedBase.detail_url);
+                    return (
+                      <BaseCard
+                        key={String(scrapedBase.id)}
+                        name={scrapedBase.title}
+                        category={CATEGORY_MAP[scrapedBase.type] || scrapedBase.type}
+                        townHallLevel={scrapedBase.th_level}
+                        rating={scrapedBase.rating_out_of_5}
+                        tags={scrapedBase.tags}
+                        previewImage={scrapedBase.preview_image_url}
+                        views={scrapedBase.views_raw}
+                        downloads={scrapedBase.votes}
+                        year={scrapedBase.year}
+                        updated={scrapedBase.updated}
+                        hasLink={scrapedBase.has_link}
+                        isFavorite={isFav}
+                        isSaved={isSavedBase}
+                        onFavorite={() => handleFavorite(scrapedBase.detail_url)}
+                        onCopy={() => handleCopy(scrapedBase)}
+                        onSave={() => handleSave(scrapedBase)}
+                      />
+                    );
+                  })}
+                </View>
+              ))
             )}
             <View style={{ height: 100 }} />
           </ScrollView>
@@ -366,6 +415,21 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.sm,
+  },
+  yearHeader: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    fontSize: 14,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  yearCount: {
+    fontWeight: '400',
+    fontSize: 12,
+    color: Colors.textTertiary,
   },
   savedItem: {
     flexDirection: 'row',
