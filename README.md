@@ -131,6 +131,10 @@ npx tsx scraper/download-building-images.ts
 npx tsx scraper/run-building-levels.ts
 ```
 
+## Roadmap
+
+- **Landing page** — A simple static HTML page for web presence, deployed via Vercel from the same repo.
+
 ## License
 
 MIT
