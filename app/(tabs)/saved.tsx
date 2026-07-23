@@ -20,7 +20,7 @@ import {
   toggleFavorite as toggleBaseFavorite,
 } from '../../src/hooks/usePlayer';
 import type { SavedBase } from '../../src/hooks/usePlayer';
-import type { ClashArmy, UnitDef } from '../../src/types/armies';
+import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SAVED_ARMIES_KEY = 'clashprime_saved_armies';
@@ -80,6 +80,8 @@ export default function SavedScreen() {
   const [armyFavorites, setArmyFavorites] = useState<Set<string>>(new Set());
   const [armies, setArmies] = useState<ClashArmy[]>([]);
   const [unitsById, setUnitsById] = useState<Map<number, UnitDef>>(new Map());
+  const [equipmentById, setEquipmentById] = useState<Map<number, EquipmentDef>>(new Map());
+  const [petsById, setPetsById] = useState<Map<number, PetDef>>(new Map());
 
   const loadData = useCallback(async () => {
     const [saved, favs, sArmies, aFavs] = await Promise.all([
@@ -101,9 +103,11 @@ export default function SavedScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const { armies: list, unitsById: defs } = await getPopularArmies();
+        const { armies: list, unitsById: defs, equipmentById: eqDefs, petsById: pDefs } = await getPopularArmies();
         setArmies(list);
         if (defs.size > 0) setUnitsById(defs);
+        if (eqDefs.size > 0) setEquipmentById(eqDefs);
+        if (pDefs.size > 0) setPetsById(pDefs);
       } catch {}
     })();
   }, []);
@@ -244,6 +248,8 @@ export default function SavedScreen() {
                       key={army.id}
                       army={army}
                       unitsById={unitsById}
+                      equipmentById={equipmentById}
+                      petsById={petsById}
                       isFavorite={isFav}
                       isSaved={isSaved}
                       onFavorite={() => handleToggleArmyFav(army.id)}

@@ -132,7 +132,7 @@ function resolveArmy(data: any[], armyIdx: number): ClashArmy {
   };
 }
 
-export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies: ClashArmy[]; unitsById: Map<number, UnitDef> }> {
+export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies: ClashArmy[]; unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> }> {
   const cacheKey = `${CACHE_PREFIX}list`;
   if (!bypassCache) {
     try {
@@ -143,7 +143,7 @@ export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies:
         if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
           const cachedDefs = await getCachedDefs();
           if (cachedDefs.unitsById.size > 0) {
-            return { armies: entry.armies, unitsById: cachedDefs.unitsById };
+            return { armies: entry.armies, unitsById: cachedDefs.unitsById, equipmentById: cachedDefs.equipmentById, petsById: cachedDefs.petsById };
           }
         }
       }
@@ -172,10 +172,10 @@ export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies:
 
   const header = armiesData[0];
   const armiesArrIdx: number = (header as any).armies ?? -1;
-  if (armiesArrIdx < 0) return { armies: [], unitsById: defs.unitsById };
+  if (armiesArrIdx < 0) return { armies: [], unitsById: defs.unitsById, equipmentById: defs.equipmentById, petsById: defs.petsById };
 
   const armyIndices: number[] = armiesData[armiesArrIdx];
-  if (!Array.isArray(armyIndices)) return { armies: [], unitsById: defs.unitsById };
+  if (!Array.isArray(armyIndices)) return { armies: [], unitsById: defs.unitsById, equipmentById: defs.equipmentById, petsById: defs.petsById };
 
   const armies: ClashArmy[] = [];
   for (const idx of armyIndices) {
@@ -188,7 +188,7 @@ export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies:
     await AsyncStorage.setItem(cacheKey, JSON.stringify({ armies, timestamp: Date.now() }));
   } catch {}
 
-  return { armies, unitsById: defs.unitsById };
+  return { armies, unitsById: defs.unitsById, equipmentById: defs.equipmentById, petsById: defs.petsById };
 }
 
 export async function getCachedDefs(): Promise<{ unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> }> {

@@ -13,7 +13,7 @@ import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { ArmyCard } from '../../src/components/ArmyCard';
 import { EmptyState } from '../../src/components/EmptyState';
-import type { ClashArmy, UnitDef } from '../../src/types/armies';
+import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
 import { getPopularArmies } from '../../src/api/clashArmies';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -75,6 +75,8 @@ export default function ArmiesScreen() {
   const { player } = usePlayer();
   const [armies, setArmies] = useState<ClashArmy[]>([]);
   const [unitsById, setUnitsById] = useState<Map<number, UnitDef>>(new Map());
+  const [equipmentById, setEquipmentById] = useState<Map<number, EquipmentDef>>(new Map());
+  const [petsById, setPetsById] = useState<Map<number, PetDef>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savedArmies, setSavedArmies] = useState<SavedArmy[]>([]);
@@ -90,9 +92,11 @@ export default function ArmiesScreen() {
     try {
       setLoading(true);
       setError(null);
-      const { armies: list, unitsById: defs } = await getPopularArmies(bypass);
+      const { armies: list, unitsById: defs, equipmentById: eqDefs, petsById: pDefs } = await getPopularArmies(bypass);
       setArmies(list);
       if (defs.size > 0) setUnitsById(defs);
+      if (eqDefs.size > 0) setEquipmentById(eqDefs);
+      if (pDefs.size > 0) setPetsById(pDefs);
     } catch (e: any) {
       setError(e.message || 'Failed to load armies');
     } finally {
@@ -252,6 +256,8 @@ export default function ArmiesScreen() {
                     key={army.id}
                     army={army}
                     unitsById={unitsById}
+                    equipmentById={equipmentById}
+                    petsById={petsById}
                     isFavorite={isFav}
                     isSaved={isSavedArmy}
                     onFavorite={() => handleArmyFavorite(army.id)}
