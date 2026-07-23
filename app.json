@@ -24,6 +24,7 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
+      "expo-updates",
       [
         "expo-splash-screen",
         {
@@ -34,6 +35,15 @@
         }
       ]
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/05158f35-ef70-4899-a1ed-916838720598",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
+    },
     "extra": {
       "router": {},
       "eas": {

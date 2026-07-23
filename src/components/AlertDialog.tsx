@@ -63,6 +63,7 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
       transparent
       animationType="fade"
       onRequestClose={onDismiss}
+      statusBarTranslucent
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

@@ -28,6 +28,7 @@ import {
 } from '../../src/hooks/usePlayer';
 import { usePlayerActions } from '../../src/hooks/usePlayerContext';
 import { useDialog } from '../../src/components/AlertDialog';
+import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
 
 interface SettingItemProps {
   icon: string;
@@ -36,13 +37,15 @@ interface SettingItemProps {
   onPress?: () => void;
   showArrow?: boolean;
   danger?: boolean;
+  loading?: boolean;
 }
 
-function SettingItem({ icon, label, value, onPress, showArrow = true, danger, bgColor }: SettingItemProps & { bgColor: string }) {
+function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: SettingItemProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.settingItem, { backgroundColor: bgColor }, pressed && styles.settingItemPressed]}
+      style={({ pressed }) => [styles.settingItem, { backgroundColor: pressed ? colors.bgCardHover : colors.bgCard, borderColor: colors.border }, pressed && { borderColor: colors.textMuted }]}
     >
       <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
         <Ionicons name={icon as any} size={16} color={danger ? Colors.bg : Colors.textSecondary} />
@@ -192,6 +195,23 @@ export default function SettingsScreen() {
     });
   };
 
+  const handleCheckUpdates = async () => {
+    try {
+      const update = await checkForUpdateAsync();
+      if (update.isAvailable) {
+        showDialog({
+          title: 'Update Available',
+          message: 'A new update is available. Downloading now...',
+          actions: [{ label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } }, { label: 'Later', onPress: () => {} }],
+        });
+      } else {
+        showDialog({ title: 'Up to Date', message: 'You are on the latest version.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+      }
+    } catch {
+      showDialog({ title: 'Update Check Failed', message: 'Could not check for updates. Check your internet connection.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+    }
+  };
+
   const handleClearCache = async () => {
     await clearAppCache();
     bumpTagVersion();
@@ -330,14 +350,12 @@ export default function SettingsScreen() {
             label="Player Tag"
             value={playerTag}
             onPress={handleEditTag}
-            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="key-outline"
             label="API Token"
             value={apiToken}
             onPress={handleEditToken}
-            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="sync-outline"
@@ -346,12 +364,11 @@ export default function SettingsScreen() {
               bumpTagVersion();
               showDialog({ title: 'Sync', message: 'Data will refresh now.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
             }}
-            bgColor={colors.bgCard}
           />
         </SettingGroup>
 
         <SettingGroup title="Appearance">
-          <View style={[styles.settingItem, { backgroundColor: colors.bgCard }]}>
+          <View style={[styles.settingItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.settingIcon}>
               <Ionicons name="moon-outline" size={16} color={Colors.textSecondary} />
             </View>
@@ -371,13 +388,16 @@ export default function SettingsScreen() {
             icon="cloud-download-outline"
             label="Clear Cache"
             onPress={handleClearCache}
-            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="download-outline"
             label="Export Data"
             onPress={handleExportData}
-            bgColor={colors.bgCard}
+          />
+          <SettingItem
+            icon="cloud-outline"
+            label="Check for Updates"
+            onPress={handleCheckUpdates}
           />
         </SettingGroup>
 
@@ -387,30 +407,26 @@ export default function SettingsScreen() {
             label="About ClashPrime"
             value="v2.0.0"
             onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
-            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="document-text-outline"
             label="Privacy Policy"
             onPress={openPrivacy}
-            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="heart-outline"
             label="Credits"
             onPress={openCredits}
-            bgColor={colors.bgCard}
           />
           <SettingItem
             icon="chatbubble-outline"
             label="Send Feedback"
             onPress={openFeedback}
-            bgColor={colors.bgCard}
           />
         </SettingGroup>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>ClashPrime v1.0.0</Text>
+          <Text style={styles.footerText}>ClashPrime v2.0.0</Text>
           <View style={styles.footerMadeRow}>
             <Text style={styles.footerSubtext}>Made with </Text>
             <Image source={heartImg} style={styles.footerHeart} />
@@ -426,6 +442,7 @@ export default function SettingsScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent
         onShow={() => modalInputRef.current?.focus()}
       >
         <KeyboardAvoidingView
@@ -497,6 +514,7 @@ export default function SettingsScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => setContentVisible(false)}
+        statusBarTranslucent
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -542,6 +560,7 @@ export default function SettingsScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => setShowOnboarding(false)}
+        statusBarTranslucent
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -634,14 +653,11 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 13,
+    paddingVertical: Spacing.sm,
     gap: Spacing.md,
-  },
-  settingItemPressed: {
-    opacity: 0.7,
-    backgroundColor: Colors.bgSubtle,
   },
   settingIcon: {
     width: 36,
