@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   thBadge: {
     width: 48,
     height: 48,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',

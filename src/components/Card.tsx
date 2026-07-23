@@ -38,7 +38,7 @@ export function Card({ title, subtitle, children, style, compact }: Props) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.md,
     borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.base,
