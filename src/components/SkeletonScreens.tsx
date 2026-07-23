@@ -52,7 +52,7 @@ export function BasesScreenSkeleton() {
                 <Skeleton width="60%" height={16} borderRadius={4} />
                 <Skeleton width={20} height={20} borderRadius={10} />
               </View>
-              <Skeleton width="100%" height={38} borderRadius={Radius.lg} />
+              <Skeleton width="100%" height={38} borderRadius={Radius.md} />
             </View>
           </View>
         ))}

@@ -151,20 +151,20 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
 
       {/* Actions */}
       <View style={styles.actionsRow}>
+        <View style={styles.spacer} />
         <Pressable onPress={onSave} hitSlop={8} style={styles.actionBtn}>
           <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={18} color={isSaved ? colors.textPrimary : colors.textTertiary} />
         </Pressable>
         <Pressable onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
           <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
         </Pressable>
-        <View style={styles.spacer} />
-        {onCopy && (
-          <Pressable onPress={onCopy} style={styles.copyBtn}>
-            <Ionicons name="copy-outline" size={14} color={Colors.bg} />
-            <Text style={styles.copyBtnText}>Copy Army</Text>
-          </Pressable>
-        )}
       </View>
+      {onCopy && (
+        <Pressable onPress={onCopy} style={styles.copyBtn}>
+          <Ionicons name="copy-outline" size={14} color={Colors.bg} />
+          <Text style={styles.copyBtnText}>Copy Army</Text>
+        </Pressable>
+      )}
     </Pressable>
   );
 }
@@ -330,11 +330,12 @@ const styles = StyleSheet.create({
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.sm,
     backgroundColor: Colors.textPrimary,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
     borderRadius: 6,
+    marginTop: Spacing.md,
   },
   copyBtnText: {
     ...Typography.caption,

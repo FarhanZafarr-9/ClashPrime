@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { BaseCard } from '../../src/components/BaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
+import { Skeleton } from '../../src/components/Skeleton';
 import type { ScrapedBase, ScrapeResult } from '../../src/types/bases';
 import { scrapeBasesForTH } from '../../src/api/baseScraper';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -46,6 +47,7 @@ const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
 
 export default function BaseLibraryScreen() {
   const { player } = usePlayer();
+  const { colors } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [baseData, setBaseData] = useState<ScrapeResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -159,9 +161,9 @@ export default function BaseLibraryScreen() {
         nullGroup.push(b);
       }
     }
-    // Sort within each year by hotScore desc
-    for (const [, arr] of groups) arr.sort((a, b) => (b.hotScore || 0) - (a.hotScore || 0));
-    nullGroup.sort((a, b) => (b.hotScore || 0) - (a.hotScore || 0));
+    // Sort within each year by download count desc
+    for (const [, arr] of groups) arr.sort((a, b) => b.views - a.views);
+    nullGroup.sort((a, b) => b.views - a.views);
 
     const sections: { year: number | null; title: string; bases: ScrapedBase[] }[] = [];
     // Years in descending order
@@ -280,7 +282,6 @@ export default function BaseLibraryScreen() {
                       <BaseCard
                         key={String(scrapedBase.id)}
                         name={scrapedBase.title}
-                        category={CATEGORY_MAP[scrapedBase.type] || scrapedBase.type}
                         townHallLevel={scrapedBase.th_level}
                         rating={scrapedBase.rating_out_of_5}
                         tags={scrapedBase.tags}
@@ -300,6 +301,22 @@ export default function BaseLibraryScreen() {
                   })}
                 </View>
               ))
+            )}
+            {totalBases > 0 && hasMore && (
+              <View style={{ gap: Spacing.base }}>
+                {[0, 1].map((i) => (
+                  <View key={i} style={{ borderRadius: Radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bgCard, overflow: 'hidden' }}>
+                    <View style={{ width: '100%', aspectRatio: 1.6, backgroundColor: colors.bgSubtle }} />
+                    <View style={{ padding: Spacing.base, gap: Spacing.sm }}>
+                      <Skeleton width="60%" height={16} borderRadius={4} />
+                      <Skeleton width="100%" height={38} borderRadius={8} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+            {totalBases > 0 && !hasMore && (
+              <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You've reached the end</Text>
             )}
             <View style={{ height: 100 }} />
           </ScrollView>
@@ -430,6 +447,12 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 12,
     color: Colors.textTertiary,
+  },
+  endMessage: {
+    ...Typography.caption,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
+    fontStyle: 'italic',
   },
   savedItem: {
     flexDirection: 'row',

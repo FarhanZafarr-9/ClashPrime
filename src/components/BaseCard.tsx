@@ -6,7 +6,6 @@ import { Skeleton } from './Skeleton';
 
 interface Props {
   name: string;
-  category: string;
   townHallLevel: number;
   rating: number;
   tags: string[];
@@ -25,7 +24,6 @@ interface Props {
 
 export function BaseCard({
   name,
-  category,
   townHallLevel,
   rating = 0,
   tags,
@@ -90,7 +88,6 @@ export function BaseCard({
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
-            <Text style={styles.category}>{category}</Text>
           </View>
           <View style={styles.actionRow}>
             <Pressable onPress={onSave} hitSlop={8} style={styles.actionBtn}>
@@ -128,7 +125,7 @@ export function BaseCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: 'hidden',
@@ -228,11 +225,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 20,
   },
-  category: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 1,
-  },
   actionRow: {
     flexDirection: 'row',
     gap: Spacing.xs,
@@ -250,7 +242,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     backgroundColor: Colors.textPrimary,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
   },
   copyBtnDisabled: {
     backgroundColor: Colors.bgSubtle,

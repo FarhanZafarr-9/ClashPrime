@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { ArmyCard } from '../../src/components/ArmyCard';
 import { EmptyState } from '../../src/components/EmptyState';
+import { Skeleton } from '../../src/components/Skeleton';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
 import { getPopularArmies } from '../../src/api/clashArmies';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -73,6 +74,7 @@ const ARMY_TAG_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
 
 export default function ArmiesScreen() {
   const { player } = usePlayer();
+  const { colors } = useTheme();
   const [armies, setArmies] = useState<ClashArmy[]>([]);
   const [unitsById, setUnitsById] = useState<Map<number, UnitDef>>(new Map());
   const [equipmentById, setEquipmentById] = useState<Map<number, EquipmentDef>>(new Map());
@@ -272,6 +274,34 @@ export default function ArmiesScreen() {
                 );
               })
             )}
+            {currentArmies.length > 0 && hasMore && (
+              <View style={{ gap: Spacing.base }}>
+                {[0, 1].map((i) => (
+                  <View key={i} style={{ borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bgCard, padding: Spacing.base, gap: Spacing.md }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                      <Skeleton width={36} height={36} borderRadius={4} />
+                      <View style={{ flex: 1 }}>
+                        <Skeleton width="60%" height={16} borderRadius={4} />
+                        <Skeleton width="35%" height={10} borderRadius={3} style={{ marginTop: 4 }} />
+                      </View>
+                      <Skeleton width={14} height={14} borderRadius={7} />
+                    </View>
+                    <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+                      <View style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 14 }}>
+                        <Skeleton width="60%" height={10} borderRadius={3} />
+                      </View>
+                      <View style={{ width: 1, backgroundColor: colors.border }} />
+                      <View style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 14 }}>
+                        <Skeleton width="60%" height={10} borderRadius={3} />
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+            {currentArmies.length > 0 && !hasMore && (
+              <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You've reached the end</Text>
+            )}
             <View style={{ height: 100 }} />
           </ScrollView>
         </>
@@ -419,5 +449,11 @@ const styles = StyleSheet.create({
     ...Typography.footnote,
     color: Colors.textTertiary,
     marginTop: 2,
+  },
+  endMessage: {
+    ...Typography.caption,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
+    fontStyle: 'italic',
   },
 });
