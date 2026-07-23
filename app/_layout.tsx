@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { PlayerProvider } from '../src/hooks/usePlayerContext';
 import { useTheme, loadTheme } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
+import { loadDiscounts } from '../src/hooks/useDiscounts';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function RootLayout() {
   useEffect(() => {
     (async () => {
       await loadTheme();
+      await loadDiscounts();
       const token = await getApiToken();
       if (!token) {
         router.replace('/onboarding');

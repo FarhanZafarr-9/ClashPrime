@@ -15,6 +15,9 @@ import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../s
 import { Card } from '../../src/components/Card';
 import thLevelsData from '../../src/data/th-levels.json';
 import buildingLevelsData from '../../src/data/building-levels.json';
+import { useDiscounts } from '../../src/hooks/useDiscounts';
+import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
+import DiscountModal from '../../src/components/DiscountModal';
 
 const COL_ABBREV: Record<string, string> = {
   'Damage per Second': 'DPS',
@@ -151,7 +154,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed, isBB }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean }) {
+function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; discounts: { costPercent: number; timePercent: number } }) {
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [tableViewportW, setTableViewportW] = useState(0);
@@ -184,6 +187,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB }: { name: string; maxLvl: n
   }
 
   const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
+  const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
   const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
   const renderGrid = () => (
@@ -290,13 +294,19 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB }: { name: string; maxLvl: n
                         statCols.map((col: string) => {
                           const val = levelData[col] ?? '—';
                           const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                          const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
+                          const displayVal = isDiscounted
+                            ? (col === 'Build Cost'
+                              ? applyCostDiscount(val, discounts)
+                              : applyTimeDiscount(String(val), discounts))
+                            : formatted;
                           return (
                             <Text
                               key={col}
-                              style={[styles.buildingStatCell, { color: Colors.textSecondary, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                              style={[styles.buildingStatCell, { color: isDiscounted ? Colors.warning : Colors.textSecondary, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
                               numberOfLines={1}
                             >
-                              {formatted}
+                              {displayVal}
                             </Text>
                           );
                         })}
@@ -343,6 +353,8 @@ function formatCostShort(cost: number): string {
 
 export default function BuildingsScreen() {
   const { player } = usePlayer();
+  const { discounts, setCostPercent, setTimePercent, resetDiscounts } = useDiscounts();
+  const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
@@ -382,16 +394,19 @@ export default function BuildingsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={styles.title}>Buildings</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>Buildings</Text>
+            <Pressable onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
+              <Ionicons
+                name={discounts.costPercent > 0 || discounts.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
+                size={24}
+                color={discounts.costPercent > 0 || discounts.timePercent > 0 ? Colors.warning : Colors.textSecondary}
+              />
+            </Pressable>
+          </View>
           <Text style={styles.subtitle}>
             {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
           </Text>
-          <View style={styles.legendRow}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, styles.legendDotCurrent]} />
-              <Text style={styles.legendText}>Current max</Text>
-            </View>
-          </View>
         </View>
 
         <View style={styles.pillRow}>
@@ -420,12 +435,22 @@ export default function BuildingsScreen() {
               maxLvl={maxLvl}
               isMaxed={isMaxed}
               isBB={isBB}
+              discounts={discounts}
             />
           );
         })}
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <DiscountModal
+        visible={discountModalVisible}
+        onClose={() => setDiscountModalVisible(false)}
+        discounts={discounts}
+        onCostChange={setCostPercent}
+        onTimeChange={setTimePercent}
+        onReset={resetDiscounts}
+      />
     </SafeAreaView>
   );
 }
@@ -442,6 +467,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     ...Typography.largeTitle,

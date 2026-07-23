@@ -17,6 +17,9 @@ import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { ItemCard } from '../../src/components/ItemCard';
+import { useDiscounts } from '../../src/hooks/useDiscounts';
+import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
+import DiscountModal from '../../src/components/DiscountModal';
 
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
@@ -58,6 +61,8 @@ function parseUnlockRequirements(raw: string): { source: string; cost?: string; 
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
   const { isDark, colors } = useTheme();
+  const { discounts, setCostPercent, setTimePercent, resetDiscounts } = useDiscounts();
+  const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('heroes');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedName, setExpandedName] = useState<string | null>(null);
@@ -354,6 +359,7 @@ export default function PlayerProfileScreen() {
 
     const isTroopLike = (detail.levels[0]?.dps ?? 0) > 0 || (detail.levels[0]?.hitpoints ?? 0) > 0;
     const extraLabels = detail.levels[0]?.extra?.map((e) => e.label) ?? [];
+    const showDiscounted = discounts.costPercent > 0 || discounts.timePercent > 0;
     const contentMinW = 28 + 56 + 48 + 72 + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 48);
 
     return (
@@ -457,8 +463,8 @@ export default function PlayerProfileScreen() {
                           </Text>
                         ))
                       )}
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 56 }]}>{l.upgradeCost || '—'}</Text>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 48 }]}>{l.upgradeTime || '—'}</Text>
+                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 56 }]}>{showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts) : (l.upgradeCost || '—')}</Text>
+                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts) : (l.upgradeTime || '—')}</Text>
                       <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
                     </View>
                   );
@@ -541,20 +547,29 @@ export default function PlayerProfileScreen() {
             <Text style={styles.title}>Army</Text>
             <Text style={styles.subtitle}>All your troops, heroes, spells & equipment</Text>
           </View>
-          <Pressable
-            onPress={onRefresh}
-            disabled={refreshing}
-            hitSlop={12}
-            style={styles.headerRefreshBtn}
-            accessibilityLabel="Force refresh all images and details"
-            accessibilityRole="button"
-          >
-            <Ionicons
-              name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
-              size={28}
-              color={refreshing ? Colors.textTertiary : Colors.textSecondary}
-            />
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+            <Pressable onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
+              <Ionicons
+                name={discounts.costPercent > 0 || discounts.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
+                size={24}
+                color={discounts.costPercent > 0 || discounts.timePercent > 0 ? colors.warning : colors.textSecondary}
+              />
+            </Pressable>
+            <Pressable
+              onPress={onRefresh}
+              disabled={refreshing}
+              hitSlop={12}
+              style={styles.headerRefreshBtn}
+              accessibilityLabel="Force refresh all images and details"
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
+                size={28}
+                color={refreshing ? Colors.textTertiary : colors.textSecondary}
+              />
+            </Pressable>
+          </View>
         </View>
 
         <ScrollView
@@ -779,6 +794,15 @@ export default function PlayerProfileScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <DiscountModal
+        visible={discountModalVisible}
+        onClose={() => setDiscountModalVisible(false)}
+        discounts={discounts}
+        onCostChange={setCostPercent}
+        onTimeChange={setTimePercent}
+        onReset={resetDiscounts}
+      />
     </SafeAreaView>
   );
 }
