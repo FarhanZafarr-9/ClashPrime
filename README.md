@@ -9,11 +9,12 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 ## Features
 
 - **Home Dashboard** — overview of your village with progress cards, quick actions, and quick stats
-- **Army** — troops, heroes, spells, pets, equipment with images, level stats tables, and progress tracking
-- **Buildings** — expandable cards showing all 80+ buildings with level model progression and stat tables (Home Village + Builder Base)
+- **Army** — troops, heroes, spells, pets, equipment with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns
+- **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles
 - **Events** — upcoming in-game events with countdown timers and progress bars
-- **Base Library** — browse TH-level base layouts with community ratings from ClashLy (paginated, category filters)
-- **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, and in-game copy
+- **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback
+- **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, in-game copy, and end-of-list feedback
+- **Discount System** — modal with per-scope (Buildings / Army) cost and time reduction sliders, preset pills, custom percentage input, and instant preview across all tabs
 - **Saved** — quick access to saved and favorited bases and armies
 - **Awards** — standalone tab with star summary and village-filtered achievement list
 - **Settings** — API token & dark mode, plus Credits, Privacy Policy and Feedback (reach us at farhanzafarr.9@gmail.com)
@@ -129,10 +130,6 @@ npx tsx scraper/download-building-images.ts
 # Scrape building level data from Fandom wiki (all building types)
 npx tsx scraper/run-building-levels.ts
 ```
-
-## Roadmap
-
-- **Building level data from Fandom** ✅ — Per-building descriptions, max levels, and full stat tables from the Clash of Clans Fandom Wiki (`action=raw` wikitext). Runs via `npx tsx scraper/run-building-levels.ts` and generates `src/data/building-levels.json`. Covers **83 buildings** across all categories: Defenses, Resources, Army buildings, Traps, Walls, and their Builder Base variants. The scraper uses a flexible parser that handles both single-line (`||`-delimited) and multi-line cell formats, `{{GoldPass}}` cost/template wrappers, and dynamically discovers column sets instead of hardcoding them. Column names are normalised (Damage per Second → DPS, Hitpoints → HP, etc.) for consistent display, and info-only tables (Range, Attack Speed, Damage Type) are automatically skipped.
 
 ## License
 
