@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     overflow: 'hidden',
     marginBottom: Spacing.base,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   ratingText: {
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   viewsText: {
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   yearBadgeUpdated: {

@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textPrimary,
     backgroundColor: Colors.bgCard,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.base,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     padding: Spacing.md,

@@ -305,7 +305,7 @@ export default function BaseLibraryScreen() {
             {totalBases > 0 && hasMore && (
               <View style={{ gap: Spacing.base }}>
                 {[0, 1].map((i) => (
-                  <View key={i} style={{ borderRadius: Radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bgCard, overflow: 'hidden' }}>
+                  <View key={i} style={{ borderRadius: Radius.lg, borderWidth: 0.75, borderColor: colors.border, backgroundColor: colors.bgCard, overflow: 'hidden' }}>
                     <View style={{ width: '100%', aspectRatio: 1.6, backgroundColor: colors.bgSubtle }} />
                     <View style={{ padding: Spacing.base, gap: Spacing.sm }}>
                       <Skeleton width="60%" height={16} borderRadius={4} />
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   filterPillActive: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

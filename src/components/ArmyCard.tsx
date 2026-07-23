@@ -172,7 +172,7 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
 const styles = StyleSheet.create({
   card: {
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 0.75,
     padding: Spacing.base,
     marginBottom: Spacing.base,
   },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   thBadgeText: {
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   detailTable: {
     flexDirection: 'row',
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: 6,
     overflow: 'hidden',
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     maxWidth: 120,
   },
   heroTable: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: 6,
     overflow: 'hidden',

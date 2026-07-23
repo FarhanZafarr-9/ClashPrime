@@ -32,7 +32,7 @@ export function BasesScreenSkeleton() {
             {/* Thumbnail block with aspect ratio */}
             <View style={{ width: '100%', aspectRatio: 1.6, backgroundColor: colors.bgSubtle, position: 'relative', overflow: 'hidden' }}>
               <Skeleton width="100%" height="100%" borderRadius={0} />
-              
+
               {/* Overlay badge placeholders */}
               <View style={{ position: 'absolute', top: Spacing.sm, left: Spacing.sm }}>
                 <Skeleton width={38} height={18} borderRadius={9} />
@@ -45,7 +45,7 @@ export function BasesScreenSkeleton() {
                 <Skeleton width={40} height={18} borderRadius={9} />
               </View>
             </View>
-            
+
             {/* Content area */}
             <View style={{ padding: Spacing.base, gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -286,7 +286,7 @@ export function ArmiesScreenSkeleton() {
             {/* Troops */}
             <View style={{ marginTop: Spacing.md }}>
               <Skeleton width={50} height={12} borderRadius={3} style={{ marginBottom: Spacing.sm }} />
-              <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+              <View style={{ flexDirection: 'row', borderWidth: 0.75, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
                 <View style={{ flex: 1 }}>
                   {[0, 1, 2].map((r) => (
                     <View key={r} style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
@@ -311,7 +311,7 @@ export function ArmiesScreenSkeleton() {
             {/* Heroes */}
             <View style={{ marginTop: Spacing.md }}>
               <Skeleton width={50} height={12} borderRadius={3} style={{ marginBottom: Spacing.sm }} />
-              <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+              <View style={{ borderWidth: 0.75, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
                 {/* Header */}
                 <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.bgSubtle }}>
                   <View style={{ flex: 1.3, paddingVertical: 6, paddingHorizontal: 14, alignItems: 'center' }}>
@@ -347,7 +347,7 @@ export function ArmiesScreenSkeleton() {
             {/* Clan Castle */}
             <View style={{ marginTop: Spacing.md }}>
               <Skeleton width={80} height={12} borderRadius={3} style={{ marginBottom: Spacing.sm }} />
-              <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+              <View style={{ flexDirection: 'row', borderWidth: 0.75, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
                 <View style={{ flex: 1 }}>
                   {[0, 1].map((r) => (
                     <View key={r} style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.md,
   },
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   statsTable: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.base,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: Radius.sm,
     overflow: 'hidden',
   },
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    borderWidth: 1,
+    borderWidth: 0.75,
     paddingVertical: Spacing.base,
     borderRadius: Radius.lg,
   },
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 1,
+    borderWidth: 0.75,
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: Radius.sm,
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
     backgroundColor: Colors.bgCard,
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.base,
   },
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     overflow: 'hidden',
   },
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.md,
   },

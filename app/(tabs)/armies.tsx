@@ -277,7 +277,7 @@ export default function ArmiesScreen() {
             {currentArmies.length > 0 && hasMore && (
               <View style={{ gap: Spacing.base }}>
                 {[0, 1].map((i) => (
-                  <View key={i} style={{ borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bgCard, padding: Spacing.base, gap: Spacing.md }}>
+                  <View key={i} style={{ borderRadius: 10, borderWidth: 0.75, borderColor: colors.border, backgroundColor: colors.bgCard, padding: Spacing.base, gap: Spacing.md }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
                       <Skeleton width={36} height={36} borderRadius={4} />
                       <View style={{ flex: 1 }}>
@@ -286,7 +286,7 @@ export default function ArmiesScreen() {
                       </View>
                       <Skeleton width={14} height={14} borderRadius={7} />
                     </View>
-                    <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
+                    <View style={{ flexDirection: 'row', borderWidth: 0.75, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' }}>
                       <View style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 14 }}>
                         <Skeleton width="60%" height={10} borderRadius={3} />
                       </View>
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   filterPillActive: {
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

@@ -452,8 +452,8 @@ export default function BuildingsScreen() {
         army={discounts.army}
         onBuildingCostChange={setBuildingCost}
         onBuildingTimeChange={setBuildingTime}
-        onArmyCostChange={() => {}}
-        onArmyTimeChange={() => {}}
+        onArmyCostChange={() => { }}
+        onArmyTimeChange={() => { }}
         onReset={resetDiscounts}
       />
     </SafeAreaView>
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   pillActive: {
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   levelGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 3,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
   },
   buildingStatsTable: {
     marginTop: Spacing.sm,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',

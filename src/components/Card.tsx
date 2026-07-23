@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.base,
     marginBottom: Spacing.base,

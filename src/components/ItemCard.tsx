@@ -37,7 +37,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           </View>
         )}
-        
+
         <View style={styles.middle}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
           {subtitle ? (
@@ -80,8 +80,8 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
@@ -95,16 +95,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icon: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
+    width: 44,
+    height: 44,
     marginRight: Spacing.md,
   },
   iconPlaceholder: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.md,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     alignItems: 'center',
     justifyContent: 'center',
@@ -153,7 +151,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   levelBadgeMaxed: {

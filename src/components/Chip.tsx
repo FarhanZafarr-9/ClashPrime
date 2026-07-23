@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgCard,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',

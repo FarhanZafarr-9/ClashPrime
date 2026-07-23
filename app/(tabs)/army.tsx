@@ -183,7 +183,7 @@ export default function PlayerProfileScreen() {
         getPetImageUrl(name),
         getEquipmentImageUrl(name),
       ].filter((u): u is string => !!u);
-      urls.forEach((url) => Image.prefetch(url).catch(() => {}));
+      urls.forEach((url) => Image.prefetch(url).catch(() => { }));
     }
   }, [expandedName, details, player]);
 
@@ -217,7 +217,7 @@ export default function PlayerProfileScreen() {
             getPetImageUrl(detail.name),
             getEquipmentImageUrl(detail.name),
           ].filter((u): u is string => !!u);
-          urls.forEach((url) => Image.prefetch(url).catch(() => {}));
+          urls.forEach((url) => Image.prefetch(url).catch(() => { }));
         }
       });
       setDetails((prev) => ({ ...prev, ...nextDetails }));
@@ -302,7 +302,7 @@ export default function PlayerProfileScreen() {
             ))}
           </View>
           {/* Stats table skeleton */}
-          <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: Radius.sm, overflow: 'hidden' }}>
+          <View style={{ borderWidth: 0.75, borderColor: colors.border, borderRadius: Radius.sm, overflow: 'hidden' }}>
             <View style={{ flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
               {['Lvl', 'DPS', 'HP', 'Cost', 'Time', 'Lab'].map((_, i) => (
                 <View key={i} style={{ flex: 1, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.xs, alignItems: 'center' }}>
@@ -824,8 +824,8 @@ export default function PlayerProfileScreen() {
         scope="army"
         buildings={discounts.buildings}
         army={discounts.army}
-        onBuildingCostChange={() => {}}
-        onBuildingTimeChange={() => {}}
+        onBuildingCostChange={() => { }}
+        onBuildingTimeChange={() => { }}
         onArmyCostChange={setArmyCost}
         onArmyTimeChange={setArmyTime}
         onReset={resetDiscounts}
@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   tabActive: {
@@ -913,12 +913,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     padding: Spacing.md,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   panelEmpty: {
     paddingVertical: Spacing.base,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: Radius.md,
     alignItems: 'center',
   },
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: 0.75,
   },
   panelPillText: {
     ...Typography.caption,
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   panelTable: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     marginBottom: Spacing.base,

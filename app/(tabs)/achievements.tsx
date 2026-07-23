@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   achievementSummary: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.base,
     marginHorizontal: Spacing.base,
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   achievementFilterPillActive: {

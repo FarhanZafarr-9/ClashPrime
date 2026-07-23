@@ -108,7 +108,7 @@ export default function SavedScreen() {
         if (defs.size > 0) setUnitsById(defs);
         if (eqDefs.size > 0) setEquipmentById(eqDefs);
         if (pDefs.size > 0) setPetsById(pDefs);
-      } catch {}
+      } catch { }
     })();
   }, []);
 
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

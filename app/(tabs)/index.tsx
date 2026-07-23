@@ -6,7 +6,6 @@ import {
   StyleSheet,
   RefreshControl,
   Pressable,
-  ActivityIndicator,
   Image,
   Alert,
 } from 'react-native';
@@ -429,7 +428,7 @@ const styles = StyleSheet.create({
   statsTable: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
@@ -465,7 +464,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: Colors.bgCard,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingVertical: 8,
     paddingHorizontal: 8,

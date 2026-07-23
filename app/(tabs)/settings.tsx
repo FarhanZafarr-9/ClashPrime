@@ -202,20 +202,20 @@ export default function SettingsScreen() {
         showDialog({
           title: 'Update Available',
           message: 'A new update is available. Downloading now...',
-          actions: [{ label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } }, { label: 'Later', onPress: () => {} }],
+          actions: [{ label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } }, { label: 'Later', onPress: () => { } }],
         });
       } else {
-        showDialog({ title: 'Up to Date', message: 'You are on the latest version.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+        showDialog({ title: 'Up to Date', message: 'You are on the latest version.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
       }
     } catch {
-      showDialog({ title: 'Update Check Failed', message: 'Could not check for updates. Check your internet connection.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+      showDialog({ title: 'Update Check Failed', message: 'Could not check for updates. Check your internet connection.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
     }
   };
 
   const handleClearCache = async () => {
     await clearAppCache();
     bumpTagVersion();
-    showDialog({ title: 'Cache Cleared', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+    showDialog({ title: 'Cache Cleared', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
   };
 
   const handleExportData = async () => {
@@ -226,7 +226,7 @@ export default function SettingsScreen() {
         title: 'ClashPrime Export',
       });
     } catch {
-      showDialog({ title: 'Export Failed', message: 'Could not export data. Please try again.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+      showDialog({ title: 'Export Failed', message: 'Could not export data. Please try again.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
     }
   };
 
@@ -406,7 +406,7 @@ export default function SettingsScreen() {
             icon="information-circle-outline"
             label="About ClashPrime"
             value="v2.0.0"
-            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}
+            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
           />
           <SettingItem
             icon="document-text-outline"
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     gap: Spacing.md,
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
     width: '85%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.xl,
     gap: Spacing.sm,
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
     paddingRight: Spacing.sm,
@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     overflow: 'hidden',
   },
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.base,
@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
     width: '85%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.xl,
     alignItems: 'center',
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textPrimary,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.base,
