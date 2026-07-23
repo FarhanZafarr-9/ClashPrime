@@ -61,7 +61,7 @@ function parseUnlockRequirements(raw: string): { source: string; cost?: string; 
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
   const { isDark, colors } = useTheme();
-  const { discounts, setCostPercent, setTimePercent, resetDiscounts } = useDiscounts();
+  const { discounts, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('heroes');
   const [refreshing, setRefreshing] = useState(false);
@@ -359,8 +359,22 @@ export default function PlayerProfileScreen() {
 
     const isTroopLike = (detail.levels[0]?.dps ?? 0) > 0 || (detail.levels[0]?.hitpoints ?? 0) > 0;
     const extraLabels = detail.levels[0]?.extra?.map((e) => e.label) ?? [];
-    const showDiscounted = discounts.costPercent > 0 || discounts.timePercent > 0;
-    const contentMinW = 28 + 56 + 48 + 72 + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 48);
+    const showDiscounted = discounts.army.costPercent > 0 || discounts.army.timePercent > 0;
+    const contentMinW = 28 + 56 + 48 + 72 + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 54);
+
+    // Acronyms for long column names
+    const acronymMap = new Map<string, string>();
+    const legendEntries: { acronym: string; full: string }[] = [];
+    for (const lbl of extraLabels) {
+      if (lbl.length > 6) {
+        const acronym = lbl.split(/\s+/).map((w) => w[0]).join('').toUpperCase();
+        if (acronym !== lbl) {
+          acronymMap.set(lbl, acronym);
+          legendEntries.push({ acronym, full: lbl });
+        }
+      }
+    }
+    const headerLabels = extraLabels.map((lbl) => acronymMap.get(lbl) ?? lbl);
 
     return (
       <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
@@ -426,6 +440,15 @@ export default function PlayerProfileScreen() {
         {visibleDetailLevels.length > 0 && (
           <>
             <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
+            {legendEntries.length > 0 && (
+              <View style={{ marginBottom: Spacing.sm }}>
+                {legendEntries.map((e) => (
+                  <Text key={e.acronym} style={[styles.panelLegend, { color: colors.textTertiary }]}>
+                    <Text style={{ fontWeight: '700' }}>{e.acronym}</Text> = {e.full}
+                  </Text>
+                ))}
+              </View>
+            )}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.base }} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
               <View style={[styles.panelTable, { borderColor: colors.border, minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
                 <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
@@ -436,8 +459,8 @@ export default function PlayerProfileScreen() {
                       <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>HP</Text>
                     </>
                   ) : (
-                    (extraLabels.length ? extraLabels : ['Value']).map((lbl) => (
-                      <Text key={lbl} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>{lbl}</Text>
+                    (headerLabels.length ? headerLabels : ['Val']).map((lbl, i) => (
+                      <Text key={i} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 54 }]}>{lbl}</Text>
                     ))
                   )}
                   <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 56 }]}>Cost</Text>
@@ -457,14 +480,14 @@ export default function PlayerProfileScreen() {
                           <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.hitpoints}</Text>
                         </>
                       ) : (
-                        (extraLabels.length ? extraLabels : ['Value']).map((lbl) => (
-                          <Text key={lbl} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 48 }]}>
+                        (extraLabels.length ? extraLabels : ['Value']).map((lbl, i) => (
+                          <Text key={i} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 54 }]}>
                             {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
                           </Text>
                         ))
                       )}
-                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 56 }]}>{showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts) : (l.upgradeCost || '—')}</Text>
-                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts) : (l.upgradeTime || '—')}</Text>
+                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 56 }]}>{showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}</Text>
+                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}</Text>
                       <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
                     </View>
                   );
@@ -550,9 +573,9 @@ export default function PlayerProfileScreen() {
           <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
             <Pressable onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
               <Ionicons
-                name={discounts.costPercent > 0 || discounts.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
+                name={discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
                 size={24}
-                color={discounts.costPercent > 0 || discounts.timePercent > 0 ? colors.warning : colors.textSecondary}
+                color={discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? colors.warning : colors.textSecondary}
               />
             </Pressable>
             <Pressable
@@ -798,9 +821,13 @@ export default function PlayerProfileScreen() {
       <DiscountModal
         visible={discountModalVisible}
         onClose={() => setDiscountModalVisible(false)}
-        discounts={discounts}
-        onCostChange={setCostPercent}
-        onTimeChange={setTimePercent}
+        scope="army"
+        buildings={discounts.buildings}
+        army={discounts.army}
+        onBuildingCostChange={() => {}}
+        onBuildingTimeChange={() => {}}
+        onArmyCostChange={setArmyCost}
+        onArmyTimeChange={setArmyTime}
         onReset={resetDiscounts}
       />
     </SafeAreaView>
@@ -951,6 +978,11 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
     fontSize: 14,
+  },
+  panelLegend: {
+    ...Typography.caption,
+    fontSize: 10,
+    marginBottom: Spacing.sm,
   },
   expandTableBtn: {
     flexDirection: 'row',

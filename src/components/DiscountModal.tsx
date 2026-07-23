@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,22 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
-import { Discounts } from '../hooks/useDiscounts';
+import type { ScopeDiscount } from '../hooks/useDiscounts';
 
 interface DiscountModalProps {
   visible: boolean;
   onClose: () => void;
-  discounts: Discounts;
-  onCostChange: (pct: number) => void;
-  onTimeChange: (pct: number) => void;
+  scope: 'buildings' | 'army';
+  buildings: ScopeDiscount;
+  army: ScopeDiscount;
+  onBuildingCostChange: (pct: number) => void;
+  onBuildingTimeChange: (pct: number) => void;
+  onArmyCostChange: (pct: number) => void;
+  onArmyTimeChange: (pct: number) => void;
   onReset: () => void;
 }
 
@@ -27,23 +32,32 @@ function DiscountSlider({
   icon,
   value,
   onChange,
-  color,
 }: {
   label: string;
   icon: string;
   value: number;
   onChange: (pct: number) => void;
-  color: string;
 }) {
-  const multiplier = ((100 - value) / 100).toFixed(2);
+  const [customText, setCustomText] = useState('');
+  const multiplier = value && !isNaN(value) ? ((100 - value) / 100).toFixed(2) : '1.00';
+  const active = value > 0;
+
+  const handleCustom = () => {
+    const parsed = parseInt(customText, 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 100) {
+      onChange(parsed);
+    }
+    setCustomText('');
+  };
+
   return (
     <View style={styles.sliderSection}>
       <View style={styles.sliderHeader}>
         <View style={styles.sliderLabelRow}>
-          <Ionicons name={icon as any} size={16} color={color} />
+          <Ionicons name={icon as any} size={16} color={Colors.textSecondary} />
           <Text style={styles.sliderLabel}>{label}</Text>
         </View>
-        <Text style={[styles.sliderValue, { color }]}>{value}%</Text>
+        <Text style={[styles.sliderValue, active && styles.sliderValueActive]}>{!value || isNaN(value) ? 'Off' : `${value}%`}</Text>
       </View>
 
       <View style={styles.pillRow}>
@@ -52,10 +66,10 @@ function DiscountSlider({
           return (
             <Pressable
               key={p}
-              style={[styles.pill, isActive && { backgroundColor: color, borderColor: color }]}
+              style={[styles.pill, isActive && styles.pillActive]}
               onPress={() => onChange(p)}
             >
-              <Text style={[styles.pillText, isActive && { color: Colors.bg }]}>
+              <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
                 {p === 0 ? 'Off' : `-${p}%`}
               </Text>
             </Pressable>
@@ -63,14 +77,29 @@ function DiscountSlider({
         })}
       </View>
 
+      <View style={styles.customRow}>
+        <TextInput
+          style={styles.customInput}
+          placeholder="Custom %"
+          placeholderTextColor={Colors.textMuted}
+          keyboardType="number-pad"
+          value={customText}
+          onChangeText={setCustomText}
+          onSubmitEditing={handleCustom}
+          returnKeyType="done"
+          maxLength={3}
+        />
+        <Pressable style={styles.customApply} onPress={handleCustom}>
+          <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+        </Pressable>
+      </View>
+
       {value > 0 && (
         <View style={styles.multiplierRow}>
-          <View style={[styles.multiplierBadge, { backgroundColor: color + '20' }]}>
-            <Text style={[styles.multiplierText, { color }]}>×{multiplier}</Text>
+          <View style={styles.multiplierBadge}>
+            <Text style={styles.multiplierText}>×{multiplier}</Text>
           </View>
-          <Text style={styles.multiplierHint}>
-            {icon === 'cash-outline' ? 'Building & research costs' : 'Build & upgrade times'} ×{multiplier}
-          </Text>
+          <Text style={styles.multiplierHint}>multiplier ×{multiplier}</Text>
         </View>
       )}
     </View>
@@ -80,12 +109,19 @@ function DiscountSlider({
 export default function DiscountModal({
   visible,
   onClose,
-  discounts,
-  onCostChange,
-  onTimeChange,
+  scope,
+  buildings,
+  army,
+  onBuildingCostChange,
+  onBuildingTimeChange,
+  onArmyCostChange,
+  onArmyTimeChange,
   onReset,
 }: DiscountModalProps) {
-  const anyActive = discounts.costPercent > 0 || discounts.timePercent > 0;
+  const scopeDiscount = scope === 'buildings' ? buildings : army;
+  const anyActive = scopeDiscount.costPercent > 0 || scopeDiscount.timePercent > 0;
+
+  function pctLabel(v: number) { return v === 0 ? 'Off' : `-${v}%`; }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -100,7 +136,7 @@ export default function DiscountModal({
               <View>
                 <Text style={styles.cardTitle}>Discounts</Text>
                 <Text style={styles.cardSubtitle}>
-                  Apply reductions to costs & upgrade times
+                  {scope === 'buildings' ? 'Building upgrades' : 'Army research'}
                 </Text>
               </View>
             </View>
@@ -110,45 +146,31 @@ export default function DiscountModal({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-            <View style={styles.scopeNote}>
-              <Ionicons name="information-circle-outline" size={12} color={Colors.textMuted} />
-              <Text style={styles.scopeNoteText}>
-                Applies to all building upgrades and troop/hero research costs & times
-              </Text>
-            </View>
-
+            <Text style={styles.scopeLabel}>{scope === 'buildings' ? 'Buildings' : 'Army'}</Text>
             <DiscountSlider
               label="Cost Reduction"
               icon="cash-outline"
-              value={discounts.costPercent}
-              onChange={onCostChange}
-              color={Colors.warning}
+              value={scopeDiscount.costPercent}
+              onChange={scope === 'buildings' ? onBuildingCostChange : onArmyCostChange}
             />
-
             <View style={styles.divider} />
-
             <DiscountSlider
               label="Time Reduction"
               icon="time-outline"
-              value={discounts.timePercent}
-              onChange={onTimeChange}
-              color="#6EB8FF"
+              value={scopeDiscount.timePercent}
+              onChange={scope === 'buildings' ? onBuildingTimeChange : onArmyTimeChange}
             />
 
             {anyActive && (
               <View style={styles.summaryRow}>
                 <View style={styles.summaryBlock}>
                   <Text style={styles.summaryLabel}>Cost</Text>
-                  <Text style={[styles.summaryValue, { color: Colors.warning }]}>
-                    -{discounts.costPercent}%
-                  </Text>
+                  <Text style={styles.summaryValue}>{pctLabel(scopeDiscount.costPercent)}</Text>
                 </View>
                 <Ionicons name="close-outline" size={14} color={Colors.textMuted} />
                 <View style={styles.summaryBlock}>
                   <Text style={styles.summaryLabel}>Time</Text>
-                  <Text style={[styles.summaryValue, { color: '#6EB8FF' }]}>
-                    -{discounts.timePercent}%
-                  </Text>
+                  <Text style={styles.summaryValue}>{pctLabel(scopeDiscount.timePercent)}</Text>
                 </View>
               </View>
             )}
@@ -230,23 +252,16 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.md,
   },
-  scopeNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.sm,
-  },
-  scopeNoteText: {
+  scopeLabel: {
     ...Typography.caption,
     color: Colors.textMuted,
-    flex: 1,
-    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: Spacing.sm,
   },
   sliderSection: {
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   sliderHeader: {
     flexDirection: 'row',
@@ -266,24 +281,61 @@ const styles = StyleSheet.create({
   sliderValue: {
     ...Typography.title2,
     fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  sliderValueActive: {
+    color: Colors.textPrimary,
   },
   pillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   pill: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 1,
     borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
     borderColor: Colors.border,
   },
+  pillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
   pillText: {
     ...Typography.caption,
     fontWeight: '700',
     color: Colors.textSecondary,
+    fontSize: 11,
+  },
+  pillTextActive: {
+    color: Colors.bg,
+  },
+  customRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  customInput: {
+    height: 40,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    width: 96,
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  customApply: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   multiplierRow: {
     flexDirection: 'row',
@@ -294,11 +346,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
   },
   multiplierText: {
     ...Typography.caption,
     fontWeight: '700',
     fontSize: 12,
+    color: Colors.textSecondary,
   },
   multiplierHint: {
     ...Typography.caption,
@@ -307,17 +361,18 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: Colors.border,
-    marginVertical: Spacing.sm,
+    marginVertical: Spacing.xs,
   },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     paddingVertical: Spacing.md,
     marginTop: Spacing.sm,
     backgroundColor: Colors.bgSubtle,
     borderRadius: Radius.lg,
+    flexWrap: 'wrap',
   },
   summaryBlock: {
     alignItems: 'center',
@@ -327,10 +382,13 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     fontWeight: '500',
+    fontSize: 10,
   },
   summaryValue: {
     ...Typography.title3,
     fontWeight: '700',
+    color: Colors.textPrimary,
+    fontSize: 16,
   },
   resetBtn: {
     flexDirection: 'row',

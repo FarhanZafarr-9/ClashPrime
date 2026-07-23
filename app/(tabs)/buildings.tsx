@@ -16,6 +16,7 @@ import { Card } from '../../src/components/Card';
 import thLevelsData from '../../src/data/th-levels.json';
 import buildingLevelsData from '../../src/data/building-levels.json';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
+import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
 import DiscountModal from '../../src/components/DiscountModal';
 
@@ -154,7 +155,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; discounts: { costPercent: number; timePercent: number } }) {
+function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; discounts: ScopeDiscount }) {
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [tableViewportW, setTableViewportW] = useState(0);
@@ -297,7 +298,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
                           const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
                           const displayVal = isDiscounted
                             ? (col === 'Build Cost'
-                              ? applyCostDiscount(val, discounts)
+                              ? applyCostDiscount(formatted, discounts)
                               : applyTimeDiscount(String(val), discounts))
                             : formatted;
                           return (
@@ -353,7 +354,7 @@ function formatCostShort(cost: number): string {
 
 export default function BuildingsScreen() {
   const { player } = usePlayer();
-  const { discounts, setCostPercent, setTimePercent, resetDiscounts } = useDiscounts();
+  const { discounts, setBuildingCost, setBuildingTime, resetDiscounts } = useDiscounts();
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
@@ -398,9 +399,9 @@ export default function BuildingsScreen() {
             <Text style={styles.title}>Buildings</Text>
             <Pressable onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
               <Ionicons
-                name={discounts.costPercent > 0 || discounts.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
+                name={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
                 size={24}
-                color={discounts.costPercent > 0 || discounts.timePercent > 0 ? Colors.warning : Colors.textSecondary}
+                color={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? Colors.warning : Colors.textSecondary}
               />
             </Pressable>
           </View>
@@ -435,7 +436,7 @@ export default function BuildingsScreen() {
               maxLvl={maxLvl}
               isMaxed={isMaxed}
               isBB={isBB}
-              discounts={discounts}
+              discounts={discounts.buildings}
             />
           );
         })}
@@ -446,9 +447,13 @@ export default function BuildingsScreen() {
       <DiscountModal
         visible={discountModalVisible}
         onClose={() => setDiscountModalVisible(false)}
-        discounts={discounts}
-        onCostChange={setCostPercent}
-        onTimeChange={setTimePercent}
+        scope="buildings"
+        buildings={discounts.buildings}
+        army={discounts.army}
+        onBuildingCostChange={setBuildingCost}
+        onBuildingTimeChange={setBuildingTime}
+        onArmyCostChange={() => {}}
+        onArmyTimeChange={() => {}}
         onReset={resetDiscounts}
       />
     </SafeAreaView>

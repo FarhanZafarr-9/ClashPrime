@@ -1,4 +1,4 @@
-import { Discounts } from '../hooks/useDiscounts';
+import type { ScopeDiscount } from '../hooks/useDiscounts';
 
 // Parse a time string like "5s", "30m", "2h", "1d 12h", "7d" into total seconds.
 export function parseTimeToSeconds(timeStr: string): number | null {
@@ -42,7 +42,7 @@ function parseCostToFullNumber(cost: string): number {
 
 // Apply a cost discount: cost is a raw number or a formatted string like "1.5M".
 // Returns the discounted value as a formatted string preserving the original unit scale.
-export function applyCostDiscount(cost: string | number, discounts: Discounts): string {
+export function applyCostDiscount(cost: string | number, discounts: ScopeDiscount): string {
   if (discounts.costPercent <= 0) return String(cost);
   let fullValue: number;
   let hadUnit = false;
@@ -61,7 +61,7 @@ export function applyCostDiscount(cost: string | number, discounts: Discounts): 
 }
 
 // Apply a time discount to a time string like "1d 12h". Returns discounted string.
-export function applyTimeDiscount(timeStr: string, discounts: Discounts): string {
+export function applyTimeDiscount(timeStr: string, discounts: ScopeDiscount): string {
   if (discounts.timePercent <= 0) return timeStr;
   const seconds = parseTimeToSeconds(timeStr);
   if (seconds === null) return timeStr;

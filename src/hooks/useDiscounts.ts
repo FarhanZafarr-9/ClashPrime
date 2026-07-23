@@ -3,18 +3,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = 'clashprime_discounts';
 
-export interface Discounts {
+export interface ScopeDiscount {
   costPercent: number;
   timePercent: number;
 }
 
-const DEFAULT_DISCOUNTS: Discounts = { costPercent: 0, timePercent: 0 };
+export interface Discounts {
+  buildings: ScopeDiscount;
+  army: ScopeDiscount;
+}
 
-let cachedDiscounts: Discounts = { ...DEFAULT_DISCOUNTS };
+const DEFAULT_SCOPE: ScopeDiscount = { costPercent: 0, timePercent: 0 };
+const DEFAULT_DISCOUNTS: Discounts = { buildings: { ...DEFAULT_SCOPE }, army: { ...DEFAULT_SCOPE } };
+
+let cachedDiscounts: Discounts = {
+  buildings: { ...DEFAULT_SCOPE },
+  army: { ...DEFAULT_SCOPE },
+};
 const listeners = new Set<() => void>();
 
 function notify() {
   listeners.forEach((l) => l());
+}
+
+function clamp(pct: number) {
+  return Math.max(0, Math.min(100, pct));
 }
 
 export async function loadDiscounts() {
@@ -22,9 +35,11 @@ export async function loadDiscounts() {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const b = parsed.buildings || {};
+      const a = parsed.army || {};
       cachedDiscounts = {
-        costPercent: Math.max(0, Math.min(100, parsed.costPercent ?? 0)),
-        timePercent: Math.max(0, Math.min(100, parsed.timePercent ?? 0)),
+        buildings: { costPercent: clamp(b.costPercent), timePercent: clamp(b.timePercent) },
+        army: { costPercent: clamp(a.costPercent), timePercent: clamp(a.timePercent) },
       };
       notify();
     }
@@ -33,11 +48,7 @@ export async function loadDiscounts() {
   }
 }
 
-export async function saveDiscounts(d: Discounts) {
-  cachedDiscounts = {
-    costPercent: Math.max(0, Math.min(100, d.costPercent)),
-    timePercent: Math.max(0, Math.min(100, d.timePercent)),
-  };
+async function persist() {
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cachedDiscounts));
   } catch {
@@ -50,7 +61,7 @@ export function useDiscounts() {
   const [discounts, setDiscounts] = useState<Discounts>(cachedDiscounts);
 
   useEffect(() => {
-    const listener = () => setDiscounts({ ...cachedDiscounts });
+    const listener = () => setDiscounts({ ...cachedDiscounts, buildings: { ...cachedDiscounts.buildings }, army: { ...cachedDiscounts.army } });
     listeners.add(listener);
     listener();
     return () => {
@@ -58,17 +69,30 @@ export function useDiscounts() {
     };
   }, []);
 
-  const setCostPercent = useCallback((pct: number) => {
-    saveDiscounts({ ...cachedDiscounts, costPercent: Math.max(0, Math.min(100, pct)) });
+  const setBuildingCost = useCallback((pct: number) => {
+    cachedDiscounts = { ...cachedDiscounts, buildings: { ...cachedDiscounts.buildings, costPercent: clamp(pct) } };
+    persist();
   }, []);
 
-  const setTimePercent = useCallback((pct: number) => {
-    saveDiscounts({ ...cachedDiscounts, timePercent: Math.max(0, Math.min(100, pct)) });
+  const setBuildingTime = useCallback((pct: number) => {
+    cachedDiscounts = { ...cachedDiscounts, buildings: { ...cachedDiscounts.buildings, timePercent: clamp(pct) } };
+    persist();
+  }, []);
+
+  const setArmyCost = useCallback((pct: number) => {
+    cachedDiscounts = { ...cachedDiscounts, army: { ...cachedDiscounts.army, costPercent: clamp(pct) } };
+    persist();
+  }, []);
+
+  const setArmyTime = useCallback((pct: number) => {
+    cachedDiscounts = { ...cachedDiscounts, army: { ...cachedDiscounts.army, timePercent: clamp(pct) } };
+    persist();
   }, []);
 
   const resetDiscounts = useCallback(() => {
-    saveDiscounts({ ...DEFAULT_DISCOUNTS });
+    cachedDiscounts = { buildings: { ...DEFAULT_SCOPE }, army: { ...DEFAULT_SCOPE } };
+    persist();
   }, []);
 
-  return { discounts, setCostPercent, setTimePercent, resetDiscounts };
+  return { discounts, setBuildingCost, setBuildingTime, setArmyCost, setArmyTime, resetDiscounts };
 }
