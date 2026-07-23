@@ -85,6 +85,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="war"
+        options={{
+          title: 'War',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
+              <Ionicons name="flag-outline" size={20} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="bases"
         options={{
           title: 'Bases',

@@ -103,6 +103,73 @@ export function isSuperTroop(name: string): boolean {
   return false;
 }
 
+// --- War ---
+
+export type WarState = 'notInWar' | 'inWar' | 'preparation' | 'warEnded';
+
+export interface WarAttack {
+  attackerTag: string;
+  defenderTag: string;
+  stars: number;
+  destructionPercentage: number;
+  order: number;
+  duration: number;
+}
+
+export interface WarMember {
+  tag: string;
+  name: string;
+  townhallLevel: number;
+  mapPosition: number;
+  attacks?: number;
+  opponentAttacks?: number;
+  bestOpponentAttack?: WarAttack;
+}
+
+export interface WarClanDetail {
+  tag: string;
+  name: string;
+  badgeUrls: BadgeUrls;
+  clanLevel: number;
+  attacks: number;
+  stars: number;
+  destructionPercentage: number;
+  members: WarMember[];
+}
+
+export interface ClanWar {
+  state: WarState;
+  teamSize: number;
+  preparationStartTime: string;
+  startTime: string;
+  endTime: string;
+  clan: WarClanDetail;
+  opponent: WarClanDetail;
+}
+
+export interface WarLogClan {
+  tag: string;
+  name: string;
+  badgeUrls: BadgeUrls;
+  clanLevel: number;
+  stars: number;
+  destructionPercentage: number;
+  attacks?: number;
+  expEarned?: number;
+}
+
+export interface WarLogEntry {
+  result: 'win' | 'lose' | 'draw';
+  endTime: string;
+  teamSize: number;
+  attacksPerMember: number;
+  battleModifier?: string;
+  clan: WarLogClan;
+  opponent: WarLogClan;
+}
+
+// --- End War ---
+
 export function filterHomeTroops(troops: Troop[]): Troop[] {
   return troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name));
 }
