@@ -54,8 +54,8 @@ function WarResultBadge({ result }: { result: string }) {
     draw: { label: 'D', color: Colors.textMuted, bg: Colors.bgSubtle },
   }[result] || { label: '—', color: Colors.textMuted, bg: Colors.bgSubtle };
   return (
-    <View style={[styles.resultBadge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.resultBadgeText, { color: config.color }]}>{config.label}</Text>
+    <View style={[styles.logResultBadge, { backgroundColor: config.bg }]}>
+      <Text style={[styles.logResultText, { color: config.color }]}>{config.label}</Text>
     </View>
   );
 }
@@ -64,17 +64,87 @@ function WarScreenSkeleton() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.skelBlock} />
+        <View style={styles.headerRow}>
+          <View style={{ width: 80, height: 28, borderRadius: 6, backgroundColor: Colors.bgSubtle }} />
+        </View>
+        <View style={{ width: 140, height: 14, borderRadius: 6, backgroundColor: Colors.bgSubtle, marginTop: 4 }} />
       </View>
       <View style={styles.scrollContent}>
-        {[1, 2].map((i) => (
-          <View key={i} style={styles.skelCard}>
-            <View style={styles.skelRow}>
-              <View style={styles.skelCircle} />
-              <View style={styles.skelLine} />
+        {/* Two clan cards + VS */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+          <View style={{ flex: 1, alignItems: 'center', gap: Spacing.xs, backgroundColor: Colors.bgSubtle, borderRadius: Radius.md, padding: Spacing.md }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.border }} />
+            <View style={{ width: 80, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+            <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+          </View>
+          <View style={{ width: 56, alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 20, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+            <View style={{ width: 32, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+          </View>
+          <View style={{ flex: 1, alignItems: 'center', gap: Spacing.xs, backgroundColor: Colors.bgSubtle, borderRadius: Radius.md, padding: Spacing.md }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.border }} />
+            <View style={{ width: 100, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+            <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+          </View>
+        </View>
+
+        {/* Stats table */}
+        <View style={{ borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm, overflow: 'hidden' }}>
+          {[0, 1, 2].map((r) => (
+            <View key={r} style={{ flexDirection: 'row', borderBottomWidth: r < 2 ? StyleSheet.hairlineWidth : 0, borderBottomColor: Colors.border }}>
+              <View style={{ width: 76, paddingVertical: 6, paddingHorizontal: Spacing.xs, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: Colors.border }}>
+                <View style={{ width: 50, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+              </View>
+              <View style={{ flex: 1, paddingVertical: 6, alignItems: 'center' }}>
+                <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+              </View>
+              <View style={{ flex: 1, paddingVertical: 6, alignItems: 'center' }}>
+                <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+              </View>
             </View>
-            <View style={styles.skelBar} />
-            <View style={styles.skelBarShort} />
+          ))}
+        </View>
+
+        {/* Members section header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.sm }}>
+          <View style={{ width: 60, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+        </View>
+
+        {/* Member rows */}
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: Spacing.md, backgroundColor: Colors.bgSubtle, borderRadius: Radius.sm }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 }}>
+              <View style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: Colors.border }} />
+              <View style={{ width: 100, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+            </View>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: Colors.border }} />
+              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: Colors.border }} />
+            </View>
+          </View>
+        ))}
+
+        {/* War History section header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.md }}>
+          <View style={{ width: 80, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+        </View>
+
+        {/* Pill row */}
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <View style={{ width: 80, height: 30, borderRadius: 15, backgroundColor: Colors.bgSubtle, borderWidth: 1, borderColor: Colors.border }} />
+          <View style={{ width: 60, height: 30, borderRadius: 15, backgroundColor: Colors.bgSubtle, borderWidth: 1, borderColor: Colors.border }} />
+        </View>
+
+        {/* Log entries */}
+        {[0, 1].map((i) => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, backgroundColor: Colors.bgSubtle, borderRadius: Radius.sm }}>
+            <View style={{ width: 28, height: 24, borderRadius: 6, backgroundColor: Colors.border }} />
+            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.border }} />
+            <View style={{ flex: 1, gap: 3 }}>
+              <View style={{ width: 120, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+              <View style={{ width: 80, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+            </View>
+            <View style={{ width: 50, height: 14, borderRadius: 7, backgroundColor: Colors.border }} />
           </View>
         ))}
       </View>
@@ -152,9 +222,6 @@ export default function WarScreen() {
       } else {
         setFetchErrors(prev => [...prev, `War history: ${warLogRes.reason?.message || 'unknown error'}`]);
       }
-
-      const cwlGroup = await api.getCwlLeagueGroup(clanTag).catch(() => null);
-      console.log('CWL league group:', JSON.stringify(cwlGroup, null, 2).slice(0, 5000));
 
       setData({ currentWar, warLog });
     } catch (e: any) {
@@ -678,14 +745,6 @@ const styles = StyleSheet.create({
   logClanName: { ...Typography.body, color: Colors.textPrimary, fontWeight: '600' },
   logDetail: { ...Typography.caption, color: Colors.textMuted, fontSize: 10 },
   logStars: { ...Typography.body, fontWeight: '700' },
-  resultBadge: { width: 28, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  resultBadgeText: { fontSize: 12, fontWeight: '800' },
-
-  skelBlock: { width: 120, height: 24, borderRadius: Radius.sm, backgroundColor: Colors.bgSubtle },
-  skelCard: { padding: Spacing.lg, borderRadius: Radius.md, backgroundColor: Colors.bgSubtle, gap: Spacing.md },
-  skelRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  skelCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.border },
-  skelLine: { flex: 1, height: 16, borderRadius: 8, backgroundColor: Colors.border },
-  skelBar: { height: 14, borderRadius: 7, backgroundColor: Colors.border, width: '80%' },
-  skelBarShort: { height: 14, borderRadius: 7, backgroundColor: Colors.border, width: '55%' },
+  logResultBadge: { width: 28, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  logResultText: { fontSize: 12, fontWeight: '800' },
 });
