@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ScrapedBase, ScrapeResult } from '../types/bases';
+import type { ScrapedBase, ScrapeResult, Village } from '../types/bases';
 
 const CLASHLY_API = 'https://api.clashly.app';
 const CLASHLY_APP_ID = '923673396b6e8649e9ed06ea63a3828f';
-const CACHE_PREFIX = 'bases_clashly_th_';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 const HEADERS = {
@@ -31,9 +30,18 @@ interface CacheEntry {
   timestamp: number;
 }
 
-async function getCached(thLevel: number): Promise<ScrapeResult | null> {
+function cacheKey(village: Village, level: number): string {
+  const prefix = village === 'home' ? 'bases_clashly_th_' : 'bases_clashly_bh_';
+  return `${prefix}${level}`;
+}
+
+function hallPrefix(village: Village): string {
+  return village === 'home' ? 'th' : 'bh';
+}
+
+async function getCached(village: Village, level: number): Promise<ScrapeResult | null> {
   try {
-    const raw = await AsyncStorage.getItem(`${CACHE_PREFIX}${thLevel}`);
+    const raw = await AsyncStorage.getItem(cacheKey(village, level));
     if (!raw) return null;
     const entry: CacheEntry = JSON.parse(raw);
     if (Date.now() - entry.timestamp > CACHE_TTL_MS) return null;
@@ -43,10 +51,10 @@ async function getCached(thLevel: number): Promise<ScrapeResult | null> {
   }
 }
 
-async function setCache(thLevel: number, data: ScrapeResult): Promise<void> {
+async function setCache(village: Village, level: number, data: ScrapeResult): Promise<void> {
   try {
     const entry: CacheEntry = { data, timestamp: Date.now() };
-    await AsyncStorage.setItem(`${CACHE_PREFIX}${thLevel}`, JSON.stringify(entry));
+    await AsyncStorage.setItem(cacheKey(village, level), JSON.stringify(entry));
   } catch {}
 }
 
@@ -69,14 +77,15 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
-function layoutToBase(layout: ClashLyLayout, thLevel: number): ScrapedBase {
+function layoutToBase(layout: ClashLyLayout, level: number, village: Village): ScrapedBase {
   const dateStr = layout.uploadedAt?.iso || '';
   const year = dateStr ? new Date(dateStr).getFullYear() : null;
 
   return {
     id: layout.objectId,
     type: layout.baseTag,
-    th_level: thLevel,
+    th_level: level,
+    village,
     title: `${mapBaseTag(layout.baseTag)} Base`,
     detail_url: layout.shareUrl,
     preview_image_url: layout.image?.url || '',
@@ -95,14 +104,16 @@ function layoutToBase(layout: ClashLyLayout, thLevel: number): ScrapedBase {
   };
 }
 
-export async function scrapeBasesForTH(
-  thLevel: number,
+async function scrapeBases(
+  village: Village,
+  level: number,
   _opts: { maxPages?: number; skipDetail?: boolean } = {}
 ): Promise<ScrapeResult> {
-  const cached = await getCached(thLevel);
+  const cached = await getCached(village, level);
   if (cached) return cached;
 
-  console.log(`[BaseScraper] Fetching TH${thLevel} from ClashLy...`);
+  const label = hallPrefix(village).toUpperCase();
+  console.log(`[BaseScraper] Fetching ${label}${level} from ClashLy...`);
 
   const allLayouts: ClashLyLayout[] = [];
   let skip = 0;
@@ -110,7 +121,7 @@ export async function scrapeBasesForTH(
   let hasMore = true;
 
   while (hasMore) {
-    const where = JSON.stringify({ hallLevel: `th${thLevel}` });
+    const where = JSON.stringify({ hallLevel: `${hallPrefix(village)}${level}` });
     const url = `${CLASHLY_API}/classes/Layout?where=${where}&limit=${limit}&skip=${skip}&order=-hotScore&keys=objectId,image,hallLevel,baseTag,shareUrl,downloadCount,votes,hotScore,recentDownloads,velocity,uploadedAt,refreshedAt`;
 
     const res = await fetch(url, { headers: HEADERS });
@@ -124,7 +135,7 @@ export async function scrapeBasesForTH(
     else skip += limit;
   }
 
-  const bases = allLayouts.map((l) => layoutToBase(l, thLevel));
+  const bases = allLayouts.map((l) => layoutToBase(l, level, village));
 
   const groups: Record<string, ScrapedBase[]> = {};
   for (const base of bases) {
@@ -137,23 +148,40 @@ export async function scrapeBasesForTH(
   }
 
   const result: ScrapeResult = {
-    th_level: thLevel,
+    th_level: level,
+    village,
     scraped_at: new Date().toISOString(),
     total_bases: bases.length,
     groups,
   };
 
-  await setCache(thLevel, result);
-  console.log(`[BaseScraper] TH${thLevel}: ${bases.length} bases from ClashLy`);
+  await setCache(village, level, result);
+  console.log(`[BaseScraper] ${label}${level}: ${bases.length} bases from ClashLy`);
   return result;
 }
 
-export async function clearBaseCache(thLevel?: number): Promise<void> {
-  if (thLevel) {
-    await AsyncStorage.removeItem(`${CACHE_PREFIX}${thLevel}`);
+export async function scrapeBasesForTH(
+  thLevel: number,
+  opts: { maxPages?: number; skipDetail?: boolean } = {}
+): Promise<ScrapeResult> {
+  return scrapeBases('home', thLevel, opts);
+}
+
+export async function scrapeBasesForBH(
+  bhLevel: number,
+  opts: { maxPages?: number; skipDetail?: boolean } = {}
+): Promise<ScrapeResult> {
+  return scrapeBases('builder', bhLevel, opts);
+}
+
+export async function clearBaseCache(village?: Village, level?: number): Promise<void> {
+  if (village && level) {
+    await AsyncStorage.removeItem(cacheKey(village, level));
   } else {
     const keys = await AsyncStorage.getAllKeys();
-    const baseKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));
+    const baseKeys = keys.filter(
+      (k) => k.startsWith('bases_clashly_th_') || k.startsWith('bases_clashly_bh_')
+    );
     await AsyncStorage.multiRemove(baseKeys);
   }
 }

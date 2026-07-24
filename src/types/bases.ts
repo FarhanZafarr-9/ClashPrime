@@ -1,7 +1,10 @@
+export type Village = 'home' | 'builder';
+
 export interface ScrapedBase {
   id: string | number;
   type: string;
   th_level: number;
+  village: Village;
   title: string;
   detail_url: string;
   preview_image_url: string;
@@ -21,6 +24,7 @@ export interface ScrapedBase {
 
 export interface ScrapeResult {
   th_level: number;
+  village: Village;
   scraped_at: string;
   total_bases: number;
   groups: Record<string, ScrapedBase[]>;
