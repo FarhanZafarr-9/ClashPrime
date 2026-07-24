@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Colors, Radius, Spacing, Typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Skeleton } from './Skeleton';
+import type { Village } from '../types/bases';
 
 interface Props {
   name: string;
   townHallLevel: number;
+  village?: Village;
   rating: number;
   tags: string[];
   previewImage?: string;
@@ -25,6 +27,7 @@ interface Props {
 export function BaseCard({
   name,
   townHallLevel,
+  village = 'home',
   rating = 0,
   tags,
   previewImage,
@@ -51,7 +54,7 @@ export function BaseCard({
             resizeMode="cover"
           />
         ) : (
-          <Text style={styles.thText}>TH{townHallLevel}</Text>
+          <Text style={styles.thText}>{village === 'builder' ? 'BH' : 'TH'}{townHallLevel}</Text>
         )}
         {safeRating > 0 && (
           <View style={styles.ratingBadge}>

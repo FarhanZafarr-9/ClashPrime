@@ -14,8 +14,8 @@ import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { BaseCard } from '../../src/components/BaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
-import type { ScrapedBase, ScrapeResult } from '../../src/types/bases';
-import { scrapeBasesForTH } from '../../src/api/baseScraper';
+import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
+import { scrapeBasesForTH, scrapeBasesForBH } from '../../src/api/baseScraper';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import {
   getSavedBases,
@@ -45,10 +45,16 @@ const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
   { key: 'CWL', label: 'CWL', icon: 'medal-outline' },
 ];
 
+const VILLAGE_OPTIONS: { key: Village; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'home', label: 'Home Village', icon: 'home-outline' },
+  { key: 'builder', label: 'Builder Base', icon: 'hammer-outline' },
+];
+
 export default function BaseLibraryScreen() {
   const { player } = usePlayer();
   const { colors } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedVillage, setSelectedVillage] = useState<Village>('home');
   const [baseData, setBaseData] = useState<ScrapeResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
@@ -58,20 +64,24 @@ export default function BaseLibraryScreen() {
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
 
-  const thLevel = player?.townHallLevel || 16;
+  const hallLevel = selectedVillage === 'home'
+    ? player?.townHallLevel || 16
+    : player?.builderHallLevel || 10;
 
   const fetchBases = useCallback(async () => {
     try {
       setLoading(true);
       setScrapeError(null);
-      const data = await scrapeBasesForTH(thLevel, { maxPages: 2 });
+      const data = selectedVillage === 'home'
+        ? await scrapeBasesForTH(hallLevel, { maxPages: 2 })
+        : await scrapeBasesForBH(hallLevel, { maxPages: 2 });
       setBaseData(data);
     } catch (e: any) {
       setScrapeError(e.message || 'Failed to load bases');
     } finally {
       setLoading(false);
     }
-  }, [thLevel]);
+  }, [hallLevel, selectedVillage]);
 
   const loadSavedData = useCallback(async () => {
     const [saved, favs] = await Promise.all([
@@ -161,12 +171,10 @@ export default function BaseLibraryScreen() {
         nullGroup.push(b);
       }
     }
-    // Sort within each year by download count desc
     for (const [, arr] of groups) arr.sort((a, b) => b.views - a.views);
     nullGroup.sort((a, b) => b.views - a.views);
 
     const sections: { year: number | null; title: string; bases: ScrapedBase[] }[] = [];
-    // Years in descending order
     const sortedYears = [...groups.keys()].sort((a, b) => b - a);
     for (const y of sortedYears) {
       sections.push({ year: y, title: String(y), bases: groups.get(y)! });
@@ -201,16 +209,41 @@ export default function BaseLibraryScreen() {
     }
   }, [hasMore]);
 
+  const hallLabel = selectedVillage === 'home' ? 'TH' : 'BH';
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
-          {loading ? null : <Text style={styles.subtitle}>TH{thLevel} layouts from ClashLy</Text>}
+          {loading ? null : <Text style={styles.subtitle}>{hallLabel}{hallLevel} layouts from ClashLy</Text>}
         </View>
         <Pressable onPress={fetchBases} hitSlop={12} style={styles.refreshBtn}>
           <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
         </Pressable>
+      </View>
+
+      {/* Village toggle */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Village</Text>
+        <View style={styles.filterPills}>
+          {VILLAGE_OPTIONS.map((opt) => (
+            <Pressable
+              key={opt.key}
+              onPress={() => setSelectedVillage(opt.key)}
+              style={[styles.filterPill, selectedVillage === opt.key && styles.filterPillActive]}
+            >
+              <Ionicons
+                name={opt.icon}
+                size={13}
+                color={selectedVillage === opt.key ? Colors.bg : Colors.textSecondary}
+              />
+              <Text style={[styles.filterPillText, selectedVillage === opt.key && styles.filterPillTextActive]}>
+                {opt.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       {/* Category filter */}
@@ -266,7 +299,7 @@ export default function BaseLibraryScreen() {
               <EmptyState
                 icon={'🔍'}
                 title={'No bases found'}
-                description={`No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for TH${thLevel}. Try a different filter.`}
+                description={`No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for ${hallLabel}${hallLevel}. Try a different filter.`}
               />
             ) : (
               visibleSections.map((section) => (
@@ -283,6 +316,7 @@ export default function BaseLibraryScreen() {
                         key={String(scrapedBase.id)}
                         name={scrapedBase.title}
                         townHallLevel={scrapedBase.th_level}
+                        village={scrapedBase.village}
                         rating={scrapedBase.rating_out_of_5}
                         tags={scrapedBase.tags}
                         previewImage={scrapedBase.preview_image_url}
