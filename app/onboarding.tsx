@@ -91,7 +91,7 @@ export default function OnboardingScreen() {
               secureTextEntry
               editable={!loading}
             />
-            <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys</Text>
+            <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys (whitelist IP 45.79.218.79 — the app uses a proxy)</Text>
 
             {error ? (
               <View style={styles.errorBox}>

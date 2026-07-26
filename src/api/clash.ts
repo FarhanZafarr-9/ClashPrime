@@ -1,6 +1,6 @@
 import { ClashPlayer, ClanWar, WarLogEntry } from '../types/clash';
 
-const BASE_URL = 'https://api.clashofclans.com/v1';
+const BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
 
 export class ClashAPI {
   private token: string;

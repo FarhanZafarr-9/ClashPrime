@@ -41,10 +41,12 @@ Monochrome palette (`#0A0A0A` → `#FAFAFA`), 8pt spacing system, decreased roun
 
 ## API
 
-Uses the official Clash of Clans API:
-- Endpoint: `https://api.clashofclans.com/v1/players/{tag}`
+Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.royaleapi.com/proxy.html) (for servers with dynamic IPs):
+- Endpoint: `https://cocproxy.royaleapi.dev/v1/players/{tag}`
 - Auth: Bearer token
 - Players enter their own API token and player tag in the onboarding flow
+
+> **Important:** When creating your API key at [developer.clashofclans.com](https://developer.clashofclans.com), you must whitelist the proxy IP: **`45.79.218.79`** — otherwise requests will be rejected.
 
 ## Data Sources
 
@@ -56,6 +58,7 @@ Uses the official Clash of Clans API:
 | TH max levels | clash.ninja | CLI scraper → static JSON |
 | Troop & hero details (images, descriptions, stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
+| Siege machine, super troop & pet names | Clash of Clans Fandom Wiki | On-demand MediaWiki category API with 7-day cache |
 | Events | clash.ninja | Runtime HTML scraper |
 
 ## Project Structure
@@ -127,12 +130,13 @@ npx tsx scraper/fandom-buildings.ts
 # Re-download building images + regenerate asset mapping
 npx tsx scraper/download-building-images.ts
 
-# Scrape building level data from Fandom wiki (all building types)
-npx tsx scraper/run-building-levels.ts
+# Scrape siege machine names from Fandom wiki (dev verification only — app fetches dynamically)
+npx tsx scraper/siege-machines.ts
 ```
 
 ## Roadmap
 
+- **Clan War Leagues** — The War tab already has basic CWL history grouping, but it needs thorough testing with live CWL data (attacks, promotions, medal tracking) when the next league season starts.
 - **Landing page** — A simple static HTML page for web presence, deployed via Vercel from the same repo.
 
 ## License
