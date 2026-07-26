@@ -72,23 +72,22 @@ export default function AchievementsScreen() {
                   </Text>
                   <Text style={styles.achievementSummaryLabel}>stars</Text>
                 </View>
-                <Text style={styles.achievementSummaryPct}>
-                  {starTotals.max > 0 ? Math.round((starTotals.earned / starTotals.max) * 100) : 0}%
-                </Text>
-              </View>
-              <View style={styles.achievementSummaryMid}>
-                <Ionicons name="checkmark-circle-outline" size={12} color={Colors.textTertiary} />
                 <Text style={styles.achievementSummarySub}>
                   {filteredAchievements.filter((a) => a.stars === 3).length}/{filteredAchievements.length} complete
                 </Text>
               </View>
-              <View style={styles.achievementSummaryBar}>
-                <View
-                  style={[
-                    styles.achievementSummaryFill,
-                    { width: `${starTotals.max > 0 ? (starTotals.earned / starTotals.max) * 100 : 0}%` },
-                  ]}
-                />
+              <View style={styles.achievementSummaryBarRow}>
+                <View style={styles.achievementSummaryBar}>
+                  <View
+                    style={[
+                      styles.achievementSummaryFill,
+                      { width: `${starTotals.max > 0 ? (starTotals.earned / starTotals.max) * 100 : 0}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.achievementSummaryPct}>
+                  {starTotals.max > 0 ? Math.round((starTotals.earned / starTotals.max) * 100) : 0}%
+                </Text>
               </View>
             </View>
 
@@ -226,22 +225,24 @@ const styles = StyleSheet.create({
     marginLeft: 1,
   },
   achievementSummaryPct: {
-    ...Typography.subhead,
-    color: Colors.textSecondary,
+    ...Typography.caption,
+    color: Colors.textTertiary,
     fontWeight: '600',
+    minWidth: 34,
+    textAlign: 'right',
   },
-  achievementSummaryMid: {
+  achievementSummaryBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
   },
   achievementSummarySub: {
     ...Typography.caption,
     color: Colors.textTertiary,
   },
   achievementSummaryBar: {
+    flex: 1,
     height: 4,
     backgroundColor: Colors.borderSubtle,
     borderRadius: 2,
