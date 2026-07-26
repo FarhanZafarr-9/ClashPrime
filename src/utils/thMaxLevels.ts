@@ -79,3 +79,29 @@ export function getHeroesAtTH(thLevel: number): Record<string, number> {
   }
   return result;
 }
+
+export function getUnlockableItems(
+  th: number,
+  ownedNames: Set<string>,
+): { name: string; type: 'troop' | 'spell'; unlockTh: number }[] {
+  const result: { name: string; type: 'troop' | 'spell'; unlockTh: number }[] = [];
+  const catKeys: [string, 'troop' | 'spell'][] = [['Troops', 'troop'], ['Dark Troops', 'troop'], ['Spells', 'spell']];
+
+  for (const [catName, type] of catKeys) {
+    const cat = (staticData as any).categories?.[catName];
+    if (!cat) continue;
+    for (const [itemName, levels] of Object.entries(cat)) {
+      let unlockTh = Infinity;
+      for (const [thKey, entry] of Object.entries(levels as any)) {
+        if (entry && (entry as any).level !== null) {
+          unlockTh = Math.min(unlockTh, parseInt(thKey, 10));
+        }
+      }
+      if (unlockTh <= th && !ownedNames.has(itemName.toLowerCase())) {
+        result.push({ name: itemName, type, unlockTh });
+      }
+    }
+  }
+
+  return result.sort((a, b) => a.unlockTh - b.unlockTh);
+}
