@@ -55,7 +55,7 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Player data | CoC API | REST fetch (Bearer token) |
 | Base layouts | ClashLy API | REST fetch (Parse server) |
 | Community armies | ClashArmies | Devalue-format REST fetch with 30-min cache |
-| TH max levels | clash.ninja | CLI scraper → static JSON |
+| TH max levels | clash.ninja | Runtime HTML scraper with section-hash caching |
 | Troop & hero details (images, descriptions, stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
 | Siege machine, super troop & pet names | Clash of Clans Fandom Wiki | On-demand MediaWiki category API with 7-day cache |
