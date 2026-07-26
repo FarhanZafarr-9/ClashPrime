@@ -19,6 +19,7 @@ import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
 import { getTroopDetail } from '../../src/api/troopDetail';
@@ -28,6 +29,7 @@ export default function HomeScreen() {
   const { player, loading, error, lastSync, refresh } = usePlayer();
   const { superTroopNames } = useGameData();
   const [refreshing, setRefreshing] = useState(false);
+  const [showBH, setShowBH] = useState(false);
 
   React.useEffect(() => {
     if (error && player) {
@@ -250,15 +252,24 @@ export default function HomeScreen() {
         <Card style={styles.playerCard}>
           <View style={styles.playerRow}>
             <View style={styles.avatar}>
-              {getTownHallImageUrl(player.townHallLevel) ? (
-                <Image
-                  source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
-                  style={styles.avatarImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
-              )}
+              {showBH
+                ? (() => {
+                    const bhSrc = getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1);
+                    return bhSrc ? (
+                      <Image source={bhSrc} style={styles.avatarImage} resizeMode="contain" />
+                    ) : (
+                      <Text style={styles.avatarText}>BH</Text>
+                    );
+                  })()
+                : getTownHallImageUrl(player.townHallLevel) ? (
+                  <Image
+                    source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
+                    style={styles.avatarImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+                )}
             </View>
             <View style={styles.playerInfo}>
               <Text style={styles.playerName}>{player.name}</Text>
@@ -274,9 +285,12 @@ export default function HomeScreen() {
               </View>
             </View>
             <View style={styles.thBadge}>
-              <Text style={styles.thLevel}>{player.townHallLevel}</Text>
-              <Text style={styles.thLabel}>TH</Text>
+              <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
+              <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
             </View>
+            <Pressable onPress={() => setShowBH(!showBH)} style={styles.swapBtn} hitSlop={8}>
+              <Ionicons name="swap-horizontal" size={18} color={Colors.textSecondary} />
+            </Pressable>
           </View>
           <View style={styles.playerStatsRow}>
             <View style={styles.miniStat}>
@@ -701,6 +715,12 @@ const styles = StyleSheet.create({
     color: Colors.bg,
     fontSize: 8,
     opacity: 0.7,
+  },
+  swapBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   playerStatsRow: {
     flexDirection: 'row',
