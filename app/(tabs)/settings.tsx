@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
+import { getStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 const heartImg = require('../../images/heart.png') as any;
 import {
@@ -128,7 +129,6 @@ export default function SettingsScreen() {
   const [modalValue, setModalValue] = useState('');
   const [modalPlaceholder, setModalPlaceholder] = useState('');
   const [modalError, setModalError] = useState('');
-  const [showToken, setShowToken] = useState(false);
   const [modalOnSave, setModalOnSave] = useState<(text: string) => void>(() => { });
   const modalInputRef = useRef<TextInput>(null);
 
@@ -161,7 +161,6 @@ export default function SettingsScreen() {
     setModalValue(current);
     setModalPlaceholder(placeholder);
     setModalError('');
-    setShowToken(false);
     setModalOnSave(() => onSave);
     setModalVisible(true);
     setTimeout(() => modalInputRef.current?.focus(), 300);
@@ -496,17 +495,16 @@ export default function SettingsScreen() {
                 placeholderTextColor={Colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
-                secureTextEntry={modalType === 'token' && !showToken}
                 keyboardAppearance="dark"
               />
+              {modalType === 'token' && (
+                <Pressable style={styles.modalIconBtn} onPress={async () => { const t = await getStringAsync(); if (t) setModalValue(t); }} hitSlop={8}>
+                  <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
+                </Pressable>
+              )}
               {modalValue.length > 0 && (
                 <Pressable style={styles.modalClearBtn} onPress={() => setModalValue('')} hitSlop={8}>
                   <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
-                </Pressable>
-              )}
-              {modalType === 'token' && (
-                <Pressable style={styles.modalToggleBtn} onPress={() => setShowToken((s) => !s)} hitSlop={8}>
-                  <Ionicons name={showToken ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.textMuted} />
                 </Pressable>
               )}
             </View>
@@ -826,7 +824,7 @@ const styles = StyleSheet.create({
   modalClearBtn: {
     padding: 4,
   },
-  modalToggleBtn: {
+  modalIconBtn: {
     padding: 4,
     marginLeft: 2,
   },

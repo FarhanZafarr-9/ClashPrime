@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { getStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius } from '../src/theme';
 import { setPlayerTag, setApiToken } from '../src/hooks/usePlayer';
 import { ClashAPI } from '../src/api/clash';
@@ -25,10 +27,11 @@ export default function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleContinue = async () => {
-    const cleanTag = tag.trim();
+    let cleanTag = tag.trim().toUpperCase();
+    if (!cleanTag.startsWith('#')) cleanTag = `#${cleanTag}`;
     const cleanToken = token.trim();
-    if (!cleanTag.startsWith('#') || cleanTag.length < 3) {
-      setError('Enter a valid player tag starting with #');
+    if (cleanTag.length < 3) {
+      setError('Enter a valid player tag (e.g. #PG8U2LR00)');
       return;
     }
     if (cleanToken.length < 20) {
@@ -40,6 +43,15 @@ export default function OnboardingScreen() {
     setError(null);
 
     try {
+      // Validate tag via clashofstats redirect
+      const tagNoHash = cleanTag.replace('#', '');
+      const cosRes = await fetch(`https://www.clashofstats.com/players/${tagNoHash}`);
+      if (!cosRes.ok) {
+        setError('Player tag not found on Clash of Stats. Double-check your tag.');
+        setLoading(false);
+        return;
+      }
+
       const api = new ClashAPI(cleanToken);
       const data = await api.getPlayer(cleanTag);
       await setPlayerTag(cleanTag);
@@ -67,30 +79,36 @@ export default function OnboardingScreen() {
 
           <View style={styles.form}>
             <Text style={styles.label}>Player Tag</Text>
-            <TextInput
-              style={styles.input}
-              value={tag}
-              onChangeText={(t) => { setTag(t); setError(null); }}
-              placeholder="#YOUR-TAG"
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              editable={!loading}
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.inputFlex}
+                value={tag}
+                onChangeText={(t) => { setTag(t); setError(null); }}
+                placeholder="#YOUR-TAG"
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!loading}
+              />
+            </View>
             <Text style={styles.hint}>Find it in-game under Profile → My Profile</Text>
 
             <Text style={styles.label}>API Token</Text>
-            <TextInput
-              style={styles.input}
-              value={token}
-              onChangeText={(t) => { setToken(t); setError(null); }}
-              placeholder="Paste your API token"
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry
-              editable={!loading}
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.inputFlex}
+                value={token}
+                onChangeText={(t) => { setToken(t); setError(null); }}
+                placeholder="Paste your API token"
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+              />
+              <Pressable style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
+                <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
+              </Pressable>
+            </View>
             <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys (whitelist IP 45.79.218.79 — the app uses a proxy)</Text>
 
             {error ? (
@@ -159,14 +177,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: Spacing.sm,
   },
-  input: {
-    ...Typography.body,
-    color: Colors.textPrimary,
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
+  },
+  inputFlex: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    flex: 1,
     paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+  },
+  inputIcon: {
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
   },
   hint: {
