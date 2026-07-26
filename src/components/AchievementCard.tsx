@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
+import PressableRipple from './PressableRipple';
 import { Achievement } from '../types/clash';
 import {
   formatAchievementValue,
@@ -29,9 +30,9 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
   const remaining = Math.max(0, a.target - a.value);
 
   return (
-    <Pressable
+    <PressableRipple
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={styles.card}
     >
       <View style={styles.row}>
         <View style={[styles.iconWrap, isComplete && styles.iconWrapComplete]}>
@@ -79,7 +80,7 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
       {expanded && a.info && a.completionInfo && (
         <Text style={styles.detailInfo}>{a.info}</Text>
       )}
-    </Pressable>
+    </PressableRipple>
   );
 }
 

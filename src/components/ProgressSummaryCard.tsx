@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 
@@ -57,7 +58,7 @@ export function ProgressSummaryCard({ category, completed, total, lockedMessage,
   );
 
   if (onPress) {
-    return <Pressable style={styles.card} onPress={onPress}>{content}</Pressable>;
+    return <PressableRipple style={styles.card} onPress={onPress}>{content}</PressableRipple>;
   }
   return <View style={styles.card}>{content}</View>;
 }

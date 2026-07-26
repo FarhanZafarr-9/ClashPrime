@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing } from '../theme';
 
@@ -18,9 +19,9 @@ export function SectionHeader({ title, icon, action, onAction }: Props) {
         <Text style={styles.title}>{title}</Text>
       </View>
       {action && onAction && (
-        <Pressable onPress={onAction}>
+        <PressableRipple onPress={onAction}>
           <Text style={styles.action}>{action}</Text>
-        </Pressable>
+        </PressableRipple>
       )}
     </View>
   );

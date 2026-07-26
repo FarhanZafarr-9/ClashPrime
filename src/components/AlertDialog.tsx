@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
   Modal,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 
 interface DialogAction {
@@ -69,7 +69,7 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
       >
-        <Pressable style={styles.backdrop} onPress={onDismiss} />
+        <PressableRipple style={styles.backdrop} onPress={onDismiss} />
         <View style={styles.content}>
           <View style={styles.accent} />
           <Text style={styles.title}>{config.title}</Text>
@@ -78,14 +78,13 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
           ) : null}
           <View style={styles.actions}>
             {config.actions.map((action, i) => (
-              <Pressable
+              <PressableRipple
                 key={`${action.label}-${i}`}
-                style={({ pressed }) => [
+                style={[
                   styles.btn,
                   action.primary && styles.btnPrimary,
                   action.destructive && styles.btnDestructive,
                   !action.primary && !action.destructive && styles.btnGhost,
-                  pressed && { opacity: 0.8 },
                 ]}
                 onPress={() => {
                   action.onPress();
@@ -102,7 +101,7 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
                 >
                   {action.label}
                 </Text>
-              </Pressable>
+              </PressableRipple>
             ))}
           </View>
         </View>

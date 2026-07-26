@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
 interface Props {
@@ -19,15 +20,9 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
   const isMaxed = level >= effectiveMax;
 
   return (
-    <Pressable
+    <PressableRipple
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: pressed ? colors.bgCardHover : colors.bgCard,
-          borderColor: colors.border,
-        },
-      ]}
+      style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
     >
       <View style={styles.row}>
         {icon ? (
@@ -75,7 +70,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
           </View>
         </View>
       </View>
-    </Pressable>
+    </PressableRipple>
   );
 }
 

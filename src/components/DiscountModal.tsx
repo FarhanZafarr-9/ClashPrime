@@ -3,11 +3,11 @@ import {
   View,
   Text,
   Modal,
-  Pressable,
   StyleSheet,
   ScrollView,
   TextInput,
 } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 import type { ScopeDiscount } from '../hooks/useDiscounts';
@@ -64,7 +64,7 @@ function DiscountSlider({
         {PRESETS.map((p) => {
           const isActive = value === p;
           return (
-            <Pressable
+            <PressableRipple
               key={p}
               style={[styles.pill, isActive && styles.pillActive]}
               onPress={() => onChange(p)}
@@ -72,7 +72,7 @@ function DiscountSlider({
               <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
                 {p === 0 ? 'Off' : `-${p}%`}
               </Text>
-            </Pressable>
+            </PressableRipple>
           );
         })}
       </View>
@@ -89,9 +89,9 @@ function DiscountSlider({
           returnKeyType="done"
           maxLength={3}
         />
-        <Pressable style={styles.customApply} onPress={handleCustom}>
+        <PressableRipple style={styles.customApply} onPress={handleCustom}>
           <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-        </Pressable>
+        </PressableRipple>
       </View>
 
       {value > 0 && (
@@ -126,7 +126,7 @@ export default function DiscountModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <PressableRipple style={styles.backdrop} onPress={onClose} />
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
@@ -140,9 +140,9 @@ export default function DiscountModal({
                 </Text>
               </View>
             </View>
-            <Pressable onPress={onClose} hitSlop={8} style={styles.closeBtn}>
+            <PressableRipple onPress={onClose} hitSlop={8} style={styles.closeBtn}>
               <Ionicons name="close" size={18} color={Colors.textTertiary} />
-            </Pressable>
+            </PressableRipple>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
@@ -176,10 +176,10 @@ export default function DiscountModal({
             )}
           </ScrollView>
 
-          <Pressable style={styles.resetBtn} onPress={onReset}>
+          <PressableRipple style={styles.resetBtn} onPress={onReset}>
             <Ionicons name="refresh-outline" size={14} color={Colors.textMuted} />
             <Text style={styles.resetText}>Reset to defaults</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
       </View>
     </Modal>

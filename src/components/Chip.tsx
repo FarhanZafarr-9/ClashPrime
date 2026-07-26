@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, StyleSheet, Pressable } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Colors, Radius, Spacing, Typography } from '../theme';
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export function Chip({ label, selected, onPress }: Props) {
   return (
-    <Pressable
+    <PressableRipple
       onPress={onPress}
       style={[styles.chip, selected && styles.selected]}
     >
@@ -20,7 +21,7 @@ export function Chip({ label, selected, onPress }: Props) {
       >
         {label}
       </Text>
-    </Pressable>
+    </PressableRipple>
   );
 }
 

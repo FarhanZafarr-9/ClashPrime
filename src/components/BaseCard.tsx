@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Colors, Radius, Spacing, Typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Skeleton } from './Skeleton';
@@ -93,27 +94,27 @@ export function BaseCard({
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
           </View>
           <View style={styles.actionRow}>
-            <Pressable onPress={onSave} hitSlop={8} style={styles.actionBtn}>
+            <PressableRipple onPress={onSave} hitSlop={8} style={styles.actionBtn}>
               <Ionicons
                 name={isSaved ? 'bookmark' : 'bookmark-outline'}
                 size={18}
                 color={isSaved ? Colors.textPrimary : Colors.textTertiary}
               />
-            </Pressable>
-            <Pressable onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
+            </PressableRipple>
+            <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
               <Ionicons
                 name={isFavorite ? 'heart' : 'heart-outline'}
                 size={18}
                 color={isFavorite ? Colors.textPrimary : Colors.textTertiary}
               />
-            </Pressable>
+            </PressableRipple>
           </View>
         </View>
         {hasLink ? (
-          <Pressable onPress={onCopy} style={styles.copyBtn}>
+          <PressableRipple onPress={onCopy} style={styles.copyBtn}>
             <Ionicons name="copy-outline" size={14} color={Colors.bg} />
             <Text style={styles.copyText}>Copy Layout</Text>
-          </Pressable>
+          </PressableRipple>
         ) : (
           <View style={[styles.copyBtn, styles.copyBtnDisabled]}>
             <Ionicons name="copy-outline" size={14} color={Colors.textMuted} />

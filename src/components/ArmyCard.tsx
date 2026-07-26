@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography, useTheme } from '../theme';
 import { getTownHallImageUrl } from '../utils/thImages';
@@ -93,7 +94,7 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
   const hasPet = heroRows.some((r) => r.pet);
 
   return (
-    <Pressable onPress={onPress} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+    <PressableRipple onPress={onPress} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
       <View style={styles.topRow}>
         {getTownHallImageUrl(army.townHall) ? (
           <Image source={{ uri: getTownHallImageUrl(army.townHall)! }} style={styles.thImage} resizeMode="contain" />
@@ -152,20 +153,20 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
       {/* Actions */}
       <View style={styles.actionsRow}>
         <View style={styles.spacer} />
-        <Pressable onPress={onSave} hitSlop={8} style={styles.actionBtn}>
+        <PressableRipple onPress={onSave} hitSlop={8} style={styles.actionBtn}>
           <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={18} color={isSaved ? colors.textPrimary : colors.textTertiary} />
-        </Pressable>
-        <Pressable onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
+        </PressableRipple>
+        <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
           <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
-        </Pressable>
+        </PressableRipple>
       </View>
       {onCopy && (
-        <Pressable onPress={onCopy} style={styles.copyBtn}>
+        <PressableRipple onPress={onCopy} style={styles.copyBtn}>
           <Ionicons name="copy-outline" size={14} color={Colors.bg} />
           <Text style={styles.copyBtnText}>Copy Army</Text>
-        </Pressable>
+        </PressableRipple>
       )}
-    </Pressable>
+    </PressableRipple>
   );
 }
 
