@@ -115,8 +115,9 @@ npx expo start --ios
 
 1. Open the app — you'll see the onboarding screen
 2. Get your API token from [developer.clashofclans.com](https://developer.clashofclans.com)
-3. Find your player tag in-game (e.g., `#YYYYY`)
-4. Enter both and tap **Connect**
+3. When creating your API key, whitelist the proxy IP: **`45.79.218.79`** — the app uses the RoyaleAPI proxy to support dynamic IPs
+4. Find your player tag in-game (e.g., `#YYYYY`)
+5. Enter both and tap **Connect**
 
 ## Scraper Scripts
 
