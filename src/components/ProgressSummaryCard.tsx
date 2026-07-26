@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 
@@ -21,16 +21,17 @@ interface Props {
   total: number;
   items?: { name: string; level: number; maxLevel: number }[];
   lockedMessage?: string;
+  onPress?: () => void;
 }
 
-export function ProgressSummaryCard({ category, completed, total, lockedMessage }: Props) {
+export function ProgressSummaryCard({ category, completed, total, lockedMessage, onPress }: Props) {
   const progress = total > 0 ? completed / total : 0;
   const isLocked = total === 0 && lockedMessage;
   const isZero = !isLocked && total > 0 && completed === 0;
   const iconDef = CATEGORY_ICONS[category];
 
-  return (
-    <View style={styles.card}>
+  const content = (
+    <>
       <View style={styles.topRow}>
         <Text style={styles.category} numberOfLines={1}>{category}</Text>
         {iconDef && (
@@ -52,8 +53,13 @@ export function ProgressSummaryCard({ category, completed, total, lockedMessage 
           {isLocked ? lockedMessage : isZero ? 'None maxed' : `${completed}/${total}`}
         </Text>
       </View>
-    </View>
+    </>
   );
+
+  if (onPress) {
+    return <Pressable style={styles.card} onPress={onPress}>{content}</Pressable>;
+  }
+  return <View style={styles.card}>{content}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -64,8 +70,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     padding: Spacing.base,
     paddingTop: Spacing.md,
-    width: '48%',
-    marginBottom: Spacing.md,
+    width: '49%',
+    marginBottom: Spacing.sm,
     paddingBottom: Spacing.sm,
   },
   topRow: {
