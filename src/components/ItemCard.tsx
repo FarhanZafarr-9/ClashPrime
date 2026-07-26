@@ -31,9 +31,11 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
     >
       <View style={styles.row}>
         {icon ? (
-          <Image source={{ uri: icon }} style={styles.icon} />
+          <View style={styles.iconWrap}>
+            <Image source={{ uri: icon }} style={styles.iconImage} />
+          </View>
         ) : (
-          <View style={styles.iconPlaceholder}>
+          <View style={styles.iconWrap}>
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           </View>
         )}
@@ -94,23 +96,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  icon: {
-    width: 44,
-    height: 44,
-    marginRight: Spacing.md,
-  },
-  iconPlaceholder: {
-    width: 44,
-    height: 44,
+  iconWrap: {
+    width: 32,
+    height: 32,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
+    overflow: 'hidden',
+  },
+  iconImage: {
+    width: 26,
+    height: 26,
   },
   iconText: {
-    ...Typography.headline,
+    ...Typography.caption,
     color: Colors.textTertiary,
+    fontWeight: '600',
   },
   middle: {
     flex: 1,
