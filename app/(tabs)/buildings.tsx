@@ -235,12 +235,11 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
 
   const buildingStats = useMemo(() => {
     const match = (buildingLevelsData as any).find((b: any) => {
-      if (isBB && b.village !== 'builderBase') return false;
       const bName = b.name.toLowerCase();
       return bName === name.toLowerCase() || bName === lookupName.toLowerCase();
     });
     return match || null;
-  }, [name, lookupName, isBB]);
+  }, [name, lookupName]);
 
   const mainImgSource = getBuildingLevelImageSource(lookupName, maxLvl);
 
