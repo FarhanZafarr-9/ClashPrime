@@ -5,7 +5,6 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "cheerio": "^1.2.0",
     "expo": "~57.0.8",
     "expo-constants": "~57.0.6",
     "expo-font": "~57.0.1",
@@ -25,6 +24,7 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "babel-preset-expo": "~57.0.3",
+    "cheerio": "^1.2.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.0",
     "typescript": "~6.0.3"
