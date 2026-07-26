@@ -12,28 +12,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { filterHomeTroops } from '../../src/types/clash';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { ItemCard } from '../../src/components/ItemCard';
+import { useGameData } from '../../src/hooks/useGameData';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
 import DiscountModal from '../../src/components/DiscountModal';
 
-import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { Skeleton } from '../../src/components/Skeleton';
 
 
-type Tab = 'heroes' | 'pets' | 'troops' | 'spells' | 'equipment';
+type Tab = 'heroes' | 'bhHeroes' | 'troops' | 'bhTroops' | 'spells' | 'pets' | 'siege' | 'equipment';
 
 const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
   heroes: { set: 'ion', name: 'shield-half-outline' },
-  pets: { set: 'mc', name: 'paw' },
+  bhHeroes: { set: 'ion', name: 'shield-outline' },
   troops: { set: 'mc', name: 'sword-cross' },
+  bhTroops: { set: 'ion', name: 'build-outline' },
   spells: { set: 'ion', name: 'flask-outline' },
+  pets: { set: 'mc', name: 'paw' },
+  siege: { set: 'ion', name: 'rocket-outline' },
   equipment: { set: 'ion', name: 'trophy-outline' },
 };
 
@@ -60,6 +62,7 @@ function parseUnlockRequirements(raw: string): { source: string; cost?: string; 
 
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
+  const { siegeMachineNames, superTroopNames, petNames } = useGameData();
   const { isDark, colors } = useTheme();
   const { discounts, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
@@ -235,9 +238,17 @@ export default function PlayerProfileScreen() {
   const th = player.townHallLevel;
   const homeHeroes = player.heroes.filter((h) => h.village === 'home');
   const builderHeroes = th >= 6 ? player.heroes.filter((h) => h.village === 'builderBase') : [];
-  const homeTroops = filterHomeTroops(player.troops);
+
+  const SIEGE_MACHINE_NAMES = new Set(siegeMachineNames);
+  const SUPER_TROOP_NAMES = new Set(superTroopNames);
+  const isSiegeMachine = (name: string) => SIEGE_MACHINE_NAMES.has(name);
+  const isSuperTroop = (name: string) =>
+    SUPER_TROOP_NAMES.has(name) || name.startsWith('Super ') || name.startsWith('Sneaky ') || name.startsWith('Rocket ');
+
+  const homeTroops = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && !isSiegeMachine(t.name) && !petNames.includes(t.name));
   const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
-  const homePets = (player.pets ?? []).filter((p) => p.village === 'home' || !p.village);
+  const siegeMachines = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && isSiegeMachine(t.name));
+  const homePets = player.troops.filter((t) => (t.village === 'home' || !t.village) && petNames.includes(t.name));
   const laboratoryMaxLevel = getMaxLevelAtTH('Lab', player.townHallLevel) ?? 0;
   const heroHallMaxLevel = getMaxLevelAtTH('Hero Hall', player.townHallLevel) ?? 0;
 
@@ -245,19 +256,16 @@ export default function PlayerProfileScreen() {
     player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
     player.heroes.some((h) => h.name === name && h.village === 'builderBase');
 
-  const isSiegeMachine = (name: string) =>
-    ['Wall Wrecker', 'Battle Blimp', 'Stone Slammer', 'Siege Barracks', 'Log Launcher', 'Flame Flinger', 'Battle Drill'].includes(name);
-
   const getLabBuilding = (name: string, tab: Tab): string => {
     switch (tab) {
-      case 'heroes': return 'Hero Hall';
+      case 'heroes':
+      case 'bhHeroes': return 'Hero Hall';
       case 'pets': return 'Pet House';
       case 'equipment': return 'Blacksmith';
       case 'spells': return 'Laboratory';
-      case 'troops':
-        if (isBuilderBaseName(name)) return 'Star Laboratory';
-        if (isSiegeMachine(name)) return 'Workshop';
-        return 'Laboratory';
+      case 'troops': return 'Laboratory';
+      case 'bhTroops': return 'Star Laboratory';
+      case 'siege': return 'Workshop';
     }
   };
 
@@ -524,23 +532,32 @@ export default function PlayerProfileScreen() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'heroes', label: 'Heroes' },
-    { key: 'pets', label: 'Pets' },
+    { key: 'bhHeroes', label: 'BH Heroes' },
     { key: 'troops', label: 'Troops' },
+    { key: 'bhTroops', label: 'BH Troops' },
     { key: 'spells', label: 'Spells' },
+    { key: 'pets', label: 'Pets' },
+    { key: 'siege', label: 'Siege' },
     { key: 'equipment', label: 'Gear' },
   ];
 
-  const hasHeroes = homeHeroes.length + builderHeroes.length > 0;
-  const hasPets = homePets.length > 0;
-  const hasTroops = homeTroops.length + builderTroops.length > 0;
+  const hasHeroes = homeHeroes.length > 0;
+  const hasBhHeroes = builderHeroes.length > 0;
+  const hasTroops = homeTroops.length > 0;
+  const hasBhTroops = builderTroops.length > 0;
   const hasSpells = player.spells.filter((s) => s.village === 'home' || !s.village).length > 0;
+  const hasPets = homePets.length > 0;
+  const hasSiege = siegeMachines.length > 0;
   const hasEquipment = player.heroEquipment.length > 0;
 
   const visibleTabs = TABS.filter((tab) => {
     if (tab.key === 'heroes') return hasHeroes;
-    if (tab.key === 'pets') return hasPets;
+    if (tab.key === 'bhHeroes') return hasBhHeroes;
     if (tab.key === 'troops') return hasTroops;
+    if (tab.key === 'bhTroops') return hasBhTroops;
     if (tab.key === 'spells') return hasSpells;
+    if (tab.key === 'pets') return hasPets;
+    if (tab.key === 'siege') return hasSiege;
     if (tab.key === 'equipment') return hasEquipment;
     return true;
   });
@@ -595,12 +612,7 @@ export default function PlayerProfileScreen() {
           </View>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0 }}
-          contentContainerStyle={styles.tabsContainer}
-        >
+        <View style={styles.tabsContainer}>
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.key;
             const iconDef = TAB_ICONS[tab.key];
@@ -622,12 +634,12 @@ export default function PlayerProfileScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
         <View style={styles.tabContent}>
           {activeTab === 'heroes' && (
             <>
-              {homeHeroes.length === 0 && builderHeroes.length === 0 ? (
+              {homeHeroes.length === 0 ? (
                 <EmptyState
                   icon="👑"
                   title="No heroes yet"
@@ -635,69 +647,45 @@ export default function PlayerProfileScreen() {
                 />
               ) : (
                 <>
-                  {homeHeroes.length > 0 && (
-                    <>
-                      <SectionHeader title="Home Village" />
-                      {homeHeroes.map((h) => (
-                        <React.Fragment key={h.name}>
-                          <ItemCard
-                            name={h.name}
-                            level={h.level}
-                            maxLevel={h.maxLevel}
-                            thMaxLevel={getMaxLevelAtTH(h.name, th)}
-                            subtitle={h.equipment?.map((e) => e.name).join(', ')}
-                            icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
-                            onPress={() => toggleDetail(h.name)}
-                          />
-                          {renderDetailPanel(h.name)}
-                        </React.Fragment>
-                      ))}
-                    </>
-                  )}
-                  {builderHeroes.length > 0 && (
-                    <>
-                      <SectionHeader title="Builder Base" />
-                      {builderHeroes.map((h) => (
-                        <React.Fragment key={h.name}>
-                          <ItemCard
-                            name={h.name}
-                            level={h.level}
-                            maxLevel={h.maxLevel}
-                            icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
-                            onPress={() => toggleDetail(h.name)}
-                          />
-                          {renderDetailPanel(h.name)}
-                        </React.Fragment>
-                      ))}
-                    </>
-                  )}
+                  {homeHeroes.map((h) => (
+                    <React.Fragment key={h.name}>
+                      <ItemCard
+                        name={h.name}
+                        level={h.level}
+                        maxLevel={h.maxLevel}
+                        thMaxLevel={getMaxLevelAtTH(h.name, th)}
+                        subtitle={h.equipment?.map((e) => e.name).join(', ')}
+                        icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                        onPress={() => toggleDetail(h.name)}
+                      />
+                      {renderDetailPanel(h.name)}
+                    </React.Fragment>
+                  ))}
                 </>
               )}
             </>
           )}
 
-          {activeTab === 'pets' && (
+          {activeTab === 'bhHeroes' && (
             <>
-              {homePets.length === 0 ? (
+              {builderHeroes.length === 0 ? (
                 <EmptyState
-                  icon="🐾"
-                  title="No pets yet"
-                  description="Pets unlock at TH14 with the Pet House. They follow and fight alongside your heroes in battle."
+                  icon="🛡️"
+                  title="No Builder Base heroes"
+                  description="Builder Base heroes unlock at BH6. The Battle Machine is your first Builder Base hero."
                 />
               ) : (
                 <>
-                  <SectionHeader title="Home Village Pets" />
-                  {homePets.map((p) => (
-                    <React.Fragment key={p.name}>
+                  {builderHeroes.map((h) => (
+                    <React.Fragment key={h.name}>
                       <ItemCard
-                        name={p.name}
-                        level={p.level}
-                        maxLevel={p.maxLevel}
-                        thMaxLevel={getMaxLevelAtTH(p.name, th)}
-                        icon={getTroopImageUrl(p.name) || getPetImageUrl(p.name) || undefined}
-                        onPress={() => toggleDetail(p.name)}
+                        name={h.name}
+                        level={h.level}
+                        maxLevel={h.maxLevel}
+                        icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                        onPress={() => toggleDetail(h.name)}
                       />
-                      {renderDetailPanel(p.name)}
+                      {renderDetailPanel(h.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -707,7 +695,7 @@ export default function PlayerProfileScreen() {
 
           {activeTab === 'troops' && (
             <>
-              {homeTroops.length === 0 && builderTroops.length === 0 ? (
+              {homeTroops.length === 0 ? (
                 <EmptyState
                   icon="⚔️"
                   title="No troops yet"
@@ -715,41 +703,74 @@ export default function PlayerProfileScreen() {
                 />
               ) : (
                 <>
-                  {homeTroops.length > 0 && (
-                    <>
-                      <SectionHeader title="Home Village" />
-                      {homeTroops.map((t) => (
-                        <React.Fragment key={t.name}>
-                          <ItemCard
-                            name={t.name}
-                            level={t.level}
-                            maxLevel={t.maxLevel}
-                            thMaxLevel={getMaxLevelAtTH(t.name, th)}
-                            icon={getTroopImageUrl(t.name) || undefined}
-                            onPress={() => toggleDetail(t.name)}
-                          />
-                          {renderDetailPanel(t.name)}
-                        </React.Fragment>
-                      ))}
-                    </>
-                  )}
-                  {builderTroops.length > 0 && (
-                    <>
-                      <SectionHeader title="Builder Base" />
-                      {builderTroops.map((t) => (
-                        <React.Fragment key={t.name}>
-                          <ItemCard
-                            name={t.name}
-                            level={t.level}
-                            maxLevel={t.maxLevel}
-                            icon={getTroopImageUrl(t.name) || undefined}
-                            onPress={() => toggleDetail(t.name)}
-                          />
-                          {renderDetailPanel(t.name)}
-                        </React.Fragment>
-                      ))}
-                    </>
-                  )}
+                  {homeTroops.map((t) => (
+                    <React.Fragment key={t.name}>
+                      <ItemCard
+                        name={t.name}
+                        level={t.level}
+                        maxLevel={t.maxLevel}
+                        thMaxLevel={getMaxLevelAtTH(t.name, th)}
+                        icon={getTroopImageUrl(t.name) || undefined}
+                        onPress={() => toggleDetail(t.name)}
+                      />
+                      {renderDetailPanel(t.name)}
+                    </React.Fragment>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+
+          {activeTab === 'bhTroops' && (
+            <>
+              {builderTroops.length === 0 ? (
+                <EmptyState
+                  icon="🔨"
+                  title="No Builder Base troops"
+                  description="Builder Base troops are unlocked as you progress through the Builder Base."
+                />
+              ) : (
+                <>
+                  {builderTroops.map((t) => (
+                    <React.Fragment key={t.name}>
+                      <ItemCard
+                        name={t.name}
+                        level={t.level}
+                        maxLevel={t.maxLevel}
+                        icon={getTroopImageUrl(t.name) || undefined}
+                        onPress={() => toggleDetail(t.name)}
+                      />
+                      {renderDetailPanel(t.name)}
+                    </React.Fragment>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+
+          {activeTab === 'siege' && (
+            <>
+              {siegeMachines.length === 0 ? (
+                <EmptyState
+                  icon="🚀"
+                  title="No siege machines"
+                  description="Siege Machines unlock at TH12 with the Workshop. You can request them from your clanmates."
+                />
+              ) : (
+                <>
+                  {siegeMachines.map((s) => (
+                    <React.Fragment key={s.name}>
+                      <ItemCard
+                        name={s.name}
+                        level={s.level}
+                        maxLevel={s.maxLevel}
+                        thMaxLevel={getMaxLevelAtTH(s.name, th)}
+                        icon={getTroopImageUrl(s.name) || undefined}
+                        onPress={() => toggleDetail(s.name)}
+                      />
+                      {renderDetailPanel(s.name)}
+                    </React.Fragment>
+                  ))}
                 </>
               )}
             </>
@@ -765,7 +786,6 @@ export default function PlayerProfileScreen() {
                 />
               ) : (
                 <>
-                  <SectionHeader title="Spells" />
                   {player.spells.filter((s) => s.village === 'home' || !s.village).map((s) => (
                     <React.Fragment key={s.name}>
                       <ItemCard
@@ -784,6 +804,34 @@ export default function PlayerProfileScreen() {
             </>
           )}
 
+          {activeTab === 'pets' && (
+            <>
+              {homePets.length === 0 ? (
+                <EmptyState
+                  icon="🐾"
+                  title="No pets yet"
+                  description="Pets unlock at TH14 with the Pet House. They follow and fight alongside your heroes in battle."
+                />
+              ) : (
+                <>
+                  {homePets.map((p) => (
+                    <React.Fragment key={p.name}>
+                      <ItemCard
+                        name={p.name}
+                        level={p.level}
+                        maxLevel={p.maxLevel}
+                        thMaxLevel={getMaxLevelAtTH(p.name, th)}
+                        icon={getTroopImageUrl(p.name) || getPetImageUrl(p.name) || undefined}
+                        onPress={() => toggleDetail(p.name)}
+                      />
+                      {renderDetailPanel(p.name)}
+                    </React.Fragment>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+
           {activeTab === 'equipment' && (
             <>
               {player.heroEquipment.length === 0 ? (
@@ -794,7 +842,6 @@ export default function PlayerProfileScreen() {
                 />
               ) : (
                 <>
-                  <SectionHeader title="Hero Equipment" />
                   {player.heroEquipment.map((e) => (
                     <React.Fragment key={e.name}>
                       <ItemCard
@@ -811,8 +858,6 @@ export default function PlayerProfileScreen() {
               )}
             </>
           )}
-
-
         </View>
 
         <View style={{ height: 100 }} />
@@ -876,6 +921,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tabsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: Spacing.base,
     gap: Spacing.sm,
     paddingVertical: Spacing.base,
@@ -949,7 +996,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.xs,
+    rowGap: Spacing.sm,
     marginBottom: Spacing.base,
+    width: '100%',
   },
   panelPill: {
     flexDirection: 'row',
