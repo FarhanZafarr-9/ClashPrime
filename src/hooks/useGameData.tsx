@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getSiegeMachineNames, getPetNames, getSuperTroopNames, clearGameDataCache } from '../api/gameData';
-import { getThLevelsData, clearThLevelsCache } from '../api/thLevels';
-import { setThLevelsCache } from '../utils/thMaxLevels';
 
 interface GameDataContextValue {
   siegeMachineNames: string[];
@@ -32,16 +30,14 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const [siege, pets, supers, thData] = await Promise.all([
+      const [siege, pets, supers] = await Promise.all([
         getSiegeMachineNames(force),
         getPetNames(force),
         getSuperTroopNames(force),
-        getThLevelsData(force),
       ]);
       setSiegeMachineNames(siege);
       setPetNames(pets);
       setSuperTroopNames(supers);
-      setThLevelsCache(thData);
     } catch (e: any) {
       setError(e.message || 'Failed to load game data');
     } finally {
@@ -54,7 +50,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   }, [fetch]);
 
   const refresh = useCallback(async () => {
-    await Promise.all([clearGameDataCache(), clearThLevelsCache()]);
+    await clearGameDataCache();
     await fetch(true);
   }, [fetch]);
 

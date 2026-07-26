@@ -15,7 +15,7 @@ import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../s
 import { Card } from '../../src/components/Card';
 import buildingLevelsData from '../../src/data/building-levels.json';
 import thLevelsData from '../../src/data/th-levels.json';
-import { getCategories } from '../../src/utils/thMaxLevels';
+
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
@@ -359,8 +359,7 @@ export default function BuildingsScreen() {
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
-  const dynamicCategories = getCategories();
-  const categories = (Object.keys(dynamicCategories).length ? dynamicCategories : thLevelsData.categories) as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
+  const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
   const [selectedCat, setSelectedCat] = useState('');
 
   const bbEntries = useMemo(() => {

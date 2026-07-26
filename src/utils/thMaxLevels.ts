@@ -1,24 +1,10 @@
-import { ThLevelsData } from '../api/thLevels';
 import staticData from '../data/th-levels.json';
 
-let data: ThLevelsData | null = staticData as ThLevelsData;
-
-export function setThLevelsCache(d: ThLevelsData) {
-  data = d;
-}
-
-export function getCategories() {
-  return data?.categories ?? {};
-}
-
-function categories(): Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>> {
-  return (data?.categories ?? {}) as any;
-}
+const categories = (staticData as any).categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
 
 export function getMaxLevelAtTH(itemName: string, thLevel: number): number | null {
-  const cats = categories();
-  for (const catName of Object.keys(cats)) {
-    const cat = cats[catName];
+  for (const catName of Object.keys(categories)) {
+    const cat = categories[catName];
     if (cat[itemName]) {
       const entry = cat[itemName][String(thLevel)];
       if (entry && entry.level !== null) return entry.level;
@@ -35,12 +21,11 @@ export function isMaxedAtTH(itemName: string, currentLevel: number, thLevel: num
 }
 
 export function getThMaxInfo(itemName: string, thLevel: number): { maxLevel: number | null; isMaxAtTh: boolean; isGlobalMax: boolean } {
-  const cats = categories();
   let maxAtTH: number | null = null;
   let globalMax = 0;
 
-  for (const catName of Object.keys(cats)) {
-    const cat = cats[catName];
+  for (const catName of Object.keys(categories)) {
+    const cat = categories[catName];
     if (cat[itemName]) {
       const thEntry = cat[itemName][String(thLevel)];
       if (thEntry && thEntry.level !== null) maxAtTH = thEntry.level;
@@ -61,10 +46,9 @@ export function getThMaxInfo(itemName: string, thLevel: number): { maxLevel: num
 }
 
 export function getTroopsAtTH(thLevel: number): Record<string, number> {
-  const cats = categories();
   const result: Record<string, number> = {};
   for (const catName of ['Troops', 'Dark Troops']) {
-    const cat = cats[catName];
+    const cat = categories[catName];
     if (!cat) continue;
     for (const [name, levels] of Object.entries(cat)) {
       const entry = levels[String(thLevel)];
@@ -75,8 +59,7 @@ export function getTroopsAtTH(thLevel: number): Record<string, number> {
 }
 
 export function getSpellsAtTH(thLevel: number): Record<string, number> {
-  const cats = categories();
-  const cat = cats['Spells'];
+  const cat = categories['Spells'];
   if (!cat) return {};
   const result: Record<string, number> = {};
   for (const [name, levels] of Object.entries(cat)) {
@@ -87,8 +70,7 @@ export function getSpellsAtTH(thLevel: number): Record<string, number> {
 }
 
 export function getHeroesAtTH(thLevel: number): Record<string, number> {
-  const cats = categories();
-  const cat = cats['Heroes'];
+  const cat = categories['Heroes'];
   if (!cat) return {};
   const result: Record<string, number> = {};
   for (const [name, levels] of Object.entries(cat)) {
