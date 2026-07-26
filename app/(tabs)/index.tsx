@@ -17,7 +17,7 @@ import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems } from '../../src/utils/thMaxLevels';
-import { getTroopImageUrl } from '../../src/utils/troopImages';
+import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
@@ -90,10 +90,37 @@ export default function HomeScreen() {
     ...player.spells.map((s: { name: string }) => s.name.toLowerCase()),
   ]);
   const unlockableItems = getUnlockableItems(th, ownedNames);
+
+  const prevTh = Math.max(1, th - 1);
+  const rushedItems: { name: string; currentLevel: number; maxLevelAtPrevTH: number; type: string }[] = [];
+  if (th > 1) {
+    for (const t of homeTroops) {
+      const maxPrev = getMaxLevelAtTH(t.name, prevTh);
+      if (maxPrev !== null && t.level < maxPrev) rushedItems.push({ name: t.name, currentLevel: t.level, maxLevelAtPrevTH: maxPrev, type: 'troop' });
+    }
+    for (const h of homeHeroes) {
+      const maxPrev = getMaxLevelAtTH(h.name, prevTh);
+      if (maxPrev !== null && h.level < maxPrev) rushedItems.push({ name: h.name, currentLevel: h.level, maxLevelAtPrevTH: maxPrev, type: 'hero' });
+    }
+    for (const s of homeSpells) {
+      const maxPrev = getMaxLevelAtTH(s.name, prevTh);
+      if (maxPrev !== null && s.level < maxPrev) rushedItems.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
+    }
+    for (const e of player.heroEquipment) {
+      const maxPrev = getMaxLevelAtTH(e.name, prevTh);
+      if (maxPrev !== null && e.level < maxPrev) rushedItems.push({ name: e.name, currentLevel: e.level, maxLevelAtPrevTH: maxPrev, type: 'equipment' });
+    }
+  }
+
   const [upgradesOpen, setUpgradesOpen] = useState(false);
   const [upgradeCosts, setUpgradeCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
   const [loadingCosts, setLoadingCosts] = useState(false);
   const fetchedRef = useRef(false);
+
+  const [rushedOpen, setRushedOpen] = useState(false);
+  const [rushedCosts, setRushedCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
+  const [loadingRushedCosts, setLoadingRushedCosts] = useState(false);
+  const rushedFetchedRef = useRef(false);
 
   useEffect(() => {
     if (!upgradesOpen || fetchedRef.current || unlockableItems.length === 0) return;
@@ -140,6 +167,50 @@ export default function HomeScreen() {
     })();
   }, [upgradesOpen, th, unlockableItems]);
 
+  const parseCost = (s: string): number => {
+    const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
+    if (!cleaned) return 0;
+    const num = parseFloat(cleaned);
+    if (isNaN(num)) return 0;
+    if (/b/i.test(cleaned)) return num * 1_000_000_000;
+    if (/m/i.test(cleaned)) return num * 1_000_000;
+    if (/k/i.test(cleaned)) return num * 1_000;
+    return num;
+  };
+
+  const parseTime = (s: string): number => {
+    if (!s || /[—\-]/.test(s)) return 0;
+    const d = s.match(/(\d+)\s*d/);
+    const h = s.match(/(\d+)\s*h/);
+    const m = s.match(/(\d+)\s*m/);
+    return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
+  };
+
+  useEffect(() => {
+    if (!rushedOpen || rushedFetchedRef.current || rushedItems.length === 0) return;
+    rushedFetchedRef.current = true;
+    setLoadingRushedCosts(true);
+
+    (async () => {
+      const results: Record<string, { cost: number; timeSeconds: number }> = {};
+      await Promise.all(rushedItems.map(async (item) => {
+        const detail = await getTroopDetail(item.name);
+        if (!detail?.levels) return;
+        let cost = 0;
+        let timeSeconds = 0;
+        for (const lvl of detail.levels) {
+          if (lvl.level > item.maxLevelAtPrevTH) break;
+          if (lvl.level <= item.currentLevel) continue;
+          if (lvl.upgradeCost) cost += parseCost(lvl.upgradeCost);
+          if (lvl.upgradeTime) timeSeconds += parseTime(lvl.upgradeTime);
+        }
+        if (cost > 0 || timeSeconds > 0) results[item.name] = { cost, timeSeconds };
+      }));
+      setRushedCosts(results);
+      setLoadingRushedCosts(false);
+    })();
+  }, [rushedOpen, rushedItems]);
+
   const fmtCost = (n: number): string => {
     if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
@@ -158,6 +229,8 @@ export default function HomeScreen() {
 
   const aggregateCost = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
   const aggregateTime = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
+  const aggregateRushedCost = rushedCosts ? Object.values(rushedCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
+  const aggregateRushedTime = rushedCosts ? Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -331,6 +404,82 @@ export default function HomeScreen() {
                       ) : null}
                     </View>
                   );
+                  return elements;
+                });
+              })()}
+            </View>
+          </>
+        )}
+
+        {rushedItems.length > 0 && (
+          <>
+            <View style={styles.sectionLabel}>
+              <Text style={styles.sectionTitle}>Rushed</Text>
+            </View>
+            <View style={styles.upgradeCard}>
+              <Pressable style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
+                <View style={styles.upgradeHeaderLeft}>
+                  <Ionicons name="alert-circle-outline" size={16} color={Colors.warning} />
+                  <Text style={styles.upgradeHeaderText}>{rushedItems.length} rushed</Text>
+                  {loadingRushedCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
+                  {!loadingRushedCosts && rushedCosts && aggregateRushedCost > 0 && (
+                    <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateRushedCost)}{aggregateRushedTime > 0 ? ` · ${fmtTime(aggregateRushedTime)}` : ''}</Text>
+                  )}
+                </View>
+                <Ionicons name={rushedOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
+              </Pressable>
+              {rushedOpen && (() => {
+                const groups: { label: string; key: string; icon: string; items: typeof rushedItems }[] = [
+                  { label: 'Heroes', key: 'hero', icon: 'shield-half-outline', items: [] },
+                  { label: 'Troops', key: 'troop', icon: 'sword-cross', items: [] },
+                  { label: 'Spells', key: 'spell', icon: 'flask-outline', items: [] },
+                  { label: 'Equipment', key: 'equipment', icon: 'trophy-outline', items: [] },
+                ];
+                for (const item of rushedItems) {
+                  const g = groups.find((g) => g.key === item.type);
+                  if (g) g.items.push(item);
+                }
+                const visible = groups.filter((g) => g.items.length > 0);
+                return visible.flatMap((group, gi) => {
+                  const elements: React.ReactNode[] = [];
+                  if (gi > 0) {
+                    elements.push(<View key={`rs-sep-${gi}`} style={styles.upgradeThSectionBorder} />);
+                  }
+                  elements.push(
+                    <View key={`rs-hdr-${group.key}`} style={styles.upgradeThSection}>
+                      <Ionicons name={group.icon as any} size={14} color={Colors.textTertiary} />
+                      <Text style={styles.upgradeThSectionTitle}>{group.label} ({group.items.length})</Text>
+                    </View>
+                  );
+                  group.items.forEach((item, i) => {
+                    const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name);
+                    const costData = rushedCosts?.[item.name];
+                    elements.push(
+                      <View key={item.name} style={[styles.upgradeRow, i < group.items.length - 1 && styles.upgradeRowBorder]}>
+                        <View style={styles.upgradeIconWrap}>
+                          {iconUrl ? (
+                            <Image source={{ uri: iconUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                          ) : (
+                            <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
+                          )}
+                        </View>
+                        <View style={styles.upgradeInfo}>
+                          <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
+                          <Text style={styles.upgradeHint}>Lv{item.currentLevel} → Lv{item.maxLevelAtPrevTH}</Text>
+                        </View>
+                        {costData ? (
+                          <View style={styles.upgradeCostPill}>
+                            <Text style={styles.upgradeCostText}>{fmtCost(costData.cost)}</Text>
+                            {costData.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(costData.timeSeconds)}</Text>}
+                          </View>
+                        ) : loadingRushedCosts ? (
+                          <View style={styles.upgradeCostPill}>
+                            <Text style={styles.upgradeCostText}>…</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    );
+                  });
                   return elements;
                 });
               })()}
