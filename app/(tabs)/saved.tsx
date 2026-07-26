@@ -4,10 +4,10 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
   Linking,
   SectionList,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
@@ -225,16 +225,16 @@ export default function SavedScreen() {
                         </Text>
                       </View>
                       <View style={styles.itemActions}>
-                        <Pressable onPress={() => handleToggleBaseFav(base.id)} hitSlop={10} style={styles.actionBtn}>
+                        <PressableRipple onPress={() => handleToggleBaseFav(base.id)} hitSlop={10} style={styles.actionBtn}>
                           <Ionicons
                             name={baseFavorites.has(base.id) ? 'heart' : 'heart-outline'}
                             size={16}
                             color={baseFavorites.has(base.id) ? Colors.textPrimary : Colors.textTertiary}
                           />
-                        </Pressable>
-                        <Pressable onPress={() => handleRemoveBase(base.id)} hitSlop={10} style={styles.actionBtn}>
+                        </PressableRipple>
+                        <PressableRipple onPress={() => handleRemoveBase(base.id)} hitSlop={10} style={styles.actionBtn}>
                           <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
-                        </Pressable>
+                        </PressableRipple>
                       </View>
                     </View>
                   );
@@ -275,16 +275,16 @@ export default function SavedScreen() {
                       </Text>
                     </View>
                     <View style={styles.itemActions}>
-                      <Pressable onPress={() => handleToggleArmyFav(Number(savedArmy.id))} hitSlop={10} style={styles.actionBtn}>
+                      <PressableRipple onPress={() => handleToggleArmyFav(Number(savedArmy.id))} hitSlop={10} style={styles.actionBtn}>
                         <Ionicons
                           name={isFav ? 'heart' : 'heart-outline'}
                           size={16}
                           color={isFav ? Colors.textPrimary : Colors.textTertiary}
                         />
-                      </Pressable>
-                      <Pressable onPress={() => handleRemoveSavedArmy(savedArmy.id)} hitSlop={10} style={styles.actionBtn}>
+                      </PressableRipple>
+                      <PressableRipple onPress={() => handleRemoveSavedArmy(savedArmy.id)} hitSlop={10} style={styles.actionBtn}>
                         <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
-                      </Pressable>
+                      </PressableRipple>
                     </View>
                   </View>
                 );

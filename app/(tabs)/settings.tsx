@@ -4,15 +4,12 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
   TextInput,
   Switch,
   Modal,
-  KeyboardAvoidingView,
-  Platform,
-  Share,
-  Image,
+  Linking,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
@@ -45,9 +42,9 @@ interface SettingItemProps {
 function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: SettingItemProps) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <PressableRipple
       onPress={onPress}
-      style={({ pressed }) => [styles.settingItem, { backgroundColor: pressed ? colors.bgCardHover : colors.bgCard, borderColor: colors.border }, pressed && { borderColor: colors.textMuted }]}
+      style={[styles.settingItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
     >
       <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
         <Ionicons name={icon as any} size={16} color={danger ? Colors.bg : Colors.textSecondary} />
@@ -56,7 +53,7 @@ function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: 
       <View style={styles.settingSpacer} />
       {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
       {showArrow && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />}
-    </Pressable>
+    </PressableRipple>
   );
 }
 
@@ -470,7 +467,7 @@ export default function SettingsScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <Pressable style={styles.modalBackdrop} onPress={() => setModalVisible(false)} />
+          <PressableRipple style={styles.modalBackdrop} onPress={() => setModalVisible(false)} />
           <View style={styles.modalContent}>
             <View style={styles.modalIconWrap}>
               <Ionicons
@@ -498,32 +495,32 @@ export default function SettingsScreen() {
                 keyboardAppearance="dark"
               />
               {modalType === 'token' && (
-                <Pressable style={styles.modalIconBtn} onPress={async () => { const t = await getStringAsync(); if (t) setModalValue(t); }} hitSlop={8}>
+                <PressableRipple style={styles.modalIconBtn} onPress={async () => { const t = await getStringAsync(); if (t) setModalValue(t); }} hitSlop={8}>
                   <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
-                </Pressable>
+                </PressableRipple>
               )}
               {modalValue.length > 0 && (
-                <Pressable style={styles.modalClearBtn} onPress={() => setModalValue('')} hitSlop={8}>
+                <PressableRipple style={styles.modalClearBtn} onPress={() => setModalValue('')} hitSlop={8}>
                   <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
-                </Pressable>
+                </PressableRipple>
               )}
             </View>
             {modalError ? (
               <Text style={styles.modalErrorText}>{modalError}</Text>
             ) : null}
             <View style={styles.modalActions}>
-              <Pressable
+              <PressableRipple
                 style={styles.modalCancelBtn}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
+              </PressableRipple>
+              <PressableRipple
                 style={styles.modalSaveBtn}
                 onPress={() => modalOnSave(modalValue)}
               >
                 <Text style={styles.modalSaveText}>Save</Text>
-              </Pressable>
+              </PressableRipple>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -540,13 +537,13 @@ export default function SettingsScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.contentOverlay}
         >
-          <Pressable style={styles.contentBackdrop} onPress={() => setContentVisible(false)} />
+          <PressableRipple style={styles.contentBackdrop} onPress={() => setContentVisible(false)} />
           <View style={styles.contentCard}>
             <View style={styles.contentHeader}>
               <Text style={styles.contentTitle}>{contentTitle}</Text>
-              <Pressable onPress={() => setContentVisible(false)} style={styles.contentClose} hitSlop={8}>
+              <PressableRipple onPress={() => setContentVisible(false)} style={styles.contentClose} hitSlop={8}>
                 <Ionicons name="close" size={20} color={Colors.textTertiary} />
-              </Pressable>
+              </PressableRipple>
             </View>
             <ScrollView
               style={styles.contentBody}
@@ -557,7 +554,7 @@ export default function SettingsScreen() {
             </ScrollView>
             <View style={styles.contentActions}>
               {contentActions.map((a, i) => (
-                <Pressable
+                <PressableRipple
                   key={`${a.label}-${i}`}
                   style={[styles.contentBtn, a.primary && styles.contentBtnPrimary]}
                   onPress={() => {
@@ -568,7 +565,7 @@ export default function SettingsScreen() {
                   <Text style={[styles.contentBtnText, a.primary && styles.contentBtnTextPrimary]}>
                     {a.label}
                   </Text>
-                </Pressable>
+                </PressableRipple>
               ))}
             </View>
           </View>
@@ -608,21 +605,21 @@ export default function SettingsScreen() {
               autoCorrect={false}
             />
             <View style={styles.onboardingActions}>
-              <Pressable
+              <PressableRipple
                 style={styles.onboardingBtn}
                 onPress={handleOnboardingSave}
               >
                 <Text style={styles.onboardingBtnText}>
                   {onboardingStep === 0 ? 'Continue' : 'Get Started'}
                 </Text>
-              </Pressable>
+              </PressableRipple>
             </View>
-            <Pressable
+            <PressableRipple
               style={styles.onboardingSkip}
               onPress={() => setShowOnboarding(false)}
             >
               <Text style={styles.onboardingSkipText}>Skip for now</Text>
-            </Pressable>
+            </PressableRipple>
             <View style={styles.onboardingMadeRow}>
               <Text style={styles.onboardingMadeText}>Made with </Text>
               <Image source={heartImg} style={styles.onboardingHeart} />

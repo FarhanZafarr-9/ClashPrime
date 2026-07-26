@@ -4,8 +4,8 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -93,7 +93,7 @@ export default function AchievementsScreen() {
                 { key: 'builderBase' as const, label: 'Builder', icon: 'hammer-outline' as const },
                 { key: 'clanCapital' as const, label: 'Capital', icon: 'flag-outline' as const },
               ]).filter((f) => f.key === 'all' || achievementVillageCounts[f.key] > 0).map((f) => (
-                <Pressable
+                <PressableRipple
                   key={f.key}
                   onPress={() => setAchievementVillageFilter(f.key)}
                   style={[
@@ -115,7 +115,7 @@ export default function AchievementsScreen() {
                     {f.label}
                     {f.key !== 'all' ? ` (${achievementVillageCounts[f.key]})` : ''}
                   </Text>
-                </Pressable>
+                </PressableRipple>
               ))}
             </ScrollView>
 

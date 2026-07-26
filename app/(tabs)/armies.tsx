@@ -4,9 +4,9 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
   Linking,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -190,9 +190,9 @@ export default function ArmiesScreen() {
           <Text style={styles.title}>Army Library</Text>
           {loading ? null : <Text style={styles.subtitle}>Community armies from ClashArmies</Text>}
         </View>
-        <Pressable onPress={() => fetchArmies(true)} hitSlop={12} style={styles.refreshBtn}>
+        <PressableRipple onPress={() => fetchArmies(true)} hitSlop={12} style={styles.refreshBtn}>
           <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
-        </Pressable>
+        </PressableRipple>
       </View>
 
       {/* Content */}
@@ -202,9 +202,9 @@ export default function ArmiesScreen() {
         <View style={styles.loadingContainer}>
           <Ionicons name="cloud-offline-outline" size={36} color={Colors.textTertiary} />
           <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={() => fetchArmies(true)} style={styles.retryBtn}>
+          <PressableRipple onPress={() => fetchArmies(true)} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
       ) : (
         <>
@@ -219,7 +219,7 @@ export default function ArmiesScreen() {
           <View style={styles.filterSection}>
             <View style={styles.filterPills}>
               {ARMY_TAG_PILLS.map((pill) => (
-                <Pressable
+                <PressableRipple
                   key={pill.key}
                   onPress={() => { setSelectedTag(pill.key); setDisplayCount(PAGE_SIZE); }}
                   style={[styles.filterPill, selectedTag === pill.key && styles.filterPillActive]}
@@ -232,7 +232,7 @@ export default function ArmiesScreen() {
                   <Text style={[styles.filterPillText, selectedTag === pill.key && styles.filterPillTextActive]}>
                     {pill.label}
                   </Text>
-                </Pressable>
+                </PressableRipple>
               ))}
             </View>
           </View>

@@ -5,10 +5,10 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
-  Pressable,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
@@ -256,9 +256,9 @@ export default function WarScreen() {
         <View style={styles.center}>
           <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
           <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={onRefresh} style={styles.retryBtn}>
+          <PressableRipple onPress={onRefresh} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
       </SafeAreaView>
     );
@@ -316,20 +316,20 @@ export default function WarScreen() {
         </View>
 
         <View style={styles.pillRow}>
-          <Pressable
+          <PressableRipple
             style={[styles.pill, warLogView === 'regular' && styles.pillActive]}
             onPress={() => setWarLogView('regular')}
           >
             <Ionicons name="shield-outline" size={14} color={warLogView === 'regular' ? Colors.bg : Colors.textSecondary} />
             <Text style={[styles.pillText, warLogView === 'regular' && styles.pillTextActive]}>Regular</Text>
-          </Pressable>
-          <Pressable
+          </PressableRipple>
+          <PressableRipple
             style={[styles.pill, warLogView === 'cwl' && styles.pillActive]}
             onPress={() => setWarLogView('cwl')}
           >
             <Ionicons name="flash-outline" size={14} color={warLogView === 'cwl' ? Colors.bg : Colors.textSecondary} />
             <Text style={[styles.pillText, warLogView === 'cwl' && styles.pillTextActive]}>CWL</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
 
         {warLogView === 'regular' ? (
@@ -501,7 +501,7 @@ function WarLogRow({ entry }: { entry: WarLogEntry }) {
 
   return (
     <View>
-      <Pressable style={styles.logRow} onPress={() => setExpanded(e => !e)}>
+      <PressableRipple style={styles.logRow} onPress={() => setExpanded(e => !e)}>
         <WarResultBadge result={entry.result} />
         {entry.opponent.badgeUrls?.medium && (
           <Image source={{ uri: entry.opponent.badgeUrls.medium }} style={styles.logBadge} />
@@ -520,7 +520,7 @@ function WarLogRow({ entry }: { entry: WarLogEntry }) {
           </Text>
         </Text>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
-      </Pressable>
+      </PressableRipple>
       {expanded && (
         <View style={styles.warTable}>
           <View style={styles.warTableRow}>

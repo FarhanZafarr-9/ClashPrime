@@ -4,10 +4,10 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
   RefreshControl,
   Image,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -575,7 +575,7 @@ export default function PlayerProfileScreen() {
               </View>
             </ScrollView>
             {visibleDetailLevels.length > 3 && (
-              <Pressable
+              <PressableRipple
                 style={styles.expandTableBtn}
                 onPress={() => setShowFullLevels((prev) => ({ ...prev, [name]: !showFull }))}
               >
@@ -583,7 +583,7 @@ export default function PlayerProfileScreen() {
                 <Text style={styles.expandTableText}>
                   {showFull ? 'Show fewer' : `Show all ${visibleDetailLevels.length} levels`}
                 </Text>
-              </Pressable>
+              </PressableRipple>
             )}
             <Text style={[styles.panelNote, { color: colors.textMuted }]}>
               {isBB
@@ -660,14 +660,14 @@ export default function PlayerProfileScreen() {
             <Text style={styles.subtitle}>All your troops, heroes, spells & equipment</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-            <Pressable onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
+            <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
               <Ionicons
                 name={discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
                 size={24}
                 color={discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? colors.warning : colors.textSecondary}
               />
-            </Pressable>
-            <Pressable
+            </PressableRipple>
+            <PressableRipple
               onPress={onRefresh}
               disabled={refreshing}
               hitSlop={12}
@@ -680,7 +680,7 @@ export default function PlayerProfileScreen() {
                 size={28}
                 color={refreshing ? Colors.textTertiary : colors.textSecondary}
               />
-            </Pressable>
+            </PressableRipple>
           </View>
         </View>
 
@@ -690,7 +690,7 @@ export default function PlayerProfileScreen() {
             const iconDef = TAB_ICONS[tab.key];
             const iconColor = isActive ? Colors.bg : Colors.textSecondary;
             return (
-              <Pressable
+              <PressableRipple
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
                 style={[styles.tab, isActive && styles.tabActive]}
@@ -703,7 +703,7 @@ export default function PlayerProfileScreen() {
                 <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
                   {tab.label}
                 </Text>
-              </Pressable>
+              </PressableRipple>
             );
           })}
         </View>

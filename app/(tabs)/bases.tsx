@@ -4,9 +4,9 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
   Linking,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -218,9 +218,9 @@ export default function BaseLibraryScreen() {
           <Text style={styles.title}>Base Library</Text>
           {loading ? null : <Text style={styles.subtitle}>{hallLabel}{hallLevel} layouts from ClashLy</Text>}
         </View>
-        <Pressable onPress={fetchBases} hitSlop={12} style={styles.refreshBtn}>
+        <PressableRipple onPress={fetchBases} hitSlop={12} style={styles.refreshBtn}>
           <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
-        </Pressable>
+        </PressableRipple>
       </View>
 
       {/* Village toggle */}
@@ -228,7 +228,7 @@ export default function BaseLibraryScreen() {
         <Text style={styles.filterLabel}>Village</Text>
         <View style={styles.filterPills}>
           {VILLAGE_OPTIONS.map((opt) => (
-            <Pressable
+            <PressableRipple
               key={opt.key}
               onPress={() => setSelectedVillage(opt.key)}
               style={[styles.filterPill, selectedVillage === opt.key && styles.filterPillActive]}
@@ -241,7 +241,7 @@ export default function BaseLibraryScreen() {
               <Text style={[styles.filterPillText, selectedVillage === opt.key && styles.filterPillTextActive]}>
                 {opt.label}
               </Text>
-            </Pressable>
+            </PressableRipple>
           ))}
         </View>
       </View>
@@ -251,7 +251,7 @@ export default function BaseLibraryScreen() {
         <Text style={styles.filterLabel}>Category</Text>
         <View style={styles.filterPills}>
           {CATEGORY_PILLS.map((pill) => (
-            <Pressable
+            <PressableRipple
               key={pill.key}
               onPress={() => setSelectedCategory(pill.key)}
               style={[styles.filterPill, selectedCategory === pill.key && styles.filterPillActive]}
@@ -264,7 +264,7 @@ export default function BaseLibraryScreen() {
               <Text style={[styles.filterPillText, selectedCategory === pill.key && styles.filterPillTextActive]}>
                 {pill.label}
               </Text>
-            </Pressable>
+            </PressableRipple>
           ))}
         </View>
       </View>
@@ -276,9 +276,9 @@ export default function BaseLibraryScreen() {
         <View style={styles.loadingContainer}>
           <Ionicons name="cloud-offline-outline" size={36} color={Colors.textTertiary} />
           <Text style={styles.errorText}>{scrapeError}</Text>
-          <Pressable onPress={fetchBases} style={styles.retryBtn}>
+          <PressableRipple onPress={fetchBases} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
       ) : (
         <>

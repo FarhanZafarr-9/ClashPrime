@@ -5,11 +5,11 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
-  Pressable,
   Image,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import PressableRipple from '../../src/components/PressableRipple';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -201,9 +201,9 @@ export default function HomeScreen() {
           <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>Connection Error</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={refresh} style={styles.retryBtn}>
+          <PressableRipple onPress={refresh} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
       </SafeAreaView>
     );
@@ -331,9 +331,9 @@ export default function HomeScreen() {
                 </>
               )}
             </View>
-            <Pressable onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
+            <PressableRipple onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
               <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
-            </Pressable>
+            </PressableRipple>
           </View>
         </Card>
 
@@ -381,7 +381,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Available Upgrades</Text>
             </View>
             <View style={styles.upgradeCard}>
-              <Pressable style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
+              <PressableRipple style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
                 <View style={styles.upgradeHeaderLeft}>
                   <Ionicons name="ban-outline" size={16} color="#FF3B30" />
                   <Text style={styles.upgradeHeaderText}>{unlockableItems.length} locked</Text>
@@ -391,7 +391,7 @@ export default function HomeScreen() {
                   )}
                 </View>
                 <Ionicons name={upgradesOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
-              </Pressable>
+              </PressableRipple>
               {upgradesOpen && (() => {
                 let lastTh = -1;
                 return unlockableItems.flatMap((item, i) => {
@@ -448,7 +448,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Rushed</Text>
             </View>
             <View style={styles.upgradeCard}>
-              <Pressable style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
+              <PressableRipple style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
                 <View style={styles.upgradeHeaderLeft}>
                   <Ionicons name="warning-outline" size={16} color={Colors.warning} />
                   <Text style={styles.upgradeHeaderText}>{rushedItems.length} rushed</Text>
@@ -458,7 +458,7 @@ export default function HomeScreen() {
                   )}
                 </View>
                 <Ionicons name={rushedOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
-              </Pressable>
+              </PressableRipple>
               {rushedOpen && (() => {
                 const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
                   { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
@@ -531,22 +531,22 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
+          <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
             <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
             <Text style={styles.actionText}>Saved</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/war')}>
+          </PressableRipple>
+          <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/war')}>
             <Ionicons name="flag-outline" size={16} color={Colors.textPrimary} />
             <Text style={styles.actionText}>War</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
+          </PressableRipple>
+          <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
             <Ionicons name="settings-sharp" size={16} color={Colors.textPrimary} />
             <Text style={styles.actionText}>Settings</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn} onPress={onRefresh}>
+          </PressableRipple>
+          <PressableRipple style={styles.actionBtn} onPress={onRefresh}>
             <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
             <Text style={styles.actionText}>Refresh</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
 
         <View style={styles.sectionLabel}>

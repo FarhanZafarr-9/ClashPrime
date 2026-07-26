@@ -5,8 +5,8 @@ import {
   ScrollView,
   StyleSheet,
   Image,
-  Pressable,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
@@ -304,7 +304,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
 
   return (
     <Card style={styles.itemCard}>
-      <Pressable onPress={toggleExpanded}>
+      <PressableRipple onPress={toggleExpanded}>
         <View style={styles.itemRow}>
           {mainImgSource ? (
             <Image source={mainImgSource} style={styles.itemIcon} resizeMode="contain" />
@@ -330,7 +330,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
             style={styles.expandArrow}
           />
         </View>
-      </Pressable>
+      </PressableRipple>
 
       {expanded && displayLevels.length > 0 && (
         <>
@@ -390,16 +390,16 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
             </ScrollView>
           )}
           {showExpand && !showFull && (
-            <Pressable style={styles.expandTableBtn} onPress={() => setShowFull(true)}>
+            <PressableRipple style={styles.expandTableBtn} onPress={() => setShowFull(true)}>
               <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
               <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
-            </Pressable>
+            </PressableRipple>
           )}
           {showExpand && showFull && (
-            <Pressable style={styles.expandTableBtn} onPress={() => setShowFull(false)}>
+            <PressableRipple style={styles.expandTableBtn} onPress={() => setShowFull(false)}>
               <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
               <Text style={styles.expandTableText}>Show fewer</Text>
-            </Pressable>
+            </PressableRipple>
           )}
         </>
       )}
@@ -469,13 +469,13 @@ export default function BuildingsScreen() {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Buildings</Text>
-            <Pressable onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
+            <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
               <Ionicons
                 name={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
                 size={24}
                 color={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? Colors.warning : Colors.textSecondary}
               />
-            </Pressable>
+            </PressableRipple>
           </View>
           <Text style={styles.subtitle}>
             {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
@@ -486,14 +486,14 @@ export default function BuildingsScreen() {
           {availableCats.map((cat) => {
             const isActive = cat === activeCat;
             return (
-              <Pressable
+              <PressableRipple
                 key={cat}
                 style={[styles.pill, isActive && styles.pillActive]}
                 onPress={() => setSelectedCat(cat)}
               >
                 <CategoryIcon cat={cat} isActive={isActive} />
                 <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{cat}</Text>
-              </Pressable>
+              </PressableRipple>
             );
           })}
         </View>

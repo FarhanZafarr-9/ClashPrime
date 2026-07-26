@@ -4,10 +4,10 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Pressable,
   RefreshControl,
   Linking,
 } from 'react-native';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
@@ -111,7 +111,7 @@ export default function EventsScreen() {
         </View>
 
         <View style={styles.pillRow}>
-          <Pressable
+          <PressableRipple
             style={[styles.pill, view === 'events' && styles.pillActive]}
             onPress={() => setView('events')}
           >
@@ -121,8 +121,8 @@ export default function EventsScreen() {
               color={view === 'events' ? Colors.bg : Colors.textSecondary}
             />
             <Text style={[styles.pillText, view === 'events' && styles.pillTextActive]}>Events</Text>
-          </Pressable>
-          <Pressable
+          </PressableRipple>
+          <PressableRipple
             style={[styles.pill, view === 'news' && styles.pillActive]}
             onPress={() => setView('news')}
           >
@@ -132,7 +132,7 @@ export default function EventsScreen() {
               color={view === 'news' ? Colors.bg : Colors.textSecondary}
             />
             <Text style={[styles.pillText, view === 'news' && styles.pillTextActive]}>News</Text>
-          </Pressable>
+          </PressableRipple>
         </View>
 
         {error && view === 'events' && (
@@ -141,9 +141,9 @@ export default function EventsScreen() {
               <Ionicons name="alert-circle-outline" size={18} color={Colors.textTertiary} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
-            <Pressable style={styles.retryBtn} onPress={loadData}>
+            <PressableRipple style={styles.retryBtn} onPress={loadData}>
               <Text style={styles.retryText}>Retry</Text>
-            </Pressable>
+            </PressableRipple>
           </Card>
         )}
 
@@ -263,7 +263,7 @@ function NewsCard({ item }: { item: NewsItem }) {
   const dateLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
 
   return (
-    <Pressable onPress={() => item.link ? Linking.openURL(item.link) : null}>
+    <PressableRipple onPress={() => item.link ? Linking.openURL(item.link) : null}>
       <View style={styles.eventCard}>
         <View style={styles.eventTop}>
           <View style={styles.newsIconWrap}>
@@ -299,7 +299,7 @@ function NewsCard({ item }: { item: NewsItem }) {
           </View>
         </View>
       </View>
-    </Pressable>
+    </PressableRipple>
   );
 }
 
