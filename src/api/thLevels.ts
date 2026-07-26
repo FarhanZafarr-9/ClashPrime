@@ -36,11 +36,10 @@ function hashStr(str: string): string {
 
 function extractSectionHtmls(fullHtml: string): Map<string, string> {
   const sections = new Map<string, string>();
-  const regex = /<h3[^>]*id="cphBody_ctl[^"]*"[^>]*>([\s\S]*?)<\/h3>\s*<div[^>]*class="cell"[^>]*>([\s\S]*?)<\/div>/gi;
+  const regex = /<div[^>]*class="[^"]*\bcell\b[^"]*"[^>]*>[\s\S]*?<h3[^>]*id="cphBody_ctl[^"]*"[^>]*>([\s\S]*?)<\/h3>([\s\S]*?)<\/div>/gi;
   let match;
   while ((match = regex.exec(fullHtml)) !== null) {
     const h3Content = match[1];
-    const cellContent = match[2];
     const nameMatch = h3Content.match(/>([^<]+)</);
     const name = nameMatch ? nameMatch[1].trim() : '';
     if (name) {

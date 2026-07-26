@@ -93,6 +93,7 @@ export function getHeroImageUrl(name: string): string | null {
 }
 
 export function getHeroSlug(name: string): string | null {
+  if (!HERO_FILENAMES[name]) return null;
   return name.replace(/\s+/g, '-').toLowerCase();
 }
 

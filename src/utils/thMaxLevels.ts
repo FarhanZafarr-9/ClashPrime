@@ -1,6 +1,7 @@
 import { ThLevelsData } from '../api/thLevels';
+import staticData from '../data/th-levels.json';
 
-let data: ThLevelsData | null = null;
+let data: ThLevelsData | null = staticData as ThLevelsData;
 
 export function setThLevelsCache(d: ThLevelsData) {
   data = d;
