@@ -425,7 +425,7 @@ function CurrentWarSection({ war }: { war: ClanWar }) {
       )}
 
       {isPreparation && (
-        <Card>
+        <Card style={{marginTop: Spacing.md}}>
           <View style={styles.center}>
             <Ionicons name="time-outline" size={24} color={Colors.textTertiary} />
             <Text style={styles.prepText}>Preparation Day</Text>
