@@ -1926,31 +1926,31 @@
     },
     {
       "name": "BB Cannon",
-      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Cannon10B.png/revision/latest/scale-to-width-down/128?cb=20230521100811",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b8/Cannon1B.png/revision/latest/scale-to-width-down/128",
       "levels": [
         {
           "level": 1,
-          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a1/Cannon1.png/revision/latest?cb=20230521100552"
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b8/Cannon1B.png/revision/latest"
         },
         {
           "level": 2,
-          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/d/dc/Cannon2.png/revision/latest?cb=20230521100606"
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4e/Cannon2B.png/revision/latest"
         },
         {
           "level": 3,
-          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/10/Cannon3.png/revision/latest?cb=20230521100615"
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8a/Cannon3B.png/revision/latest"
         },
         {
           "level": 4,
-          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a5/Cannon4.png/revision/latest?cb=20230521100624"
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/6/6d/Cannon4B.png/revision/latest"
         },
         {
           "level": 5,
-          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/ea/Cannon5.png/revision/latest?cb=20230521100633"
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/02/Cannon5B.png/revision/latest"
         },
         {
           "level": 6,
-          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/93/Cannon6.png/revision/latest?cb=20230521100644"
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/4/4d/Cannon6B.png/revision/latest"
         },
         {
           "level": 7,
@@ -3585,6 +3585,114 @@
     {
       "name": "BB Army Camp",
       "imageUrl": "Army CampB.png"
+    },
+    {
+      "name": "Builder Barracks",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ce/Builder_Barracks1.png/revision/latest",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/ce/Builder_Barracks1.png/revision/latest"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/c/c2/Builder_Barracks2.png/revision/latest"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/74/Builder_Barracks3.png/revision/latest"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1e/Builder_Barracks4.png/revision/latest"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e3/Builder_Barracks5.png/revision/latest"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/f/f4/Builder_Barracks6.png/revision/latest"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/91/Builder_Barracks7.png/revision/latest"
+        },
+        {
+          "level": 8,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/03/Builder_Barracks8.png/revision/latest"
+        },
+        {
+          "level": 9,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Builder_Barracks9.png/revision/latest"
+        }
+      ]
+    },
+    {
+      "name": "Star Laboratory",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1c/Star_Laboratory1.png/revision/latest",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/1/1c/Star_Laboratory1.png/revision/latest"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b5/Star_Laboratory2.png/revision/latest"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/ac/Star_Laboratory3.png/revision/latest"
+        },
+        {
+          "level": 4,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/5/5e/Star_Laboratory4.png/revision/latest"
+        },
+        {
+          "level": 5,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/bd/Star_Laboratory5.png/revision/latest"
+        },
+        {
+          "level": 6,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8b/Star_Laboratory6.png/revision/latest"
+        },
+        {
+          "level": 7,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/8/8a/Star_Laboratory7.png/revision/latest"
+        }
+      ]
+    },
+    {
+      "name": "B.O.B Control",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/95/O.T.T.O_Hut1.png/revision/latest",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/95/O.T.T.O_Hut1.png/revision/latest"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/a/a7/O.T.T.O_Hut2.png/revision/latest"
+        }
+      ]
+    },
+    {
+      "name": "Reinforcement Camp",
+      "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Reinforcement_Camp.png/revision/latest",
+      "levels": [
+        {
+          "level": 1,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Reinforcement_Camp.png/revision/latest"
+        },
+        {
+          "level": 2,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Reinforcement_Camp.png/revision/latest"
+        },
+        {
+          "level": 3,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/7/7c/Reinforcement_Camp.png/revision/latest"
+        }
+      ]
     }
   ]
 }

@@ -592,21 +592,7 @@ const buildingAssets: Record<string, { main: any; levels: Record<number, any> }>
     10: require('../../assets/buildings/Double_Cannon/level_10.webp')
     },
   },
-  'BB Cannon': {
-    main: require('../../assets/buildings/BB_Cannon/main.webp'),
-    levels: {
-    1: require('../../assets/buildings/BB_Cannon/level_1.webp'),
-    2: require('../../assets/buildings/BB_Cannon/level_2.webp'),
-    3: require('../../assets/buildings/BB_Cannon/level_3.webp'),
-    4: require('../../assets/buildings/BB_Cannon/level_4.webp'),
-    5: require('../../assets/buildings/BB_Cannon/level_5.webp'),
-    6: require('../../assets/buildings/BB_Cannon/level_6.webp'),
-    7: require('../../assets/buildings/BB_Cannon/level_7.webp'),
-    8: require('../../assets/buildings/BB_Cannon/level_8.webp'),
-    9: require('../../assets/buildings/BB_Cannon/level_9.webp'),
-    10: require('../../assets/buildings/BB_Cannon/level_10.webp')
-    },
-  },
+  'BB Cannon': { main: null, levels: {} },
   'Wall': {
     main: require('../../assets/buildings/Wall/main.webp'),
     levels: {

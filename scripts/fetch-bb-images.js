@@ -27,7 +27,6 @@ const BUILDING_PAGES = {
   'Reinforcement Camp': 'Reinforcement_Camp',
   'Healing Hut': 'Healing_Hut',
   'Battle Copter Altar': 'Battle_Copter_Altar',
-  "Builder's Hut": "Builder%27s_Hut",
   'Clock Tower': 'Clock_Tower',
   "B.O.T.O's Shack": "B.O.T.O%27s_Shack",
   'Elixir Cart': 'Elixir_Cart',
