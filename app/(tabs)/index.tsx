@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useGameData } from '../../src/hooks/useGameData';
@@ -337,7 +337,7 @@ export default function HomeScreen() {
             <View style={styles.upgradeCard}>
               <Pressable style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
                 <View style={styles.upgradeHeaderLeft}>
-                  <Ionicons name="arrow-up-circle-outline" size={16} color={Colors.textPrimary} />
+                  <Ionicons name="ban-outline" size={16} color="#FF3B30" />
                   <Text style={styles.upgradeHeaderText}>{unlockableItems.length} locked</Text>
                   {loadingCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
                   {!loadingCosts && upgradeCosts && aggregateCost > 0 && (
@@ -404,7 +404,7 @@ export default function HomeScreen() {
             <View style={styles.upgradeCard}>
               <Pressable style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
                 <View style={styles.upgradeHeaderLeft}>
-                  <Ionicons name="alert-circle-outline" size={16} color={Colors.warning} />
+                  <Ionicons name="warning-outline" size={16} color={Colors.warning} />
                   <Text style={styles.upgradeHeaderText}>{rushedItems.length} rushed</Text>
                   {loadingRushedCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
                   {!loadingRushedCosts && rushedCosts && aggregateRushedCost > 0 && (
@@ -414,11 +414,11 @@ export default function HomeScreen() {
                 <Ionicons name={rushedOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
               </Pressable>
               {rushedOpen && (() => {
-                const groups: { label: string; key: string; icon: string; items: typeof rushedItems }[] = [
-                  { label: 'Heroes', key: 'hero', icon: 'shield-half-outline', items: [] },
-                  { label: 'Troops', key: 'troop', icon: 'people-outline', items: [] },
-                  { label: 'Spells', key: 'spell', icon: 'flask-outline', items: [] },
-                  { label: 'Equipment', key: 'equipment', icon: 'trophy-outline', items: [] },
+                const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
+                  { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
+                  { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
+                  { label: 'Spells', key: 'spell', icon: { set: 'ion', name: 'flask-outline' }, items: [] },
+                  { label: 'Equipment', key: 'equipment', icon: { set: 'ion', name: 'trophy-outline' }, items: [] },
                 ];
                 for (const item of rushedItems) {
                   const g = groups.find((g) => g.key === item.type);
@@ -432,7 +432,11 @@ export default function HomeScreen() {
                   }
                   elements.push(
                     <View key={`rs-hdr-${group.key}`} style={styles.upgradeThSection}>
-                      <Ionicons name={group.icon as any} size={14} color={Colors.textTertiary} />
+                      {group.icon.set === 'mc' ? (
+                        <MaterialCommunityIcons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
+                      ) : (
+                        <Ionicons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
+                      )}
                       <Text style={styles.upgradeThSectionTitle}>{group.label} ({group.items.length})</Text>
                     </View>
                   );
@@ -450,7 +454,11 @@ export default function HomeScreen() {
                         </View>
                         <View style={styles.upgradeInfo}>
                           <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
-                          <Text style={styles.upgradeHint}>Lv{item.currentLevel} → Lv{item.maxLevelAtPrevTH}</Text>
+                          <View style={styles.upgradeHintRow}>
+                            <Text style={styles.upgradeHint}>Lv{item.currentLevel}</Text>
+                            <Ionicons name="arrow-forward" size={10} color={Colors.textTertiary} style={{ marginHorizontal: 2 }} />
+                            <Text style={styles.upgradeHint}>Lv{item.maxLevelAtPrevTH}</Text>
+                          </View>
                         </View>
                         {costData ? (
                           <View style={styles.upgradeCostPill}>
@@ -778,7 +786,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     borderWidth: 0.75,
     borderColor: Colors.border,
     overflow: 'hidden',
@@ -787,7 +795,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.base,
   },
   upgradeHeaderLeft: {
@@ -843,6 +851,10 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: 1,
+  },
+  upgradeHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   upgradeThSection: {
     flexDirection: 'row',
