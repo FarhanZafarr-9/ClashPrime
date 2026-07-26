@@ -27,6 +27,7 @@ import {
   exportAppData,
 } from '../../src/hooks/usePlayer';
 import { usePlayerActions } from '../../src/hooks/usePlayerContext';
+import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
 
@@ -140,6 +141,7 @@ export default function SettingsScreen() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingToken, setOnboardingToken] = useState('');
+  const { refresh: refreshGameData } = useGameData();
 
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
@@ -361,8 +363,14 @@ export default function SettingsScreen() {
             icon="sync-outline"
             label="Sync Now"
             onPress={() => {
-              bumpTagVersion();
-              showDialog({ title: 'Sync', message: 'Data will refresh now.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+              showDialog({
+                title: 'Sync Now',
+                message: 'Triggers an immediate sync of your player data from the Clash of Clans API. Use this if your stats seem outdated or after switching accounts.',
+                actions: [
+                  { label: 'Cancel', onPress: () => {} },
+                  { label: 'Sync', primary: true, onPress: () => { bumpTagVersion(); } },
+                ],
+              });
             }}
           />
         </SettingGroup>
@@ -393,6 +401,20 @@ export default function SettingsScreen() {
             icon="download-outline"
             label="Export Data"
             onPress={handleExportData}
+          />
+          <SettingItem
+            icon="refresh-outline"
+            label="Refresh Game Data"
+            onPress={() => {
+              showDialog({
+                title: 'Refresh Game Data',
+                message: 'Re-fetches all game reference data (siege machines, pets, super troops, max levels) from the wiki and clash.ninja. This ensures you have the latest unit names and balance changes. Data is cached for 7 days.',
+                actions: [
+                  { label: 'Cancel', onPress: () => {} },
+                  { label: 'Refresh', primary: true, onPress: async () => { await refreshGameData(); } },
+                ],
+              });
+            }}
           />
           <SettingItem
             icon="cloud-outline"
@@ -462,7 +484,7 @@ export default function SettingsScreen() {
             <Text style={styles.modalHint}>
               {modalType === 'tag'
                 ? 'Your unique player identifier starting with #. Find it in-game under Settings → More → Show Tag.'
-                : 'A long alphanumeric string that grants read-only access to your profile. Generate one at developer.clashofclans.com → My Account → API Keys'}
+                : 'A long alphanumeric string that grants read-only access to your profile. Generate one at developer.clashofclans.com → My Account → API Keys. Important: whitelist IP 45.79.218.79 in your API key — the app uses a proxy to support dynamic IPs.'}
             </Text>
             <View style={styles.modalInputRow}>
               <TextInput
@@ -576,7 +598,7 @@ export default function SettingsScreen() {
             <Text style={styles.onboardingDesc}>
               {onboardingStep === 0
                 ? 'Find your tag in-game under Settings → More → Show Tag'
-                : 'Get your token from developer.clashofclans.com → My Account → API Keys'}
+                : 'Get your token from developer.clashofclans.com → My Account → API Keys. Important: whitelist IP 45.79.218.79 in your API key — the app uses a proxy.'}
             </Text>
             <TextInput
               style={styles.onboardingInput}
