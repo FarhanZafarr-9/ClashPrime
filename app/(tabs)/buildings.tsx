@@ -159,15 +159,15 @@ const BB_FANDOM_URLS: Record<string, string> = {
 // Maps building name → { BH level → max levels available at that BH }.
 const BB_LEVEL_SUPPLEMENT: Record<string, Record<number, number>> = {
   'BB Cannon':     { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
-  'Double Cannon': { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
+  'Double Cannon': { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
   'Guard Post':    { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
   "O.T.T.O's Outpost": { 10: 3 },
   'Mega Tesla':    { 9: 1, 10: 3 },
-  'Push Trap':     { 5: 1, 6: 2, 7: 3, 8: 4, 9: 5, 10: 6 },
+  'Push Trap':     { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
   'Builder Hall':  { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
   'Gem Mine':      { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 7, 10: 9 },
   'B.O.B Control': { 9: 1, 10: 2 },
-  'Builder Barracks':  { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9 },
+  'Builder Barracks':  { 2: 2, 3: 4, 4: 6, 5: 7, 6: 8, 7: 9, 8: 10, 9: 11, 10: 12 },
   'Star Laboratory':   { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7 },
   'Battle Machine Altar':  { 5: 1, 6: 5, 7: 10, 8: 15, 9: 20, 10: 25 },
   'Reinforcement Camp':  { 8: 1, 9: 2, 10: 3 },

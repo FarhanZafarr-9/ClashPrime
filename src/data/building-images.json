@@ -3625,6 +3625,18 @@
         {
           "level": 9,
           "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/e/e2/Builder_Barracks9.png/revision/latest"
+        },
+        {
+          "level": 10,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/b/b9/Builder_Barracks10.png/revision/latest"
+        },
+        {
+          "level": 11,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/0/05/Builder_Barracks11.png/revision/latest"
+        },
+        {
+          "level": 12,
+          "imageUrl": "https://static.wikia.nocookie.net/clashofclans/images/9/94/Builder_Barracks12.png/revision/latest"
         }
       ]
     },
