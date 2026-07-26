@@ -73,81 +73,93 @@ export function EventsScreenSkeleton() {
             <Skeleton width={190} height={12} borderRadius={4} />
           </View>
         </View>
-        <View style={{ paddingHorizontal: Spacing.base, marginBottom: Spacing.sm }}>
-          <Skeleton width={100} height={13} borderRadius={4} />
+        <View style={styles.eventsSectionRow}>
+          <Skeleton width={6} height={6} borderRadius={3} />
+          <Skeleton width={90} height={13} borderRadius={4} />
         </View>
         {[0, 1].map((i) => (
           <View key={`active-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.eventCardTop}>
-              <Skeleton width={36} height={36} borderRadius={18} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <Skeleton width="55%" height={14} borderRadius={4} />
+              <Skeleton width={36} height={36} borderRadius={8} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="55%" height={17} borderRadius={4} />
                 <Skeleton width="40%" height={11} borderRadius={3} />
               </View>
-              <Skeleton width={60} height={22} borderRadius={11} />
+              <Skeleton width={60} height={22} borderRadius={6} />
             </View>
-            <Skeleton width="70%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
-            <Skeleton width="100%" height={3} borderRadius={2} style={{ marginTop: Spacing.sm }} />
+            <View style={{ marginBottom: Spacing.sm }}>
+              <Skeleton width="70%" height={10} borderRadius={3} />
+            </View>
+            <Skeleton width="100%" height={3} borderRadius={2} style={{ marginBottom: Spacing.sm }} />
             <View style={styles.eventCardFooter}>
-              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={12} height={12} borderRadius={6} />
               <Skeleton width={110} height={10} borderRadius={3} />
             </View>
           </View>
         ))}
-        <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
-          <Skeleton width={80} height={13} borderRadius={4} />
+        <View style={styles.eventsSectionRow}>
+          <Skeleton width={6} height={6} borderRadius={3} />
+          <Skeleton width={70} height={13} borderRadius={4} />
         </View>
         {[0, 1].map((i) => (
           <View key={`upcoming-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.eventCardTop}>
-              <Skeleton width={36} height={36} borderRadius={18} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <Skeleton width="50%" height={14} borderRadius={4} />
+              <Skeleton width={36} height={36} borderRadius={8} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="50%" height={17} borderRadius={4} />
                 <Skeleton width="35%" height={11} borderRadius={3} />
               </View>
-              <Skeleton width={70} height={22} borderRadius={11} />
+              <Skeleton width={70} height={22} borderRadius={6} />
             </View>
-            <Skeleton width="65%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <View style={{ marginBottom: Spacing.sm }}>
+              <Skeleton width="65%" height={10} borderRadius={3} />
+            </View>
             <View style={styles.eventCardFooter}>
-              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={12} height={12} borderRadius={6} />
               <Skeleton width={100} height={10} borderRadius={3} />
             </View>
           </View>
         ))}
-        <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
+        <View style={styles.eventsSectionRow}>
+          <Skeleton width={6} height={6} borderRadius={3} />
           <Skeleton width={110} height={13} borderRadius={4} />
         </View>
         {[0, 1].map((i) => (
           <View key={`ended-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.eventCardTop}>
-              <Skeleton width={36} height={36} borderRadius={18} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <Skeleton width="45%" height={14} borderRadius={4} />
+              <Skeleton width={36} height={36} borderRadius={8} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="45%" height={17} borderRadius={4} />
                 <Skeleton width="30%" height={11} borderRadius={3} />
               </View>
             </View>
-            <Skeleton width="60%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <View style={{ marginBottom: Spacing.sm }}>
+              <Skeleton width="60%" height={10} borderRadius={3} />
+            </View>
             <View style={styles.eventCardFooter}>
-              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={12} height={12} borderRadius={6} />
               <Skeleton width={90} height={10} borderRadius={3} />
             </View>
           </View>
         ))}
-        <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
-          <Skeleton width={90} height={13} borderRadius={4} />
+        <View style={styles.eventsSectionRow}>
+          <Skeleton width={6} height={6} borderRadius={3} />
+          <Skeleton width={80} height={13} borderRadius={4} />
         </View>
         {[0, 1].map((i) => (
           <View key={`news-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.eventCardTop}>
-              <Skeleton width={36} height={36} borderRadius={18} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <Skeleton width="70%" height={14} borderRadius={4} />
+              <Skeleton width={36} height={36} borderRadius={8} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="70%" height={17} borderRadius={4} />
                 <Skeleton width="50%" height={11} borderRadius={3} />
               </View>
             </View>
-            <Skeleton width="80%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <View style={{ marginBottom: Spacing.sm }}>
+              <Skeleton width="80%" height={10} borderRadius={3} />
+            </View>
             <View style={styles.eventCardFooter}>
-              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={12} height={12} borderRadius={6} />
               <Skeleton width={80} height={10} borderRadius={3} />
             </View>
           </View>
@@ -427,7 +439,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
     gap: 8,
   },
   card: {
@@ -588,19 +601,28 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     overflow: 'hidden',
   },
+  eventsSectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
   eventCard: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     borderWidth: 0.75,
     borderColor: Colors.border,
-    padding: Spacing.md,
+    padding: Spacing.base,
   },
   eventCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   eventCardFooter: {
     flexDirection: 'row',
