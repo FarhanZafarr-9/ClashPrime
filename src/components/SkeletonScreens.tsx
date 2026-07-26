@@ -95,9 +95,9 @@ export function EventsScreenSkeleton() {
           </View>
         ))}
         <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
-          <Skeleton width={110} height={13} borderRadius={4} />
+          <Skeleton width={80} height={13} borderRadius={4} />
         </View>
-        {[0, 1, 2].map((i) => (
+        {[0, 1].map((i) => (
           <View key={`upcoming-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.eventCardTop}>
               <Skeleton width={36} height={36} borderRadius={18} />
@@ -108,10 +108,47 @@ export function EventsScreenSkeleton() {
               <Skeleton width={70} height={22} borderRadius={11} />
             </View>
             <Skeleton width="65%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
-            <Skeleton width="100%" height={3} borderRadius={2} style={{ marginTop: Spacing.sm }} />
             <View style={styles.eventCardFooter}>
               <Skeleton width={14} height={14} borderRadius={7} />
               <Skeleton width={100} height={10} borderRadius={3} />
+            </View>
+          </View>
+        ))}
+        <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
+          <Skeleton width={110} height={13} borderRadius={4} />
+        </View>
+        {[0, 1].map((i) => (
+          <View key={`ended-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={styles.eventCardTop}>
+              <Skeleton width={36} height={36} borderRadius={18} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Skeleton width="45%" height={14} borderRadius={4} />
+                <Skeleton width="30%" height={11} borderRadius={3} />
+              </View>
+            </View>
+            <Skeleton width="60%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <View style={styles.eventCardFooter}>
+              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={90} height={10} borderRadius={3} />
+            </View>
+          </View>
+        ))}
+        <View style={{ paddingHorizontal: Spacing.base, marginTop: Spacing.md, marginBottom: Spacing.sm }}>
+          <Skeleton width={90} height={13} borderRadius={4} />
+        </View>
+        {[0, 1].map((i) => (
+          <View key={`news-${i}`} style={[styles.eventCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={styles.eventCardTop}>
+              <Skeleton width={36} height={36} borderRadius={18} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Skeleton width="70%" height={14} borderRadius={4} />
+                <Skeleton width="50%" height={11} borderRadius={3} />
+              </View>
+            </View>
+            <Skeleton width="80%" height={10} borderRadius={3} style={{ marginTop: Spacing.sm }} />
+            <View style={styles.eventCardFooter}>
+              <Skeleton width={14} height={14} borderRadius={7} />
+              <Skeleton width={80} height={10} borderRadius={3} />
             </View>
           </View>
         ))}

@@ -196,14 +196,6 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actionsRow}>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/bases')}>
-            <Ionicons name="grid-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Bases</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/armies')}>
-            <Ionicons name="shield-half-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Armies</Text>
-          </Pressable>
           <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
             <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
             <Text style={styles.actionText}>Saved</Text>
