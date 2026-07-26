@@ -114,17 +114,77 @@ const DEFAULT_COL_WIDTH = 56;
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
-const BB_CATEGORY_MAP: Record<string, string[]> = {
-  Defenses: ['BB Archer Tower', 'BB Hidden Tesla', 'Crusher', 'BB Air Bombs', 'Multi Mortar', 'BB Roaster', 'Giant Cannon', 'BB Lava Launcher', 'BB X-Bow'],
-  Traps: ['BB Spring Trap', 'Mine', 'Mega Mine'],
-  Resources: ['BB Gold Mine', 'BB Elixir Collector', 'BB Gold Storage', 'BB Elixir Storage'],
-  Army: ['BB Army Camp'],
-  Walls: ['BB Walls'],
+// Fandom wiki page slugs for Builder Base buildings.
+// Used to construct detail-page URLs for stat scraping.
+const BB_FANDOM_URLS: Record<string, string> = {
+  'BB Cannon': 'https://clashofclans.fandom.com/wiki/Cannon/Builder_Base',
+  'Double Cannon': 'https://clashofclans.fandom.com/wiki/Double_Cannon',
+  'BB Archer Tower': 'https://clashofclans.fandom.com/wiki/Archer_Tower/Builder_Base',
+  'BB Hidden Tesla': 'https://clashofclans.fandom.com/wiki/Hidden_Tesla/Builder_Base',
+  'BB Air Bombs': 'https://clashofclans.fandom.com/wiki/Firecrackers',
+  'Crusher': 'https://clashofclans.fandom.com/wiki/Crusher/Builder_Base',
+  'Guard Post': 'https://clashofclans.fandom.com/wiki/Guard_Post',
+  'Multi Mortar': 'https://clashofclans.fandom.com/wiki/Multi_Mortar/Builder_Base',
+  "O.T.T.O's Outpost": "https://clashofclans.fandom.com/wiki/O.T.T.O's_Outpost",
+  'BB Roaster': 'https://clashofclans.fandom.com/wiki/Roaster/Builder_Base',
+  'Giant Cannon': 'https://clashofclans.fandom.com/wiki/Giant_Cannon/Builder_Base',
+  'Mega Tesla': 'https://clashofclans.fandom.com/wiki/Mega_Tesla',
+  'BB Lava Launcher': 'https://clashofclans.fandom.com/wiki/Lava_Launcher/Builder_Base',
+  'BB X-Bow': 'https://clashofclans.fandom.com/wiki/X-Bow/Builder_Base',
+  'BB Walls': 'https://clashofclans.fandom.com/wiki/Walls/Builder_Base',
+  'BB Spring Trap': 'https://clashofclans.fandom.com/wiki/Spring_Trap/Builder_Base',
+  'Mine': 'https://clashofclans.fandom.com/wiki/Mine/Builder_Base',
+  'Mega Mine': 'https://clashofclans.fandom.com/wiki/Mega_Mine/Builder_Base',
+  'Push Trap': 'https://clashofclans.fandom.com/wiki/Push_Trap',
+  'Builder Hall': 'https://clashofclans.fandom.com/wiki/Builder_Hall',
+  'BB Gold Mine': 'https://clashofclans.fandom.com/wiki/Gold_Mine/Builder_Base',
+  'BB Elixir Collector': 'https://clashofclans.fandom.com/wiki/Elixir_Collector/Builder_Base',
+  'BB Gold Storage': 'https://clashofclans.fandom.com/wiki/Gold_Storage/Builder_Base',
+  'BB Elixir Storage': 'https://clashofclans.fandom.com/wiki/Elixir_Storage/Builder_Base',
+  'Gem Mine': 'https://clashofclans.fandom.com/wiki/Gem_Mine',
+  'B.O.B Control': 'https://clashofclans.fandom.com/wiki/B.O.B_Control',
+  'Builder Barracks': 'https://clashofclans.fandom.com/wiki/Builder_Barracks',
+  'BB Army Camp': 'https://clashofclans.fandom.com/wiki/Army_Camp/Builder_Base',
+  'Star Laboratory': 'https://clashofclans.fandom.com/wiki/Star_Laboratory',
+  'Battle Machine Altar': 'https://clashofclans.fandom.com/wiki/Battle_Machine_Altar',
+  'Reinforcement Camp': 'https://clashofclans.fandom.com/wiki/Reinforcement_Camp',
+  'Healing Hut': 'https://clashofclans.fandom.com/wiki/Healing_Hut',
+  'Battle Copter Altar': 'https://clashofclans.fandom.com/wiki/Battle_Copter_Altar',
+  "Builder's Hut": "https://clashofclans.fandom.com/wiki/Builder's_Hut",
+  'Clock Tower': 'https://clashofclans.fandom.com/wiki/Clock_Tower',
+  "B.O.T.O's Shack": "https://clashofclans.fandom.com/wiki/B.O.T.O's_Shack",
+  'Elixir Cart': 'https://clashofclans.fandom.com/wiki/Elixir_Cart',
+};
+
+// Per-BH max-level data for BB buildings missing from building-levels.json.
+// Maps building name → { BH level → max levels available at that BH }.
+const BB_LEVEL_SUPPLEMENT: Record<string, Record<number, number>> = {
+  'BB Cannon':     { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 10 },
+  'Double Cannon': { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
+  'Guard Post':    { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
+  "O.T.T.O's Outpost": { 10: 3 },
+  'Mega Tesla':    { 9: 1, 10: 3 },
+  'Push Trap':     { 5: 1, 6: 2, 7: 3, 8: 4, 9: 5, 10: 6 },
+  'Builder Hall':  { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
+  'Gem Mine':      { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 7, 10: 9 },
+  'B.O.B Control': { 9: 1, 10: 2 },
+  'Builder Barracks':  { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9 },
+  'Star Laboratory':   { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7 },
+  'Battle Machine Altar':  { 5: 1, 6: 5, 7: 10, 8: 15, 9: 20, 10: 25 },
+  'Reinforcement Camp':  { 8: 1, 9: 2, 10: 3 },
+  'Healing Hut':         { 8: 1, 9: 2, 10: 3 },
+  'Battle Copter Altar': { 9: 1, 10: 10 },
+  "Builder's Hut":  { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5 },
+  'Clock Tower':    { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7 },
+  "B.O.T.O's Shack": { 10: 1 },
+  'Elixir Cart': { 1: 1 },
 };
 
 function buildBBCategories(builderHallLevel: number): Record<string, { level: number | null; isMaxLevel: boolean }> {
-  const bbBuildings = (buildingLevelsData as any[]).filter((b: any) => b.village === 'builderBase');
   const entries: Record<string, { level: number | null; isMaxLevel: boolean }> = {};
+
+  // 1. Read existing JSON data for buildings with full stats.
+  const bbBuildings = (buildingLevelsData as any[]).filter((b: any) => b.village === 'builderBase');
   for (const building of bbBuildings) {
     const levelsAtOrBelow = building.levels.filter((l: any) => {
       const bh = l['Town Hall Level'];
@@ -138,6 +198,19 @@ function buildBBCategories(builderHallLevel: number): Record<string, { level: nu
     });
     entries[building.name] = { level: maxLevel.Level ?? 0, isMaxLevel: isMaxed };
   }
+
+  // 2. Fill gaps from the supplement for buildings not already covered.
+  for (const [name, bhs] of Object.entries(BB_LEVEL_SUPPLEMENT)) {
+    if (entries[name]) continue;
+    const sortedBHs = Object.keys(bhs).map(Number).sort((a, b) => a - b);
+    const maxBH = sortedBHs[sortedBHs.length - 1];
+    let level = 0;
+    for (const bh of sortedBHs) {
+      if (bh <= builderHallLevel) level = bhs[bh];
+    }
+    entries[name] = { level, isMaxLevel: builderHallLevel >= maxBH };
+  }
+
   return entries;
 }
 
