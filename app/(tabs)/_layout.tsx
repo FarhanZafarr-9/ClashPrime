@@ -78,19 +78,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="events"
+        name="war"
         options={{
-          title: 'Events',
+          title: 'War',
           href: null,
         }}
       />
       <Tabs.Screen
-        name="war"
+        name="events"
         options={{
-          title: 'War',
+          title: 'Events',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="flag-outline" size={20} color={color} />
+              <Ionicons name="calendar-outline" size={20} color={color} />
             </View>
           ),
         }}
@@ -125,19 +125,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="achievements"
+        name="settings"
         options={{
-          title: 'Awards',
+          title: 'Settings',
           href: null,
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="achievements"
         options={{
-          title: 'Settings',
+          title: 'Awards',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.tabIconWrapper, focused && { backgroundColor: colors.accentSubtle }]}>
-              <Ionicons name="settings-sharp" size={20} color={color} />
+              <Ionicons name="trophy-outline" size={20} color={color} />
             </View>
           ),
         }}
