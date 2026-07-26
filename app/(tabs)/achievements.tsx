@@ -65,11 +65,21 @@ export default function AchievementsScreen() {
           <>
             <View style={styles.achievementSummary}>
               <View style={styles.achievementSummaryTop}>
-                <Text style={styles.achievementSummaryTitle}>
-                  {starTotals.earned} / {starTotals.max} stars
+                <View style={styles.achievementSummaryRow}>
+                  <Ionicons name="star" size={14} color={Colors.warning} />
+                  <Text style={styles.achievementSummaryTitle}>
+                    {starTotals.earned}/{starTotals.max}
+                  </Text>
+                  <Text style={styles.achievementSummaryLabel}>stars</Text>
+                </View>
+                <Text style={styles.achievementSummaryPct}>
+                  {starTotals.max > 0 ? Math.round((starTotals.earned / starTotals.max) * 100) : 0}%
                 </Text>
+              </View>
+              <View style={styles.achievementSummaryMid}>
+                <Ionicons name="checkmark-circle-outline" size={12} color={Colors.textTertiary} />
                 <Text style={styles.achievementSummarySub}>
-                  {filteredAchievements.filter((a) => a.stars === 3).length} complete
+                  {filteredAchievements.filter((a) => a.stars === 3).length}/{filteredAchievements.length} complete
                 </Text>
               </View>
               <View style={styles.achievementSummaryBar}>
@@ -200,11 +210,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+  },
+  achievementSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   achievementSummaryTitle: {
     ...Typography.headline,
     color: Colors.textPrimary,
+  },
+  achievementSummaryLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginLeft: 1,
+  },
+  achievementSummaryPct: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  achievementSummaryMid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+    marginBottom: Spacing.sm,
   },
   achievementSummarySub: {
     ...Typography.caption,
