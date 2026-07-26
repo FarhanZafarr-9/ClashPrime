@@ -250,88 +250,90 @@ export default function HomeScreen() {
         </View>
 
         <Card style={styles.playerCard}>
-          <View style={styles.playerRow}>
-            <View style={styles.avatar}>
-              {showBH
-                ? (() => {
-                    const bhSrc = getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1);
-                    return bhSrc ? (
-                      <Image source={bhSrc} style={styles.avatarImage} resizeMode="contain" />
-                    ) : (
-                      <Text style={styles.avatarText}>BH</Text>
-                    );
-                  })()
-                : getTownHallImageUrl(player.townHallLevel) ? (
-                  <Image
-                    source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
-                    style={styles.avatarImage}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
-                )}
-            </View>
-            <View style={styles.playerInfo}>
-              <Text style={styles.playerName}>{player.name}</Text>
-              <Text style={styles.playerTag}>{player.tag}</Text>
-              <View style={styles.playerMeta}>
-                {player.clan && (
-                  <View style={styles.metaItem}>
-                    <Text style={styles.metaText}>{player.clan.name}</Text>
-                    <Text style={styles.metaDot}>·</Text>
-                    <Text style={styles.metaText}>Lv.{player.clan.clanLevel}</Text>
-                  </View>
-                )}
+          <View style={styles.playerCardInner}>
+            <View style={styles.playerRow}>
+              <View style={styles.avatar}>
+                {showBH
+                  ? (() => {
+                      const bhSrc = getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1);
+                      return bhSrc ? (
+                        <Image source={bhSrc} style={styles.avatarImage} resizeMode="contain" />
+                      ) : (
+                        <Text style={styles.avatarText}>BH</Text>
+                      );
+                    })()
+                  : getTownHallImageUrl(player.townHallLevel) ? (
+                    <Image
+                      source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
+                      style={styles.avatarImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+                  )}
+              </View>
+              <View style={styles.playerInfo}>
+                <Text style={styles.playerName}>{player.name}</Text>
+                <Text style={styles.playerTag}>{player.tag}</Text>
+                <View style={styles.playerMeta}>
+                  {player.clan && (
+                    <View style={styles.metaItem}>
+                      <Text style={styles.metaText}>{player.clan.name}</Text>
+                      <Text style={styles.metaDot}>·</Text>
+                      <Text style={styles.metaText}>Lv.{player.clan.clanLevel}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <View style={styles.thBadge}>
+                <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
+                <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
               </View>
             </View>
-            <View style={styles.thBadge}>
-              <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
-              <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
+            <View style={styles.playerStatsRow}>
+              {showBH ? (
+                <>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="hammer-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>{player.builderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
+                  </View>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="hammer" size={14} color={Colors.warning} />
+                    <Text style={[styles.miniStatValue, { color: Colors.warning }]}>{player.bestBuilderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
+                  </View>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>{player.expLevel}</Text>
+                  </View>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="home-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>BH{player.builderHallLevel ?? 1}</Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="trophy-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>{player.bestTrophies.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="star-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>{player.warStars.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>{player.expLevel}</Text>
+                  </View>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="arrow-up-outline" size={14} color={Colors.textTertiary} />
+                    <Text style={styles.miniStatValue}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
+                  </View>
+                </>
+              )}
             </View>
-            <Pressable onPress={() => setShowBH(!showBH)} style={styles.swapBtn} hitSlop={8}>
-              <Ionicons name="swap-horizontal" size={18} color={Colors.textSecondary} />
+            <Pressable onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
+              <Ionicons name="swap-horizontal" size={16} color={Colors.textPrimary} />
             </Pressable>
-          </View>
-          <View style={styles.playerStatsRow}>
-            {showBH ? (
-              <>
-                <View style={styles.miniStat}>
-                  <Ionicons name="hammer-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>{player.builderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
-                </View>
-                <View style={styles.miniStat}>
-                  <Ionicons name="hammer" size={14} color={Colors.warning} />
-                  <Text style={[styles.miniStatValue, { color: Colors.warning }]}>{player.bestBuilderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
-                </View>
-                <View style={styles.miniStat}>
-                  <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>{player.expLevel}</Text>
-                </View>
-                <View style={styles.miniStat}>
-                  <Ionicons name="home-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>BH{player.builderHallLevel ?? 1}</Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.miniStat}>
-                  <Ionicons name="trophy-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>{player.bestTrophies.toLocaleString()}</Text>
-                </View>
-                <View style={styles.miniStat}>
-                  <Ionicons name="star-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>{player.warStars.toLocaleString()}</Text>
-                </View>
-                <View style={styles.miniStat}>
-                  <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>{player.expLevel}</Text>
-                </View>
-                <View style={styles.miniStat}>
-                  <Ionicons name="arrow-up-outline" size={14} color={Colors.textTertiary} />
-                  <Text style={styles.miniStatValue}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
-                </View>
-              </>
-            )}
           </View>
         </Card>
 
@@ -669,6 +671,9 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.sm
   },
+  playerCardInner: {
+    position: 'relative',
+  },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -739,11 +744,18 @@ const styles = StyleSheet.create({
     fontSize: 8,
     opacity: 0.7,
   },
-  swapBtn: {
-    width: 32,
-    height: 32,
+  swapBtnFloating: {
+    position: 'absolute',
+    top: -14,
+    right: -10,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: Colors.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.border || '#333',
   },
   playerStatsRow: {
     flexDirection: 'row',
