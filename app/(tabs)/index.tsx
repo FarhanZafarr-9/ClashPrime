@@ -41,59 +41,26 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refresh]);
 
-  if (loading && !player) {
-    return <HomeScreenSkeleton />;
-  }
-
-  if (error && !player) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
-          <Text style={styles.errorTitle}>Connection Error</Text>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={refresh} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!player) return null;
-
-  const homeHeroes = player.heroes.filter((h: { village: string }) => h.village === 'home');
-  const homeTroops = player.troops.filter((t) => {
+  // ── Derived data (null-safe when player is null) ──
+  const th = player?.townHallLevel ?? 0;
+  const homeHeroes = player?.heroes?.filter((h: { village: string }) => h.village === 'home') ?? [];
+  const homeTroops = player?.troops?.filter((t) => {
     if (t.village !== 'home') return false;
     if (superTroopNames.includes(t.name) || t.name.startsWith('Super ') || t.name.startsWith('Sneaky ') || t.name.startsWith('Rocket ')) return false;
     return true;
-  });
-  const homeSpells = player.spells.filter((s: { village?: string }) => s.village === 'home' || !s.village);
-  const th = player.townHallLevel;
-
-  const heroesMaxed = homeHeroes.filter((h) => {
-    const max = getMaxLevelAtTH(h.name, th);
-    return max !== null ? h.level >= max : h.level >= h.maxLevel;
-  }).length;
-  const troopsMaxed = homeTroops.filter((t) => {
-    const max = getMaxLevelAtTH(t.name, th);
-    return max !== null ? t.level >= max : t.level >= t.maxLevel;
-  }).length;
-  const spellsMaxed = homeSpells.filter((s) => {
-    const max = getMaxLevelAtTH(s.name, th);
-    return max !== null ? s.level >= max : s.level >= s.maxLevel;
-  }).length;
-  const equipMaxed = player.heroEquipment.filter((e) => e.level >= e.maxLevel).length;
+  }) ?? [];
+  const homeSpells = player?.spells?.filter((s: { village?: string }) => s.village === 'home' || !s.village) ?? [];
+  const heroEquipment = player?.heroEquipment ?? [];
 
   const ownedNames = new Set([
-    ...player.troops.map((t: { name: string }) => t.name.toLowerCase()),
-    ...player.spells.map((s: { name: string }) => s.name.toLowerCase()),
+    ...(player?.troops ?? []).map((t: { name: string }) => t.name.toLowerCase()),
+    ...(player?.spells ?? []).map((s: { name: string }) => s.name.toLowerCase()),
   ]);
-  const unlockableItems = getUnlockableItems(th, ownedNames);
+  const unlockableItems = th > 0 ? getUnlockableItems(th, ownedNames) : [];
 
   const prevTh = Math.max(1, th - 1);
   const rushedItems: { name: string; currentLevel: number; maxLevelAtPrevTH: number; type: string }[] = [];
-  if (th > 1) {
+  if (th > 1 && player) {
     for (const t of homeTroops) {
       const maxPrev = getMaxLevelAtTH(t.name, prevTh);
       if (maxPrev !== null && t.level < maxPrev) rushedItems.push({ name: t.name, currentLevel: t.level, maxLevelAtPrevTH: maxPrev, type: 'troop' });
@@ -106,12 +73,49 @@ export default function HomeScreen() {
       const maxPrev = getMaxLevelAtTH(s.name, prevTh);
       if (maxPrev !== null && s.level < maxPrev) rushedItems.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
     }
-    for (const e of player.heroEquipment) {
+    for (const e of heroEquipment) {
       const maxPrev = getMaxLevelAtTH(e.name, prevTh);
       if (maxPrev !== null && e.level < maxPrev) rushedItems.push({ name: e.name, currentLevel: e.level, maxLevelAtPrevTH: maxPrev, type: 'equipment' });
     }
   }
 
+  // ── Cost helpers ──
+  const parseCost = (s: string): number => {
+    const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
+    if (!cleaned) return 0;
+    const num = parseFloat(cleaned);
+    if (isNaN(num)) return 0;
+    if (/b/i.test(cleaned)) return num * 1_000_000_000;
+    if (/m/i.test(cleaned)) return num * 1_000_000;
+    if (/k/i.test(cleaned)) return num * 1_000;
+    return num;
+  };
+
+  const parseTime = (s: string): number => {
+    if (!s || /[—\-]/.test(s)) return 0;
+    const d = s.match(/(\d+)\s*d/);
+    const h = s.match(/(\d+)\s*h/);
+    const m = s.match(/(\d+)\s*m/);
+    return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
+  };
+
+  const fmtCost = (n: number): string => {
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+    return String(n);
+  };
+
+  const fmtTime = (s: number): string => {
+    if (s <= 0) return '';
+    const days = Math.floor(s / 86400);
+    const hours = Math.floor((s % 86400) / 3600);
+    if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+    if (hours > 0) return `${hours}h`;
+    return `${Math.floor(s / 60)}m`;
+  };
+
+  // ── State / refs / effects (must be before early returns) ──
   const [upgradesOpen, setUpgradesOpen] = useState(false);
   const [upgradeCosts, setUpgradeCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
   const [loadingCosts, setLoadingCosts] = useState(false);
@@ -150,25 +154,6 @@ export default function HomeScreen() {
     })();
   }, [upgradesOpen, th, unlockableItems]);
 
-  const parseCost = (s: string): number => {
-    const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
-    if (!cleaned) return 0;
-    const num = parseFloat(cleaned);
-    if (isNaN(num)) return 0;
-    if (/b/i.test(cleaned)) return num * 1_000_000_000;
-    if (/m/i.test(cleaned)) return num * 1_000_000;
-    if (/k/i.test(cleaned)) return num * 1_000;
-    return num;
-  };
-
-  const parseTime = (s: string): number => {
-    if (!s || /[—\-]/.test(s)) return 0;
-    const d = s.match(/(\d+)\s*d/);
-    const h = s.match(/(\d+)\s*h/);
-    const m = s.match(/(\d+)\s*m/);
-    return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
-  };
-
   useEffect(() => {
     if (!rushedOpen || rushedItems.length === 0) return;
     const key = rushedItems.map((i) => `${i.name}:${i.currentLevel}:${i.maxLevelAtPrevTH}`).join('|');
@@ -196,26 +181,48 @@ export default function HomeScreen() {
     })();
   }, [rushedOpen, rushedItems]);
 
-  const fmtCost = (n: number): string => {
-    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
-    if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
-    return String(n);
-  };
-
-  const fmtTime = (s: number): string => {
-    if (s <= 0) return '';
-    const days = Math.floor(s / 86400);
-    const hours = Math.floor((s % 86400) / 3600);
-    if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
-    if (hours > 0) return `${hours}h`;
-    return `${Math.floor(s / 60)}m`;
-  };
-
+  // ── Aggregates ──
   const aggregateCost = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
   const aggregateTime = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
   const aggregateRushedCost = rushedCosts ? Object.values(rushedCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
   const aggregateRushedTime = rushedCosts ? Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
+
+  // ── Early returns (hooks must not follow) ──
+  if (loading && !player) {
+    return <HomeScreenSkeleton />;
+  }
+
+  if (error && !player) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
+          <Text style={styles.errorTitle}>Connection Error</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable onPress={refresh} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!player) return null;
+
+  // ── Player-guaranteed computations ──
+  const heroesMaxed = homeHeroes.filter((h) => {
+    const max = getMaxLevelAtTH(h.name, th);
+    return max !== null ? h.level >= max : h.level >= h.maxLevel;
+  }).length;
+  const troopsMaxed = homeTroops.filter((t) => {
+    const max = getMaxLevelAtTH(t.name, th);
+    return max !== null ? t.level >= max : t.level >= t.maxLevel;
+  }).length;
+  const spellsMaxed = homeSpells.filter((s) => {
+    const max = getMaxLevelAtTH(s.name, th);
+    return max !== null ? s.level >= max : s.level >= s.maxLevel;
+  }).length;
+  const equipMaxed = heroEquipment.filter((e) => e.level >= e.maxLevel).length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
