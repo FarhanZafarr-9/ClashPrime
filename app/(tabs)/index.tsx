@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useGameData } from '../../src/hooks/useGameData';
-import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
+import { getMaxLevelAtTH, getUnlockableItems } from '../../src/utils/thMaxLevels';
+import { getTroopImageUrl } from '../../src/utils/troopImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
+import { getTroopDetail } from '../../src/api/troopDetail';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -82,6 +84,80 @@ export default function HomeScreen() {
     return max !== null ? s.level >= max : s.level >= s.maxLevel;
   }).length;
   const equipMaxed = player.heroEquipment.filter((e) => e.level >= e.maxLevel).length;
+
+  const ownedNames = new Set([
+    ...player.troops.map((t: { name: string }) => t.name.toLowerCase()),
+    ...player.spells.map((s: { name: string }) => s.name.toLowerCase()),
+  ]);
+  const unlockableItems = getUnlockableItems(th, ownedNames);
+  const [upgradesOpen, setUpgradesOpen] = useState(false);
+  const [upgradeCosts, setUpgradeCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
+  const [loadingCosts, setLoadingCosts] = useState(false);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!upgradesOpen || fetchedRef.current || unlockableItems.length === 0) return;
+    fetchedRef.current = true;
+    setLoadingCosts(true);
+
+    const parseCost = (s: string): number => {
+      const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
+      if (!cleaned) return 0;
+      const num = parseFloat(cleaned);
+      if (isNaN(num)) return 0;
+      if (/b/i.test(cleaned)) return num * 1_000_000_000;
+      if (/m/i.test(cleaned)) return num * 1_000_000;
+      if (/k/i.test(cleaned)) return num * 1_000;
+      return num;
+    };
+
+    const parseTime = (s: string): number => {
+      if (!s || /[—\-]/.test(s)) return 0;
+      const d = s.match(/(\d+)\s*d/);
+      const h = s.match(/(\d+)\s*h/);
+      const m = s.match(/(\d+)\s*m/);
+      return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
+    };
+
+    (async () => {
+      const results: Record<string, { cost: number; timeSeconds: number }> = {};
+      await Promise.all(unlockableItems.map(async (item) => {
+        const maxLvl = getMaxLevelAtTH(item.name, th);
+        if (!maxLvl) return;
+        const detail = await getTroopDetail(item.name);
+        if (!detail?.levels) return;
+        let cost = 0;
+        let timeSeconds = 0;
+        for (const lvl of detail.levels) {
+          if (lvl.level > maxLvl) break;
+          if (lvl.upgradeCost) cost += parseCost(lvl.upgradeCost);
+          if (lvl.upgradeTime) timeSeconds += parseTime(lvl.upgradeTime);
+        }
+        if (cost > 0 || timeSeconds > 0) results[item.name] = { cost, timeSeconds };
+      }));
+      setUpgradeCosts(results);
+      setLoadingCosts(false);
+    })();
+  }, [upgradesOpen, th, unlockableItems]);
+
+  const fmtCost = (n: number): string => {
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+    return String(n);
+  };
+
+  const fmtTime = (s: number): string => {
+    if (s <= 0) return '';
+    const days = Math.floor(s / 86400);
+    const hours = Math.floor((s % 86400) / 3600);
+    if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+    if (hours > 0) return `${hours}h`;
+    return `${Math.floor(s / 60)}m`;
+  };
+
+  const aggregateCost = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
+  const aggregateTime = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -171,25 +247,96 @@ export default function HomeScreen() {
               const max = getMaxLevelAtTH(h.name, th);
               return max !== null ? h.level < max : false;
             })}
+            onPress={() => router.push('/(tabs)/army?tab=heroes')}
           />
           <ProgressSummaryCard
             category="Troops"
             completed={troopsMaxed}
             total={homeTroops.length}
+            onPress={() => router.push('/(tabs)/army?tab=troops')}
           />
           <ProgressSummaryCard
             category="Spells"
             completed={spellsMaxed}
             total={homeSpells.length}
             lockedMessage={homeSpells.length === 0 ? 'Unlocks at TH5' : undefined}
+            onPress={() => router.push('/(tabs)/army?tab=spells')}
           />
           <ProgressSummaryCard
             category="Equipment"
             completed={equipMaxed}
             total={player.heroEquipment.length}
             lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH15' : undefined}
+            onPress={() => router.push('/(tabs)/army?tab=equipment')}
           />
         </View>
+
+        {unlockableItems.length > 0 && (
+          <>
+            <View style={styles.sectionLabel}>
+              <Text style={styles.sectionTitle}>Available Upgrades</Text>
+            </View>
+            <View style={styles.upgradeCard}>
+              <Pressable style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
+                <View style={styles.upgradeHeaderLeft}>
+                  <Ionicons name="arrow-up-circle-outline" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.upgradeHeaderText}>{unlockableItems.length} locked</Text>
+                  {loadingCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
+                  {!loadingCosts && upgradeCosts && aggregateCost > 0 && (
+                    <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateCost)}{aggregateTime > 0 ? ` · ${fmtTime(aggregateTime)}` : ''}</Text>
+                  )}
+                </View>
+                <Ionicons name={upgradesOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
+              </Pressable>
+              {upgradesOpen && (() => {
+                let lastTh = -1;
+                return unlockableItems.flatMap((item, i) => {
+                  const troopUrl = getTroopImageUrl(item.name);
+                  const thUrl = getTownHallImageUrl(item.unlockTh);
+                  const levelsAtTH = getMaxLevelAtTH(item.name, th);
+                  const isNewTh = item.unlockTh !== lastTh;
+                  lastTh = item.unlockTh;
+                  const elements: React.ReactNode[] = [];
+                  if (isNewTh) {
+                    elements.push(
+                      <View key={`th-${item.unlockTh}`} style={[styles.upgradeThSection, i > 0 && styles.upgradeThSectionBorder]}>
+                        <Image source={{ uri: thUrl! }} style={styles.upgradeThSectionIcon} resizeMode="contain" />
+                        <Text style={styles.upgradeThSectionTitle}>Town Hall {item.unlockTh}</Text>
+                      </View>
+                    );
+                  }
+                  const itemCost = upgradeCosts?.[item.name];
+                  elements.push(
+                    <View key={item.name} style={[styles.upgradeRow, i < unlockableItems.length - 1 && styles.upgradeRowBorder]}>
+                      <View style={styles.upgradeIconWrap}>
+                        {troopUrl ? (
+                          <Image source={{ uri: troopUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                        ) : (
+                          <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
+                        )}
+                      </View>
+                      <View style={styles.upgradeInfo}>
+                        <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
+                        <Text style={styles.upgradeHint}>{levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'} at TH{th}</Text>
+                      </View>
+                      {itemCost ? (
+                        <View style={styles.upgradeCostPill}>
+                          <Text style={styles.upgradeCostText}>{fmtCost(itemCost.cost)}</Text>
+                          {itemCost.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
+                        </View>
+                      ) : loadingCosts ? (
+                        <View style={styles.upgradeCostPill}>
+                          <Text style={styles.upgradeCostText}>…</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  );
+                  return elements;
+                });
+              })()}
+            </View>
+          </>
+        )}
 
         <View style={styles.sectionLabel}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -200,13 +347,13 @@ export default function HomeScreen() {
             <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
             <Text style={styles.actionText}>Saved</Text>
           </Pressable>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/events')}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Events</Text>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/war')}>
+            <Ionicons name="flag-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>War</Text>
           </Pressable>
-          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/achievements')}>
-            <Ionicons name="trophy-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Awards</Text>
+          <Pressable style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
+            <Ionicons name="settings-sharp" size={16} color={Colors.textPrimary} />
+            <Text style={styles.actionText}>Settings</Text>
           </Pressable>
           <Pressable style={styles.actionBtn} onPress={onRefresh}>
             <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
@@ -219,36 +366,54 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.statsTable}>
-          <View style={styles.statsRow}>
-            <Text style={[styles.statsCell, styles.statsHeader]}>Stat</Text>
-            <Text style={[styles.statsCell, styles.statsHeader, { textAlign: 'right' }]}>Value</Text>
-          </View>
           {[
-            { label: 'Trophies', value: player.trophies },
-            { label: 'Best Trophies', value: player.bestTrophies },
-            { label: 'War Stars', value: player.warStars },
-            { label: 'Donations', value: player.donations },
-            { label: 'Received', value: player.donationsReceived },
-            { label: 'Capital Gold', value: player.clanCapitalContributions },
-            ...(player.builderBaseTrophies !== undefined
-              ? [{ label: 'Builder Trophies', value: player.builderBaseTrophies }]
-              : []),
-          ].map((s) => (
-            <View
-              key={s.label}
-              style={[styles.statsRow, { backgroundColor: Colors.bgCard }]}
-            >
-              <Text style={[styles.statsCell, { color: Colors.textSecondary, textAlign: 'left' }]}>{s.label}</Text>
-              <Text
-                style={[
-                  styles.statsCell,
-                  { color: Colors.textPrimary, fontWeight: '600', textAlign: 'right', fontVariant: ['tabular-nums'] },
-                ]}
+            {
+              title: 'PvP',
+              rows: [
+                { label: 'Trophies', value: player.trophies, icon: 'trophy-outline' as const },
+                { label: 'Best Trophies', value: player.bestTrophies, icon: 'trophy' as const, accentColor: Colors.warning },
+                { label: 'War Stars', value: player.warStars, icon: 'star-outline' as const },
+                { label: 'Attack Wins', value: player.attackWins, icon: 'flame-outline' as const },
+                { label: 'Defense Wins', value: player.defenseWins, icon: 'shield-outline' as const },
+              ],
+            },
+            {
+              title: 'Clan',
+              rows: [
+                { label: 'Donations', value: player.donations, icon: 'gift-outline' as const },
+                { label: 'Received', value: player.donationsReceived, icon: 'arrow-down-outline' as const, accentColor: player.donationsReceived > player.donations ? Colors.success : undefined },
+                { label: 'Capital Gold', value: player.clanCapitalContributions, icon: 'cash-outline' as const },
+              ],
+            },
+            {
+              title: 'Builder Base',
+              rows: [
+                ...(player.builderBaseTrophies !== undefined
+                  ? [{ label: 'Builder Trophies', value: player.builderBaseTrophies, icon: 'hammer-outline' as const }]
+                  : []),
+                ...(player.bestBuilderBaseTrophies !== undefined
+                  ? [{ label: 'Best Builder', value: player.bestBuilderBaseTrophies, icon: 'hammer' as const, accentColor: Colors.warning }]
+                  : []),
+              ],
+            },
+          ].filter((g) => g.rows.length > 0).flatMap((group, gi, arr) => [
+            gi > 0 ? <View key={`sep-${gi}`} style={styles.statsRowSep} /> : null,
+            <View key={`hdr-${gi}`} style={styles.statsGroupHeader}>
+              <Text style={styles.statsGroupTitle}>{group.title}</Text>
+            </View>,
+            ...group.rows.map((row, ri) => (
+              <View
+                key={`${group.title}-${ri}`}
+                style={[styles.statsRow, row.accentColor ? { borderLeftColor: row.accentColor } : null]}
               >
-                {typeof s.value === 'number' ? s.value.toLocaleString() : s.value}
-              </Text>
-            </View>
-          ))}
+                <Ionicons name={row.icon} size={13} color={Colors.textTertiary} style={styles.statsIcon} />
+                <Text style={styles.statsLabel}>{row.label}</Text>
+                <Text style={[styles.statsValue, row.accentColor ? { color: row.accentColor } : null]}>
+                  {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
+                </Text>
+              </View>
+            )),
+          ])}
         </View>
 
         <View style={{ height: 100 }} />
@@ -425,28 +590,166 @@ const styles = StyleSheet.create({
   statsTable: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
+    backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
   },
+  statsGroupHeader: {
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    backgroundColor: Colors.bgCard,
+  },
+  statsGroupTitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
   statsRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+    borderLeftWidth: 2.5,
+    borderLeftColor: Colors.border,
+    backgroundColor: Colors.bgCard,
   },
-  statsCell: {
+  statsIcon: {
+    marginRight: Spacing.sm,
+  },
+  statsLabel: {
     flex: 1,
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    textAlign: 'left',
+  },
+  statsValue: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  statsRowSep: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: Spacing.base,
+    marginVertical: Spacing.md,
+  },
+  upgradeCard: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  upgradeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.base,
-    ...Typography.caption,
   },
-  statsHeader: {
+  upgradeHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  upgradeHeaderText: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  upgradeHeaderMeta: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '500',
+  },
+  upgradeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    gap: Spacing.md,
+  },
+  upgradeRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  upgradeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
-    color: Colors.textMuted,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  upgradeIcon: {
+    width: 26,
+    height: 26,
+  },
+  upgradeInfo: {
+    flex: 1,
+  },
+  upgradeName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  upgradeHint: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  upgradeThSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+    backgroundColor: Colors.bgSubtle,
+  },
+  upgradeThSectionBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+  },
+  upgradeThSectionIcon: {
+    width: 18,
+    height: 18,
+  },
+  upgradeThSectionTitle: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  upgradeCostPill: {
+    alignItems: 'flex-end',
+    gap: 1,
+  },
+  upgradeCostText: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    fontSize: 10,
+  },
+  upgradeCostSub: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+    fontSize: 9,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -456,7 +759,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
   },
   actionBtn: {
-    width: '48%',
+    width: '49%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
