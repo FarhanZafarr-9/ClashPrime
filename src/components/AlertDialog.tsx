@@ -71,6 +71,7 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
       >
         <Pressable style={styles.backdrop} onPress={onDismiss} />
         <View style={styles.content}>
+          <View style={styles.accent} />
           <Text style={styles.title}>{config.title}</Text>
           {config.message ? (
             <Text style={styles.message}>{config.message}</Text>
@@ -79,11 +80,12 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
             {config.actions.map((action, i) => (
               <Pressable
                 key={`${action.label}-${i}`}
-                style={[
+                style={({ pressed }) => [
                   styles.btn,
                   action.primary && styles.btnPrimary,
                   action.destructive && styles.btnDestructive,
                   !action.primary && !action.destructive && styles.btnGhost,
+                  pressed && { opacity: 0.8 },
                 ]}
                 onPress={() => {
                   action.onPress();
@@ -121,26 +123,42 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   content: {
-    width: '82%',
+    width: '84%',
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    borderWidth: 0.75,
+    borderRadius: Radius.xl,
+    borderWidth: 0.5,
     borderColor: Colors.border,
-    padding: Spacing.xl,
+    paddingTop: Spacing.base,
+    paddingBottom: Spacing.base,
+    paddingHorizontal: Spacing.xl,
     gap: Spacing.md,
     zIndex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  accent: {
+    height: 3,
+    width: 32,
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 2,
+    marginBottom: Spacing.xs,
   },
   title: {
-    ...Typography.headline,
+    ...Typography.title3,
     color: Colors.textPrimary,
+    letterSpacing: -0.3,
   },
   message: {
     ...Typography.subhead,
-    color: Colors.textTertiary,
-    lineHeight: 18,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    letterSpacing: 0.1,
   },
   actions: {
     flexDirection: 'row',
@@ -149,8 +167,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   btn: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm + 2,
+    minWidth: 72,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.base + 4,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
   },
   btnPrimary: {
@@ -161,6 +181,8 @@ const styles = StyleSheet.create({
   },
   btnGhost: {
     backgroundColor: 'transparent',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
   },
   btnText: {
     ...Typography.subhead,
@@ -173,7 +195,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   btnTextGhost: {
-    color: Colors.textTertiary,
+    color: Colors.textSecondary,
     fontWeight: '500',
   },
 });
