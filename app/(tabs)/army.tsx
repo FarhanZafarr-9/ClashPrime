@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -66,7 +67,12 @@ export default function PlayerProfileScreen() {
   const { isDark, colors } = useTheme();
   const { discounts, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('heroes');
+  const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    if (initialTab === 'troops' || initialTab === 'spells' || initialTab === 'equipment') return initialTab;
+    if (initialTab === 'heroes') return 'heroes';
+    return 'heroes';
+  });
   const [refreshing, setRefreshing] = useState(false);
   const [expandedName, setExpandedName] = useState<string | null>(null);
 
@@ -445,8 +451,69 @@ export default function PlayerProfileScreen() {
           </View>
         ) : null}
 
-        {visibleDetailLevels.length > 0 && (
+        {visibleDetailLevels.length > 0 && (() => {
+          const parseCost = (s: string): number => {
+            const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
+            if (!cleaned) return 0;
+            const num = parseFloat(cleaned);
+            if (isNaN(num)) return 0;
+            if (/b/i.test(cleaned)) return num * 1_000_000_000;
+            if (/m/i.test(cleaned)) return num * 1_000_000;
+            if (/k/i.test(cleaned)) return num * 1_000;
+            return num;
+          };
+          const parseTime = (s: string): number => {
+            if (!s || /[—\-]/.test(s)) return 0;
+            const d = s.match(/(\d+)\s*d/);
+            const h = s.match(/(\d+)\s*h/);
+            const m = s.match(/(\d+)\s*m/);
+            return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
+          };
+          const fmtCost = (n: number): string => {
+            if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
+            if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+            if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+            return String(n);
+          };
+          const fmtTime = (s: number): string => {
+            if (s <= 0) return '';
+            const days = Math.floor(s / 86400);
+            const hours = Math.floor((s % 86400) / 3600);
+            if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+            if (hours > 0) return `${hours}h`;
+            return `${Math.floor(s / 60)}m`;
+          };
+
+          const remainingLevels = visibleDetailLevels.filter((l) => l.level > currentLevel && (maxHeroLevel != null ? l.level <= maxHeroLevel : true));
+          let totalCost = 0;
+          let totalTime = 0;
+          for (const lvl of remainingLevels) {
+            if (lvl.upgradeCost) totalCost += parseCost(lvl.upgradeCost);
+            if (lvl.upgradeTime) totalTime += parseTime(lvl.upgradeTime);
+          }
+          const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
+          return (
           <>
+            {hasRemaining && (
+              <View style={[styles.panelTable, { borderColor: colors.border, marginBottom: Spacing.md }]}>
+                <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, flex: 1 }]}>Remaining ({remainingLevels.length} lvls)</Text>
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
+                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
+                </View>
+                <View style={styles.panelTableRow}>
+                  <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
+                    Lv{currentLevel} → Lv{maxHeroLevel != null ? maxHeroLevel : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                  </Text>
+                  <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                    {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts.army) : fmtCost(totalCost)}
+                  </Text>
+                  <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                    {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
+                  </Text>
+                </View>
+              </View>
+            )}
             <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
             {legendEntries.length > 0 && (
               <View style={{ marginBottom: Spacing.sm }}>
@@ -525,7 +592,7 @@ export default function PlayerProfileScreen() {
                     : `Showing all levels for ${detail.name}`}
             </Text>
           </>
-        )}
+        );})()}
       </View>
     );
   };
