@@ -3,13 +3,13 @@ import {
   View,
   Text,
   TextInput,
-  Pressable,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import PressableRipple from '../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -105,9 +105,9 @@ export default function OnboardingScreen() {
                 autoCorrect={false}
                 editable={!loading}
               />
-              <Pressable style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
+              <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
                 <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
-              </Pressable>
+              </PressableRipple>
             </View>
             <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys (whitelist IP 45.79.218.79 — the app uses a proxy)</Text>
 
@@ -117,7 +117,7 @@ export default function OnboardingScreen() {
               </View>
             ) : null}
 
-            <Pressable
+            <PressableRipple
               style={[styles.btn, loading && styles.btnDisabled]}
               onPress={handleContinue}
               disabled={loading}
@@ -127,7 +127,7 @@ export default function OnboardingScreen() {
               ) : (
                 <Text style={styles.btnText}>Continue</Text>
               )}
-            </Pressable>
+            </PressableRipple>
           </View>
         </View>
       </KeyboardAvoidingView>
