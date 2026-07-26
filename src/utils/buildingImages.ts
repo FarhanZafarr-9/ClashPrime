@@ -30,7 +30,7 @@ export function getBuildingLevelImageSource(name: string, level: number): ImageS
 
 export function getBuildingAvailableLevels(name: string): number[] {
   const asset = buildingAssets[name];
-  if (asset?.levels) return Object.keys(asset.levels).map(Number).sort((a, b) => a - b);
+  if (asset?.levels && Object.keys(asset.levels).length > 0) return Object.keys(asset.levels).map(Number).sort((a, b) => a - b);
   const entry = nameToEntry.get(name.toLowerCase());
   if (entry?.levels) return entry.levels.map((l) => l.level).sort((a, b) => a - b);
   return [];

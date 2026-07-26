@@ -158,7 +158,7 @@ const BB_FANDOM_URLS: Record<string, string> = {
 // Per-BH max-level data for BB buildings missing from building-levels.json.
 // Maps building name → { BH level → max levels available at that BH }.
 const BB_LEVEL_SUPPLEMENT: Record<string, Record<number, number>> = {
-  'BB Cannon':     { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 10 },
+  'BB Cannon':     { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
   'Double Cannon': { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
   'Guard Post':    { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
   "O.T.T.O's Outpost": { 10: 3 },
@@ -235,11 +235,12 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
 
   const buildingStats = useMemo(() => {
     const match = (buildingLevelsData as any).find((b: any) => {
+      if (isBB && b.village !== 'builderBase') return false;
       const bName = b.name.toLowerCase();
       return bName === name.toLowerCase() || bName === lookupName.toLowerCase();
     });
     return match || null;
-  }, [name, lookupName]);
+  }, [name, lookupName, isBB]);
 
   const mainImgSource = getBuildingLevelImageSource(lookupName, maxLvl);
 
