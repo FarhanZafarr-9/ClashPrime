@@ -332,7 +332,7 @@ export default function HomeScreen() {
               )}
             </View>
             <Pressable onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
-              <Ionicons name="swap-horizontal" size={16} color={Colors.textPrimary} />
+              <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
             </Pressable>
           </View>
         </Card>
@@ -746,16 +746,16 @@ const styles = StyleSheet.create({
   },
   swapBtnFloating: {
     position: 'absolute',
-    top: -14,
-    right: -10,
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: Colors.bgCard,
+    top: -24,
+    right: -20,
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.border || '#333',
+    borderColor: Colors.border,
   },
   playerStatsRow: {
     flexDirection: 'row',
