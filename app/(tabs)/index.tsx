@@ -115,36 +115,19 @@ export default function HomeScreen() {
   const [upgradesOpen, setUpgradesOpen] = useState(false);
   const [upgradeCosts, setUpgradeCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
   const [loadingCosts, setLoadingCosts] = useState(false);
-  const fetchedRef = useRef(false);
+  const upgradeFetchedKeyRef = useRef('');
 
   const [rushedOpen, setRushedOpen] = useState(false);
   const [rushedCosts, setRushedCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
   const [loadingRushedCosts, setLoadingRushedCosts] = useState(false);
-  const rushedFetchedRef = useRef(false);
+  const rushedFetchedKeyRef = useRef('');
 
   useEffect(() => {
-    if (!upgradesOpen || fetchedRef.current || unlockableItems.length === 0) return;
-    fetchedRef.current = true;
+    if (!upgradesOpen || unlockableItems.length === 0) return;
+    const key = unlockableItems.map((i) => i.name).join(',');
+    if (upgradeFetchedKeyRef.current === key) return;
+    upgradeFetchedKeyRef.current = key;
     setLoadingCosts(true);
-
-    const parseCost = (s: string): number => {
-      const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
-      if (!cleaned) return 0;
-      const num = parseFloat(cleaned);
-      if (isNaN(num)) return 0;
-      if (/b/i.test(cleaned)) return num * 1_000_000_000;
-      if (/m/i.test(cleaned)) return num * 1_000_000;
-      if (/k/i.test(cleaned)) return num * 1_000;
-      return num;
-    };
-
-    const parseTime = (s: string): number => {
-      if (!s || /[—\-]/.test(s)) return 0;
-      const d = s.match(/(\d+)\s*d/);
-      const h = s.match(/(\d+)\s*h/);
-      const m = s.match(/(\d+)\s*m/);
-      return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
-    };
 
     (async () => {
       const results: Record<string, { cost: number; timeSeconds: number }> = {};
@@ -187,8 +170,10 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    if (!rushedOpen || rushedFetchedRef.current || rushedItems.length === 0) return;
-    rushedFetchedRef.current = true;
+    if (!rushedOpen || rushedItems.length === 0) return;
+    const key = rushedItems.map((i) => `${i.name}:${i.currentLevel}:${i.maxLevelAtPrevTH}`).join('|');
+    if (rushedFetchedKeyRef.current === key) return;
+    rushedFetchedKeyRef.current = key;
     setLoadingRushedCosts(true);
 
     (async () => {
@@ -431,7 +416,7 @@ export default function HomeScreen() {
               {rushedOpen && (() => {
                 const groups: { label: string; key: string; icon: string; items: typeof rushedItems }[] = [
                   { label: 'Heroes', key: 'hero', icon: 'shield-half-outline', items: [] },
-                  { label: 'Troops', key: 'troop', icon: 'sword-cross', items: [] },
+                  { label: 'Troops', key: 'troop', icon: 'people-outline', items: [] },
                   { label: 'Spells', key: 'spell', icon: 'flask-outline', items: [] },
                   { label: 'Equipment', key: 'equipment', icon: 'trophy-outline', items: [] },
                 ];
