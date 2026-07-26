@@ -293,22 +293,45 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <View style={styles.playerStatsRow}>
-            <View style={styles.miniStat}>
-              <Ionicons name="trophy-outline" size={14} color={Colors.textTertiary} />
-              <Text style={styles.miniStatValue}>{player.bestTrophies.toLocaleString()}</Text>
-            </View>
-            <View style={styles.miniStat}>
-              <Ionicons name="star-outline" size={14} color={Colors.textTertiary} />
-              <Text style={styles.miniStatValue}>{player.warStars.toLocaleString()}</Text>
-            </View>
-            <View style={styles.miniStat}>
-              <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
-              <Text style={styles.miniStatValue}>{player.expLevel}</Text>
-            </View>
-            <View style={styles.miniStat}>
-              <Ionicons name="arrow-up-outline" size={14} color={Colors.textTertiary} />
-              <Text style={styles.miniStatValue}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
-            </View>
+            {showBH ? (
+              <>
+                <View style={styles.miniStat}>
+                  <Ionicons name="hammer-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>{player.builderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
+                </View>
+                <View style={styles.miniStat}>
+                  <Ionicons name="hammer" size={14} color={Colors.warning} />
+                  <Text style={[styles.miniStatValue, { color: Colors.warning }]}>{player.bestBuilderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
+                </View>
+                <View style={styles.miniStat}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>{player.expLevel}</Text>
+                </View>
+                <View style={styles.miniStat}>
+                  <Ionicons name="home-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>BH{player.builderHallLevel ?? 1}</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.miniStat}>
+                  <Ionicons name="trophy-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>{player.bestTrophies.toLocaleString()}</Text>
+                </View>
+                <View style={styles.miniStat}>
+                  <Ionicons name="star-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>{player.warStars.toLocaleString()}</Text>
+                </View>
+                <View style={styles.miniStat}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>{player.expLevel}</Text>
+                </View>
+                <View style={styles.miniStat}>
+                  <Ionicons name="arrow-up-outline" size={14} color={Colors.textTertiary} />
+                  <Text style={styles.miniStatValue}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
+                </View>
+              </>
+            )}
           </View>
         </Card>
 
