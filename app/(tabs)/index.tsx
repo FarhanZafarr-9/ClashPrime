@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { filterHomeTroops } from '../../src/types/clash';
+import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { Card } from '../../src/components/Card';
@@ -24,6 +24,7 @@ import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
 export default function HomeScreen() {
   const router = useRouter();
   const { player, loading, error, lastSync, refresh } = usePlayer();
+  const { superTroopNames } = useGameData();
   const [refreshing, setRefreshing] = useState(false);
 
   React.useEffect(() => {
@@ -60,7 +61,11 @@ export default function HomeScreen() {
   if (!player) return null;
 
   const homeHeroes = player.heroes.filter((h: { village: string }) => h.village === 'home');
-  const homeTroops = filterHomeTroops(player.troops);
+  const homeTroops = player.troops.filter((t) => {
+    if (t.village !== 'home') return false;
+    if (superTroopNames.includes(t.name) || t.name.startsWith('Super ') || t.name.startsWith('Sneaky ') || t.name.startsWith('Rocket ')) return false;
+    return true;
+  });
   const homeSpells = player.spells.filter((s: { village?: string }) => s.village === 'home' || !s.village);
   const th = player.townHallLevel;
 
