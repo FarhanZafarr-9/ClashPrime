@@ -69,10 +69,15 @@ export default function PlayerProfileScreen() {
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
-    if (initialTab === 'troops' || initialTab === 'spells' || initialTab === 'equipment') return initialTab;
-    if (initialTab === 'heroes') return 'heroes';
+    if (['troops', 'spells', 'equipment', 'heroes', 'pets', 'siege'].includes(initialTab ?? '')) return initialTab as Tab;
     return 'heroes';
   });
+
+  React.useEffect(() => {
+    if (['troops', 'spells', 'equipment', 'heroes', 'pets', 'siege'].includes(initialTab ?? '')) {
+      setActiveTab(initialTab as Tab);
+    }
+  }, [initialTab]);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedName, setExpandedName] = useState<string | null>(null);
 
