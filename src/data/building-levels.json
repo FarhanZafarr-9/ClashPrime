@@ -9316,6 +9316,122 @@
     "levels": []
   },
   {
+    "name": "BB Cannon",
+    "village": "builderBase",
+    "statsColumns": [
+      "Level",
+      "Damage per Second",
+      "Damage per Shot",
+      "Hitpoints",
+      "Build Cost",
+      "Build Time",
+      "Experience",
+      "Town Hall Level"
+    ],
+    "levels": [
+      {
+        "Level": 1,
+        "Damage per Second": 70,
+        "Damage per Shot": 56,
+        "Hitpoints": 500,
+        "Build Cost": 10000,
+        "Build Time": "1m",
+        "Experience": 7,
+        "Town Hall Level": 1
+      },
+      {
+        "Level": 2,
+        "Damage per Second": 77,
+        "Damage per Shot": 62,
+        "Hitpoints": 575,
+        "Build Cost": 20000,
+        "Build Time": "5m",
+        "Experience": 17,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 3,
+        "Damage per Second": 85,
+        "Damage per Shot": 68,
+        "Hitpoints": 660,
+        "Build Cost": 50000,
+        "Build Time": "2h",
+        "Experience": 84,
+        "Town Hall Level": 3
+      },
+      {
+        "Level": 4,
+        "Damage per Second": 93,
+        "Damage per Shot": 74,
+        "Hitpoints": 760,
+        "Build Cost": 200000,
+        "Build Time": "8h",
+        "Experience": 169,
+        "Town Hall Level": 4
+      },
+      {
+        "Level": 5,
+        "Damage per Second": 102,
+        "Damage per Shot": 82,
+        "Hitpoints": 875,
+        "Build Cost": 600000,
+        "Build Time": "1d",
+        "Experience": 293,
+        "Town Hall Level": 5
+      },
+      {
+        "Level": 6,
+        "Damage per Second": 112,
+        "Damage per Shot": 90,
+        "Hitpoints": 1050,
+        "Build Cost": 1000000,
+        "Build Time": "2d",
+        "Experience": 415,
+        "Town Hall Level": 6
+      },
+      {
+        "Level": 7,
+        "Damage per Second": 123,
+        "Damage per Shot": 98,
+        "Hitpoints": 1250,
+        "Build Cost": 1800000,
+        "Build Time": "4d",
+        "Experience": 587,
+        "Town Hall Level": 7
+      },
+      {
+        "Level": 8,
+        "Damage per Second": 136,
+        "Damage per Shot": 109,
+        "Hitpoints": 1450,
+        "Build Cost": 2500000,
+        "Build Time": "6d",
+        "Experience": 720,
+        "Town Hall Level": 8
+      },
+      {
+        "Level": 9,
+        "Damage per Second": 150,
+        "Damage per Shot": 120,
+        "Hitpoints": 1650,
+        "Build Cost": 3300000,
+        "Build Time": "8d",
+        "Experience": 831,
+        "Town Hall Level": 9
+      },
+      {
+        "Level": 10,
+        "Damage per Second": 165,
+        "Damage per Shot": 132,
+        "Hitpoints": 1850,
+        "Build Cost": 4500000,
+        "Build Time": "9d",
+        "Experience": 881,
+        "Town Hall Level": 10
+      }
+    ]
+  },
+  {
     "name": "Star Laboratory",
     "village": "home",
     "description": "\"The Star Laboratory searches the heavens for secrets to unlock a troops full potential. Improve troop hitpoints, damage and housing space in addition to special troop abilities!\"",
