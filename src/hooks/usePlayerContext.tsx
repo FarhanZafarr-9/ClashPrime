@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { ClashPlayer } from '../types/clash';
 import {
   getPlayerTag,
@@ -43,6 +43,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [tagVersion, setTagVersion] = useState(0);
+  const playerRef = useRef<ClashPlayer | null>(null);
 
   const fetchPlayer = useCallback(async (force = false) => {
     try {
@@ -72,6 +73,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const token = await getApiToken();
       const api = new ClashAPI(token);
       const data = await api.getPlayer(tag);
+      const prev = playerRef.current;
+      if (prev) {
+        data.buildingLevels = prev.buildingLevels;
+        data.lastMaxedTH = prev.lastMaxedTH;
+      }
 
       setPlayer(data);
       await cachePlayer(data);
@@ -89,6 +95,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     fetchPlayer();
   }, [fetchPlayer, tagVersion]);
 
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+
   const refresh = useCallback(async () => {
     await fetchPlayer(true);
   }, [fetchPlayer]);
@@ -96,11 +106,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const bumpTagVersion = useCallback(() => {
     setTagVersion((v) => v + 1);
   }, []);
-
   const setBuildingLevel = useCallback(async (name: string, level: number) => {
     setPlayer((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev, buildingLevels: { ...prev.buildingLevels, [name]: level } };
+      const base = prev || {} as ClashPlayer;
+      const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), [name]: level } };
       cachePlayer(updated);
       return updated;
     });
@@ -108,9 +117,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const upgradeBuilding = useCallback(async (name: string) => {
     setPlayer((prev) => {
-      if (!prev) return prev;
-      const current = prev.buildingLevels?.[name] ?? 0;
-      const updated = { ...prev, buildingLevels: { ...prev.buildingLevels, [name]: current + 1 } };
+      const base = prev || {} as ClashPlayer;
+      const current = base.buildingLevels?.[name] ?? 0;
+      const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), [name]: current + 1 } };
       cachePlayer(updated);
       return updated;
     });
@@ -118,8 +127,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const setBulkLevels = useCallback(async (levels: Record<string, number>) => {
     setPlayer((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev, buildingLevels: { ...(prev.buildingLevels || {}), ...levels } };
+      const base = prev || {} as ClashPlayer;
+      const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), ...levels } };
       cachePlayer(updated);
       return updated;
     });
@@ -128,8 +137,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const setLastMaxed = useCallback(async (th: number) => {
     setLastMaxedTH(th);
     setPlayer((prev) => {
-      if (!prev) return prev;
-      return { ...prev, lastMaxedTH: th };
+      const base = prev || {} as ClashPlayer;
+      return { ...base, lastMaxedTH: th };
     });
   }, []);
 
