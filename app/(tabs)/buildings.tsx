@@ -264,7 +264,8 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
   const renderGrid = () => (
-    <View style={styles.levelGrid}>
+    <View style={styles.levelGridBorder}>
+      <View style={styles.levelGrid}>
       {displayLevels.map((levelData: any) => {
         const lvl = levelData.Level;
         const cellSource = getBuildingLevelImageSource(lookupName, lvl);
@@ -290,6 +291,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
           </View>
         );
       })}
+      </View>
     </View>
   );
 
@@ -661,14 +663,16 @@ const styles = StyleSheet.create({
     width: 24,
     textAlign: 'center',
   },
+  levelGridBorder: {
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+    marginTop: Spacing.sm,
+  },
   levelGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.sm,
-    overflow: 'hidden',
-    marginTop: Spacing.sm,
   },
   levelGridCell: {
     width: '20%',
