@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  Modal,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -450,36 +451,18 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
             <>
               <View style={styles.remainingTable}>
                 <View style={styles.remainingRow}>
-                  <Text style={[styles.remainingHead, { flex: 1.5 }]}>Remaining</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
                   <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
                   <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>TH</Text>
                 </View>
-                {remainingLevels.map((lvl: any) => {
-                  const costStr = showDiscounted
-                    ? applyCostDiscount(fmtCost(parseCost(String(lvl['Build Cost'] || '0'))), discounts)
-                    : fmtCost(parseCost(String(lvl['Build Cost'] || '0')));
-                  const timeStr = showDiscounted
-                    ? applyTimeDiscount(String(lvl['Build Time'] || '—'), discounts)
-                    : fmtTime(parseTimeToSeconds(String(lvl['Build Time'] || '')));
-                  return (
-                    <View key={lvl.Level} style={styles.remainingRow}>
-                      <Text style={[styles.remainingCell, { flex: 1.5 }]}>Lv{lvl.Level}</Text>
-                      <Text style={[styles.remainingCell, { flex: 1 }]}>{costStr}</Text>
-                      <Text style={[styles.remainingCell, { flex: 1 }]}>{timeStr}</Text>
-                      <Text style={[styles.remainingCell, { flex: 1 }]}>TH{lvl['Town Hall Level'] || '?'}</Text>
-                    </View>
-                  );
-                })}
                 <View style={styles.remainingTotalRow}>
-                  <Text style={[styles.remainingTotalCell, { flex: 1.5 }]}>Total</Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{remainingLevels.length} levels</Text>
                   <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
                     {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
                   </Text>
                   <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
                     {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
                   </Text>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]} />
                 </View>
               </View>
               <PressableRipple
@@ -515,9 +498,10 @@ function formatCostShort(cost: number): string {
 }
 
 export default function BuildingsScreen() {
-  const { player } = usePlayer();
+  const { player, setBulkLevels, setLastMaxed } = usePlayer();
   const { discounts, setBuildingCost, setBuildingTime, resetDiscounts } = useDiscounts();
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
+  const [thPickerVisible, setThPickerVisible] = useState(false);
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
@@ -559,13 +543,18 @@ export default function BuildingsScreen() {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Buildings</Text>
-            <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
-              <Ionicons
-                name={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
-                size={24}
-                color={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? Colors.warning : Colors.textSecondary}
-              />
-            </PressableRipple>
+            <View style={styles.headerActions}>
+              <PressableRipple onPress={() => setThPickerVisible(true)} hitSlop={8} style={styles.headerBtn}>
+                <Ionicons name="refresh-outline" size={22} color={Colors.textSecondary} />
+              </PressableRipple>
+              <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
+                <Ionicons
+                  name={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
+                  size={24}
+                  color={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? Colors.warning : Colors.textSecondary}
+                />
+              </PressableRipple>
+            </View>
           </View>
           <Text style={styles.subtitle}>
             {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
@@ -618,6 +607,50 @@ export default function BuildingsScreen() {
         onArmyTimeChange={() => { }}
         onReset={resetDiscounts}
       />
+
+      <Modal
+        visible={thPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setThPickerVisible(false)}
+      >
+        <View style={styles.thPickerOverlay}>
+          <View style={styles.thPickerSheet}>
+            <View style={styles.thPickerHeader}>
+              <Text style={styles.thPickerTitle}>Select last maxed Town Hall</Text>
+              <Text style={styles.thPickerSub}>
+                All building levels will be reset to the maximum available at this TH.
+              </Text>
+            </View>
+            <View style={styles.thPickerGrid}>
+              {Array.from({ length: th - 1 }, (_, i) => i + 2).map((level) => {
+                const isSelected = level === th;
+                return (
+                  <PressableRipple
+                    key={level}
+                    style={[styles.thPickerPill, isSelected && styles.thPickerPillActive]}
+                    onPress={() => {
+                      setBulkLevels({});
+                      setLastMaxed(level);
+                      setThPickerVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.thPickerPillText, isSelected && styles.thPickerPillTextActive]}>
+                      TH{level}
+                    </Text>
+                  </PressableRipple>
+                );
+              })}
+            </View>
+            <PressableRipple
+              style={styles.thPickerCloseBtn}
+              onPress={() => setThPickerVisible(false)}
+            >
+              <Text style={styles.thPickerCloseText}>Cancel</Text>
+            </PressableRipple>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -639,6 +672,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  headerBtn: {
+    borderRadius: Radius.sm,
   },
   title: {
     ...Typography.largeTitle,
@@ -971,6 +1012,74 @@ const styles = StyleSheet.create({
   },
   expandTableText: {
     ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  thPickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.base,
+  },
+  thPickerSheet: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.lg,
+    width: '100%',
+    maxWidth: 400,
+    padding: Spacing.base,
+  },
+  thPickerHeader: {
+    alignItems: 'center',
+    marginBottom: Spacing.base,
+  },
+  thPickerTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  thPickerSub: {
+    ...Typography.footnote,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  thPickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    justifyContent: 'center',
+    marginBottom: Spacing.base,
+  },
+  thPickerPill: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  thPickerPillActive: {
+    backgroundColor: Colors.accentGhost,
+    borderColor: Colors.accent,
+  },
+  thPickerPillText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  thPickerPillTextActive: {
+    color: Colors.accent,
+  },
+  thPickerCloseBtn: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgSubtle,
+  },
+  thPickerCloseText: {
+    ...Typography.subhead,
     color: Colors.textSecondary,
     fontWeight: '500',
   },
