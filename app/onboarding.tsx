@@ -69,11 +69,18 @@ export default function OnboardingScreen() {
         setLoading(false);
         return;
       }
+      const cosHtml = await cosRes.text();
+      const thMatch = cosHtml.match(/Town\s*Hall\s*(\d+)/i);
+      const bhMatch = cosHtml.match(/Builder\s*Hall\s*(\d+)/i);
+      const cosTh = thMatch ? parseInt(thMatch[1], 10) : 0;
+      const cosBh = bhMatch ? parseInt(bhMatch[1], 10) : 0;
 
       const api = new ClashAPI(cleanToken);
       const data = await api.getPlayer(cleanTag);
       await setPlayerTag(cleanTag);
       await setApiToken(cleanToken);
+      data.townHallLevel = cosTh || data.townHallLevel;
+      data.builderHallLevel = cosBh || data.builderHallLevel;
       setPlayerData(data);
       setStep('thPicker');
       setLoading(false);
