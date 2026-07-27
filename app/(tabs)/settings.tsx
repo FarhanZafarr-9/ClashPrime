@@ -8,6 +8,10 @@ import {
   Switch,
   Modal,
   Linking,
+  Share,
+  Platform,
+  KeyboardAvoidingView,
+  Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
