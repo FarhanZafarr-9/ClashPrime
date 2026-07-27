@@ -11,7 +11,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { getBuildingLevelImageSource, getBuildingAvailableLevels } from '../../src/utils/buildingImages';
+import {
+  getBuildingLevelImageSource,
+  getBuildingAvailableLevels,
+  getBuildingData,
+  getBuildingEffectiveMax,
+  parseCost,
+  parseTimeToSeconds,
+  formatCost as fmtCost,
+  formatTime as fmtTime,
+} from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
 import buildingLevelsData from '../../src/data/building-levels.json';
 import thLevelsData from '../../src/data/th-levels.json';
@@ -228,6 +237,7 @@ const NAME_FIX: Record<string, string> = {
 };
 
 function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; discounts: ScopeDiscount }) {
+  const { player, upgradeBuilding } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [tableViewportW, setTableViewportW] = useState(0);
@@ -241,7 +251,13 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
     return match || null;
   }, [name, lookupName]);
 
-  const mainImgSource = getBuildingLevelImageSource(lookupName, maxLvl);
+  const currentLevel = player?.buildingLevels?.[name] ?? 0;
+  const effectiveMax = getBuildingEffectiveMax(name, player?.townHallLevel ?? 1);
+  const progress = effectiveMax > 0 ? currentLevel / effectiveMax : 0;
+  const isFullyMaxed = currentLevel >= effectiveMax;
+  const isLocked = currentLevel === 0;
+
+  const mainImgSource = getBuildingLevelImageSource(lookupName, Math.max(currentLevel, 1));
 
   const availableLevels = getBuildingAvailableLevels(lookupName);
   const allLevels = buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l }));
@@ -253,7 +269,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   } else if (showFull || !showExpand) {
     displayLevels = allLevels;
   } else {
-    const currentIdx = allLevels.findIndex((l: any) => l.Level === maxLvl);
+    const currentIdx = allLevels.findIndex((l: any) => l.Level === currentLevel);
     const start = Math.max(0, currentIdx - 1);
     const end = Math.min(allLevels.length, currentIdx + 2);
     displayLevels = allLevels.slice(start, end);
@@ -263,13 +279,22 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
   const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
+  const remainingLevels = allLevels.filter((l: any) => l.Level > currentLevel && l.Level <= effectiveMax);
+  let totalCost = 0;
+  let totalTime = 0;
+  for (const lvl of remainingLevels) {
+    if (lvl['Build Cost']) totalCost += parseCost(String(lvl['Build Cost']));
+    if (lvl['Build Time']) totalTime += parseTimeToSeconds(String(lvl['Build Time']));
+  }
+  const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
+
   const renderGrid = () => (
     <View style={styles.levelGridBorder}>
       <View style={styles.levelGrid}>
       {displayLevels.map((levelData: any) => {
         const lvl = levelData.Level;
         const cellSource = getBuildingLevelImageSource(lookupName, lvl);
-        const isCurrent = lvl === maxLvl;
+        const isCurrent = lvl === currentLevel;
         return (
           <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
             <View style={styles.levelGridImgWrap}>
@@ -282,8 +307,8 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
                   </Text>
                 </View>
               )}
-              <View style={styles.levelGridBadge}>
-                <Text style={[styles.levelGridBadgeText, isCurrent && styles.levelGridBadgeTextCurrent]}>
+              <View style={[styles.levelGridBadge, isCurrent && styles.levelGridBadgeCurrent]}>
+                <Text style={[styles.levelGridBadgeText]}>
                   {lvl}
                 </Text>
               </View>
@@ -319,11 +344,26 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
           )}
           <View style={styles.itemInfo}>
             <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
-            <View style={styles.levelBadgeRow}>
-              <Text style={styles.itemLevel}>
-                Max Lv {maxLvl}
-              </Text>
-            </View>
+            {isLocked ? (
+              <Text style={styles.lockedText}>Locked</Text>
+            ) : (
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(progress, 1) * 100}%`,
+                      backgroundColor: isFullyMaxed ? Colors.warning : Colors.textSecondary,
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </View>
+          <View style={[styles.levelBadge, isFullyMaxed && styles.levelBadgeMaxed]}>
+            <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
+              {isLocked ? 'Locked' : `${currentLevel}/${effectiveMax}`}
+            </Text>
           </View>
           <Ionicons
             name={expanded ? 'chevron-down' : 'chevron-forward'}
@@ -336,6 +376,9 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
 
       {expanded && displayLevels.length > 0 && (
         <>
+          {buildingStats?.description ? (
+            <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
+          ) : null}
           {renderGrid()}
           {buildingStats && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
@@ -359,7 +402,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
                 </View>
                 {displayLevels.map((levelData: any) => {
                   const lvl = levelData.Level;
-                  const isCurrentLevel = lvl === maxLvl;
+                  const isCurrentLevel = lvl === currentLevel;
                   return (
                     <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
                       <View style={styles.buildingStatCellIcon}>
@@ -402,6 +445,51 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
               <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
               <Text style={styles.expandTableText}>Show fewer</Text>
             </PressableRipple>
+          )}
+          {hasRemaining && (
+            <>
+              <View style={styles.remainingTable}>
+                <View style={styles.remainingRow}>
+                  <Text style={[styles.remainingHead, { flex: 1.5 }]}>Remaining</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>TH</Text>
+                </View>
+                {remainingLevels.map((lvl: any) => {
+                  const costStr = showDiscounted
+                    ? applyCostDiscount(fmtCost(parseCost(String(lvl['Build Cost'] || '0'))), discounts)
+                    : fmtCost(parseCost(String(lvl['Build Cost'] || '0')));
+                  const timeStr = showDiscounted
+                    ? applyTimeDiscount(String(lvl['Build Time'] || '—'), discounts)
+                    : fmtTime(parseTimeToSeconds(String(lvl['Build Time'] || '')));
+                  return (
+                    <View key={lvl.Level} style={styles.remainingRow}>
+                      <Text style={[styles.remainingCell, { flex: 1.5 }]}>Lv{lvl.Level}</Text>
+                      <Text style={[styles.remainingCell, { flex: 1 }]}>{costStr}</Text>
+                      <Text style={[styles.remainingCell, { flex: 1 }]}>{timeStr}</Text>
+                      <Text style={[styles.remainingCell, { flex: 1 }]}>TH{lvl['Town Hall Level'] || '?'}</Text>
+                    </View>
+                  );
+                })}
+                <View style={styles.remainingTotalRow}>
+                  <Text style={[styles.remainingTotalCell, { flex: 1.5 }]}>Total</Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
+                  </Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
+                  </Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]} />
+                </View>
+              </View>
+              <PressableRipple
+                style={styles.upgradeBtn}
+                onPress={() => upgradeBuilding(name)}
+              >
+                <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
+                <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+              </PressableRipple>
+            </>
           )}
         </>
       )}
@@ -655,9 +743,112 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: 2,
   },
-  itemLevel: {
+  progressTrack: {
+    height: 4,
+    backgroundColor: Colors.borderSubtle,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  levelBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    marginRight: Spacing.xs,
+  },
+  levelBadgeMaxed: {
+    backgroundColor: 'rgba(212, 163, 89, 0.08)',
+    borderColor: 'rgba(212, 163, 89, 0.3)',
+  },
+  levelBadgeText: {
     ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  levelBadgeTextMaxed: {
+    color: Colors.warning,
+  },
+  lockedText: {
+    ...Typography.footnote,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  buildingDesc: {
+    ...Typography.caption,
     color: Colors.textTertiary,
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    lineHeight: 18,
+  },
+  remainingTable: {
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+    marginTop: Spacing.sm,
+  },
+  remainingRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  remainingHead: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    textAlign: 'center',
+  },
+  remainingCell: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    textAlign: 'center',
+    fontSize: 11,
+  },
+  remainingTotalRow: {
+    flexDirection: 'row',
+    backgroundColor: Colors.bgSubtle,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  remainingTotalCell: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    textAlign: 'center',
+    fontSize: 11,
+  },
+  upgradeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.textPrimary,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    marginTop: Spacing.md,
+  },
+  upgradeBtnText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '600',
   },
   expandArrow: {
     width: 24,
@@ -675,7 +866,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   levelGridCell: {
-    width: '20%',
+    width: '19.99%',
     borderRightWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
@@ -723,8 +914,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textTertiary,
   },
-  levelGridBadgeTextCurrent: {
-    color: Colors.textPrimary,
+  levelGridBadgeCurrent: {
+    backgroundColor: Colors.textPrimary,
   },
   buildingStatsTable: {
     marginTop: Spacing.sm,
