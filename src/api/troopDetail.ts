@@ -313,25 +313,89 @@ function extractTableCells(rowHtml: string): Array<{ text: string; className: st
   return cells;
 }
 
-function findHeaderRow(tableHtml: string): string | null {
+function findHeaderRows(tableHtml: string): string[] {
   const floatingOriginal = tableHtml.match(/<thead class="tableFloatingHeaderOriginal">([\s\S]*?)<\/thead>/i);
   const headerSource = floatingOriginal
     ? floatingOriginal[1]
     : (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i)?.[1] ?? tableHtml);
-  const rows = [...headerSource.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((m) => m[1]);
-  return rows.find((row) => /<th/i.test(row)) ?? null;
+  return [...headerSource.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
+    .map((m) => m[1])
+    .filter((row) => /<th/i.test(row));
+}
+
+function parseHeaderCells(rowHtml: string): Array<{ text: string; colspan: number; rowspan: number }> {
+  const result: Array<{ text: string; colspan: number; rowspan: number }> = [];
+  const thRegex = /<t[dh]([^>]*)>([\s\S]*?)<\/t[dh]>/g;
+  let match: RegExpExecArray | null;
+  while ((match = thRegex.exec(rowHtml)) !== null) {
+    const attrs = match[1] || '';
+    const colspan = parseInt(attrs.match(/colspan\s*=\s*"(\d+)"/i)?.[1] || attrs.match(/colspan\s*=\s*(\d+)/i)?.[1] || '1', 10);
+    const rowspan = parseInt(attrs.match(/rowspan\s*=\s*"(\d+)"/i)?.[1] || attrs.match(/rowspan\s*=\s*(\d+)/i)?.[1] || '1', 10);
+    const text = normalizeCellText(match[2]);
+    result.push({ text, colspan, rowspan });
+  }
+  return result;
 }
 
 function getTableHeaders(tableHtml: string): string[] {
-  const headerRow = findHeaderRow(tableHtml);
-  if (!headerRow) return [];
-  return [...headerRow.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)]
-    .map((match) => normalizeCellText(match[1]))
-    .filter((header) => header.length > 0 && !/^\d+$/.test(header));
+  const headerRows = findHeaderRows(tableHtml);
+  if (headerRows.length === 0) return [];
+
+  const parsed = headerRows.map((row) => parseHeaderCells(row));
+
+  // Simulate the grid column-by-column, tracking rowspan skips
+  const skipCols = new Set<number>();
+  const merged: string[] = [];
+
+  for (let row = 0; row < parsed.length; row++) {
+    const cells = parsed[row];
+    let ci = 0; // cell index within this row
+    for (let col = 0; col < merged.length || ci < cells.length; col++) {
+      if (skipCols.has(col)) {
+        skipCols.delete(col);
+        continue;
+      }
+      if (ci >= cells.length) break;
+      const cell = cells[ci++];
+      const text = cell.text;
+      // Skip empty category-level names when a deeper row has sub-labels
+      const isCategory = /attributes|boosts|cost/i.test(text);
+      const hasDeeper = row < parsed.length - 1 && parsed.slice(row + 1).some((r) =>
+        r.some((c) => c.text && !/attributes|boosts|cost/i.test(c.text))
+      );
+      if (text && !(isCategory && hasDeeper)) {
+        if (col < merged.length) merged[col] = text;
+        else merged.push(text);
+      } else if (col >= merged.length) {
+        merged.push('');
+      }
+      // Track rowspan: skip this column in future rows for (rowspan - 1) rows
+      for (let r = 1; r < cell.rowspan; r++) {
+        skipCols.add(col);
+      }
+      // Expand colspan: fill extra slots
+      for (let e = 1; e < cell.colspan; e++) {
+        const ec = col + e;
+        if (text && !(isCategory && hasDeeper)) {
+          if (ec < merged.length) merged[ec] = text;
+          else merged.push(text);
+        } else if (ec >= merged.length) {
+          merged.push('');
+        }
+        for (let r = 1; r < cell.rowspan; r++) {
+          skipCols.add(ec);
+        }
+      }
+      col += cell.colspan - 1;
+    }
+  }
+
+  return merged.filter(Boolean);
 }
 
 function getHeaderRowHtml(tableHtml: string): string | null {
-  return findHeaderRow(tableHtml);
+  const rows = findHeaderRows(tableHtml);
+  return rows.length > 0 ? rows[0] : null;
 }
 
 function findHeaderIndex(headers: string[], patterns: RegExp[]): number {
@@ -354,11 +418,11 @@ function pickHeaderValue(cells: string[], headers: string[], patterns: RegExp[])
 }
 
 function getBodyRows(tableHtml: string): string[] {
-  const headerRow = findHeaderRow(tableHtml);
   const tbody = tableHtml.match(/<tbody>([\s\S]*?)<\/tbody>/i)?.[1] ?? tableHtml;
+  const headerRows = findHeaderRows(tableHtml);
   return [...tbody.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
     .map((match) => match[1])
-    .filter((row) => /<td/i.test(row) && row !== headerRow);
+    .filter((row) => /<td/i.test(row) && !headerRows.includes(row));
 }
 
 function findStatTable(tableHtmls: string[]): string | null {
@@ -427,12 +491,14 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
       /damage per second|dps/i,
       /damage per hit|damage when destroyed/i,
       /hitpoints|health|hp/i,
-      /upgrade|elixir|gold|dark elixir|gem|cost/i,
+      /upgrade|elixir|gold|dark elixir|gem|cost|ore/i,
       /clock|training time|time/i,
       /xp/i,
       /laboratory|lab|blacksmith|hero hall/i,
       /town hall/i,
     ];
+
+    const isEquipment = headers.some((h) => /ability|ore|rarity|blacksmith.*required|hero.*boost|increase/i.test(h));
 
     for (const row of bodyRows) {
       const cells = extractTableCells(row).map((cell) => cell.text);
@@ -441,10 +507,17 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
       const level = parseNumeric(getCellByHeader(cells, headers, [/^level$/i], 0));
       if (!level) continue;
 
-      const dps = parseNumeric(pickHeaderValue(cells, headers, [/damage per second|dps/i]));
+      let dps: number;
+      let hitpoints: number;
+      if (isEquipment) {
+        dps = 0;
+        hitpoints = 0;
+      } else {
+        dps = parseNumeric(pickHeaderValue(cells, headers, [/damage per second|dps/i]));
+        hitpoints = parseNumeric(pickHeaderValue(cells, headers, [/hitpoints|health|hp/i]));
+      }
       const damagePerHit = parseNumeric(pickHeaderValue(cells, headers, [/damage per hit|damage when destroyed/i]));
-      const hitpoints = parseNumeric(pickHeaderValue(cells, headers, [/hitpoints|health|hp/i]));
-      const upgradeCost = formatCostString(pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost/i]) || '');
+      const upgradeCost = formatCostString(pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost|ore/i]) || '');
       const upgradeTime = pickHeaderValue(cells, headers, [/clock|training time|time/i]) || '';
       const xp = parseNumeric(pickHeaderValue(cells, headers, [/xp/i]));
       const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab|blacksmith|hero hall/i]) || '';
@@ -453,6 +526,11 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
 
       const extra: { label: string; value: string }[] = [];
       headers.forEach((h, idx) => {
+        if (isEquipment && /increase|ability|duration/i.test(h)) {
+          const v = (cells[idx] || '').trim();
+          if (v) extra.push({ label: h, value: v });
+          return;
+        }
         if (knownHeaderPatterns.some((p) => p.test(h))) return;
         const v = (cells[idx] || '').trim();
         if (v) extra.push({ label: h, value: v });

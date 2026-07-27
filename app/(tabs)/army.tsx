@@ -914,6 +914,11 @@ export default function PlayerProfileScreen() {
                 />
               ) : (
                 <>
+                  <View style={{ paddingHorizontal: Spacing.base, paddingBottom: Spacing.sm }}>
+                    <Text style={{ fontSize: 12, color: Colors.textTertiary, fontStyle: 'italic' }}>
+                      Equipment stats will be better parsed in a future update.
+                    </Text>
+                  </View>
                   {player.heroEquipment.map((e) => (
                     <React.Fragment key={e.name}>
                       <ItemCard
