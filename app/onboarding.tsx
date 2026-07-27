@@ -28,6 +28,12 @@ import type { ClashPlayer } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
 import buildingLevelsData from '../src/data/building-levels.json';
 
+const NAME_REV: Record<string, string> = {
+  "Builder's Hut": 'Builder Hut',
+  'Laboratory': 'Lab',
+  'Wall': 'Walls',
+};
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
@@ -88,15 +94,16 @@ export default function OnboardingScreen() {
     const known = (buildingLevelsData as any[]) || [];
 
     for (const b of known) {
+      const storeName = NAME_REV[b.name] || b.name;
       const unlockTh = b.levels?.[0]?.['Town Hall Level'] ?? 99;
       const emaxAtSelected = getBuildingEffectiveMax(b.name, selectedTh);
 
       if (unlockTh <= selectedTh) {
-        levels[b.name] = emaxAtSelected > 0 ? emaxAtSelected : 1;
+        levels[storeName] = emaxAtSelected > 0 ? emaxAtSelected : 1;
       } else if (unlockTh <= currentTh) {
-        levels[b.name] = 1;
+        levels[storeName] = 1;
       } else {
-        levels[b.name] = 0;
+        levels[storeName] = 0;
       }
     }
 
@@ -120,7 +127,7 @@ export default function OnboardingScreen() {
         return level;
       }
 
-      const setIf = (name: string, lvl: number) => { if (lvl > 0) levels[name] = lvl; };
+      const setIf = (jsonName: string, lvl: number) => { if (lvl > 0) levels[NAME_REV[jsonName] || jsonName] = lvl; };
 
       setIf('Barracks', inferLevel('Barracks', 'Unlocked Unit', homeTroops));
       setIf('Dark Barracks', inferLevel('Dark Barracks', 'Unlocked Unit', homeTroops));
@@ -140,7 +147,7 @@ export default function OnboardingScreen() {
           }
         }
         const labAtTh = getBuildingEffectiveMax('Laboratory', maxTh);
-        if (labAtTh > 0) levels['Laboratory'] = labAtTh;
+        setIf('Laboratory', labAtTh);
       }
     }
 
