@@ -22,7 +22,6 @@ import {
   formatCost as fmtCost,
   formatTime as fmtTime,
 } from '../../src/utils/buildingImages';
-import { Card } from '../../src/components/Card';
 import buildingLevelsData from '../../src/data/building-levels.json';
 import thLevelsData from '../../src/data/th-levels.json';
 
@@ -331,8 +330,8 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   };
 
   return (
-    <Card style={styles.itemCard}>
-      <PressableRipple onPress={toggleExpanded}>
+    <View style={styles.itemCard}>
+      <PressableRipple onPress={toggleExpanded} style={styles.itemCardTouchable}>
         <View style={styles.itemRow}>
           {mainImgSource ? (
             <Image source={mainImgSource} style={styles.itemIcon} resizeMode="contain" />
@@ -376,7 +375,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
       </PressableRipple>
 
       {expanded && displayLevels.length > 0 && (
-        <>
+        <View style={styles.expandedSection}>
           {buildingStats?.description ? (
             <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
@@ -474,9 +473,9 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
               </PressableRipple>
             </>
           )}
-        </>
+        </View>
       )}
-    </Card>
+    </View>
   );
 }
 
@@ -702,10 +701,15 @@ const styles = StyleSheet.create({
   itemCard: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+    overflow: 'hidden',
+  },
+  itemCardTouchable: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: Radius.sm,
-    overflow: 'hidden',
   },
   itemRow: {
     flexDirection: 'row',
@@ -958,6 +962,10 @@ const styles = StyleSheet.create({
   },
   buildingStatLvlNumCurrent: {
     color: Colors.textPrimary,
+  },
+  expandedSection: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   expandTableBtn: {
     flexDirection: 'row',

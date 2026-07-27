@@ -19,9 +19,8 @@ import { Colors, Typography, Spacing, Radius } from '../src/theme';
 import {
   setPlayerTag,
   setApiToken,
-  setBulkBuildingLevels,
-  setLastMaxedTH,
 } from '../src/hooks/usePlayer';
+import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
 import { cachePlayer } from '../src/hooks/usePlayer';
 import { getBuildingData, getBuildingEffectiveMax } from '../src/utils/buildingImages';
@@ -31,6 +30,7 @@ import buildingLevelsData from '../src/data/building-levels.json';
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
+  const { setBulkLevels, setLastMaxed } = usePlayer();
   const [step, setStep] = useState<'form' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
@@ -85,8 +85,8 @@ export default function OnboardingScreen() {
         const emax = getBuildingEffectiveMax(b.name, th);
         if (emax > 0) levels[b.name] = emax;
       }
-      await setBulkBuildingLevels(levels);
-      await setLastMaxedTH(th);
+      await setBulkLevels(levels);
+      await setLastMaxed(th);
       router.back();
       return;
     }
@@ -101,8 +101,8 @@ export default function OnboardingScreen() {
       if (emax > 0) levels[b.name] = emax;
     }
 
-    await setBulkBuildingLevels(levels);
-    await setLastMaxedTH(th);
+    await setBulkLevels(levels);
+    await setLastMaxed(th);
     playerData.buildingLevels = levels;
     playerData.lastMaxedTH = th;
     await cachePlayer(playerData);
