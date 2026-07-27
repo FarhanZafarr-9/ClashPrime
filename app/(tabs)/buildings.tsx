@@ -252,7 +252,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   }, [name, lookupName]);
 
   const currentLevel = player?.buildingLevels?.[name] ?? 0;
-  const effectiveMax = getBuildingEffectiveMax(name, player?.townHallLevel ?? 1);
+  const effectiveMax = getBuildingEffectiveMax(lookupName, player?.townHallLevel ?? 1);
   const progress = effectiveMax > 0 ? currentLevel / effectiveMax : 0;
   const isFullyMaxed = currentLevel >= effectiveMax;
   const isLocked = currentLevel === 0;
@@ -374,12 +374,42 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
         </View>
       </PressableRipple>
 
-      {expanded && displayLevels.length > 0 && (
+      {isLocked && effectiveMax > 0 && (
+        <View style={styles.expandedSection}>
+          <Text style={styles.buildingDesc} numberOfLines={3}>This building is available at your Town Hall level. Tap to unlock it.</Text>
+          <PressableRipple style={styles.upgradeBtn} onPress={() => upgradeBuilding(name)}>
+            <Text style={styles.upgradeBtnText}>Unlock {name}</Text>
+            <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+          </PressableRipple>
+        </View>
+      )}
+
+      {!isLocked && expanded && displayLevels.length > 0 && (
         <View style={styles.expandedSection}>
           {buildingStats?.description ? (
             <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
           {renderGrid()}
+          {hasRemaining && (
+            <>
+              <View style={styles.remainingTable}>
+                <View style={styles.remainingRow}>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
+                </View>
+                <View style={styles.remainingTotalRow}>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{remainingLevels.length} levels</Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
+                  </Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
           {buildingStats && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
               <View style={[styles.buildingStatsTable, { minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
@@ -447,31 +477,13 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
             </PressableRipple>
           )}
           {hasRemaining && (
-            <>
-              <View style={styles.remainingTable}>
-                <View style={styles.remainingRow}>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
-                </View>
-                <View style={styles.remainingTotalRow}>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{remainingLevels.length} levels</Text>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
-                    {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
-                  </Text>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
-                    {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
-                  </Text>
-                </View>
-              </View>
-              <PressableRipple
-                style={styles.upgradeBtn}
-                onPress={() => upgradeBuilding(name)}
-              >
-                <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
-                <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-              </PressableRipple>
-            </>
+            <PressableRipple
+              style={styles.upgradeBtn}
+              onPress={() => upgradeBuilding(name)}
+            >
+              <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
+              <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+            </PressableRipple>
           )}
         </View>
       )}
@@ -746,7 +758,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    backgroundColor: Colors.borderSubtle,
+    backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
     marginTop: 4,

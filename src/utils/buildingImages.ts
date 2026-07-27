@@ -83,10 +83,11 @@ export function getBuildingData(name: string) {
 }
 
 export function getBuildingEffectiveMax(name: string, th: number): number {
+  const REV: Record<string, string> = { "Builder's Hut": 'Builder Hut', 'Laboratory': 'Lab', 'Wall': 'Walls' };
+  const thMax = getMaxLevelAtTH(REV[name] || name, th);
   const data = getBuildingData(name);
-  if (!data) return 0;
+  if (!data) return thMax ?? 0;
   const globalMax = data.maxLevel || data.levels.length;
-  const thMax = getMaxLevelAtTH(name, th);
   return thMax != null ? Math.min(globalMax, thMax) : globalMax;
 }
 
