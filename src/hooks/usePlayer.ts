@@ -6,6 +6,7 @@ const API_TOKEN_KEY = 'clashprime_api_token';
 const PLAYER_CACHE_KEY = 'clashprime_player_cache';
 const SAVED_BASES_KEY = 'clashprime_saved_bases';
 const FAVORITES_KEY = 'clashprime_favorites';
+const LAST_MAXED_TH_KEY = 'clashprime_last_maxed_th';
 
 export interface SavedBase {
   id: string;
@@ -49,6 +50,33 @@ export async function getCachedPlayer(): Promise<ClashPlayer | null> {
 
 export async function cachePlayer(player: ClashPlayer): Promise<void> {
   await AsyncStorage.setItem(PLAYER_CACHE_KEY, JSON.stringify(player));
+}
+
+export async function updatePlayerBuildingLevel(name: string, level: number): Promise<void> {
+  const player = await getCachedPlayer();
+  if (!player) return;
+  player.buildingLevels = { ...player.buildingLevels, [name]: level };
+  await cachePlayer(player);
+}
+
+export async function setBulkBuildingLevels(levels: Record<string, number>): Promise<void> {
+  const player = await getCachedPlayer();
+  if (!player) return;
+  player.buildingLevels = { ...(player.buildingLevels || {}), ...levels };
+  await cachePlayer(player);
+}
+
+export async function setLastMaxedTH(th: number): Promise<void> {
+  await AsyncStorage.setItem(LAST_MAXED_TH_KEY, th.toString());
+  const player = await getCachedPlayer();
+  if (!player) return;
+  player.lastMaxedTH = th;
+  await cachePlayer(player);
+}
+
+export async function getLastMaxedTH(): Promise<number | null> {
+  const raw = await AsyncStorage.getItem(LAST_MAXED_TH_KEY);
+  return raw ? parseInt(raw, 10) : null;
 }
 
 export async function getSavedBases(): Promise<SavedBase[]> {

@@ -5,6 +5,9 @@ import {
   getApiToken,
   getCachedPlayer,
   cachePlayer,
+  updatePlayerBuildingLevel,
+  setBulkBuildingLevels,
+  setLastMaxedTH,
 } from './usePlayer';
 import { ClashAPI } from '../api/clash';
 
@@ -15,6 +18,10 @@ interface PlayerContextValue {
   lastSync: Date | null;
   refresh: () => Promise<void>;
   tagVersion: number;
+  upgradeBuilding: (name: string) => Promise<void>;
+  setBuildingLevel: (name: string, level: number) => Promise<void>;
+  setBulkLevels: (levels: Record<string, number>) => Promise<void>;
+  setLastMaxed: (th: number) => Promise<void>;
 }
 
 const PlayerContext = createContext<PlayerContextValue>({
@@ -24,6 +31,10 @@ const PlayerContext = createContext<PlayerContextValue>({
   lastSync: null,
   refresh: async () => {},
   tagVersion: 0,
+  upgradeBuilding: async () => {},
+  setBuildingLevel: async () => {},
+  setBulkLevels: async () => {},
+  setLastMaxed: async () => {},
 });
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
@@ -86,6 +97,42 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setTagVersion((v) => v + 1);
   }, []);
 
+  const setBuildingLevel = useCallback(async (name: string, level: number) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, buildingLevels: { ...prev.buildingLevels, [name]: level } };
+      cachePlayer(updated);
+      return updated;
+    });
+  }, []);
+
+  const upgradeBuilding = useCallback(async (name: string) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      const current = prev.buildingLevels?.[name] ?? 0;
+      const updated = { ...prev, buildingLevels: { ...prev.buildingLevels, [name]: current + 1 } };
+      cachePlayer(updated);
+      return updated;
+    });
+  }, []);
+
+  const setBulkLevels = useCallback(async (levels: Record<string, number>) => {
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, buildingLevels: { ...(prev.buildingLevels || {}), ...levels } };
+      cachePlayer(updated);
+      return updated;
+    });
+  }, []);
+
+  const setLastMaxed = useCallback(async (th: number) => {
+    setLastMaxedTH(th);
+    setPlayer((prev) => {
+      if (!prev) return prev;
+      return { ...prev, lastMaxedTH: th };
+    });
+  }, []);
+
   // Expose bumpTagVersion on the context value so Settings can trigger re-fetch
   const value: PlayerContextValue & { bumpTagVersion: () => void } = {
     player,
@@ -95,6 +142,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     refresh,
     tagVersion,
     bumpTagVersion,
+    upgradeBuilding,
+    setBuildingLevel,
+    setBulkLevels,
+    setLastMaxed,
   };
 
   return (

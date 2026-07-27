@@ -232,4 +232,6 @@ export interface ClashPlayer {
   heroEquipment: HeroEquipment[];
   spells: Spell[];
   pets: Pet[];
+  buildingLevels?: Record<string, number>;
+  lastMaxedTH?: number;
 }
