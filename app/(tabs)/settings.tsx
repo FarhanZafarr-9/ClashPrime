@@ -427,7 +427,7 @@ export default function SettingsScreen() {
           <SettingItem
             icon="information-circle-outline"
             label="About ClashPrime"
-            value="v2.0.0"
+            value="v3.0.0"
             onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
           />
           <SettingItem
@@ -448,7 +448,7 @@ export default function SettingsScreen() {
         </SettingGroup>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>ClashPrime v2.0.0</Text>
+          <Text style={styles.footerText}>ClashPrime v3.0.0</Text>
           <View style={styles.footerMadeRow}>
             <Text style={styles.footerSubtext}>Made with </Text>
             <Image source={heartImg} style={styles.footerHeart} />
