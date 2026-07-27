@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   StyleSheet,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
@@ -15,12 +16,22 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius } from '../src/theme';
-import { setPlayerTag, setApiToken } from '../src/hooks/usePlayer';
+import {
+  setPlayerTag,
+  setApiToken,
+  setBulkBuildingLevels,
+  setLastMaxedTH,
+} from '../src/hooks/usePlayer';
 import { ClashAPI } from '../src/api/clash';
 import { cachePlayer } from '../src/hooks/usePlayer';
+import { getBuildingData, getBuildingEffectiveMax } from '../src/utils/buildingImages';
+import type { ClashPlayer } from '../src/types/clash';
+import buildingLevelsData from '../src/data/building-levels.json';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const [step, setStep] = useState<'form' | 'thPicker'>('form');
+  const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
   const [tag, setTag] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +54,6 @@ export default function OnboardingScreen() {
     setError(null);
 
     try {
-      // Validate tag via clashofstats redirect
       const tagNoHash = cleanTag.replace('#', '');
       const cosRes = await fetch(`https://www.clashofstats.com/players/${tagNoHash}`);
       if (!cosRes.ok) {
@@ -56,12 +66,32 @@ export default function OnboardingScreen() {
       const data = await api.getPlayer(cleanTag);
       await setPlayerTag(cleanTag);
       await setApiToken(cleanToken);
-      await cachePlayer(data);
-      router.replace('/(tabs)');
+      setPlayerData(data);
+      setStep('thPicker');
+      setLoading(false);
     } catch (e: any) {
       setError(e.message || 'Failed to connect. Check your token and tag.');
       setLoading(false);
     }
+  };
+
+  const handleThPick = async (th: number) => {
+    if (!playerData) return;
+    setLoading(true);
+
+    const levels: Record<string, number> = {};
+    const known = (buildingLevelsData as any[]) || [];
+    for (const b of known) {
+      const emax = getBuildingEffectiveMax(b.name, th);
+      if (emax > 0) levels[b.name] = emax;
+    }
+
+    await setBulkBuildingLevels(levels);
+    await setLastMaxedTH(th);
+    playerData.buildingLevels = levels;
+    playerData.lastMaxedTH = th;
+    await cachePlayer(playerData);
+    router.replace('/(tabs)');
   };
 
   return (
@@ -70,66 +100,90 @@ export default function OnboardingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboard}
       >
-        <View style={styles.content}>
-          <View style={styles.hero}>
-            <Image source={require('../assets/icon.png')} style={styles.logo} />
-            <Text style={styles.title}>ClashPrime</Text>
-            <Text style={styles.subtitle}>Your Clash of Clans companion</Text>
-          </View>
-
-          <View style={styles.form}>
-            <Text style={styles.label}>Player Tag</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.inputFlex}
-                value={tag}
-                onChangeText={(t) => { setTag(t); setError(null); }}
-                placeholder="#YOUR-TAG"
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                editable={!loading}
-              />
+        {step === 'form' ? (
+          <View style={styles.content}>
+            <View style={styles.hero}>
+              <Image source={require('../assets/icon.png')} style={styles.logo} />
+              <Text style={styles.title}>ClashPrime</Text>
+              <Text style={styles.subtitle}>Your Clash of Clans companion</Text>
             </View>
-            <Text style={styles.hint}>Find it in-game under Profile → My Profile</Text>
 
-            <Text style={styles.label}>API Token</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.inputFlex}
-                value={token}
-                onChangeText={(t) => { setToken(t); setError(null); }}
-                placeholder="Paste your API token"
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-              <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
-                <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
+            <View style={styles.form}>
+              <Text style={styles.label}>Player Tag</Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.inputFlex}
+                  value={tag}
+                  onChangeText={(t) => { setTag(t); setError(null); }}
+                  placeholder="#YOUR-TAG"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+              </View>
+              <Text style={styles.hint}>Find it in-game under Profile → My Profile</Text>
+
+              <Text style={styles.label}>API Token</Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.inputFlex}
+                  value={token}
+                  onChangeText={(t) => { setToken(t); setError(null); }}
+                  placeholder="Paste your API token"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+                <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
+                  <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
+                </PressableRipple>
+              </View>
+              <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys (whitelist IP 45.79.218.79 — the app uses a proxy)</Text>
+
+              {error ? (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+
+              <PressableRipple
+                style={[styles.btn, loading && styles.btnDisabled]}
+                onPress={handleContinue}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={Colors.bg} />
+                ) : (
+                  <Text style={styles.btnText}>Continue</Text>
+                )}
               </PressableRipple>
             </View>
-            <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys (whitelist IP 45.79.218.79 — the app uses a proxy)</Text>
-
-            {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            <PressableRipple
-              style={[styles.btn, loading && styles.btnDisabled]}
-              onPress={handleContinue}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={Colors.bg} />
-              ) : (
-                <Text style={styles.btnText}>Continue</Text>
-              )}
-            </PressableRipple>
           </View>
-        </View>
+        ) : (
+          <View style={styles.content}>
+            <View style={styles.hero}>
+              <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
+              <Text style={styles.title}>Building Levels</Text>
+              <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
+            </View>
+            <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
+            <ScrollView style={styles.thGrid} contentContainerStyle={styles.thGridInner}>
+              {Array.from({ length: (playerData?.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
+                <PressableRipple
+                  key={th}
+                  style={styles.thCell}
+                  onPress={() => handleThPick(th)}
+                  disabled={loading}
+                >
+                  <Text style={styles.thCellText}>TH{th}</Text>
+                </PressableRipple>
+              ))}
+            </ScrollView>
+            {loading && <ActivityIndicator size="small" color={Colors.textPrimary} style={{ marginTop: Spacing.md }} />}
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -228,6 +282,36 @@ const styles = StyleSheet.create({
   btnText: {
     ...Typography.headline,
     color: Colors.bg,
+    fontWeight: '600',
+  },
+  thLabel: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.base,
+  },
+  thGrid: {
+    maxHeight: 400,
+  },
+  thGridInner: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    justifyContent: 'center',
+  },
+  thCell: {
+    width: 80,
+    height: 60,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thCellText: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
     fontWeight: '600',
   },
 });
