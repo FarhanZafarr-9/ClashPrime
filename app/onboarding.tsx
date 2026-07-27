@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -76,37 +76,37 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleThPick = async (th: number) => {
-    if (mode === 'reset') {
-      setLoading(true);
-      const levels: Record<string, number> = {};
-      const known = (buildingLevelsData as any[]) || [];
-      for (const b of known) {
-        const emax = getBuildingEffectiveMax(b.name, th);
-        if (emax > 0) levels[b.name] = emax;
-      }
-      await setBulkLevels(levels);
-      await setLastMaxed(th);
-      router.back();
-      return;
-    }
-
-    if (!playerData) return;
+  const handleThPick = async (selectedTh: number) => {
+    const currentTh = mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16;
+    if (mode !== 'reset' && !playerData) return;
     setLoading(true);
 
     const levels: Record<string, number> = {};
     const known = (buildingLevelsData as any[]) || [];
     for (const b of known) {
-      const emax = getBuildingEffectiveMax(b.name, th);
-      if (emax > 0) levels[b.name] = emax;
+      const unlockTh = b.levels?.[0]?.['Town Hall Level'] ?? 99;
+      const emaxAtSelected = getBuildingEffectiveMax(b.name, selectedTh);
+
+      if (unlockTh <= selectedTh) {
+        levels[b.name] = emaxAtSelected > 0 ? emaxAtSelected : 1;
+      } else if (unlockTh <= currentTh) {
+        levels[b.name] = 1;
+      } else {
+        levels[b.name] = 0;
+      }
     }
 
     await setBulkLevels(levels);
-    await setLastMaxed(th);
-    playerData.buildingLevels = levels;
-    playerData.lastMaxedTH = th;
-    await cachePlayer(playerData);
-    router.replace('/(tabs)');
+    await setLastMaxed(selectedTh);
+
+    if (mode === 'reset') {
+      router.back();
+    } else {
+      playerData!.buildingLevels = levels;
+      playerData!.lastMaxedTH = selectedTh;
+      await cachePlayer(playerData!);
+      router.replace('/(tabs)');
+    }
   };
 
   return (
