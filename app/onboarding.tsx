@@ -23,7 +23,7 @@ import {
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
 import { cachePlayer } from '../src/hooks/usePlayer';
-import { getBuildingData, getBuildingEffectiveMax } from '../src/utils/buildingImages';
+import { getMaxLevelAtTH } from '../src/utils/thMaxLevels';
 import type { ClashPlayer } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
 import buildingLevelsData from '../src/data/building-levels.json';
@@ -96,10 +96,12 @@ export default function OnboardingScreen() {
     for (const b of known) {
       const storeName = NAME_REV[b.name] || b.name;
       const unlockTh = b.levels?.[0]?.['Town Hall Level'] ?? 99;
-      const emaxAtSelected = getBuildingEffectiveMax(b.name, selectedTh);
+      const globalMax = b.maxLevel || (b.levels ? b.levels.length : 0);
+      const thMax = getMaxLevelAtTH(storeName, selectedTh);
+      const effectiveMax = thMax != null ? Math.min(globalMax, thMax) : globalMax;
 
       if (unlockTh <= selectedTh) {
-        levels[storeName] = emaxAtSelected > 0 ? emaxAtSelected : 1;
+        levels[storeName] = effectiveMax > 0 ? effectiveMax : 1;
       } else if (unlockTh <= currentTh) {
         levels[storeName] = 1;
       } else {
@@ -146,7 +148,9 @@ export default function OnboardingScreen() {
             maxTh = Math.max(maxTh, lvlEntry['Town Hall Level']);
           }
         }
-        const labAtTh = getBuildingEffectiveMax('Laboratory', maxTh);
+        const labGlobalMax = lab.maxLevel || (lab.levels ? lab.levels.length : 0);
+        const labThMax = getMaxLevelAtTH('Lab', maxTh);
+        const labAtTh = labThMax != null ? Math.min(labGlobalMax, labThMax) : labGlobalMax;
         setIf('Laboratory', labAtTh);
       }
     }
