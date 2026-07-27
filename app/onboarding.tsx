@@ -25,12 +25,13 @@ import { ClashAPI } from '../src/api/clash';
 import { cachePlayer } from '../src/hooks/usePlayer';
 import { getBuildingData, getBuildingEffectiveMax } from '../src/utils/buildingImages';
 import type { ClashPlayer } from '../src/types/clash';
+import { isSuperTroop } from '../src/types/clash';
 import buildingLevelsData from '../src/data/building-levels.json';
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
-  const { setBulkLevels, setLastMaxed } = usePlayer();
+  const { player: contextPlayer, setBulkLevels, setLastMaxed } = usePlayer();
   const [step, setStep] = useState<'form' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
@@ -81,8 +82,11 @@ export default function OnboardingScreen() {
     if (mode !== 'reset' && !playerData) return;
     setLoading(true);
 
+    const player = mode === 'reset' ? contextPlayer : playerData;
+
     const levels: Record<string, number> = {};
     const known = (buildingLevelsData as any[]) || [];
+
     for (const b of known) {
       const unlockTh = b.levels?.[0]?.['Town Hall Level'] ?? 99;
       const emaxAtSelected = getBuildingEffectiveMax(b.name, selectedTh);
@@ -93,6 +97,50 @@ export default function OnboardingScreen() {
         levels[b.name] = 1;
       } else {
         levels[b.name] = 0;
+      }
+    }
+
+    if (player) {
+      const homeTroops = (player.troops || []).filter((t: any) => t.village === 'home' && !isSuperTroop(t.name));
+      const homeSpells = (player.spells || []).filter((s: any) => s.village === 'home');
+      const heroes = player.heroes || [];
+      const equipment = player.heroEquipment || [];
+
+      function inferLevel(buildingName: string, column: string, items: { name: string }[]): number {
+        const b = known.find((x: any) => x.name === buildingName);
+        if (!b) return 0;
+        let level = 0;
+        for (const lev of b.levels || []) {
+          const val: string = lev[column] || '';
+          if (!val) continue;
+          if (items.some((i) => val === i.name || val.includes(i.name) || i.name.includes(val))) {
+            level = Math.max(level, lev.Level);
+          }
+        }
+        return level;
+      }
+
+      const setIf = (name: string, lvl: number) => { if (lvl > 0) levels[name] = lvl; };
+
+      setIf('Barracks', inferLevel('Barracks', 'Unlocked Unit', homeTroops));
+      setIf('Dark Barracks', inferLevel('Dark Barracks', 'Unlocked Unit', homeTroops));
+      setIf('Spell Factory', inferLevel('Spell Factory', 'Spell(s) Unlocked', homeSpells));
+      setIf('Dark Spell Factory', inferLevel('Dark Spell Factory', 'Spell(s) Unlocked', homeSpells));
+      setIf('Blacksmith', inferLevel('Blacksmith', 'Equipment Unlocked', equipment));
+      setIf('Hero Hall', inferLevel('Hero Hall', 'Unlocked Hero', heroes));
+
+      const lab = known.find((x: any) => x.name === 'Laboratory');
+      if (lab) {
+        let maxTh = 0;
+        for (const item of [...homeTroops, ...homeSpells]) {
+          const entry = known.find((x: any) => x.name === item.name);
+          const lvlEntry = entry?.levels?.find((l: any) => l.Level === item.level);
+          if (lvlEntry && lvlEntry['Town Hall Level'] != null) {
+            maxTh = Math.max(maxTh, lvlEntry['Town Hall Level']);
+          }
+        }
+        const labAtTh = getBuildingEffectiveMax('Laboratory', maxTh);
+        if (labAtTh > 0) levels['Laboratory'] = labAtTh;
       }
     }
 
