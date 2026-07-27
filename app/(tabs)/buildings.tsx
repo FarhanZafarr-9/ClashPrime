@@ -5,10 +5,10 @@ import {
   ScrollView,
   StyleSheet,
   Image,
-  Modal,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -498,10 +498,10 @@ function formatCostShort(cost: number): string {
 }
 
 export default function BuildingsScreen() {
-  const { player, setBulkLevels, setLastMaxed } = usePlayer();
+  const router = useRouter();
+  const { player } = usePlayer();
   const { discounts, setBuildingCost, setBuildingTime, resetDiscounts } = useDiscounts();
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
-  const [thPickerVisible, setThPickerVisible] = useState(false);
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
@@ -544,7 +544,7 @@ export default function BuildingsScreen() {
           <View style={styles.headerRow}>
             <Text style={styles.title}>Buildings</Text>
             <View style={styles.headerActions}>
-              <PressableRipple onPress={() => setThPickerVisible(true)} hitSlop={8} style={styles.headerBtn}>
+              <PressableRipple onPress={() => router.push(`/onboarding?mode=reset&th=${th}`)} hitSlop={8} style={styles.headerBtn}>
                 <Ionicons name="refresh-outline" size={22} color={Colors.textSecondary} />
               </PressableRipple>
               <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
@@ -607,50 +607,6 @@ export default function BuildingsScreen() {
         onArmyTimeChange={() => { }}
         onReset={resetDiscounts}
       />
-
-      <Modal
-        visible={thPickerVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setThPickerVisible(false)}
-      >
-        <View style={styles.thPickerOverlay}>
-          <View style={styles.thPickerSheet}>
-            <View style={styles.thPickerHeader}>
-              <Text style={styles.thPickerTitle}>Select last maxed Town Hall</Text>
-              <Text style={styles.thPickerSub}>
-                All building levels will be reset to the maximum available at this TH.
-              </Text>
-            </View>
-            <View style={styles.thPickerGrid}>
-              {Array.from({ length: th - 1 }, (_, i) => i + 2).map((level) => {
-                const isSelected = level === th;
-                return (
-                  <PressableRipple
-                    key={level}
-                    style={[styles.thPickerPill, isSelected && styles.thPickerPillActive]}
-                    onPress={() => {
-                      setBulkLevels({});
-                      setLastMaxed(level);
-                      setThPickerVisible(false);
-                    }}
-                  >
-                    <Text style={[styles.thPickerPillText, isSelected && styles.thPickerPillTextActive]}>
-                      TH{level}
-                    </Text>
-                  </PressableRipple>
-                );
-              })}
-            </View>
-            <PressableRipple
-              style={styles.thPickerCloseBtn}
-              onPress={() => setThPickerVisible(false)}
-            >
-              <Text style={styles.thPickerCloseText}>Cancel</Text>
-            </PressableRipple>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -841,6 +797,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+    backgroundColor: Colors.bgSubtle,
   },
   remainingHead: {
     ...Typography.caption,
@@ -863,7 +820,6 @@ const styles = StyleSheet.create({
   },
   remainingTotalRow: {
     flexDirection: 'row',
-    backgroundColor: Colors.bgSubtle,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
@@ -1012,74 +968,6 @@ const styles = StyleSheet.create({
   },
   expandTableText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  thPickerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.base,
-  },
-  thPickerSheet: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    width: '100%',
-    maxWidth: 400,
-    padding: Spacing.base,
-  },
-  thPickerHeader: {
-    alignItems: 'center',
-    marginBottom: Spacing.base,
-  },
-  thPickerTitle: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  thPickerSub: {
-    ...Typography.footnote,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.sm,
-  },
-  thPickerGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    justifyContent: 'center',
-    marginBottom: Spacing.base,
-  },
-  thPickerPill: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  thPickerPillActive: {
-    backgroundColor: Colors.accentGhost,
-    borderColor: Colors.accent,
-  },
-  thPickerPillText: {
-    ...Typography.subhead,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  thPickerPillTextActive: {
-    color: Colors.accent,
-  },
-  thPickerCloseBtn: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
-  },
-  thPickerCloseText: {
-    ...Typography.subhead,
     color: Colors.textSecondary,
     fontWeight: '500',
   },

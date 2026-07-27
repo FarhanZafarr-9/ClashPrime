@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import PressableRipple from '../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius } from '../src/theme';
@@ -30,7 +30,8 @@ import buildingLevelsData from '../src/data/building-levels.json';
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const [step, setStep] = useState<'form' | 'thPicker'>('form');
+  const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
+  const [step, setStep] = useState<'form' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
   const [tag, setTag] = useState('');
@@ -76,6 +77,20 @@ export default function OnboardingScreen() {
   };
 
   const handleThPick = async (th: number) => {
+    if (mode === 'reset') {
+      setLoading(true);
+      const levels: Record<string, number> = {};
+      const known = (buildingLevelsData as any[]) || [];
+      for (const b of known) {
+        const emax = getBuildingEffectiveMax(b.name, th);
+        if (emax > 0) levels[b.name] = emax;
+      }
+      await setBulkBuildingLevels(levels);
+      await setLastMaxedTH(th);
+      router.back();
+      return;
+    }
+
     if (!playerData) return;
     setLoading(true);
 
@@ -170,7 +185,7 @@ export default function OnboardingScreen() {
             </View>
             <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
             <ScrollView style={styles.thGrid} contentContainerStyle={styles.thGridInner}>
-              {Array.from({ length: (playerData?.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
+              {Array.from({ length: (mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
                 <PressableRipple
                   key={th}
                   style={styles.thCell}
