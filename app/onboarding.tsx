@@ -137,22 +137,6 @@ export default function OnboardingScreen() {
       setIf('Dark Spell Factory', inferLevel('Dark Spell Factory', 'Spell(s) Unlocked', homeSpells));
       setIf('Blacksmith', inferLevel('Blacksmith', 'Equipment Unlocked', equipment));
       setIf('Hero Hall', inferLevel('Hero Hall', 'Unlocked Hero', heroes));
-
-      const lab = known.find((x: any) => x.name === 'Laboratory');
-      if (lab) {
-        let maxTh = 0;
-        for (const item of [...homeTroops, ...homeSpells]) {
-          const entry = known.find((x: any) => x.name === item.name);
-          const lvlEntry = entry?.levels?.find((l: any) => l.Level === item.level);
-          if (lvlEntry && lvlEntry['Town Hall Level'] != null) {
-            maxTh = Math.max(maxTh, lvlEntry['Town Hall Level']);
-          }
-        }
-        const labGlobalMax = lab.maxLevel || (lab.levels ? lab.levels.length : 0);
-        const labThMax = getMaxLevelAtTH('Lab', maxTh);
-        const labAtTh = labThMax != null ? Math.min(labGlobalMax, labThMax) : labGlobalMax;
-        setIf('Laboratory', labAtTh);
-      }
     }
 
     await setBulkLevels(levels);
