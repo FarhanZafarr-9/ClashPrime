@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    backgroundColor: Colors.borderSubtle,
+    backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
   },
