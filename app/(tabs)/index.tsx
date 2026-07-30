@@ -7,6 +7,9 @@ import {
   RefreshControl,
   Image,
   Alert,
+  Modal,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -15,6 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
+import type { StoredAccount } from '../../src/types/clash';
+import { getAccounts, getActiveAccountTag, getCachedPlayer } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
@@ -26,16 +31,44 @@ import { getTroopDetail } from '../../src/api/troopDetail';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { player, loading, error, lastSync, refresh } = usePlayer();
+  const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts } = usePlayer();
   const { superTroopNames } = useGameData();
   const [refreshing, setRefreshing] = useState(false);
   const [showBH, setShowBH] = useState(false);
+  const [switcherVisible, setSwitcherVisible] = useState(false);
+  const [switchingHome, setSwitchingHome] = useState(false);
+  const [homeAccounts, setHomeAccounts] = useState<StoredAccount[]>([]);
 
   React.useEffect(() => {
     if (error && player) {
       Alert.alert('Sync Error', error, [{ text: 'OK' }]);
     }
   }, [error, player]);
+
+  useEffect(() => {
+    (async () => {
+      const list = await getAccounts();
+      for (const acct of list) {
+        if (acct.townHallLevel === 0 || acct.name === acct.tag) {
+          const cached = await getCachedPlayer(acct.tag);
+          if (cached) {
+            acct.name = cached.name;
+            acct.townHallLevel = cached.townHallLevel;
+          }
+        }
+      }
+      setHomeAccounts(list);
+    })();
+  }, [accounts]);
+
+  const handleHomeSwitch = useCallback(async (tag: string) => {
+    if (tag === activeAccount?.tag || switchingHome) return;
+    setSwitcherVisible(false);
+    setSwitchingHome(true);
+    await switchAccount(tag);
+    setHomeAccounts(await getAccounts());
+    setSwitchingHome(false);
+  }, [switchAccount, activeAccount, switchingHome]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -241,7 +274,12 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>ClashPrime</Text>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.greeting}>ClashPrime</Text>
+            <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
+              <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
+            </PressableRipple>
+          </View>
           <Text style={styles.timestamp}>
             {lastSync
               ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
@@ -606,6 +644,44 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {switchingHome && (
+        <View style={styles.switchingOverlay}>
+          <ActivityIndicator size="large" color={Colors.textPrimary} />
+        </View>
+      )}
+      <Modal visible={switcherVisible} transparent animationType="fade" onRequestClose={() => setSwitcherVisible(false)} statusBarTranslucent>
+        <Pressable style={styles.switcherOverlay} onPress={() => setSwitcherVisible(false)}>
+          <View style={styles.switcherCard}>
+            <Text style={styles.switcherTitle}>Switch Account</Text>
+            {homeAccounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
+            {homeAccounts.map((acct) => {
+              const isActive = acct.tag === activeAccount?.tag;
+              return (
+                <PressableRipple
+                  key={acct.tag}
+                  style={[styles.switcherItem, isActive && styles.switcherItemActive]}
+                  onPress={() => handleHomeSwitch(acct.tag)}
+                >
+                  <View style={styles.switcherItemIcon}>
+                    <Ionicons name={isActive ? 'checkmark-circle' : 'person-circle-outline'} size={22} color={isActive ? Colors.textPrimary : Colors.textSecondary} />
+                  </View>
+                  <View style={styles.switcherItemText}>
+                    <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name}</Text>
+                    <Text style={styles.switcherItemTag}>{acct.tag}</Text>
+                  </View>
+                  {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
+                    <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.switcherThImage} resizeMode="contain" />
+                  ) : null}
+                </PressableRipple>
+              );
+            })}
+            <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
+              <Text style={styles.switcherCloseText}>Close</Text>
+            </PressableRipple>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -656,9 +732,22 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   greeting: {
     ...Typography.largeTitle,
     color: Colors.textPrimary,
+  },
+  switchBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timestamp: {
     ...Typography.caption,
@@ -666,6 +755,88 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
+  },
+  switchingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  switcherOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  switcherCard: {
+    width: '84%',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
+    gap: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  switcherTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+    marginBottom: Spacing.xs,
+  },
+  switcherEmpty: {
+    ...Typography.subhead,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  switcherItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  switcherItemActive: {
+    backgroundColor: Colors.accentGhost,
+  },
+  switcherItemIcon: {
+    marginRight: Spacing.sm,
+  },
+  switcherItemText: {
+    flex: 1,
+  },
+  switcherItemName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  switcherItemTag: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  switcherThImage: {
+    width: 22,
+    height: 22,
+    marginLeft: Spacing.sm,
+  },
+  switcherClose: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  switcherCloseText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   playerCard: {
     marginHorizontal: Spacing.base,
