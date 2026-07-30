@@ -9,6 +9,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 ## Features
 
 - **Home Dashboard** — overview of your village with progress cards, quick actions, and quick stats
+- **Multi-Account** — add and switch between multiple player tags from Settings or the Home dashboard. Each account keeps its own building levels, saved bases, and favorites. Shared data (events, troop details) is fetched once.
 - **Army** — troops, heroes, spells, pets, equipment with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns
 - **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles
 - **Events** — upcoming in-game events with countdown timers and progress bars
