@@ -32,12 +32,8 @@ import {
   saveAccount,
   removeAccount,
   getAccounts,
-  getActiveAccountTag,
-  setActiveAccountTag,
-  getCachedPlayer,
 } from '../../src/hooks/usePlayer';
 import { usePlayer, usePlayerActions } from '../../src/hooks/usePlayerContext';
-import type { StoredAccount } from '../../src/types/clash';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
@@ -129,7 +125,7 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 export default function SettingsScreen() {
   const { bumpTagVersion } = usePlayerActions();
-  const { switchAccount, refreshAccounts } = usePlayer();
+  const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
@@ -150,64 +146,25 @@ export default function SettingsScreen() {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingTag, setOnboardingTag] = useState('');
-  const [storedAccounts, setStoredAccounts] = useState<StoredAccount[]>([]);
-  const [activeAccountTag, setActiveAccountTagState] = useState<string | null>(null);
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const { refresh: refreshGameData } = useGameData();
 
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
-  const loadAccounts = async () => {
-    let list = await getAccounts();
-    if (list.length === 0) {
-      const legacyTag = await getPlayerTag();
-      if (legacyTag) {
-        const acct: StoredAccount = {
-          tag: legacyTag,
-          name: legacyTag,
-          townHallLevel: 0,
-          addedAt: new Date().toISOString(),
-          lastUsedAt: new Date().toISOString(),
-        };
-        await saveAccount(acct);
-        if (!(await getActiveAccountTag())) {
-          await setActiveAccountTag(legacyTag);
-        }
-        list = [acct];
-      }
-    }
-    for (const acct of list) {
-      if (acct.townHallLevel === 0 || acct.name === acct.tag) {
-        const cached = await getCachedPlayer(acct.tag);
-        if (cached) {
-          acct.name = cached.name;
-          acct.townHallLevel = cached.townHallLevel;
-        }
-      }
-    }
-    setStoredAccounts(list);
-    setActiveAccountTagState((await getActiveAccountTag()) || null);
-  };
-
   const handleSwitchAccount = async (tag: string) => {
-    if (tag === activeAccountTag) return;
+    if (tag === activeAccount?.tag) return;
     setSwitchingAccount(true);
     await switchAccount(tag);
-    const list = await getAccounts();
-    setStoredAccounts(list);
-    setActiveAccountTagState(tag);
     const t = await getPlayerTag(tag);
     setPlayerTagState(t);
     setSwitchingAccount(false);
   };
 
   useEffect(() => {
-    (async () => {
-      const tag = await getPlayerTag();
+    getPlayerTag().then((tag) => {
       setPlayerTagState(tag);
-      await loadAccounts();
       if (!tag) setShowOnboarding(true);
-    })();
+    });
     getApiToken().then((t) => {
       setApiTokenState(maskSecret(t));
     });
@@ -292,7 +249,7 @@ export default function SettingsScreen() {
   const handleOnboardingSave = async () => {
     const tag = onboardingTag;
     if (!tag || !tag.startsWith('#')) return;
-    const existing = storedAccounts.find((a) => a.tag === tag);
+    const existing = accounts.find((a) => a.tag === tag);
     if (existing) {
       showDialog({
         title: 'Account Already Added',
@@ -321,7 +278,7 @@ export default function SettingsScreen() {
       addedAt: new Date().toISOString(),
       lastUsedAt: new Date().toISOString(),
     });
-    await loadAccounts();
+    await refreshAccounts();
     await handleSwitchAccount(tag);
     setShowOnboarding(false);
     setOnboardingTag('');
@@ -425,7 +382,7 @@ export default function SettingsScreen() {
         </View>
 
         <SettingGroup title="Account">
-          {storedAccounts.length === 0 ? (
+          {accounts.length === 0 ? (
             <>
               <SettingItem
                 icon="person-outline"
@@ -441,8 +398,8 @@ export default function SettingsScreen() {
               />
             </>
           ) : (
-            storedAccounts.map((acct) => {
-              const isActive = acct.tag === activeAccountTag;
+            accounts.map((acct) => {
+              const isActive = acct.tag === activeAccount?.tag;
               return (
                 <PressableRipple
                   key={acct.tag}
@@ -451,7 +408,7 @@ export default function SettingsScreen() {
                     await handleSwitchAccount(acct.tag);
                   }}
                   onLongPress={async () => {
-                    if (storedAccounts.length <= 1) {
+                    if (accounts.length <= 1) {
                       showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
                       return;
                     }
@@ -462,7 +419,7 @@ export default function SettingsScreen() {
                         { label: 'Cancel', onPress: () => {} },
                         { label: 'Remove', primary: true, destructive: true, onPress: async () => {
                           await removeAccount(acct.tag);
-                          await loadAccounts();
+                          await refreshAccounts();
                           if (isActive) {
                             const remaining = await getAccounts();
                             if (remaining.length > 0) {
@@ -500,7 +457,7 @@ export default function SettingsScreen() {
               );
             })
           )}
-          {storedAccounts.length > 0 && (
+          {accounts.length > 0 && (
             <SettingItem
               icon="key-outline"
               label="API Token"
@@ -510,7 +467,7 @@ export default function SettingsScreen() {
           )}
           <SettingItem
             icon="add-circle-outline"
-            label={storedAccounts.length === 0 ? 'Connect Account' : 'Add Account'}
+            label={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
             onPress={() => {
               setOnboardingTag('');
               setShowOnboarding(true);

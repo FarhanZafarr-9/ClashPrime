@@ -18,8 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import type { StoredAccount } from '../../src/types/clash';
-import { getAccounts, getActiveAccountTag, getCachedPlayer } from '../../src/hooks/usePlayer';
+import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
@@ -37,7 +36,6 @@ export default function HomeScreen() {
   const [showBH, setShowBH] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
-  const [homeAccounts, setHomeAccounts] = useState<StoredAccount[]>([]);
 
   React.useEffect(() => {
     if (error && player) {
@@ -46,19 +44,9 @@ export default function HomeScreen() {
   }, [error, player]);
 
   useEffect(() => {
-    (async () => {
-      const list = await getAccounts();
-      for (const acct of list) {
-        if (acct.townHallLevel === 0 || acct.name === acct.tag) {
-          const cached = await getCachedPlayer(acct.tag);
-          if (cached) {
-            acct.name = cached.name;
-            acct.townHallLevel = cached.townHallLevel;
-          }
-        }
-      }
-      setHomeAccounts(list);
-    })();
+    if (accounts.length > 0) {
+      backfillAccountNames(accounts);
+    }
   }, [accounts]);
 
   const handleHomeSwitch = useCallback(async (tag: string) => {
@@ -66,7 +54,6 @@ export default function HomeScreen() {
     setSwitcherVisible(false);
     setSwitchingHome(true);
     await switchAccount(tag);
-    setHomeAccounts(await getAccounts());
     setSwitchingHome(false);
   }, [switchAccount, activeAccount, switchingHome]);
 
@@ -654,8 +641,8 @@ export default function HomeScreen() {
         <Pressable style={styles.switcherOverlay} onPress={() => setSwitcherVisible(false)}>
           <View style={styles.switcherCard}>
             <Text style={styles.switcherTitle}>Switch Account</Text>
-            {homeAccounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
-            {homeAccounts.map((acct) => {
+            {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
+            {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
               return (
                 <PressableRipple
