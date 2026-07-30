@@ -176,6 +176,14 @@ export interface StoredAccount {
   lastUsedAt: string;
 }
 
+export interface TimerReminder {
+  id: string;
+  label: string;
+  targetDate: string;
+  createdAt: string;
+  status: 'active' | 'expired';
+}
+
 // --- End War ---
 
 export function filterHomeTroops(troops: Troop[]): Troop[] {

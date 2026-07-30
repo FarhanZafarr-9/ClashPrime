@@ -11,9 +11,10 @@ interface Props {
   subtitle?: string;
   icon?: string;
   onPress?: () => void;
+  locked?: boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, onPress }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, onPress, locked }: Props) {
   const { colors } = useTheme();
   const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
   const progress = effectiveMax > 0 ? level / effectiveMax : 0;
@@ -22,7 +23,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
   return (
     <PressableRipple
       onPress={onPress}
-      style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+      style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border, opacity: locked ? 0.55 : 1 }]}
     >
       <View style={styles.row}>
         {icon ? (
@@ -39,6 +40,8 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
           {subtitle ? (
             <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+          ) : locked ? (
+            <Text style={styles.lockedHint}>Not yet unlocked</Text>
           ) : (
             <View style={styles.progressContainer}>
               <View style={styles.progressTrack}>
@@ -47,7 +50,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
                     styles.progressFill,
                     {
                       width: `${Math.min(progress, 1) * 100}%`,
-                      backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary, // Goldish color if maxed, secondary gray if not
+                      backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary,
                     },
                   ]}
                 />
@@ -57,17 +60,23 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
         </View>
 
         <View style={styles.right}>
-          <View style={[
-            styles.levelBadgeContainer,
-            isMaxed && styles.levelBadgeMaxed
-          ]}>
-            <Text style={[
-              styles.levelBadgeText,
-              isMaxed && styles.levelBadgeTextMaxed
+          {locked ? (
+            <View style={styles.lockedBadge}>
+              <Text style={styles.lockedBadgeText}>Locked</Text>
+            </View>
+          ) : (
+            <View style={[
+              styles.levelBadgeContainer,
+              isMaxed && styles.levelBadgeMaxed
             ]}>
-              {level}/{effectiveMax}
-            </Text>
-          </View>
+              <Text style={[
+                styles.levelBadgeText,
+                isMaxed && styles.levelBadgeTextMaxed
+              ]}>
+                {level}/{effectiveMax}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </PressableRipple>
@@ -166,5 +175,27 @@ const styles = StyleSheet.create({
   },
   levelBadgeTextMaxed: {
     color: Colors.warning,
+  },
+  lockedHint: {
+    ...Typography.footnote,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  lockedBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  lockedBadgeText: {
+    ...Typography.footnote,
+    color: Colors.textMuted,
+    fontWeight: '600',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

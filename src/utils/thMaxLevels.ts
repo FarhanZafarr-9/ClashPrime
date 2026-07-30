@@ -80,12 +80,19 @@ export function getHeroesAtTH(thLevel: number): Record<string, number> {
   return result;
 }
 
+export type UnlockableType = 'troop' | 'spell' | 'hero' | 'equipment';
+
 export function getUnlockableItems(
   th: number,
   ownedNames: Set<string>,
-): { name: string; type: 'troop' | 'spell'; unlockTh: number }[] {
-  const result: { name: string; type: 'troop' | 'spell'; unlockTh: number }[] = [];
-  const catKeys: [string, 'troop' | 'spell'][] = [['Troops', 'troop'], ['Dark Troops', 'troop'], ['Spells', 'spell']];
+): { name: string; type: UnlockableType; unlockTh: number }[] {
+  const result: { name: string; type: UnlockableType; unlockTh: number }[] = [];
+  const catKeys: [string, UnlockableType][] = [
+    ['Troops', 'troop'],
+    ['Dark Troops', 'troop'],
+    ['Spells', 'spell'],
+    ['Heroes', 'hero'],
+  ];
 
   for (const [catName, type] of catKeys) {
     const cat = (staticData as any).categories?.[catName];
@@ -104,4 +111,27 @@ export function getUnlockableItems(
   }
 
   return result.sort((a, b) => a.unlockTh - b.unlockTh);
+}
+
+export function getAllItemsAtTH(th: number): { name: string; type: UnlockableType; maxLevel: number }[] {
+  const result: { name: string; type: UnlockableType; maxLevel: number }[] = [];
+  const catKeys: [string, UnlockableType][] = [
+    ['Troops', 'troop'],
+    ['Dark Troops', 'troop'],
+    ['Spells', 'spell'],
+    ['Heroes', 'hero'],
+  ];
+
+  for (const [catName, type] of catKeys) {
+    const cat = (staticData as any).categories?.[catName];
+    if (!cat) continue;
+    for (const [itemName, levels] of Object.entries(cat)) {
+      const entry = (levels as any)[String(th)];
+      if (entry && entry.level !== null) {
+        result.push({ name: itemName, type, maxLevel: entry.level as number });
+      }
+    }
+  }
+
+  return result;
 }

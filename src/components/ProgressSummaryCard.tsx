@@ -18,17 +18,27 @@ const CATEGORY_ICONS: Record<string, IconDef> = {
 
 interface Props {
   category: string;
-  completed: number;
-  total: number;
+  progress: number;
   items?: { name: string; level: number; maxLevel: number }[];
   lockedMessage?: string;
   onPress?: () => void;
 }
 
-export function ProgressSummaryCard({ category, completed, total, lockedMessage, onPress }: Props) {
-  const progress = total > 0 ? completed / total : 0;
-  const isLocked = total === 0 && lockedMessage;
-  const isZero = !isLocked && total > 0 && completed === 0;
+export function ProgressSummaryCard({ category, progress, items, lockedMessage, onPress }: Props) {
+  const isLocked = (items === undefined || (items.length === 0 && lockedMessage));
+  const remaining = items?.filter((i) => i.level < i.maxLevel).length ?? 0;
+
+  let label: string;
+  if (lockedMessage && (!items || items.length === 0)) {
+    label = lockedMessage;
+  } else if (progress >= 1) {
+    label = 'All maxed!';
+  } else if (remaining > 0) {
+    label = `${remaining} remaining`;
+  } else {
+    label = 'None upgraded';
+  }
+
   const iconDef = CATEGORY_ICONS[category];
 
   const content = (
@@ -50,8 +60,8 @@ export function ProgressSummaryCard({ category, completed, total, lockedMessage,
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
         </View>
-        <Text style={[styles.count, (isLocked || isZero) && styles.locked]}>
-          {isLocked ? lockedMessage : isZero ? 'None maxed' : `${completed}/${total}`}
+        <Text style={[styles.count, isLocked && styles.locked]}>
+          {label}
         </Text>
       </View>
     </>

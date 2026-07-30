@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { getMaxLevelAtTH } from '../../src/utils/thMaxLevels';
+import { getMaxLevelAtTH, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
 import { ItemCard } from '../../src/components/ItemCard';
@@ -260,6 +260,19 @@ export default function PlayerProfileScreen() {
   const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
   const siegeMachines = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && isSiegeMachine(t.name));
   const homePets = player.troops.filter((t) => (t.village === 'home' || !t.village) && petNames.includes(t.name));
+  const homeSpells = player.spells.filter((s) => s.village === 'home' || !s.village);
+
+  const allTroopsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'troop');
+  const allSpellsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'spell');
+  const allHeroesAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'hero');
+
+  const ownedTroopNames = new Set(homeTroops.map((t) => t.name.toLowerCase()));
+  const ownedSpellNames = new Set(homeSpells.map((s) => s.name.toLowerCase()));
+  const ownedHeroNames = new Set(homeHeroes.map((h) => h.name.toLowerCase()));
+
+  const lockedTroops = allTroopsAtTH.filter((t) => !ownedTroopNames.has(t.name.toLowerCase()));
+  const lockedSpells = allSpellsAtTH.filter((s) => !ownedSpellNames.has(s.name.toLowerCase()));
+  const lockedHeroes = allHeroesAtTH.filter((h) => !ownedHeroNames.has(h.name.toLowerCase()));
   const laboratoryMaxLevel = getMaxLevelAtTH('Lab', player.townHallLevel) ?? 0;
   const heroHallMaxLevel = getMaxLevelAtTH('Hero Hall', player.townHallLevel) ?? 0;
 
@@ -709,31 +722,44 @@ export default function PlayerProfileScreen() {
         </View>
 
         <View style={styles.tabContent}>
-          {activeTab === 'heroes' && (
+              {activeTab === 'heroes' && (
             <>
-              {homeHeroes.length === 0 ? (
+              {homeHeroes.length > 0 && homeHeroes.map((h) => (
+                <React.Fragment key={h.name}>
+                  <ItemCard
+                    name={h.name}
+                    level={h.level}
+                    maxLevel={h.maxLevel}
+                    thMaxLevel={getMaxLevelAtTH(h.name, th)}
+                    subtitle={h.equipment?.map((e) => e.name).join(', ')}
+                    icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                    onPress={() => toggleDetail(h.name)}
+                  />
+                  {renderDetailPanel(h.name)}
+                </React.Fragment>
+              ))}
+              {lockedHeroes.length > 0 && (
+                <>
+                  <Text style={styles.lockedSectionHeader}>{homeHeroes.length > 0 ? 'Not Yet Unlocked' : 'Locked Heroes'}</Text>
+                  {lockedHeroes.map((h) => (
+                    <ItemCard
+                      key={h.name}
+                      name={h.name}
+                      level={0}
+                      maxLevel={h.maxLevel}
+                      thMaxLevel={h.maxLevel}
+                      icon={getHeroImageUrl(h.name) || undefined}
+                      locked
+                    />
+                  ))}
+                </>
+              )}
+              {homeHeroes.length === 0 && lockedHeroes.length === 0 && (
                 <EmptyState
                   icon="👑"
                   title="No heroes yet"
                   description="Heroes unlock at higher Town Hall levels. Your first hero, the Barbarian King, is available at TH7."
                 />
-              ) : (
-                <>
-                  {homeHeroes.map((h) => (
-                    <React.Fragment key={h.name}>
-                      <ItemCard
-                        name={h.name}
-                        level={h.level}
-                        maxLevel={h.maxLevel}
-                        thMaxLevel={getMaxLevelAtTH(h.name, th)}
-                        subtitle={h.equipment?.map((e) => e.name).join(', ')}
-                        icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
-                        onPress={() => toggleDetail(h.name)}
-                      />
-                      {renderDetailPanel(h.name)}
-                    </React.Fragment>
-                  ))}
-                </>
               )}
             </>
           )}
@@ -767,28 +793,41 @@ export default function PlayerProfileScreen() {
 
           {activeTab === 'troops' && (
             <>
-              {homeTroops.length === 0 ? (
+              {homeTroops.map((t) => (
+                <React.Fragment key={t.name}>
+                  <ItemCard
+                    name={t.name}
+                    level={t.level}
+                    maxLevel={t.maxLevel}
+                    thMaxLevel={getMaxLevelAtTH(t.name, th)}
+                    icon={getTroopImageUrl(t.name) || undefined}
+                    onPress={() => toggleDetail(t.name)}
+                  />
+                  {renderDetailPanel(t.name)}
+                </React.Fragment>
+              ))}
+              {lockedTroops.length > 0 && (
+                <>
+                  <Text style={styles.lockedSectionHeader}>{homeTroops.length > 0 ? 'Not Yet Unlocked' : 'Locked Troops'}</Text>
+                  {lockedTroops.map((t) => (
+                    <ItemCard
+                      key={t.name}
+                      name={t.name}
+                      level={0}
+                      maxLevel={t.maxLevel}
+                      thMaxLevel={t.maxLevel}
+                      icon={getTroopImageUrl(t.name) || undefined}
+                      locked
+                    />
+                  ))}
+                </>
+              )}
+              {homeTroops.length === 0 && lockedTroops.length === 0 && (
                 <EmptyState
                   icon="⚔️"
                   title="No troops yet"
                   description="Troops unlock as you progress. Your first troop, the Barbarian, is available from TH1."
                 />
-              ) : (
-                <>
-                  {homeTroops.map((t) => (
-                    <React.Fragment key={t.name}>
-                      <ItemCard
-                        name={t.name}
-                        level={t.level}
-                        maxLevel={t.maxLevel}
-                        thMaxLevel={getMaxLevelAtTH(t.name, th)}
-                        icon={getTroopImageUrl(t.name) || undefined}
-                        onPress={() => toggleDetail(t.name)}
-                      />
-                      {renderDetailPanel(t.name)}
-                    </React.Fragment>
-                  ))}
-                </>
               )}
             </>
           )}
@@ -850,28 +889,41 @@ export default function PlayerProfileScreen() {
 
           {activeTab === 'spells' && (
             <>
-              {player.spells.filter((s) => s.village === 'home' || !s.village).length === 0 ? (
+              {homeSpells.map((s) => (
+                <React.Fragment key={s.name}>
+                  <ItemCard
+                    name={s.name}
+                    level={s.level}
+                    maxLevel={s.maxLevel}
+                    thMaxLevel={getMaxLevelAtTH(s.name, th)}
+                    icon={getTroopImageUrl(s.name) || undefined}
+                    onPress={() => toggleDetail(s.name)}
+                  />
+                  {renderDetailPanel(s.name)}
+                </React.Fragment>
+              ))}
+              {lockedSpells.length > 0 && (
+                <>
+                  <Text style={styles.lockedSectionHeader}>{homeSpells.length > 0 ? 'Not Yet Unlocked' : 'Locked Spells'}</Text>
+                  {lockedSpells.map((s) => (
+                    <ItemCard
+                      key={s.name}
+                      name={s.name}
+                      level={0}
+                      maxLevel={s.maxLevel}
+                      thMaxLevel={s.maxLevel}
+                      icon={getTroopImageUrl(s.name) || undefined}
+                      locked
+                    />
+                  ))}
+                </>
+              )}
+              {homeSpells.length === 0 && lockedSpells.length === 0 && (
                 <EmptyState
                   icon="✨"
                   title="No spells yet"
                   description="Spells unlock at TH5. Your first spell, the Lightning Spell, is available at TH5."
                 />
-              ) : (
-                <>
-                  {player.spells.filter((s) => s.village === 'home' || !s.village).map((s) => (
-                    <React.Fragment key={s.name}>
-                      <ItemCard
-                        name={s.name}
-                        level={s.level}
-                        maxLevel={s.maxLevel}
-                        thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                        icon={getTroopImageUrl(s.name) || undefined}
-                        onPress={() => toggleDetail(s.name)}
-                      />
-                      {renderDetailPanel(s.name)}
-                    </React.Fragment>
-                  ))}
-                </>
               )}
             </>
           )}
@@ -1149,5 +1201,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  lockedSectionHeader: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    paddingTop: Spacing.lg,
   },
 });
