@@ -429,7 +429,7 @@ function CurrentWarSection({ war }: { war: ClanWar }) {
           <View style={styles.center}>
             <Ionicons name="time-outline" size={24} color={Colors.textTertiary} />
             <Text style={styles.prepText}>Preparation Day</Text>
-            <Text style={styles.prepSub}>War starts {formatTime(war.startTime)}</Text>
+            <Text style={styles.prepSub}>War has not started yet</Text>
           </View>
         </Card>
       )}
