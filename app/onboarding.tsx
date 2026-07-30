@@ -19,6 +19,7 @@ import { Colors, Typography, Spacing, Radius } from '../src/theme';
 import {
   setPlayerTag,
   setApiToken,
+  saveAccount,
 } from '../src/hooks/usePlayer';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
@@ -79,6 +80,13 @@ export default function OnboardingScreen() {
       const data = await api.getPlayer(cleanTag);
       await setPlayerTag(cleanTag);
       await setApiToken(cleanToken);
+      await saveAccount({
+        tag: cleanTag,
+        name: cleanTag,
+        townHallLevel: cosTh || data.townHallLevel,
+        addedAt: new Date().toISOString(),
+        lastUsedAt: new Date().toISOString(),
+      });
       data.townHallLevel = cosTh || data.townHallLevel;
       data.builderHallLevel = cosBh || data.builderHallLevel;
       setPlayerData(data);
