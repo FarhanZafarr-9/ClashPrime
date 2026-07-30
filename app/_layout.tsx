@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { PlayerProvider } from '../src/hooks/usePlayerContext';
 import { GameDataProvider } from '../src/hooks/useGameData';
+import { TimerProvider } from '../src/hooks/useTimerContext';
 import { useTheme, loadTheme } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
 import { loadDiscounts } from '../src/hooks/useDiscounts';
@@ -32,15 +33,17 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PlayerProvider>
         <GameDataProvider>
-          <StatusBar style={isDark ? 'light' : 'dark'} hidden />
-          <Stack
-            key={isDark ? 'dark' : 'light'}
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.bg },
-              animation: 'slide_from_right',
-            }}
-          />
+          <TimerProvider>
+            <StatusBar style={isDark ? 'light' : 'dark'} hidden />
+            <Stack
+              key={isDark ? 'dark' : 'light'}
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.bg },
+                animation: 'slide_from_right',
+              }}
+            />
+          </TimerProvider>
         </GameDataProvider>
       </PlayerProvider>
     </SafeAreaProvider>

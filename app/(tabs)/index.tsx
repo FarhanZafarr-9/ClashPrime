@@ -10,6 +10,9 @@ import {
   Modal,
   Pressable,
   ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -18,9 +21,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
+import { useTimers } from '../../src/hooks/useTimerContext';
 import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
-import { getMaxLevelAtTH, getUnlockableItems } from '../../src/utils/thMaxLevels';
+import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
@@ -32,7 +36,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts } = usePlayer();
   const { superTroopNames } = useGameData();
+  const { reminders, addTimer, dismissTimer } = useTimers();
   const [refreshing, setRefreshing] = useState(false);
+  const [addTimerVisible, setAddTimerVisible] = useState(false);
+  const [timerLabel, setTimerLabel] = useState('');
+  const [timerMinutes, setTimerMinutes] = useState(30);
+  const [addingTimer, setAddingTimer] = useState(false);
   const [showBH, setShowBH] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
@@ -77,6 +86,7 @@ export default function HomeScreen() {
   const ownedNames = new Set([
     ...(player?.troops ?? []).map((t: { name: string }) => t.name.toLowerCase()),
     ...(player?.spells ?? []).map((s: { name: string }) => s.name.toLowerCase()),
+    ...(player?.heroes ?? []).map((h: { name: string }) => h.name.toLowerCase()),
   ]);
   const unlockableItems = th > 0 ? getUnlockableItems(th, ownedNames) : [];
 
@@ -232,19 +242,28 @@ export default function HomeScreen() {
   if (!player) return null;
 
   // ── Player-guaranteed computations ──
-  const heroesMaxed = homeHeroes.filter((h) => {
-    const max = getMaxLevelAtTH(h.name, th);
-    return max !== null ? h.level >= max : h.level >= h.maxLevel;
-  }).length;
-  const troopsMaxed = homeTroops.filter((t) => {
-    const max = getMaxLevelAtTH(t.name, th);
-    return max !== null ? t.level >= max : t.level >= t.maxLevel;
-  }).length;
-  const spellsMaxed = homeSpells.filter((s) => {
-    const max = getMaxLevelAtTH(s.name, th);
-    return max !== null ? s.level >= max : s.level >= s.maxLevel;
-  }).length;
-  const equipMaxed = heroEquipment.filter((e) => e.level >= e.maxLevel).length;
+  const calcProgress = (
+    ownedItems: { name: string; level: number }[],
+    allAtTH: { name: string; maxLevel: number }[],
+  ) => {
+    if (allAtTH.length === 0) return 0;
+    const ownedMap = new Map(ownedItems.map((i) => [i.name.toLowerCase(), i.level]));
+    let sum = 0;
+    for (const { name, maxLevel } of allAtTH) {
+      const level = ownedMap.get(name.toLowerCase()) ?? 0;
+      sum += maxLevel > 0 ? level / maxLevel : 0;
+    }
+    return Math.min(sum / allAtTH.length, 1);
+  };
+  const allTroopsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'troop');
+  const allSpellsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'spell');
+  const allHeroesAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
+  const heroesProgress = calcProgress(homeHeroes, allHeroesAtTH);
+  const troopsProgress = calcProgress(homeTroops, allTroopsAtTH);
+  const spellsProgress = calcProgress(homeSpells, allSpellsAtTH);
+  const equipProgress = heroEquipment.length > 0
+    ? heroEquipment.reduce((s, e) => s + (e.maxLevel > 0 ? e.level / e.maxLevel : 0), 0) / heroEquipment.length
+    : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -369,33 +388,42 @@ export default function HomeScreen() {
         <View style={styles.progressGrid}>
           <ProgressSummaryCard
             category="Heroes"
-            completed={heroesMaxed}
-            total={homeHeroes.length}
-            lockedMessage={homeHeroes.length === 0 ? 'Unlocks at TH7' : undefined}
-            items={homeHeroes.filter((h: { level: number; name: string }) => {
-              const max = getMaxLevelAtTH(h.name, th);
-              return max !== null ? h.level < max : false;
+            progress={heroesProgress}
+            lockedMessage={allHeroesAtTH.length === 0 ? 'Unlocks at TH7' : undefined}
+            items={allHeroesAtTH.map((h) => {
+              const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
+              return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel };
             })}
             onPress={() => router.push('/(tabs)/army?tab=heroes')}
           />
           <ProgressSummaryCard
             category="Troops"
-            completed={troopsMaxed}
-            total={homeTroops.length}
+            progress={troopsProgress}
+            items={allTroopsAtTH.map((t) => {
+              const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
+              return { name: t.name, level: owned?.level ?? 0, maxLevel: t.maxLevel };
+            })}
             onPress={() => router.push('/(tabs)/army?tab=troops')}
           />
           <ProgressSummaryCard
             category="Spells"
-            completed={spellsMaxed}
-            total={homeSpells.length}
-            lockedMessage={homeSpells.length === 0 ? 'Unlocks at TH5' : undefined}
+            progress={spellsProgress}
+            lockedMessage={allSpellsAtTH.length === 0 ? 'Unlocks at TH5' : undefined}
+            items={allSpellsAtTH.map((s) => {
+              const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
+              return { name: s.name, level: owned?.level ?? 0, maxLevel: s.maxLevel };
+            })}
             onPress={() => router.push('/(tabs)/army?tab=spells')}
           />
           <ProgressSummaryCard
             category="Equipment"
-            completed={equipMaxed}
-            total={player.heroEquipment.length}
+            progress={equipProgress}
             lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH15' : undefined}
+            items={player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
+              name: e.name,
+              level: e.level,
+              maxLevel: e.maxLevel,
+            }))}
             onPress={() => router.push('/(tabs)/army?tab=equipment')}
           />
         </View>
@@ -420,7 +448,7 @@ export default function HomeScreen() {
               {upgradesOpen && (() => {
                 let lastTh = -1;
                 return unlockableItems.flatMap((item, i) => {
-                  const troopUrl = getTroopImageUrl(item.name);
+                  const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name);
                   const thUrl = getTownHallImageUrl(item.unlockTh);
                   const levelsAtTH = getMaxLevelAtTH(item.name, th);
                   const isNewTh = item.unlockTh !== lastTh;
@@ -438,8 +466,8 @@ export default function HomeScreen() {
                   elements.push(
                     <View key={item.name} style={[styles.upgradeRow, i < unlockableItems.length - 1 && styles.upgradeRowBorder]}>
                       <View style={styles.upgradeIconWrap}>
-                        {troopUrl ? (
-                          <Image source={{ uri: troopUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                        {imageUrl ? (
+                          <Image source={{ uri: imageUrl }} style={styles.upgradeIcon} resizeMode="contain" />
                         ) : (
                           <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
                         )}
@@ -629,6 +657,46 @@ export default function HomeScreen() {
           ])}
         </View>
 
+        {/* ── Active Timers ── */}
+        {reminders.length > 0 && (
+          <>
+            <View style={styles.sectionLabel}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.sectionTitle}>Active Timers</Text>
+                <PressableRipple style={styles.addTimerBtn} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
+                  <Ionicons name="alarm-outline" size={14} color={Colors.textPrimary} />
+                  <Text style={styles.addTimerBtnText}>Add</Text>
+                </PressableRipple>
+              </View>
+            </View>
+            <View style={styles.timersCard}>
+              {reminders.map((r) => {
+                const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
+                const expired = r.status === 'expired' || remaining <= 0;
+                const days = Math.floor(remaining / 86400000);
+                const hours = Math.floor((remaining % 86400000) / 3600000);
+                const minutes = Math.floor((remaining % 3600000) / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                const pad = (n: number) => String(n).padStart(2, '0');
+                const timeStr = days > 0
+                  ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                  : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                return (
+                  <View key={r.id} style={styles.timerRow}>
+                    <View style={styles.timerInfo}>
+                      <Text style={styles.timerLabel} numberOfLines={1}>{r.label}</Text>
+                      <Text style={[styles.timerCountdown, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
+                    </View>
+                    <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
+                      <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
+                    </PressableRipple>
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -637,6 +705,60 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color={Colors.textPrimary} />
         </View>
       )}
+
+      <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => setAddTimerVisible(false)} statusBarTranslucent>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Pressable style={styles.modalOverlay} onPress={() => setAddTimerVisible(false)}>
+            <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
+              <Text style={styles.modalTitle}>New Timer</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Label (e.g. Archer Queen)"
+                placeholderTextColor={Colors.textMuted}
+                value={timerLabel}
+                onChangeText={setTimerLabel}
+                autoFocus
+              />
+              <View style={styles.durationPresets}>
+                {[15, 30, 60, 120, 240, 480, 720, 1440].map((m) => {
+                  const label = m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 60 / 24}d`;
+                  return (
+                    <PressableRipple
+                      key={m}
+                      style={[styles.durationPill, timerMinutes === m && styles.durationPillActive]}
+                      onPress={() => setTimerMinutes(m)}
+                    >
+                      <Text style={[styles.durationPillText, timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
+                    </PressableRipple>
+                  );
+                })}
+              </View>
+              <View style={styles.modalActions}>
+                <PressableRipple style={styles.modalCancelBtn} onPress={() => setAddTimerVisible(false)}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </PressableRipple>
+                <PressableRipple
+                  style={[styles.modalConfirmBtn, (!timerLabel.trim() || addingTimer) && { opacity: 0.4 }]}
+                  disabled={!timerLabel.trim() || addingTimer}
+                  onPress={async () => {
+                    setAddingTimer(true);
+                    await addTimer(timerLabel.trim(), timerMinutes);
+                    setAddingTimer(false);
+                    setAddTimerVisible(false);
+                  }}
+                >
+                  {addingTimer ? (
+                    <ActivityIndicator size="small" color={Colors.bg} />
+                  ) : (
+                    <Text style={styles.modalConfirmText}>Start Timer</Text>
+                  )}
+                </PressableRipple>
+              </View>
+            </View>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
       <Modal visible={switcherVisible} transparent animationType="fade" onRequestClose={() => setSwitcherVisible(false)} statusBarTranslucent>
         <Pressable style={styles.switcherOverlay} onPress={() => setSwitcherVisible(false)}>
           <View style={styles.switcherCard}>
@@ -1143,5 +1265,141 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'left',
     marginLeft: 24,
+  },
+  addTimerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.accentGhost,
+  },
+  addTimerBtnText: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  timersCard: {
+    marginHorizontal: Spacing.base,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  timerInfo: {
+    flex: 1,
+  },
+  timerLabel: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  timerCountdown: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+    marginTop: 2,
+  },
+  timerExpired: {
+    color: Colors.success,
+    fontWeight: '700',
+  },
+  timerDismiss: {
+    padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  modalCard: {
+    width: '84%',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
+    gap: Spacing.md,
+  },
+  modalTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+  },
+  modalInput: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
+  },
+  durationPresets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  durationPill: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  durationPillActive: {
+    backgroundColor: Colors.accentGhost,
+    borderColor: Colors.textPrimary,
+  },
+  durationPillText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  durationPillTextActive: {
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  modalCancelText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+  },
+  modalConfirmText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '700',
   },
 });
