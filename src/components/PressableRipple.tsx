@@ -4,6 +4,7 @@ import { TouchableRipple } from 'react-native-paper';
 
 interface Props {
   onPress?: () => void;
+  onLongPress?: () => void;
   style?: StyleProp<ViewStyle>;
   hitSlop?: number | { top?: number; bottom?: number; left?: number; right?: number };
   children?: ReactNode;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function PressableRipple({
   onPress,
+  onLongPress,
   style,
   hitSlop,
   children,
@@ -28,6 +30,7 @@ export default function PressableRipple({
       borderless
       style={style}
       onPress={onPress}
+      onLongPress={onLongPress}
       hitSlop={hitSlop}
       disabled={disabled}
       rippleColor={rippleColor}
