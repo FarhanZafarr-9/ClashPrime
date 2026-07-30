@@ -293,6 +293,25 @@ export async function toggleFavorite(id: string, accountTag?: string): Promise<b
   }
 }
 
+// --- Backfill account names/TH from cached player data ---
+
+export async function backfillAccountNames(accounts: StoredAccount[]): Promise<void> {
+  let changed = false;
+  for (const acct of accounts) {
+    if (acct.townHallLevel === 0 || acct.name === acct.tag) {
+      const cached = await getCachedPlayer(acct.tag);
+      if (cached) {
+        acct.name = cached.name;
+        acct.townHallLevel = cached.townHallLevel;
+        changed = true;
+      }
+    }
+  }
+  if (changed) {
+    await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  }
+}
+
 // --- Cache & Export ---
 
 const CACHE_KEY_PREFIXES = [
