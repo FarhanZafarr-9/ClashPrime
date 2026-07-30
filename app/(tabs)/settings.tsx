@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
 import { getStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
+import { getTownHallImageUrl } from '../../src/utils/thImages';
 const heartImg = require('../../images/heart.png') as any;
 import {
   getPlayerTag,
@@ -27,8 +29,15 @@ import {
   setApiToken,
   clearAppCache,
   exportAppData,
+  saveAccount,
+  removeAccount,
+  getAccounts,
+  getActiveAccountTag,
+  setActiveAccountTag,
+  getCachedPlayer,
 } from '../../src/hooks/usePlayer';
-import { usePlayerActions } from '../../src/hooks/usePlayerContext';
+import { usePlayer, usePlayerActions } from '../../src/hooks/usePlayerContext';
+import type { StoredAccount } from '../../src/types/clash';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
@@ -120,6 +129,7 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 export default function SettingsScreen() {
   const { bumpTagVersion } = usePlayerActions();
+  const { switchAccount, refreshAccounts } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
@@ -139,18 +149,65 @@ export default function SettingsScreen() {
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingTag, setOnboardingTag] = useState('');
-  const [onboardingToken, setOnboardingToken] = useState('');
+  const [storedAccounts, setStoredAccounts] = useState<StoredAccount[]>([]);
+  const [activeAccountTag, setActiveAccountTagState] = useState<string | null>(null);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
   const { refresh: refreshGameData } = useGameData();
 
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
+  const loadAccounts = async () => {
+    let list = await getAccounts();
+    if (list.length === 0) {
+      const legacyTag = await getPlayerTag();
+      if (legacyTag) {
+        const acct: StoredAccount = {
+          tag: legacyTag,
+          name: legacyTag,
+          townHallLevel: 0,
+          addedAt: new Date().toISOString(),
+          lastUsedAt: new Date().toISOString(),
+        };
+        await saveAccount(acct);
+        if (!(await getActiveAccountTag())) {
+          await setActiveAccountTag(legacyTag);
+        }
+        list = [acct];
+      }
+    }
+    for (const acct of list) {
+      if (acct.townHallLevel === 0 || acct.name === acct.tag) {
+        const cached = await getCachedPlayer(acct.tag);
+        if (cached) {
+          acct.name = cached.name;
+          acct.townHallLevel = cached.townHallLevel;
+        }
+      }
+    }
+    setStoredAccounts(list);
+    setActiveAccountTagState((await getActiveAccountTag()) || null);
+  };
+
+  const handleSwitchAccount = async (tag: string) => {
+    if (tag === activeAccountTag) return;
+    setSwitchingAccount(true);
+    await switchAccount(tag);
+    const list = await getAccounts();
+    setStoredAccounts(list);
+    setActiveAccountTagState(tag);
+    const t = await getPlayerTag(tag);
+    setPlayerTagState(t);
+    setSwitchingAccount(false);
+  };
+
   useEffect(() => {
-    getPlayerTag().then((tag) => {
+    (async () => {
+      const tag = await getPlayerTag();
       setPlayerTagState(tag);
+      await loadAccounts();
       if (!tag) setShowOnboarding(true);
-    });
+    })();
     getApiToken().then((t) => {
       setApiTokenState(maskSecret(t));
     });
@@ -233,20 +290,41 @@ export default function SettingsScreen() {
   };
 
   const handleOnboardingSave = async () => {
-    if (onboardingStep === 0) {
-      if (onboardingTag && onboardingTag.startsWith('#')) {
-        await setPlayerTag(onboardingTag);
-        setPlayerTagState(onboardingTag);
-        setOnboardingStep(1);
-      }
-    } else {
-      if (onboardingToken) {
-        await setApiToken(onboardingToken);
-        setApiTokenState(maskSecret(onboardingToken));
-        bumpTagVersion();
-        setShowOnboarding(false);
-      }
+    const tag = onboardingTag;
+    if (!tag || !tag.startsWith('#')) return;
+    const existing = storedAccounts.find((a) => a.tag === tag);
+    if (existing) {
+      showDialog({
+        title: 'Account Already Added',
+        message: `${tag} is already in your account list. Switch to it instead.`,
+        actions: [
+          { label: 'Cancel', onPress: () => {} },
+          { label: 'Switch', primary: true, onPress: async () => {
+            await handleSwitchAccount(existing.tag);
+            setShowOnboarding(false);
+          }},
+        ],
+      });
+      return;
     }
+    const token = await getApiToken();
+    if (!token) {
+      showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+      return;
+    }
+    await setPlayerTag(tag);
+    await setApiToken(token);
+    await saveAccount({
+      tag,
+      name: tag,
+      townHallLevel: 0,
+      addedAt: new Date().toISOString(),
+      lastUsedAt: new Date().toISOString(),
+    });
+    await loadAccounts();
+    await handleSwitchAccount(tag);
+    setShowOnboarding(false);
+    setOnboardingTag('');
   };
 
   const openCredits = () => {
@@ -347,17 +425,96 @@ export default function SettingsScreen() {
         </View>
 
         <SettingGroup title="Account">
+          {storedAccounts.length === 0 ? (
+            <>
+              <SettingItem
+                icon="person-outline"
+                label="Player Tag"
+                value={playerTag}
+                onPress={handleEditTag}
+              />
+              <SettingItem
+                icon="key-outline"
+                label="API Token"
+                value={apiToken}
+                onPress={handleEditToken}
+              />
+            </>
+          ) : (
+            storedAccounts.map((acct) => {
+              const isActive = acct.tag === activeAccountTag;
+              return (
+                <PressableRipple
+                  key={acct.tag}
+                  onPress={async () => {
+                    if (isActive || switchingAccount) return;
+                    await handleSwitchAccount(acct.tag);
+                  }}
+                  onLongPress={async () => {
+                    if (storedAccounts.length <= 1) {
+                      showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+                      return;
+                    }
+                    showDialog({
+                      title: 'Remove Account',
+                      message: `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
+                      actions: [
+                        { label: 'Cancel', onPress: () => {} },
+                        { label: 'Remove', primary: true, destructive: true, onPress: async () => {
+                          await removeAccount(acct.tag);
+                          await loadAccounts();
+                          if (isActive) {
+                            const remaining = await getAccounts();
+                            if (remaining.length > 0) {
+                              await handleSwitchAccount(remaining[0].tag);
+                            }
+                          }
+                        }},
+                      ],
+                    });
+                  }}
+                  style={[styles.settingItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                >
+                  <View style={[styles.settingIcon, isActive && { backgroundColor: Colors.textPrimary }]}>
+                    {switchingAccount && isActive ? (
+                      <ActivityIndicator size="small" color={Colors.textSecondary} />
+                    ) : (
+                      <Ionicons
+                        name={isActive ? 'checkmark' : 'person-outline'}
+                        size={16}
+                        color={isActive ? Colors.bg : Colors.textSecondary}
+                      />
+                    )}
+                  </View>
+                  <View style={styles.settingLabelCol}>
+                    <Text style={[styles.settingLabel, isActive && { fontWeight: '600' }]} numberOfLines={1}>{acct.name}</Text>
+                    <Text style={styles.settingTag}>{acct.tag}</Text>
+                  </View>
+                  {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
+                    <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
+                  ) : acct.townHallLevel > 0 ? (
+                    <Text style={styles.settingValue}>TH{acct.townHallLevel}</Text>
+                  ) : null}
+                  {!isActive && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 8 }} />}
+                </PressableRipple>
+              );
+            })
+          )}
+          {storedAccounts.length > 0 && (
+            <SettingItem
+              icon="key-outline"
+              label="API Token"
+              value={apiToken}
+              onPress={handleEditToken}
+            />
+          )}
           <SettingItem
-            icon="person-outline"
-            label="Player Tag"
-            value={playerTag}
-            onPress={handleEditTag}
-          />
-          <SettingItem
-            icon="key-outline"
-            label="API Token"
-            value={apiToken}
-            onPress={handleEditToken}
+            icon="add-circle-outline"
+            label={storedAccounts.length === 0 ? 'Connect Account' : 'Add Account'}
+            onPress={() => {
+              setOnboardingTag('');
+              setShowOnboarding(true);
+            }}
           />
           <SettingItem
             icon="sync-outline"
@@ -589,23 +746,19 @@ export default function SettingsScreen() {
         >
           <View style={styles.onboardingCard}>
             <View style={styles.onboardingIcon}>
-              <Ionicons name={onboardingStep === 0 ? 'person-outline' : 'key-outline'} size={24} color={Colors.textPrimary} />
+              <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />
             </View>
-            <Text style={styles.onboardingTitle}>
-              {onboardingStep === 0 ? 'Enter Your Player Tag' : 'Enter Your API Token'}
-            </Text>
+            <Text style={styles.onboardingTitle}>Enter Player Tag</Text>
             <Text style={styles.onboardingDesc}>
-              {onboardingStep === 0
-                ? 'Find your tag in-game under Settings → More → Show Tag'
-                : 'Get your token from developer.clashofclans.com → My Account → API Keys. Important: whitelist IP 45.79.218.79 in your API key — the app uses a proxy.'}
+              Find your tag in-game under Profile → My Profile. The API token from your existing account will be reused.
             </Text>
             <TextInput
               style={styles.onboardingInput}
-              value={onboardingStep === 0 ? onboardingTag : onboardingToken}
-              onChangeText={(t) => onboardingStep === 0 ? setOnboardingTag(t) : setOnboardingToken(t)}
-              placeholder={onboardingStep === 0 ? '#PG8U2LR00' : 'Paste your API token'}
+              value={onboardingTag}
+              onChangeText={(t) => setOnboardingTag(t)}
+              placeholder="#PG8U2LR00"
               placeholderTextColor={Colors.textMuted}
-              autoCapitalize="none"
+              autoCapitalize="characters"
               autoCorrect={false}
             />
             <View style={styles.onboardingActions}>
@@ -613,22 +766,15 @@ export default function SettingsScreen() {
                 style={styles.onboardingBtn}
                 onPress={handleOnboardingSave}
               >
-                <Text style={styles.onboardingBtnText}>
-                  {onboardingStep === 0 ? 'Continue' : 'Get Started'}
-                </Text>
+                <Text style={styles.onboardingBtnText}>Connect</Text>
               </PressableRipple>
             </View>
             <PressableRipple
               style={styles.onboardingSkip}
               onPress={() => setShowOnboarding(false)}
             >
-              <Text style={styles.onboardingSkipText}>Skip for now</Text>
+              <Text style={styles.onboardingSkipText}>Cancel</Text>
             </PressableRipple>
-            <View style={styles.onboardingMadeRow}>
-              <Text style={styles.onboardingMadeText}>Made with </Text>
-              <Image source={heartImg} style={styles.onboardingHeart} />
-              <Text style={styles.onboardingMadeText}> by Parzival</Text>
-            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -699,6 +845,16 @@ const styles = StyleSheet.create({
   settingLabelDanger: {
     color: Colors.bg,
   },
+  settingLabelCol: {
+    flexDirection: 'column',
+    marginLeft: Spacing.md,
+    flex: 1,
+  },
+  settingTag: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: 1,
+  },
   settingSpacer: {
     flex: 1,
   },
@@ -708,6 +864,11 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontWeight: '500',
     maxWidth: 160,
+  },
+  settingThImage: {
+    width: 24,
+    height: 24,
+    marginLeft: Spacing.sm,
   },
   footer: {
     alignItems: 'center',
