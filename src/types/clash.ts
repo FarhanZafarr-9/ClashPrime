@@ -168,6 +168,14 @@ export interface WarLogEntry {
   opponent: WarLogClan;
 }
 
+export interface StoredAccount {
+  tag: string;
+  name: string;
+  townHallLevel: number;
+  addedAt: string;
+  lastUsedAt: string;
+}
+
 // --- End War ---
 
 export function filterHomeTroops(troops: Troop[]): Troop[] {
