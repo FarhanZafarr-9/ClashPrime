@@ -121,7 +121,7 @@ export interface WarMember {
   name: string;
   townhallLevel: number;
   mapPosition: number;
-  attacks?: number;
+  attacks?: WarAttack[];
   opponentAttacks?: number;
   bestOpponentAttack?: WarAttack;
 }

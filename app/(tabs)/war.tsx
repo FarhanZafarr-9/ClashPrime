@@ -210,6 +210,11 @@ export default function WarScreen() {
 
       let currentWar: ClanWar | null = null;
       if (currentWarRes.status === 'fulfilled') {
+        if (__DEV__) {
+          console.log('[War] current war response:', JSON.stringify(currentWarRes.value, null, 2));
+          const member = currentWarRes.value.clan?.members?.[0];
+          if (member) console.log('[War] first member raw:', JSON.stringify(member, null, 2));
+        }
         if (currentWarRes.value.state !== 'notInWar') currentWar = currentWarRes.value;
       }
       if (currentWarRes.status === 'rejected') {
@@ -378,6 +383,9 @@ export default function WarScreen() {
 function CurrentWarSection({ war }: { war: ClanWar }) {
   const isPreparation = war.state === 'preparation';
   const isWarEnded = war.state === 'warEnded';
+  const opponentNames = new Map(war.opponent.members.map(m => [m.tag, m.name]));
+  const clanNames = new Map(war.clan.members.map(m => [m.tag, m.name]));
+  const defenderName = (tag: string) => opponentNames.get(tag) ?? clanNames.get(tag) ?? tag;
 
   return (
     <View>
@@ -444,7 +452,7 @@ function CurrentWarSection({ war }: { war: ClanWar }) {
       {!isPreparation && (
         <View style={styles.memberList}>
           {war.clan.members.map((m, i) => (
-            <MemberRow key={m.tag} member={m} />
+            <MemberRow key={m.tag} member={m} defenderName={defenderName} />
           ))}
         </View>
       )}
@@ -464,34 +472,95 @@ function WarClanCard({ clan, align }: { clan: WarClanDetail; align: 'left' | 'ri
   );
 }
 
-function MemberRow({ member }: { member: WarMember }) {
-  const attacksUsed = member.attacks || 0;
+function MemberRow({ member, defenderName }: { member: WarMember; defenderName: (tag: string) => string }) {
+  const attacks = member.attacks ?? [];
+  const attacksUsed = attacks.length;
   const maxAttacks = 2;
+  const totalStars = attacks.reduce((s, a) => s + a.stars, 0);
   const thImg = getTownHallImageUrl(member.townhallLevel);
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <View style={styles.memberRow}>
-      <View style={styles.memberLeft}>
-        {thImg ? (
-          <Image source={{ uri: thImg }} style={styles.thBadge} resizeMode="contain" />
-        ) : (
-          <View style={styles.thBadge}>
-            <Text style={styles.thBadgeText}>{member.townhallLevel}</Text>
+    <View>
+      <PressableRipple style={styles.memberRow} onPress={() => setExpanded(e => !e)}>
+        <View style={styles.memberLeft}>
+          {thImg ? (
+            <Image source={{ uri: thImg }} style={styles.thBadge} resizeMode="contain" />
+          ) : (
+            <View style={styles.thBadge}>
+              <Text style={styles.thBadgeText}>{member.townhallLevel}</Text>
+            </View>
+          )}
+          <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
+        </View>
+        <View style={styles.memberRight}>
+          {totalStars > 0 && (
+            <View style={styles.memberStars}>
+              <Ionicons name="star" size={11} color={Colors.warning} />
+              <Text style={styles.memberStarsText}>{totalStars}</Text>
+            </View>
+          )}
+          <Text style={styles.memberAttackCount}>
+            {attacksUsed}/{maxAttacks}
+          </Text>
+          <View style={styles.attackDots}>
+            {Array.from({ length: maxAttacks }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.attackDot,
+                  i < attacksUsed ? styles.attackDotUsed : styles.attackDotEmpty,
+                ]}
+              />
+            ))}
           </View>
-        )}
-        <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
-      </View>
-      <View style={styles.memberRight}>
-        {Array.from({ length: maxAttacks }).map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.attackDot,
-              i < attacksUsed ? styles.attackDotUsed : styles.attackDotEmpty,
-            ]}
-          />
-        ))}
-      </View>
+          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
+        </View>
+      </PressableRipple>
+      {expanded && (
+        <View style={styles.memberDetail}>
+          <Text style={styles.memberDetailLabel}>Attacks</Text>
+          {attacks.length === 0 ? (
+            <Text style={styles.memberDetailEmpty}>No attacks used yet</Text>
+          ) : (
+            attacks.map((a, i) => (
+              <View key={i} style={styles.memberAttackRow}>
+                <View style={styles.memberAttackInfo}>
+                  <Text style={styles.memberAttackOrder}>#{i + 1}</Text>
+                  <Text style={styles.memberAttackTarget} numberOfLines={1}>
+                    {defenderName(a.defenderTag) || a.defenderTag}
+                  </Text>
+                </View>
+                <Text style={[styles.memberAttackStars, a.stars === 3 && styles.memberAttackStars3]}>
+                  {a.stars}★
+                </Text>
+                <Text style={styles.memberAttackDestruction}>{a.destructionPercentage}%</Text>
+                <Text style={styles.memberAttackDuration}>{a.duration}s</Text>
+              </View>
+            ))
+          )}
+          <Text style={styles.memberDetailLabel}>Defense</Text>
+          {member.bestOpponentAttack ? (
+            <View style={styles.memberAttackRow}>
+              <View style={styles.memberAttackInfo}>
+                <Text style={styles.memberAttackOrder} />
+                <Text style={styles.memberAttackTarget} numberOfLines={1}>
+                  {defenderName(member.bestOpponentAttack.attackerTag) || member.bestOpponentAttack.attackerTag}
+                </Text>
+              </View>
+              <Text style={[styles.memberAttackStars, member.bestOpponentAttack.stars === 3 && styles.memberAttackStars3]}>
+                {member.bestOpponentAttack.stars}★
+              </Text>
+              <Text style={styles.memberAttackDestruction}>{member.bestOpponentAttack.destructionPercentage}%</Text>
+              <Text style={styles.memberAttackDuration}>{member.bestOpponentAttack.duration}s</Text>
+            </View>
+          ) : (
+            <Text style={styles.memberDetailEmpty}>
+              {member.opponentAttacks ? 'Not attacked yet' : 'Not attacked'}
+            </Text>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -725,9 +794,53 @@ const styles = StyleSheet.create({
   thBadgeText: { fontSize: 9, fontWeight: '700', color: Colors.textSecondary },
   memberName: { ...Typography.subhead, color: Colors.textPrimary, flex: 1 },
   memberRight: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  memberStars: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  memberStarsText: { ...Typography.caption, color: Colors.warning, fontWeight: '700' },
+  memberAttackCount: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600', minWidth: 22 },
+  attackDots: { flexDirection: 'row', gap: 6 },
   attackDot: { width: 10, height: 10, borderRadius: 3 },
   attackDotUsed: { backgroundColor: '#4CAF50' },
   attackDotEmpty: { backgroundColor: Colors.border },
+  memberDetail: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.bgSubtle,
+    borderBottomLeftRadius: Radius.sm,
+    borderBottomRightRadius: Radius.sm,
+    borderWidth: 0.75,
+    borderTopWidth: 0,
+    borderColor: Colors.border,
+    marginTop: -1,
+  },
+  memberDetailLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: Spacing.sm,
+    marginBottom: 2,
+  },
+  memberDetailEmpty: { ...Typography.caption, color: Colors.textMuted, paddingVertical: 2 },
+  memberAttackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 3,
+  },
+  memberAttackInfo: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
+  memberAttackOrder: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '700',
+    width: 18,
+    textAlign: 'center',
+  },
+  memberAttackTarget: { ...Typography.caption, color: Colors.textPrimary, flex: 1 },
+  memberAttackStars: { ...Typography.caption, color: Colors.textMuted, fontWeight: '700', minWidth: 26, textAlign: 'right' },
+  memberAttackStars3: { color: Colors.warning },
+  memberAttackDestruction: { ...Typography.caption, color: Colors.textSecondary, minWidth: 44, textAlign: 'right' },
+  memberAttackDuration: { ...Typography.caption, color: Colors.textTertiary, minWidth: 32, textAlign: 'right' },
 
   logRow: {
     flexDirection: 'row',
