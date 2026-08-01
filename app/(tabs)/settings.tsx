@@ -38,44 +38,102 @@ import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
 
-interface SettingItemProps {
-  icon: string;
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  showArrow?: boolean;
-  danger?: boolean;
-  loading?: boolean;
+const DANGER = '#F44336';
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return <Text style={styles.sectionHeader}>{children}</Text>;
 }
 
-function SettingItem({ icon, label, value, onPress, showArrow = true, danger }: SettingItemProps) {
-  const { colors } = useTheme();
+function SettingCard({ children }: { children: React.ReactNode }) {
   return (
-    <PressableRipple
-      onPress={onPress}
-      style={[styles.settingItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-    >
-      <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
-        <Ionicons name={icon as any} size={16} color={danger ? Colors.bg : Colors.textSecondary} />
-      </View>
-      <Text style={[styles.settingLabel, danger && styles.settingLabelDanger]}>{label}</Text>
-      <View style={styles.settingSpacer} />
-      {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
-      {showArrow && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />}
-    </PressableRipple>
+    <View style={styles.settingCard}>
+      {children}
+    </View>
   );
 }
 
-interface SettingGroupProps {
-  title?: string;
-  children: React.ReactNode;
+type PillPosition =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'center-left' | 'center' | 'center-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
+function getPillPos(pos: PillPosition, topOffset: number, rightOffset: number): React.CSSProperties | any {
+  const style: any = { position: 'absolute', zIndex: 10 };
+  const [vert, hor] = pos.split('-');
+  if (vert === 'top') style.top = -8 + topOffset;
+  if (vert === 'center') { style.top = '50%'; style.marginTop = -8; }
+  if (vert === 'bottom') style.bottom = -8;
+  if (hor === 'left') style.left = 12;
+  if (hor === 'right') style.right = 12 + rightOffset;
+  if (pos === 'center') { style.left = '50%'; style.transform = [{ translateX: -50 }]; }
+  return style;
 }
 
-function SettingGroup({ title, children }: SettingGroupProps) {
+interface SettingRowProps {
+  icon: string;
+  title: string;
+  desc?: string;
+  onPress?: () => void;
+  onLongPress?: () => void;
+  children?: React.ReactNode;
+  disabled?: boolean;
+  pillText?: string;
+  pillPosition?: PillPosition;
+  pillTopOffset?: number;
+  pillRightOffset?: number;
+  destructive?: boolean;
+  isExtra?: boolean;
+}
+
+function SettingRow({
+  icon,
+  title,
+  desc,
+  onPress,
+  onLongPress,
+  children,
+  disabled,
+  pillText,
+  pillPosition = 'top-right',
+  pillTopOffset = 0,
+  pillRightOffset = 0,
+  destructive,
+  isExtra,
+}: SettingRowProps) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.group}>
-      {title && <Text style={styles.groupTitle}>{title}</Text>}
-      <View style={styles.groupItems}>{children}</View>
+    <View style={styles.settingRowContainer}>
+      {pillText && (
+        <View style={getPillPos(pillPosition, pillTopOffset, pillRightOffset)}>
+          <View style={[styles.pill, destructive ? styles.pillDanger : { backgroundColor: colors.textPrimary, borderColor: colors.border }]}>
+            <Text style={[styles.pillText, destructive ? styles.pillTextDanger : { color: colors.bg }]}>{pillText}</Text>
+          </View>
+        </View>
+      )}
+      <PressableRipple
+        onPress={onPress}
+        onLongPress={onLongPress}
+        disabled={disabled}
+        style={[
+          styles.settingBlock,
+          { backgroundColor: isExtra ? colors.accentGhost : colors.bgCard, borderColor: colors.border },
+          disabled && styles.settingBlockDisabled,
+        ]}
+      >
+        {icon && (
+          <Ionicons
+            name={icon as any}
+            size={18}
+            color={destructive ? DANGER : colors.textPrimary}
+            style={styles.settingRowIcon}
+          />
+        )}
+        <View style={styles.settingTextBlock}>
+          <Text style={[styles.settingTitle, destructive && { color: DANGER }]}>{title}</Text>
+          {desc ? <Text style={styles.settingDesc}>{desc}</Text> : null}
+        </View>
+        {children}
+      </PressableRipple>
     </View>
   );
 }
@@ -384,28 +442,41 @@ export default function SettingsScreen() {
           <Text style={styles.title}>Settings</Text>
         </View>
 
-        <SettingGroup title="Account">
+        <SectionHeader>Account</SectionHeader>
+        <SettingCard>
           {accounts.length === 0 ? (
             <>
-              <SettingItem
+              <SettingRow
                 icon="person-outline"
-                label="Player Tag"
-                value={playerTag}
+                title="Player Tag"
+                desc={playerTag || 'Not set'}
                 onPress={handleEditTag}
               />
-              <SettingItem
+              <SettingRow
                 icon="key-outline"
-                label="API Token"
-                value={apiToken}
+                title="API Token"
+                desc="Required for API access"
+                pillText="Required"
+                pillTopOffset={18}
+                pillRightOffset={-4}
                 onPress={handleEditToken}
+                children={
+                  <>
+                    <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
+                    <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+                  </>
+                }
               />
             </>
           ) : (
             accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
               return (
-                <PressableRipple
+                <SettingRow
                   key={acct.tag}
+                  icon={switchingAccount && isActive ? 'ellipsis-horizontal' : isActive ? 'checkmark' : 'person-outline'}
+                  title={acct.name}
+                  desc={acct.tag}
                   onPress={async () => {
                     if (isActive || switchingAccount) return;
                     await handleSwitchAccount(acct.tag);
@@ -433,53 +504,54 @@ export default function SettingsScreen() {
                       ],
                     });
                   }}
-                  style={[styles.settingItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-                >
-                  <View style={[styles.settingIcon, isActive && { backgroundColor: Colors.textPrimary }]}>
-                    {switchingAccount && isActive ? (
-                      <ActivityIndicator size="small" color={Colors.textSecondary} />
-                    ) : (
-                      <Ionicons
-                        name={isActive ? 'checkmark' : 'person-outline'}
-                        size={16}
-                        color={isActive ? Colors.bg : Colors.textSecondary}
-                      />
-                    )}
-                  </View>
-                  <View style={styles.settingLabelCol}>
-                    <Text style={[styles.settingLabel, isActive && { fontWeight: '600' }]} numberOfLines={1}>{acct.name}</Text>
-                    <Text style={styles.settingTag}>{acct.tag}</Text>
-                  </View>
-                  {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
-                    <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
-                  ) : acct.townHallLevel > 0 ? (
-                    <Text style={styles.settingValue}>TH{acct.townHallLevel}</Text>
-                  ) : null}
-                  {!isActive && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 8 }} />}
-                </PressableRipple>
+                  children={
+                    <>
+                      {switchingAccount && isActive ? (
+                        <ActivityIndicator size="small" color={Colors.textSecondary} />
+                      ) : null}
+                      {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
+                        <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
+                      ) : acct.townHallLevel > 0 ? (
+                        <Text style={styles.settingValue}>TH{acct.townHallLevel}</Text>
+                      ) : null}
+                      {!isActive && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />}
+                    </>
+                  }
+                />
               );
             })
           )}
           {accounts.length > 0 && (
-            <SettingItem
+            <SettingRow
               icon="key-outline"
-              label="API Token"
-              value={apiToken}
+              title="API Token"
+              desc="Required for API access"
+              pillText="Required"
+              pillTopOffset={18}
+              pillRightOffset={-4}
               onPress={handleEditToken}
+              children={
+                <>
+                  <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
+                  <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+                </>
+              }
             />
           )}
-          <SettingItem
+          <SettingRow
             icon="add-circle-outline"
-            label={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
+            title={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
+            desc="Connect a new player tag"
             onPress={() => {
               setOnboardingTag('');
               setOnboardingThLevel('');
               setShowOnboarding(true);
             }}
           />
-          <SettingItem
+          <SettingRow
             icon="sync-outline"
-            label="Sync Now"
+            title="Sync Now"
+            desc="Pull fresh data from the API"
             onPress={() => {
               showDialog({
                 title: 'Sync Now',
@@ -491,38 +563,47 @@ export default function SettingsScreen() {
               });
             }}
           />
-        </SettingGroup>
+        </SettingCard>
 
-        <SettingGroup title="Appearance">
-          <View style={[styles.settingItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <View style={styles.settingIcon}>
-              <Ionicons name="moon-outline" size={16} color={Colors.textSecondary} />
-            </View>
-            <Text style={styles.settingLabel}>Dark Mode</Text>
-            <View style={styles.settingSpacer} />
-            <Switch
-              value={isDark}
-              onValueChange={(v) => setThemeMode(v)}
-              trackColor={{ false: Colors.border, true: Colors.textMuted }}
-              thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
-            />
-          </View>
-        </SettingGroup>
+        <SectionHeader>Appearance</SectionHeader>
+        <SettingCard>
+          <SettingRow
+            icon="moon-outline"
+            title="Dark Mode"
+            desc="Switch between dark and light theme"
+            children={
+              <Switch
+                value={isDark}
+                onValueChange={(v) => setThemeMode(v)}
+                trackColor={{ false: Colors.border, true: Colors.textMuted }}
+                thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
+              />
+            }
+          />
+        </SettingCard>
 
-        <SettingGroup title="Data">
-          <SettingItem
-            icon="cloud-download-outline"
-            label="Clear Cache"
+        <SectionHeader>Data &amp; Preferences</SectionHeader>
+        <SettingCard>
+          <SettingRow
+            icon="trash-outline"
+            title="Clear Cache"
+            desc="Remove all locally cached data"
+            destructive
+            pillText="Destructive"
+            pillTopOffset={18}
+            pillRightOffset={-4}
             onPress={handleClearCache}
           />
-          <SettingItem
+          <SettingRow
             icon="download-outline"
-            label="Export Data"
+            title="Export Data"
+            desc="Share your data as a JSON backup"
             onPress={handleExportData}
           />
-          <SettingItem
+          <SettingRow
             icon="refresh-outline"
-            label="Refresh Game Data"
+            title="Refresh Game Data"
+            desc="Re-fetch reference data from the wiki"
             onPress={() => {
               showDialog({
                 title: 'Refresh Game Data',
@@ -534,36 +615,47 @@ export default function SettingsScreen() {
               });
             }}
           />
-          <SettingItem
+        </SettingCard>
+
+        <SectionHeader>App Management</SectionHeader>
+        <SettingCard>
+          <SettingRow
             icon="cloud-outline"
-            label="Check for Updates"
+            title="Check for Updates"
+            desc="Look for the latest version"
             onPress={handleCheckUpdates}
           />
-        </SettingGroup>
-
-        <SettingGroup title="About">
-          <SettingItem
+          <SettingRow
             icon="information-circle-outline"
-            label="About ClashPrime"
-            value="v4.0.0"
+            title="About ClashPrime"
+            desc="A premium Clash of Clans companion"
             onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
+            children={
+              <>
+                <Text style={styles.settingValue}>v4.0.0</Text>
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+              </>
+            }
           />
-          <SettingItem
+          <SettingRow
             icon="document-text-outline"
-            label="Privacy Policy"
+            title="Privacy Policy"
+            desc="How your data is handled"
             onPress={openPrivacy}
           />
-          <SettingItem
+          <SettingRow
             icon="heart-outline"
-            label="Credits"
+            title="Credits"
+            desc="Made with love by Parzival"
             onPress={openCredits}
           />
-          <SettingItem
+          <SettingRow
             icon="chatbubble-outline"
-            label="Send Feedback"
+            title="Send Feedback"
+            desc="Report a bug or share an idea"
             onPress={openFeedback}
           />
-        </SettingGroup>
+        </SettingCard>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>ClashPrime v4.0.0</Text>
@@ -772,62 +864,74 @@ const styles = StyleSheet.create({
     ...Typography.largeTitle,
     color: Colors.textPrimary,
   },
-  group: {
-    marginBottom: Spacing.xl,
-  },
-  groupTitle: {
-    ...Typography.footnote,
-    color: Colors.textMuted,
-    fontWeight: '600',
+  sectionHeader: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     paddingHorizontal: Spacing.base,
     marginBottom: Spacing.sm,
   },
-  groupItems: {
+  settingCard: {
+    marginBottom: Spacing.xl,
     marginHorizontal: Spacing.base,
     gap: Spacing.sm,
   },
-  settingItem: {
+  settingRowContainer: {
+    position: 'relative',
+  },
+  settingBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Radius.md,
+    gap: Spacing.base,
+    paddingTop: Spacing.base + 2,
+    paddingBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.md,
-  },
-  settingIcon: {
-    width: 36,
-    height: 36,
+    borderColor: Colors.border,
     borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  settingIconDanger: {
-    backgroundColor: Colors.destructive,
+  settingBlockDisabled: {
+    opacity: 0.5,
   },
-  settingLabel: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
+  settingRowIcon: {
+    marginRight: 6,
+  },
+  settingTextBlock: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 16,
     fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: 2,
   },
-  settingLabelDanger: {
-    color: Colors.bg,
+  settingDesc: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    opacity: 0.85,
   },
-  settingLabelCol: {
-    flexDirection: 'column',
-    marginLeft: Spacing.md,
-    flex: 1,
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1.5,
   },
-  settingTag: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    marginTop: 1,
+  pillDanger: {
+    backgroundColor: `${DANGER}20`,
+    borderColor: `${DANGER}c0`,
   },
-  settingSpacer: {
-    flex: 1,
+  pillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    lineHeight: 12,
+  },
+  pillTextDanger: {
+    color: DANGER,
   },
   settingValue: {
     ...Typography.footnote,
