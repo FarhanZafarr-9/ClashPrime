@@ -13,6 +13,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -45,6 +46,7 @@ export default function HomeScreen() {
   const [showBH, setShowBH] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
     if (error && player) {
@@ -62,9 +64,11 @@ export default function HomeScreen() {
     if (tag === activeAccount?.tag || switchingHome) return;
     setSwitcherVisible(false);
     setSwitchingHome(true);
+    Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     await switchAccount(tag);
+    Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
     setSwitchingHome(false);
-  }, [switchAccount, activeAccount, switchingHome]);
+  }, [switchAccount, activeAccount, switchingHome, fadeAnim]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -267,6 +271,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={
@@ -699,6 +704,7 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      </Animated.View>
 
       {switchingHome && (
         <View style={styles.switchingOverlay}>

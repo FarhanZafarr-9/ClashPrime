@@ -237,7 +237,7 @@ const NAME_FIX: Record<string, string> = {
 };
 
 function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; discounts: ScopeDiscount }) {
-  const { player, upgradeBuilding } = usePlayer();
+  const { player, upgradeBuilding, setBuildingLevel } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [tableViewportW, setTableViewportW] = useState(0);
@@ -477,13 +477,23 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
             </PressableRipple>
           )}
           {hasRemaining && (
-            <PressableRipple
-              style={styles.upgradeBtn}
-              onPress={() => upgradeBuilding(name)}
-            >
-              <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
-              <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-            </PressableRipple>
+            <View style={styles.upgradeRow}>
+              <PressableRipple
+                style={styles.upgradeBtn}
+                onPress={() => upgradeBuilding(name)}
+              >
+                <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
+                <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+              </PressableRipple>
+              {currentLevel > 0 && (
+                <PressableRipple
+                  style={styles.downgradeBtn}
+                  onPress={() => setBuildingLevel(name, currentLevel - 1)}
+                >
+                  <Ionicons name="arrow-back" size={16} color={Colors.bg} />
+                </PressableRipple>
+              )}
+            </View>
           )}
         </View>
       )}
@@ -848,7 +858,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
   },
+  upgradeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
   upgradeBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -856,12 +873,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textPrimary,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-    marginTop: Spacing.md,
   },
   upgradeBtnText: {
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '600',
+  },
+  downgradeBtn: {
+    width: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.textPrimary,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    opacity: 0.85,
   },
   expandArrow: {
     width: 24,

@@ -146,6 +146,7 @@ export default function SettingsScreen() {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingTag, setOnboardingTag] = useState('');
+  const [onboardingThLevel, setOnboardingThLevel] = useState('');
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const { refresh: refreshGameData } = useGameData();
 
@@ -271,10 +272,11 @@ export default function SettingsScreen() {
     }
     await setPlayerTag(tag);
     await setApiToken(token);
+    const thLevel = parseInt(onboardingThLevel, 10);
     await saveAccount({
       tag,
       name: tag,
-      townHallLevel: 0,
+      townHallLevel: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : 0,
       addedAt: new Date().toISOString(),
       lastUsedAt: new Date().toISOString(),
     });
@@ -282,6 +284,7 @@ export default function SettingsScreen() {
     await handleSwitchAccount(tag);
     setShowOnboarding(false);
     setOnboardingTag('');
+    setOnboardingThLevel('');
   };
 
   const openCredits = () => {
@@ -470,6 +473,7 @@ export default function SettingsScreen() {
             label={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
             onPress={() => {
               setOnboardingTag('');
+              setOnboardingThLevel('');
               setShowOnboarding(true);
             }}
           />
@@ -717,6 +721,16 @@ export default function SettingsScreen() {
               placeholderTextColor={Colors.textMuted}
               autoCapitalize="characters"
               autoCorrect={false}
+            />
+            <Text style={styles.onboardingFieldLabel}>Last Maxed Town Hall</Text>
+            <TextInput
+              style={styles.onboardingInput}
+              value={onboardingThLevel}
+              onChangeText={(t) => setOnboardingThLevel(t.replace(/[^0-9]/g, ''))}
+              placeholder="e.g. 12"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="number-pad"
+              maxLength={2}
             />
             <View style={styles.onboardingActions}>
               <PressableRipple
@@ -1194,6 +1208,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
     width: '100%',
+  },
+  onboardingFieldLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    alignSelf: 'flex-start',
+    marginTop: Spacing.sm,
   },
   onboardingActions: {
     width: '100%',
