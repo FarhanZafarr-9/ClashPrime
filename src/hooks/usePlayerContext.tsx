@@ -106,8 +106,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       const api = new ClashAPI(token);
       const data = await api.getPlayer(tag);
-      console.log('[Player] raw API fields:', Object.keys(data));
-      console.log('[Player] raw payload:', JSON.stringify(data, null, 2));
       const cached = await getCachedPlayer();
       if (cached) {
         data.buildingLevels = cached.buildingLevels;
