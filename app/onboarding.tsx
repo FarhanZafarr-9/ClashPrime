@@ -63,19 +63,6 @@ export default function OnboardingScreen() {
     setError(null);
 
     try {
-      const tagNoHash = cleanTag.replace('#', '');
-      const cosRes = await fetch(`https://www.clashofstats.com/players/${tagNoHash}`);
-      if (!cosRes.ok) {
-        setError('Player tag not found on Clash of Stats. Double-check your tag.');
-        setLoading(false);
-        return;
-      }
-      const cosHtml = await cosRes.text();
-      const thMatch = cosHtml.match(/Town\s*Hall\s*(\d+)/i);
-      const bhMatch = cosHtml.match(/Builder\s*Hall\s*(\d+)/i);
-      const cosTh = thMatch ? parseInt(thMatch[1], 10) : 0;
-      const cosBh = bhMatch ? parseInt(bhMatch[1], 10) : 0;
-
       const api = new ClashAPI(cleanToken);
       const data = await api.getPlayer(cleanTag);
       await setPlayerTag(cleanTag);
@@ -83,12 +70,10 @@ export default function OnboardingScreen() {
       await saveAccount({
         tag: cleanTag,
         name: cleanTag,
-        townHallLevel: cosTh || data.townHallLevel,
+        townHallLevel: data.townHallLevel,
         addedAt: new Date().toISOString(),
         lastUsedAt: new Date().toISOString(),
       });
-      data.townHallLevel = cosTh || data.townHallLevel;
-      data.builderHallLevel = cosBh || data.builderHallLevel;
       setPlayerData(data);
       setStep('thPicker');
       setLoading(false);
@@ -268,7 +253,10 @@ export default function OnboardingScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color={Colors.bg} />
+                  <>
+                    <ActivityIndicator size="small" color={Colors.bg} />
+                    <Text style={styles.btnTextLoading}>Connecting…</Text>
+                  </>
                 ) : (
                   <Text style={styles.btnText}>Continue</Text>
                 )}
@@ -397,6 +385,12 @@ const styles = StyleSheet.create({
     ...Typography.headline,
     color: Colors.bg,
     fontWeight: '600',
+  },
+  btnTextLoading: {
+    ...Typography.headline,
+    color: Colors.bg,
+    fontWeight: '600',
+    marginLeft: Spacing.sm,
   },
   thLabel: {
     ...Typography.body,
