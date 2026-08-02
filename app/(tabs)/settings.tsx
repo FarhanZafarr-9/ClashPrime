@@ -121,11 +121,12 @@ function SettingRow({
         style={[
           styles.settingBlock,
           { backgroundColor: isExtra ? colors.accentGhost : colors.bgCard, borderColor: colors.border },
+          destructive && { backgroundColor: `${DANGER}1a`, borderColor: `${DANGER}40` },
           disabled && styles.settingBlockDisabled,
         ]}
       >
         {icon && (
-          <View style={styles.settingRowIcon}>
+          <View style={[styles.settingRowIcon, destructive && { backgroundColor: `${DANGER}2e` }]}>
             <Ionicons
               name={icon as any}
               size={15}
@@ -136,7 +137,7 @@ function SettingRow({
         )}
         <View style={styles.settingTextBlock}>
           <Text style={[styles.settingTitle, destructive && { color: DANGER }]}>{title}</Text>
-          {desc ? <Text style={styles.settingDesc}>{desc}</Text> : null}
+          {desc ? <Text style={[styles.settingDesc, destructive && { color: DANGER }]}>{desc}</Text> : null}
         </View>
         {children}
       </PressableRipple>
