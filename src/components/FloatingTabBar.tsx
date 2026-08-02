@@ -3,6 +3,8 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius } from '../theme';
 import PressableRipple from './PressableRipple';
+import { Skeleton } from './Skeleton';
+import { usePlayer } from '../hooks/usePlayerContext';
 
 type IconDef = { set: 'ion' | 'mc'; name: string };
 
@@ -32,8 +34,13 @@ function TabIcon({ icon, color, size }: { icon: IconDef; color: string; size?: n
 }
 
 export default function FloatingTabBar({ state, navigation }: any) {
+  const { player, loading } = usePlayer();
   const activeKey = state.routeNames[state.index];
   const [showExtras, setShowExtras] = useState(false);
+
+  // The home tab's data is still loading; show skeleton placeholders instead of
+  // a real nav bar so it doesn't look half-broken while the screen shimmers.
+  const skeletons = activeKey === 'index' && loading && !player;
 
   useEffect(() => {
     const onExtra = EXTRA_TABS.some((t) => t.key === activeKey);
@@ -52,6 +59,19 @@ export default function FloatingTabBar({ state, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.bar}>
+        {skeletons ? (
+          <>
+            {MAIN_TABS.map((tab) => (
+              <View key={tab.key} style={[styles.tabItem, styles.tabItemSkeleton]}>
+                <Skeleton width={22} height={22} borderRadius={8} />
+              </View>
+            ))}
+            <View style={[styles.tabItem, styles.tabItemSkeleton]}>
+              <Skeleton width={22} height={22} borderRadius={8} />
+            </View>
+          </>
+        ) : (
+        <>
         {visibleTabs.map((tab) => {
           const isActive = activeKey === tab.key;
           return (
@@ -71,6 +91,8 @@ export default function FloatingTabBar({ state, navigation }: any) {
             color={Colors.textSecondary}
           />
         </PressableRipple>
+        </>
+        )}
       </View>
     </View>
   );
@@ -115,5 +137,9 @@ const styles = StyleSheet.create({
   },
   tabItemActive: {
     backgroundColor: Colors.accentSubtle,
+  },
+  tabItemSkeleton: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
