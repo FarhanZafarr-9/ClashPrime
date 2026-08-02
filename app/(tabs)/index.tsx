@@ -14,8 +14,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  BackHandler,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,12 +33,14 @@ import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
 import { getTroopDetail } from '../../src/api/troopDetail';
+import { useDialog } from '../../src/components/AlertDialog';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts } = usePlayer();
   const { superTroopNames } = useGameData();
   const { reminders, addTimer, dismissTimer } = useTimers();
+  const { show: showDialog, Dialog } = useDialog();
   const [refreshing, setRefreshing] = useState(false);
   const [addTimerVisible, setAddTimerVisible] = useState(false);
   const [timerLabel, setTimerLabel] = useState('');
@@ -53,6 +56,23 @@ export default function HomeScreen() {
       Alert.alert('Sync Error', error, [{ text: 'OK' }]);
     }
   }, [error, player]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        showDialog({
+          title: 'Exit ClashPrime?',
+          message: 'Are you sure you want to close the app?',
+          actions: [
+            { label: 'Cancel', onPress: () => {} },
+            { label: 'Exit', primary: true, destructive: true, onPress: () => BackHandler.exitApp() },
+          ],
+        });
+        return true;
+      });
+      return () => sub.remove();
+    }, [showDialog])
+  );
 
   useEffect(() => {
     if (accounts.length > 0) {
@@ -711,6 +731,8 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color={Colors.textPrimary} />
         </View>
       )}
+
+      <Dialog />
 
       <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => setAddTimerVisible(false)} statusBarTranslucent>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

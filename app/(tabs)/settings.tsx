@@ -36,6 +36,7 @@ import {
 import { usePlayer, usePlayerActions } from '../../src/hooks/usePlayerContext';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
+import Constants from 'expo-constants';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
 
 const DANGER = '#F44336';
@@ -121,12 +122,14 @@ function SettingRow({
         ]}
       >
         {icon && (
-          <Ionicons
-            name={icon as any}
-            size={18}
-            color={destructive ? DANGER : colors.textPrimary}
-            style={styles.settingRowIcon}
-          />
+          <View style={styles.settingRowIcon}>
+            <Ionicons
+              name={icon as any}
+              size={18}
+              color={destructive ? DANGER : colors.textPrimary}
+
+            />
+            </View>
         )}
         <View style={styles.settingTextBlock}>
           <Text style={[styles.settingTitle, destructive && { color: DANGER }]}>{title}</Text>
@@ -206,6 +209,7 @@ export default function SettingsScreen() {
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
   const [switchingAccount, setSwitchingAccount] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
   const { refresh: refreshGameData } = useGameData();
 
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
@@ -270,20 +274,65 @@ export default function SettingsScreen() {
     });
   };
 
-  const handleCheckUpdates = async () => {
+  const probeConnectivity = async (): Promise<boolean> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
     try {
-      const update = await checkForUpdateAsync();
-      if (update.isAvailable) {
-        showDialog({
-          title: 'Update Available',
-          message: 'A new update is available. Downloading now...',
-          actions: [{ label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } }, { label: 'Later', onPress: () => { } }],
-        });
-      } else {
-        showDialog({ title: 'Up to Date', message: 'You are on the latest version.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
-      }
+      const res = await fetch('https://u.expo.dev/', { method: 'HEAD', signal: controller.signal });
+      return res.status > 0;
     } catch {
-      showDialog({ title: 'Update Check Failed', message: 'Could not check for updates. Check your internet connection.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    const variant = (Constants.expoConfig as any)?.extra?.variant;
+    if (variant === 'development' || __DEV__) {
+      showDialog({
+        title: 'Development Build',
+        message: 'Over-the-air updates only apply to release builds. You are running a development build, so updates arrive by installing a new build (EAS or `expo run`) — not through the update channel.',
+        actions: [{ label: 'Got It', primary: true, onPress: () => {} }],
+      });
+      return;
+    }
+
+    setCheckingUpdates(true);
+    try {
+      const online = await probeConnectivity();
+      if (!online) {
+        showDialog({
+          title: 'No Internet Connection',
+          message: 'Could not reach the update server. Check your Wi-Fi or mobile data, then try again.',
+          actions: [{ label: 'OK', primary: true, onPress: () => {} }],
+        });
+        return;
+      }
+
+      try {
+        const update = await checkForUpdateAsync();
+        if (update.isAvailable) {
+          showDialog({
+            title: 'Update Available',
+            message: 'A new update is ready for this channel. Tap Install to download and apply it now — you will return to the app once it is applied.',
+            actions: [
+              { label: 'Later', onPress: () => {} },
+              { label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } },
+            ],
+          });
+        } else {
+          showDialog({ title: "You're Up to Date", message: 'ClashPrime is running the latest available update for this channel.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+        }
+      } catch {
+        showDialog({
+          title: 'Update Check Failed',
+          message: 'The update server was reachable but the check could not complete. This can happen if the update channel is misconfigured or the Expo servers are busy. Please try again in a moment.',
+          actions: [{ label: 'OK', primary: true, onPress: () => {} }],
+        });
+      }
+    } finally {
+      setCheckingUpdates(false);
     }
   };
 
@@ -343,6 +392,63 @@ export default function SettingsScreen() {
     setShowOnboarding(false);
     setOnboardingTag('');
     setOnboardingThLevel('');
+  };
+
+  const openAbout = () => {
+    showContent(
+      'About ClashPrime',
+      (
+        <View>
+          <View style={styles.creditHero}>
+            <View style={styles.creditAvatar}>
+              <Ionicons name="shield" size={26} color={Colors.textPrimary} />
+            </View>
+            <View style={styles.creditHeroText}>
+              <Text style={styles.creditName}>ClashPrime v4.0.0</Text>
+              <Text style={styles.creditHandle}>Premium Clash of Clans companion</Text>
+            </View>
+          </View>
+          <Text style={styles.creditBlurb}>
+            ClashPrime is an unofficial, community-built companion for Clash of Clans. It brings your village progress, war performance and favorite game references together in one clean, fast app — no ads, no clutter, just the data that matters.
+          </Text>
+          <Text style={styles.creditSectionTitle}>What it does</Text>
+          {[
+            { icon: 'trending-up-outline', title: 'Progress Tracking', body: 'Tracks every troop, spell, hero and building against your town hall, with a weighted max-out score so you always know what is next.' },
+            { icon: 'timer-outline', title: 'Pinned Timers', body: 'Set countdowns for upgrades and boosts, with reminders delivered as system notifications.' },
+            { icon: 'flag-outline', title: 'War Center', body: 'Follow the current war, per-member attacks and defenses, plus a searchable war history split into regular wars and CWL.' },
+            { icon: 'git-network-outline', title: 'Base & Army Hub', body: 'Browse community base layouts, armies, super troops, pets and in-game events — all kept up to date.' },
+            { icon: 'swap-horizontal-outline', title: 'Multi-Account', body: 'Switch between several villages with one tap. Each account keeps its own progress, cache and timers.' },
+          ].map((f) => (
+            <View style={styles.aboutFeatureRow} key={f.title}>
+              <Ionicons name={f.icon as any} size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+              <View style={styles.creditSourceText}>
+                <Text style={styles.creditSourceName}>{f.title}</Text>
+                <Text style={styles.creditSourceUse}>{f.body}</Text>
+              </View>
+            </View>
+          ))}
+          <Text style={styles.creditSectionTitle}>Data sources</Text>
+          {DATA_SOURCES.map((s) => (
+            <View style={styles.creditSourceRow} key={s.name}>
+              <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+              <View style={styles.creditSourceText}>
+                <Text style={styles.creditSourceName}>{s.name}</Text>
+                <Text style={styles.creditSourceUse}>{s.use}</Text>
+              </View>
+            </View>
+          ))}
+          <Text style={styles.policyTitle}>Disclaimer</Text>
+          <Text style={styles.policyBody}>
+            ClashPrime is an independent project and is not affiliated with or endorsed by Supercell. Supercell's trademarks and the Clash of Clans brand are used with permission where applicable.
+          </Text>
+        </View>
+      ),
+      [
+        { label: 'Credits', onPress: openCredits },
+        { label: 'View on GitHub', primary: true, onPress: () => openURL('https://github.com/FarhanZafarr-9/ClashPrime') },
+        { label: 'Close' },
+      ],
+    );
   };
 
   const openCredits = () => {
@@ -527,8 +633,8 @@ export default function SettingsScreen() {
               title="API Token"
               desc="Required for API access"
               pillText="Required"
-              pillTopOffset={18}
-              pillRightOffset={-4}
+              pillTopOffset={8}
+              pillRightOffset={-10}
               onPress={handleEditToken}
               children={
                 <>
@@ -624,12 +730,13 @@ export default function SettingsScreen() {
             title="Check for Updates"
             desc="Look for the latest version"
             onPress={handleCheckUpdates}
+            children={checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
           />
           <SettingRow
             icon="information-circle-outline"
             title="About ClashPrime"
-            desc="A premium Clash of Clans companion"
-            onPress={() => showDialog({ title: 'ClashPrime', message: 'A premium Clash of Clans companion app.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] })}
+            desc="What this app does, its features and sources"
+            onPress={openAbout}
             children={
               <>
                 <Text style={styles.settingValue}>v4.0.0</Text>
@@ -876,7 +983,9 @@ const styles = StyleSheet.create({
   settingCard: {
     marginBottom: Spacing.xl,
     marginHorizontal: Spacing.base,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
+    borderRadius: Radius.xl * 1.25,
+    overflow:'hidden'
   },
   settingRowContainer: {
     position: 'relative',
@@ -885,19 +994,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.base,
-    paddingTop: Spacing.base + 2,
-    paddingBottom: Spacing.md,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
   },
   settingBlockDisabled: {
     opacity: 0.5,
   },
   settingRowIcon: {
-    marginRight: 6,
+    marginRight: 4,
+    backgroundColor: Colors.bgCardHover,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   settingTextBlock: {
     flex: 1,
@@ -1176,7 +1288,7 @@ const styles = StyleSheet.create({
   creditAvatar: {
     width: 52,
     height: 52,
-    borderRadius: Radius.full,
+    borderRadius: Radius.md,
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1203,13 +1315,19 @@ const styles = StyleSheet.create({
     ...Typography.callout,
     color: Colors.textPrimary,
     fontWeight: '600',
-    marginTop: Spacing.sm,
+    marginVertical: Spacing.sm,
   },
   creditSourceRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
     marginBottom: Spacing.sm,
+  },
+  aboutFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   creditSourceIcon: {
     marginTop: 2,
