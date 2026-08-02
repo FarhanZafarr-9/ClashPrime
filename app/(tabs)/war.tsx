@@ -13,15 +13,80 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { ClashAPI } from '../../src/api/clash';
+import { ClashAPI, ClashAPIError } from '../../src/api/clash';
 import { getApiToken } from '../../src/hooks/usePlayer';
-import type { ClanWar, WarLogEntry, WarClanDetail, WarMember } from '../../src/types/clash';
+import type { ClanWar, WarLogEntry, WarClanDetail, WarMember, WarState } from '../../src/types/clash';
 import { Card } from '../../src/components/Card';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 
 interface WarScreenData {
   currentWar: ClanWar | null;
   warLog: WarLogEntry[];
+}
+
+interface WarIssue {
+  key: string;
+  title: string;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+interface WarStatusInfo {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bg: string;
+}
+
+const STATUS_CONFIG: Record<WarState, WarStatusInfo> = {
+  preparation: { label: 'Preparation', icon: 'hourglass-outline', color: '#FFB74D', bg: 'rgba(255,183,77,0.12)' },
+  inWar: { label: 'In War', icon: 'flame-outline', color: '#4FC3F7', bg: 'rgba(79,195,247,0.12)' },
+  warEnded: { label: 'War Ended', icon: 'flag-outline', color: '#9E9E9E', bg: 'rgba(158,158,158,0.12)' },
+  notInWar: { label: 'No War', icon: 'flag-outline', color: '#9E9E9E', bg: 'rgba(158,158,158,0.12)' },
+};
+
+function describeWarError(e: unknown, context: 'currentWar' | 'warLog'): { title: string; message: string } {
+  if (e instanceof ClashAPIError) {
+    if (e.status === 403) {
+      if (context === 'warLog') {
+        return {
+          title: 'War log unavailable',
+          message: 'This clan\u2019s war log can\u2019t be read through the API. It may be private or have fewer than 5 wars on record. Current war data is unaffected.',
+        };
+      }
+      return {
+        title: 'Access denied',
+        message: 'The current war can\u2019t be read. Your API token may be invalid or lack permission, or the clan\u2019s war data may be private. Check your token in Settings.',
+      };
+    }
+    if (e.status === 429) return { title: 'Rate limited', message: e.message };
+    if (e.status === 404) return { title: 'Not found', message: e.message };
+    if (e.status === 0) return { title: 'Network error', message: e.message };
+    if (e.status >= 500) return { title: 'API unavailable', message: e.message };
+  }
+  const msg = e instanceof Error ? e.message : String(e ?? 'Unknown error');
+  return { title: 'Something went wrong', message: msg };
+}
+
+function formatDuration(ms: number): string {
+  if (ms <= 0) return '0m';
+  const totalSec = Math.floor(ms / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function formatDateTime(iso: string): string {
+  const d = parseCoCDate(iso);
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function parseCoCDate(str: string): Date {
@@ -158,13 +223,20 @@ export default function WarScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fetchErrors, setFetchErrors] = useState<string[]>([]);
+  const [fetchIssues, setFetchIssues] = useState<WarIssue[]>([]);
   const [warLogView, setWarLogView] = useState<'regular' | 'cwl'>('regular');
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   const clanTag = player?.clan?.tag ?? null;
 
   const regularWars = (data?.warLog || []).filter(e => e.attacksPerMember === 2);
   const cwlWars = (data?.warLog || []).filter(e => e.attacksPerMember === 1);
+  const warLogBlocked = fetchIssues.some(i => i.key === 'warLog');
 
   function groupByMonth(entries: WarLogEntry[]): { key: string; label: string; wars: WarLogEntry[]; wins: number; losses: number; draws: number; totalStars: number }[] {
     const groups: Record<string, WarLogEntry[]> = {};
@@ -192,14 +264,14 @@ export default function WarScreen() {
   const loadWarData = useCallback(async (forceRefresh = false) => {
     try {
       setError(null);
-      setFetchErrors([]);
+      setFetchIssues([]);
       const token = await getApiToken();
       if (!token) {
-        setError('API token not configured. Go to Settings.');
+        setError('API token not configured.');
         return;
       }
       if (!clanTag) {
-        setError('No clan linked. Add a player tag in Settings who is in a clan.');
+        setError('No clan linked.');
         return;
       }
       const api = new ClashAPI(token);
@@ -218,14 +290,26 @@ export default function WarScreen() {
         if (currentWarRes.value.state !== 'notInWar') currentWar = currentWarRes.value;
       }
       if (currentWarRes.status === 'rejected') {
-        setFetchErrors(prev => [...prev, `Current war: ${currentWarRes.reason?.message || 'unknown error'}`]);
+        const desc = describeWarError(currentWarRes.reason, 'currentWar');
+        setFetchIssues(prev => [...prev, {
+          key: 'currentWar',
+          title: desc.title,
+          message: desc.message,
+          severity: currentWarRes.reason instanceof ClashAPIError && currentWarRes.reason.status >= 500 ? 'warning' : 'error',
+        }]);
       }
 
       let warLog: WarLogEntry[] = [];
       if (warLogRes.status === 'fulfilled') {
         warLog = warLogRes.value.items || [];
       } else {
-        setFetchErrors(prev => [...prev, `War history: ${warLogRes.reason?.message || 'unknown error'}`]);
+        const desc = describeWarError(warLogRes.reason, 'warLog');
+        setFetchIssues(prev => [...prev, {
+          key: 'warLog',
+          title: desc.title,
+          message: desc.message,
+          severity: warLogRes.reason instanceof ClashAPIError && warLogRes.reason.status >= 500 ? 'warning' : 'error',
+        }]);
       }
 
       setData({ currentWar, warLog });
@@ -250,6 +334,18 @@ export default function WarScreen() {
   if (loading) return <WarScreenSkeleton />;
 
   if (error && !data) {
+    const isConfigError = error === 'API token not configured.' || error === 'No clan linked.';
+    const configInfo = error === 'API token not configured.'
+      ? {
+        icon: 'key-outline' as const,
+        title: 'API token not configured',
+        message: 'Add your Clash of Clans API token in Settings to view live war data.',
+      }
+      : {
+        icon: 'shield-checkmark-outline' as const,
+        title: 'No clan linked',
+        message: 'Add a player tag in Settings who belongs to a clan to see war data.',
+      };
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -259,8 +355,19 @@ export default function WarScreen() {
           <Text style={styles.subtitle}>Current war & history</Text>
         </View>
         <View style={styles.center}>
-          <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
-          <Text style={styles.errorText}>{error}</Text>
+          {isConfigError ? (
+            <>
+              <Ionicons name={configInfo.icon} size={44} color={Colors.textTertiary} />
+              <Text style={styles.errorTitle}>{configInfo.title}</Text>
+              <Text style={styles.errorText}>{configInfo.message}</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
+              <Text style={styles.errorTitle}>Couldn't load war data</Text>
+              <Text style={styles.errorText}>{error}</Text>
+            </>
+          )}
           <PressableRipple onPress={onRefresh} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
           </PressableRipple>
@@ -295,23 +402,30 @@ export default function WarScreen() {
         }
       >
         {data?.currentWar ? (
-          <CurrentWarSection war={data.currentWar} />
+          <CurrentWarSection war={data.currentWar} now={now} />
         ) : (
           <Card style={styles.noWarCard}>
             <Ionicons name="flag-outline" size={32} color={Colors.textTertiary} />
             <Text style={styles.noWarTitle}>No Active War</Text>
-            <Text style={styles.noWarSub}>Your clan is currently not in a war</Text>
+            <Text style={styles.noWarSub}>Your clan is currently not in a war. Check back when war starts.</Text>
           </Card>
         )}
 
-        {fetchErrors.length > 0 && (
-          <View style={styles.warningBanner}>
-            <Ionicons name="warning-outline" size={14} color={Colors.warning} />
-            <View style={{ flex: 1 }}>
-              {fetchErrors.map((msg, i) => (
-                <Text key={i} style={styles.warningText}>{msg}</Text>
-              ))}
-            </View>
+        {fetchIssues.length > 0 && (
+          <View style={styles.issueList}>
+            {fetchIssues.map((issue) => {
+              const isError = issue.severity === 'error';
+              const accent = isError ? Colors.destructive : Colors.warning;
+              return (
+                <View key={issue.key} style={[styles.issueBanner, isError && styles.issueBannerError]}>
+                  <Ionicons name={isError ? 'alert-circle-outline' : 'warning-outline'} size={16} color={accent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.issueTitle, { color: accent }]}>{issue.title}</Text>
+                    <Text style={styles.issueMessage}>{issue.message}</Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -344,9 +458,13 @@ export default function WarScreen() {
             ))
           ) : (
             <Card style={styles.noWarCard}>
-              <Ionicons name="document-text-outline" size={24} color={Colors.textTertiary} />
-              <Text style={styles.noWarTitle}>No Regular Wars</Text>
-              <Text style={styles.noWarSub}>No regular war history found</Text>
+              <Ionicons name={warLogBlocked ? 'lock-closed-outline' : 'shield-outline'} size={24} color={Colors.textTertiary} />
+              <Text style={styles.noWarTitle}>{warLogBlocked ? 'War log unavailable' : 'No Regular Wars Yet'}</Text>
+              <Text style={styles.noWarSub}>
+                {warLogBlocked
+                  ? 'This clan\u2019s war log is private or has fewer than 5 wars, so it can\u2019t be read through the API.'
+                  : 'Regular wars are 2-attack wars. History will appear here after your first war ends.'}
+              </Text>
             </Card>
           )
         ) : (
@@ -367,9 +485,13 @@ export default function WarScreen() {
             ))
           ) : (
             <Card style={styles.noWarCard}>
-              <Ionicons name="document-text-outline" size={24} color={Colors.textTertiary} />
-              <Text style={styles.noWarTitle}>No CWL Wars</Text>
-              <Text style={styles.noWarSub}>No CWL war history found</Text>
+              <Ionicons name={warLogBlocked ? 'lock-closed-outline' : 'flash-outline'} size={24} color={Colors.textTertiary} />
+              <Text style={styles.noWarTitle}>{warLogBlocked ? 'War log unavailable' : 'No CWL Wars'}</Text>
+              <Text style={styles.noWarSub}>
+                {warLogBlocked
+                  ? 'This clan\u2019s war log is private or has fewer than 5 wars, so CWL history can\u2019t be read through the API.'
+                  : 'Clan War Leagues use 1 attack per day. CWL history will show here once your clan participates.'}
+              </Text>
             </Card>
           )
         )}
@@ -380,32 +502,102 @@ export default function WarScreen() {
   );
 }
 
-function CurrentWarSection({ war }: { war: ClanWar }) {
+function CurrentWarSection({ war, now }: { war: ClanWar; now: number }) {
   const isPreparation = war.state === 'preparation';
+  const isInWar = war.state === 'inWar';
   const isWarEnded = war.state === 'warEnded';
   const opponentNames = new Map(war.opponent.members.map(m => [m.tag, m.name]));
   const clanNames = new Map(war.clan.members.map(m => [m.tag, m.name]));
   const defenderName = (tag: string) => opponentNames.get(tag) ?? clanNames.get(tag) ?? tag;
 
+  const status = STATUS_CONFIG[war.state] ?? STATUS_CONFIG.notInWar;
+  const clanStars = war.clan.stars ?? 0;
+  const oppStars = war.opponent.stars ?? 0;
+
+  let countdown: { icon: keyof typeof Ionicons.glyphMap; text: string } | null = null;
+  if (isPreparation) {
+    const startMs = parseCoCDate(war.startTime).getTime();
+    const left = startMs - now;
+    countdown = left > 0
+      ? { icon: 'hourglass-outline', text: `War starts in ${formatDuration(left)}` }
+      : { icon: 'rocket-outline', text: 'War starting soon…' };
+  } else if (isInWar) {
+    const endMs = parseCoCDate(war.endTime).getTime();
+    const left = endMs - now;
+    countdown = left > 0
+      ? { icon: 'timer-outline', text: `Ends in ${formatDuration(left)}` }
+      : { icon: 'flag-outline', text: 'Finalizing results…' };
+  } else if (isWarEnded) {
+    countdown = { icon: 'calendar-outline', text: `Ended ${formatDateTime(war.endTime)}` };
+  }
+
+  const result = isWarEnded
+    ? clanStars > oppStars
+      ? { label: 'Victory', color: '#4CAF50', bg: 'rgba(76,175,80,0.12)', icon: 'trophy-outline' as const }
+      : oppStars > clanStars
+        ? { label: 'Defeat', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: 'sad-outline' as const }
+        : { label: 'Draw', color: Colors.textSecondary, bg: Colors.bgSubtle, icon: 'hand-left-outline' as const }
+    : null;
+
   return (
     <View>
+      <View style={styles.warStatusRow}>
+        <View style={[styles.statusChip, { backgroundColor: status.bg }]}>
+          <Ionicons name={status.icon} size={12} color={status.color} />
+          <Text style={[styles.statusChipText, { color: status.color }]}>{status.label}</Text>
+        </View>
+        {countdown && (
+          <View style={styles.countdownChip}>
+            <Ionicons name={countdown.icon} size={12} color={Colors.textSecondary} />
+            <Text style={styles.countdownText}>{countdown.text}</Text>
+          </View>
+        )}
+      </View>
+
       <View style={styles.warHeader}>
         <WarClanCard clan={war.clan} align="left" />
         <View style={styles.vsContainer}>
           <Text style={styles.vsLabel}>VS</Text>
           {!isPreparation && (
-            <Text style={styles.vsScore}>{war.clan.stars}</Text>
+            <Text style={[styles.vsScore, clanStars > oppStars && styles.vsScoreWin]}>{war.clan.stars}</Text>
           )}
           <View style={styles.vsDash}>
             <Text style={styles.vsDashText}>—</Text>
           </View>
           {!isPreparation && (
-            <Text style={styles.vsScoreOpp}>{war.opponent.stars}</Text>
+            <Text style={[styles.vsScoreOpp, oppStars > clanStars && styles.vsScoreOppWin]}>{war.opponent.stars}</Text>
           )}
           <Text style={styles.vsTeamSize}>{war.teamSize}v{war.teamSize}</Text>
         </View>
         <WarClanCard clan={war.opponent} align="right" />
       </View>
+
+      {isPreparation && (
+        <Card style={{ marginTop: Spacing.md }}>
+          <View style={styles.center}>
+            <Ionicons name="hourglass-outline" size={24} color={Colors.textTertiary} />
+            <Text style={styles.prepText}>Preparation Day</Text>
+            <Text style={styles.prepSub}>
+              War begins {formatDateTime(war.startTime)} · attacks unlock then
+            </Text>
+          </View>
+        </Card>
+      )}
+
+      {isWarEnded && result && (
+        <View style={[styles.resultBanner, { backgroundColor: result.bg }]}>
+          <Ionicons name={result.icon} size={20} color={result.color} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.resultLabel, { color: result.color }]}>{result.label}</Text>
+            <Text style={styles.resultSub}>
+              {clanStars}★ vs {oppStars}★
+              {war.clan.destructionPercentage != null && war.opponent.destructionPercentage != null
+                ? ` · ${war.clan.destructionPercentage.toFixed(1)}% vs ${war.opponent.destructionPercentage.toFixed(1)}%`
+                : ''}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {!isPreparation && (
         <View style={styles.warTable}>
@@ -416,30 +608,20 @@ function CurrentWarSection({ war }: { war: ClanWar }) {
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt]}>
             <Text style={styles.warTableLabel}>Stars</Text>
-            <Text style={[styles.warTableCell, (war.clan.stars || 0) > (war.opponent.stars || 0) && styles.warTableCellWin]}>{war.clan.stars}</Text>
-            <Text style={[styles.warTableCell, (war.opponent.stars || 0) > (war.clan.stars || 0) && styles.warTableCellWin]}>{war.opponent.stars}</Text>
+            <Text style={[styles.warTableCell, clanStars > oppStars && styles.warTableCellWin]}>{war.clan.stars}</Text>
+            <Text style={[styles.warTableCell, oppStars > clanStars && styles.warTableCellWin]}>{war.opponent.stars}</Text>
           </View>
           <View style={styles.warTableRow}>
             <Text style={styles.warTableLabel}>Destruction</Text>
-            <Text style={styles.warTableCell}>{war.clan.destructionPercentage.toFixed(1)}%</Text>
-            <Text style={styles.warTableCell}>{war.opponent.destructionPercentage.toFixed(1)}%</Text>
+            <Text style={styles.warTableCell}>{war.clan.destructionPercentage != null ? war.clan.destructionPercentage.toFixed(1) : '—'}%</Text>
+            <Text style={styles.warTableCell}>{war.opponent.destructionPercentage != null ? war.opponent.destructionPercentage.toFixed(1) : '—'}%</Text>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt, { borderBottomWidth: 0 }]}>
             <Text style={styles.warTableLabel}>Attacks</Text>
-            <Text style={styles.warTableCell}>{war.clan.attacks}/{war.teamSize * 2}</Text>
-            <Text style={styles.warTableCell}>{war.opponent.attacks}/{war.teamSize * 2}</Text>
+            <Text style={styles.warTableCell}>{war.clan.attacks ?? '—'}/{war.teamSize * 2}</Text>
+            <Text style={styles.warTableCell}>{war.opponent.attacks ?? '—'}/{war.teamSize * 2}</Text>
           </View>
         </View>
-      )}
-
-      {isPreparation && (
-        <Card style={{marginTop: Spacing.md}}>
-          <View style={styles.center}>
-            <Ionicons name="time-outline" size={24} color={Colors.textTertiary} />
-            <Text style={styles.prepText}>Preparation Day</Text>
-            <Text style={styles.prepSub}>War has not started yet</Text>
-          </View>
-        </Card>
       )}
 
       {!isPreparation && (
@@ -692,7 +874,8 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 10,
   },
-  warningBanner: {
+  issueList: { gap: Spacing.sm },
+  issueBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
@@ -700,9 +883,51 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,204,0,0.08)',
     borderRadius: Radius.sm,
     borderWidth: 0.75,
-    borderColor: 'rgba(255,204,0,0.2)',
+    borderColor: 'rgba(255,204,0,0.25)',
   },
-  warningText: { ...Typography.caption, color: Colors.warning, fontSize: 10 },
+  issueBannerError: {
+    backgroundColor: 'rgba(244,67,54,0.08)',
+    borderColor: 'rgba(244,67,54,0.3)',
+  },
+  issueTitle: { ...Typography.caption, fontWeight: '700' },
+  issueMessage: { ...Typography.caption, color: Colors.textSecondary, fontSize: 10, marginTop: 1 },
+
+  warStatusRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.md },
+  statusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  statusChipText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  countdownChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  countdownText: { ...Typography.caption, color: Colors.textSecondary, fontSize: 10 },
+
+  resultBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.sm,
+    marginTop: Spacing.md,
+  },
+  resultLabel: { ...Typography.subhead, fontWeight: '700' },
+  resultSub: { ...Typography.caption, color: Colors.textSecondary, fontSize: 10, marginTop: 1 },
+
+  errorTitle: { ...Typography.title3, color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.xs },
 
   warHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   warClanCard: { flex: 1, alignItems: 'center', gap: Spacing.xs, backgroundColor: Colors.bgCard, borderRadius: Radius.md, padding: Spacing.md, borderWidth: 0.75, borderColor: Colors.border },
@@ -713,7 +938,9 @@ const styles = StyleSheet.create({
   vsContainer: { alignItems: 'center', gap: 1, width: 56 },
   vsLabel: { ...Typography.caption, color: Colors.textMuted, fontWeight: '700', fontSize: 9, letterSpacing: 1 },
   vsScore: { ...Typography.title1, color: Colors.textPrimary, lineHeight: 32 },
+  vsScoreWin: { color: '#4CAF50' },
   vsScoreOpp: { ...Typography.title1, color: Colors.textMuted, lineHeight: 32 },
+  vsScoreOppWin: { color: '#f44336' },
   vsDash: { width: 16, height: 2, borderRadius: 1, backgroundColor: Colors.border },
   vsDashText: { display: 'none' },
   vsTeamSize: { ...Typography.caption, color: Colors.textTertiary, fontSize: 9 },
