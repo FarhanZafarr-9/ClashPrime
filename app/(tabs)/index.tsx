@@ -553,8 +553,11 @@ export default function HomeScreen() {
                     lastTh = item.unlockTh;
                     const elements: React.ReactNode[] = [];
                     if (isNewTh) {
+                      if (i > 0) {
+                        elements.push(<View key={`th-sep-${item.unlockTh}`} style={styles.upgradeGroupSep} />);
+                      }
                       elements.push(
-                        <View key={`th-${item.unlockTh}`} style={[styles.upgradeThSection, i > 0 && styles.upgradeThSectionBorder]}>
+                        <View key={`th-${item.unlockTh}`} style={styles.upgradeThSection}>
                           <Image source={{ uri: thUrl! }} style={styles.upgradeThSectionIcon} resizeMode="contain" />
                           <Text style={styles.upgradeThSectionTitle}>Town Hall {item.unlockTh}</Text>
                         </View>
@@ -625,7 +628,7 @@ export default function HomeScreen() {
                   return visible.flatMap((group, gi) => {
                     const elements: React.ReactNode[] = [];
                     if (gi > 0) {
-                      elements.push(<View key={`rs-sep-${gi}`} style={styles.upgradeThSectionBorder} />);
+                      elements.push(<View key={`rs-sep-${gi}`} style={styles.upgradeGroupSep} />);
                     }
                     elements.push(
                       <View key={`rs-hdr-${group.key}`} style={styles.upgradeThSection}>
@@ -1473,13 +1476,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.base,
     backgroundColor: Colors.bgSubtle,
   },
-  upgradeThSectionBorder: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+  upgradeGroupSep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.border,
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.sm,
   },
   upgradeThSectionIcon: {
     width: 18,
@@ -1487,10 +1492,10 @@ const styles = StyleSheet.create({
   },
   upgradeThSectionTitle: {
     ...Typography.caption,
-    color: Colors.textTertiary,
-    fontWeight: '600',
+    color: Colors.textSecondary,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   upgradeCostPill: {
     alignItems: 'flex-end',
