@@ -125,7 +125,7 @@ function SettingRow({
           <View style={styles.settingRowIcon}>
             <Ionicons
               name={icon as any}
-              size={18}
+              size={15}
               color={destructive ? DANGER : colors.textPrimary}
 
             />
@@ -209,6 +209,7 @@ export default function SettingsScreen() {
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
   const [switchingAccount, setSwitchingAccount] = useState(false);
+  const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const { refresh: refreshGameData } = useGameData();
 
@@ -575,57 +576,22 @@ export default function SettingsScreen() {
               />
             </>
           ) : (
-            accounts.map((acct) => {
-              const isActive = acct.tag === activeAccount?.tag;
-              return (
-                <SettingRow
-                  key={acct.tag}
-                  icon={switchingAccount && isActive ? 'ellipsis-horizontal' : isActive ? 'checkmark' : 'person-outline'}
-                  title={acct.name}
-                  desc={acct.tag}
-                  onPress={async () => {
-                    if (isActive || switchingAccount) return;
-                    await handleSwitchAccount(acct.tag);
-                  }}
-                  onLongPress={async () => {
-                    if (accounts.length <= 1) {
-                      showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
-                      return;
-                    }
-                    showDialog({
-                      title: 'Remove Account',
-                      message: `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
-                      actions: [
-                        { label: 'Cancel', onPress: () => {} },
-                        { label: 'Remove', primary: true, destructive: true, onPress: async () => {
-                          await removeAccount(acct.tag);
-                          await refreshAccounts();
-                          if (isActive) {
-                            const remaining = await getAccounts();
-                            if (remaining.length > 0) {
-                              await handleSwitchAccount(remaining[0].tag);
-                            }
-                          }
-                        }},
-                      ],
-                    });
-                  }}
-                  children={
-                    <>
-                      {switchingAccount && isActive ? (
-                        <ActivityIndicator size="small" color={Colors.textSecondary} />
-                      ) : null}
-                      {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
-                        <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
-                      ) : acct.townHallLevel > 0 ? (
-                        <Text style={styles.settingValue}>TH{acct.townHallLevel}</Text>
-                      ) : null}
-                      {!isActive && <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />}
-                    </>
-                  }
-                />
-              );
-            })
+            <SettingRow
+              icon={switchingAccount ? 'ellipsis-horizontal' : 'people-outline'}
+              title={activeAccount?.name || 'Accounts'}
+              desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} · ${activeAccount?.tag || ''}`}
+              onPress={() => setSwitchModalVisible(true)}
+              children={
+                <>
+                  {switchingAccount ? (
+                    <ActivityIndicator size="small" color={Colors.textSecondary} />
+                  ) : activeAccount && activeAccount.townHallLevel > 0 && getTownHallImageUrl(activeAccount.townHallLevel) ? (
+                    <Image source={{ uri: getTownHallImageUrl(activeAccount.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
+                  ) : null}
+                  <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+                </>
+              }
+            />
           )}
           {accounts.length > 0 && (
             <SettingRow
@@ -949,6 +915,104 @@ export default function SettingsScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      <Modal visible={switchModalVisible} transparent animationType="fade" onRequestClose={() => setSwitchModalVisible(false)} statusBarTranslucent>
+        <PressableRipple style={styles.switchOverlay} onPress={() => setSwitchModalVisible(false)}>
+          <View style={styles.switchCard}>
+            <View style={styles.switchHeader}>
+              <View style={styles.switchHeaderIcon}>
+                <Ionicons name="people" size={18} color={Colors.textPrimary} />
+              </View>
+              <View style={styles.switchHeaderText}>
+                <Text style={styles.switchTitle}>Accounts</Text>
+                <Text style={styles.switchSubtitle}>Tap to switch · hold to remove</Text>
+              </View>
+            </View>
+
+            {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
+
+            {accounts.map((acct) => {
+              const isActive = acct.tag === activeAccount?.tag;
+              return (
+                <PressableRipple
+                  key={acct.tag}
+                  style={[styles.switchItem, isActive && styles.switchItemActive]}
+                  onPress={async () => {
+                    if (isActive || switchingAccount) return;
+                    setSwitchModalVisible(false);
+                    await handleSwitchAccount(acct.tag);
+                  }}
+                  onLongPress={() => {
+                    if (accounts.length <= 1) {
+                      showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+                      return;
+                    }
+                    showDialog({
+                      title: 'Remove Account',
+                      message: `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
+                      actions: [
+                        { label: 'Cancel', onPress: () => {} },
+                        { label: 'Remove', primary: true, destructive: true, onPress: async () => {
+                          await removeAccount(acct.tag);
+                          await refreshAccounts();
+                          if (isActive) {
+                            const remaining = await getAccounts();
+                            if (remaining.length > 0) {
+                              await handleSwitchAccount(remaining[0].tag);
+                            }
+                          }
+                        }},
+                      ],
+                    });
+                  }}
+                >
+                  <View style={styles.switchAvatar}>
+                    {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
+                      <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.switchAvatarImg} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="person" size={18} color={Colors.textSecondary} />
+                    )}
+                  </View>
+                  <View style={styles.switchItemText}>
+                    <View style={styles.switchItemNameRow}>
+                      <Text style={styles.switchItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
+                      {isActive && (
+                        <View style={styles.switchActiveChip}>
+                          <Text style={styles.switchActiveChipText}>Active</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.switchItemTag}>{acct.tag}</Text>
+                  </View>
+                  {acct.townHallLevel > 0 && (
+                    <View style={[styles.switchThBox, isActive && styles.switchThBoxActive]}>
+                      <Text style={[styles.switchThBoxLevel, isActive && styles.switchThBoxLevelActive]}>{acct.townHallLevel}</Text>
+                      <Text style={[styles.switchThBoxLabel, isActive && styles.switchThBoxLabelActive]}>TH</Text>
+                    </View>
+                  )}
+                </PressableRipple>
+              );
+            })}
+
+            <PressableRipple
+              style={styles.switchAdd}
+              onPress={() => {
+                setSwitchModalVisible(false);
+                setOnboardingTag('');
+                setOnboardingThLevel('');
+                setShowOnboarding(true);
+              }}
+            >
+              <Ionicons name="add-circle-outline" size={18} color={Colors.textSecondary} />
+              <Text style={styles.switchAddText}>Add Account</Text>
+            </PressableRipple>
+
+            <PressableRipple style={styles.switchClose} onPress={() => setSwitchModalVisible(false)}>
+              <Text style={styles.switchCloseText}>Close</Text>
+            </PressableRipple>
+          </View>
+        </PressableRipple>
+      </Modal>
+
       <Dialog />
     </SafeAreaView>
   );
@@ -1056,6 +1120,184 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginLeft: Spacing.sm,
+  },
+  switchOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  switchCard: {
+    width: '86%',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+    gap: Spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  switchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  switchHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchHeaderText: {
+    flex: 1,
+  },
+  switchTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+    lineHeight: 22,
+  },
+  switchSubtitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  switchEmpty: {
+    ...Typography.subhead,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  switchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  switchItemActive: {
+    backgroundColor: Colors.accentGhost,
+  },
+  switchAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  switchAvatarImg: {
+    width: 34,
+    height: 34,
+  },
+  switchItemText: {
+    flex: 1,
+  },
+  switchItemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  switchItemName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  switchItemTag: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: 1,
+  },
+  switchActiveChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.textPrimary,
+  },
+  switchActiveChipText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: Colors.bg,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  switchThBox: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchThBoxActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  switchThBoxLevel: {
+    ...Typography.headline,
+    color: Colors.textSecondary,
+    fontSize: 15,
+    lineHeight: 16,
+    fontWeight: '700',
+  },
+  switchThBoxLevelActive: {
+    color: Colors.bg,
+  },
+  switchThBoxLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 8,
+    lineHeight: 9,
+    fontWeight: '600',
+  },
+  switchThBoxLabelActive: {
+    color: Colors.bg,
+    opacity: 0.7,
+  },
+  switchAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+  },
+  switchAddText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  switchClose: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  switchCloseText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   footer: {
     alignItems: 'center',
@@ -1302,6 +1544,7 @@ const styles = StyleSheet.create({
   },
   creditHandle: {
     ...Typography.subhead,
+    marginTop: Spacing.md,
     color: Colors.textTertiary,
   },
   creditBlurb: {
