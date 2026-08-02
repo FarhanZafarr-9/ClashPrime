@@ -1056,6 +1056,7 @@ export default function SettingsScreen() {
       <DiscountModal
         visible={discountModalScope !== null}
         onClose={() => setDiscountModalScope(null)}
+        scope={discountModalScope ?? 'buildings'}
         buildings={discounts.buildings}
         army={discounts.army}
         onBuildingCostChange={setBuildingCost}

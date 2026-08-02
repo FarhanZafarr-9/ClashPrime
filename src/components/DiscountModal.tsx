@@ -15,6 +15,7 @@ import type { ScopeDiscount } from '../hooks/useDiscounts';
 interface DiscountModalProps {
   visible: boolean;
   onClose: () => void;
+  scope: 'buildings' | 'army';
   buildings: ScopeDiscount;
   army: ScopeDiscount;
   onBuildingCostChange: (pct: number) => void;
@@ -108,38 +109,18 @@ function DiscountSlider({
 }
 
 function DiscountSection({
-  title,
-  icon,
   cost,
   time,
   onCostChange,
   onTimeChange,
 }: {
-  title: string;
-  icon: string;
   cost: number;
   time: number;
   onCostChange: (pct: number) => void;
   onTimeChange: (pct: number) => void;
 }) {
-  const anyActive = cost > 0 || time > 0;
-
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionIcon}>
-          <Ionicons name={icon as any} size={16} color={Colors.textPrimary} />
-        </View>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <View style={[styles.sectionChip, !anyActive && styles.sectionChipOff]}>
-          <Text style={[styles.sectionChipText, !anyActive && styles.sectionChipTextOff]}>
-            {anyActive
-              ? `${cost > 0 ? `-${cost}% cost` : 'cost off'} · ${time > 0 ? `-${time}% time` : 'time off'}`
-              : 'Off'}
-          </Text>
-        </View>
-      </View>
-
       <DiscountSlider label="Cost Reduction" icon="cash-outline" value={cost} onChange={onCostChange} />
       <View style={styles.divider} />
       <DiscountSlider label="Time Reduction" icon="time-outline" value={time} onChange={onTimeChange} />
@@ -150,6 +131,7 @@ function DiscountSection({
 export default function DiscountModal({
   visible,
   onClose,
+  scope,
   buildings,
   army,
   onBuildingCostChange,
@@ -158,6 +140,7 @@ export default function DiscountModal({
   onArmyTimeChange,
   onReset,
 }: DiscountModalProps) {
+  const isBuildings = scope === 'buildings';
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
@@ -169,8 +152,10 @@ export default function DiscountModal({
                 <Ionicons name="pricetag-outline" size={18} color={Colors.textPrimary} />
               </View>
               <View>
-                <Text style={styles.cardTitle}>Discounts</Text>
-                <Text style={styles.cardSubtitle}>Apply % reductions to upgrade costs & times</Text>
+                <Text style={styles.cardTitle}>{isBuildings ? 'Building Discounts' : 'Army Discounts'}</Text>
+                <Text style={styles.cardSubtitle}>
+                  {isBuildings ? 'Applies to building costs & build times' : 'Applies to research costs & upgrade times'}
+                </Text>
               </View>
             </View>
             <PressableRipple onPress={onClose} hitSlop={8} style={styles.closeBtn}>
@@ -179,23 +164,21 @@ export default function DiscountModal({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-            <DiscountSection
-              title="Buildings"
-              icon="business-outline"
-              cost={buildings.costPercent}
-              time={buildings.timePercent}
-              onCostChange={onBuildingCostChange}
-              onTimeChange={onBuildingTimeChange}
-            />
-            <View style={styles.sectionGap} />
-            <DiscountSection
-              title="Army"
-              icon="shield-half-outline"
-              cost={army.costPercent}
-              time={army.timePercent}
-              onCostChange={onArmyCostChange}
-              onTimeChange={onArmyTimeChange}
-            />
+            {isBuildings ? (
+              <DiscountSection
+                cost={buildings.costPercent}
+                time={buildings.timePercent}
+                onCostChange={onBuildingCostChange}
+                onTimeChange={onBuildingTimeChange}
+              />
+            ) : (
+              <DiscountSection
+                cost={army.costPercent}
+                time={army.timePercent}
+                onCostChange={onArmyCostChange}
+                onTimeChange={onArmyTimeChange}
+              />
+            )}
           </ScrollView>
 
           <PressableRipple style={styles.resetBtn} onPress={onReset}>
@@ -277,51 +260,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: Spacing.sm,
-  },
-  sectionGap: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  sectionIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionTitle: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  sectionChip: {
-    marginLeft: 'auto',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.textPrimary,
-  },
-  sectionChipOff: {
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  sectionChipText: {
-    ...Typography.caption,
-    color: Colors.bg,
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  sectionChipTextOff: {
-    color: Colors.textMuted,
   },
   sliderSection: {
     gap: Spacing.sm,
