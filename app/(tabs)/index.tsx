@@ -28,6 +28,7 @@ import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
+import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
@@ -47,6 +48,8 @@ export default function HomeScreen() {
   const [timerMinutes, setTimerMinutes] = useState(30);
   const [addingTimer, setAddingTimer] = useState(false);
   const [showBH, setShowBH] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(true);
+  const [labelsOpen, setLabelsOpen] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -64,7 +67,7 @@ export default function HomeScreen() {
           title: 'Exit ClashPrime?',
           message: 'Are you sure you want to close the app?',
           actions: [
-            { label: 'Cancel', onPress: () => {} },
+            { label: 'Cancel', onPress: () => { } },
             { label: 'Exit', primary: true, destructive: true, onPress: () => BackHandler.exitApp() },
           ],
         });
@@ -292,38 +295,38 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.textSecondary}
-            colors={[Colors.textSecondary]}
-            progressBackgroundColor={Colors.bgCard}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <View style={styles.headerTitleRow}>
-            <Text style={styles.greeting}>ClashPrime</Text>
-            <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
-              <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
-            </PressableRipple>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.textSecondary}
+              colors={[Colors.textSecondary]}
+              progressBackgroundColor={Colors.bgCard}
+            />
+          }
+        >
+          <View style={styles.header}>
+            <View style={styles.headerTitleRow}>
+              <Text style={styles.greeting}>ClashPrime</Text>
+              <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
+                <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
+              </PressableRipple>
+            </View>
+            <Text style={styles.timestamp}>
+              {lastSync
+                ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : 'The Prime Clash experience, like never before'}
+            </Text>
           </View>
-          <Text style={styles.timestamp}>
-            {lastSync
-              ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : 'The Prime Clash experience, like never before'}
-          </Text>
-        </View>
 
-        <Card style={styles.playerCard}>
-          <View style={styles.playerCardInner}>
-            <View style={styles.playerRow}>
-              <View style={styles.avatar}>
-                {showBH
-                  ? (() => {
+          <Card style={styles.playerCard}>
+            <View style={styles.playerCardInner}>
+              <View style={styles.playerRow}>
+                <View style={styles.avatar}>
+                  {showBH
+                    ? (() => {
                       const bhSrc = getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1);
                       return bhSrc ? (
                         <Image source={bhSrc} style={styles.avatarImage} resizeMode="contain" />
@@ -331,399 +334,469 @@ export default function HomeScreen() {
                         <Text style={styles.avatarText}>BH</Text>
                       );
                     })()
-                  : getTownHallImageUrl(player.townHallLevel) ? (
-                    <Image
-                      source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
-                      style={styles.avatarImage}
-                      resizeMode="contain"
-                    />
+                    : getTownHallImageUrl(player.townHallLevel) ? (
+                      <Image
+                        source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
+                        style={styles.avatarImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
+                    )}
+                </View>
+                <View style={styles.playerInfo}>
+                  <Text style={styles.playerName}>{player.name}</Text>
+                  <Text style={styles.playerTag}>{player.tag}</Text>
+                  <View style={styles.playerMeta}>
+                    {player.clan && (
+                      <View style={styles.metaItem}>
+                        <Text style={styles.metaText}>{player.clan.name}</Text>
+                        {player.clan.badgeUrls?.small ? (
+                          <Image source={{ uri: player.clan.badgeUrls.small }} style={styles.metaBadge} resizeMode="contain" />
+                        ) : null}
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.thBadge}>
+                  <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
+                  <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
+                </View>
+              </View>
+              <PressableRipple style={styles.collapseRow} onPress={() => setStatsOpen((v) => !v)}>
+                <View style={styles.collapseRowIcon}>
+                  <Ionicons name="stats-chart" size={16} color={Colors.textSecondary} />
+                </View>
+                <View style={styles.collapseRowText}>
+                  <Text style={styles.collapseRowTitle}>Stats</Text>
+                  <Text style={styles.collapseRowSub}>{showBH ? 'Builder Base' : 'Home Village'}</Text>
+                </View>
+                <Ionicons name={statsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
+              </PressableRipple>
+              {statsOpen && (
+                <View style={styles.statsGrid}>
+                  {showBH ? (
+                    <>
+                      <View style={styles.statCell}>
+                        <Image source={getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1)} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue}>BH{player.builderHallLevel ?? 1}</Text>
+                          <Text style={styles.statCellLabel}>Builder Hall</Text>
+                        </View>
+                      </View>
+                      <View style={styles.statCell}>
+                        <Image source={STAT_ICONS.exp} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue}>{player.expLevel}</Text>
+                          <Text style={styles.statCellLabel}>Exp Level</Text>
+                        </View>
+                      </View>
+                      <View style={styles.statCell}>
+                        <Image source={STAT_ICONS.bhTrophies} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue}>{player.builderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
+                          <Text style={styles.statCellLabel}>Trophies</Text>
+                        </View>
+                      </View>
+                      <View style={styles.statCell}>
+                        <Image source={STAT_ICONS.bhBestTrophies} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={[styles.statCellValue, { color: Colors.warning }]}>{player.bestBuilderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
+                          <Text style={styles.statCellLabel}>Best</Text>
+                        </View>
+                      </View>
+                    </>
                   ) : (
-                    <Text style={styles.avatarText}>{player.name.charAt(0)}</Text>
-                  )}
-              </View>
-              <View style={styles.playerInfo}>
-                <Text style={styles.playerName}>{player.name}</Text>
-                <Text style={styles.playerTag}>{player.tag}</Text>
-                <View style={styles.playerMeta}>
-                  {player.clan && (
-                    <View style={styles.metaItem}>
-                      <Text style={styles.metaText}>{player.clan.name}</Text>
-                      <Text style={styles.metaDot}>·</Text>
-                      <Text style={styles.metaText}>Lv.{player.clan.clanLevel}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-              <View style={styles.thBadge}>
-                <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
-                <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
-              </View>
-            </View>
-            <View style={styles.playerStatsRow}>
-              {showBH ? (
-                <>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="hammer-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>{player.builderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
-                  </View>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="hammer" size={14} color={Colors.warning} />
-                    <Text style={[styles.miniStatValue, { color: Colors.warning }]}>{player.bestBuilderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
-                  </View>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>{player.expLevel}</Text>
-                  </View>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="home-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>BH{player.builderHallLevel ?? 1}</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="trophy-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>{player.bestTrophies.toLocaleString()}</Text>
-                  </View>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="star-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>{player.warStars.toLocaleString()}</Text>
-                  </View>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="shield-checkmark-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>{player.expLevel}</Text>
-                  </View>
-                  <View style={styles.miniStat}>
-                    <Ionicons name="arrow-up-outline" size={14} color={Colors.textTertiary} />
-                    <Text style={styles.miniStatValue}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
-                  </View>
-                </>
-              )}
-            </View>
-            <PressableRipple onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
-              <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
-            </PressableRipple>
-          </View>
-        </Card>
-
-        <View style={styles.sectionLabel}>
-          <Text style={styles.sectionTitle}>Progress Overview</Text>
-        </View>
-
-        <View style={styles.progressGrid}>
-          <ProgressSummaryCard
-            category="Heroes"
-            progress={heroesProgress}
-            lockedMessage={allHeroesAtTH.length === 0 ? 'Unlocks at TH7' : undefined}
-            items={allHeroesAtTH.map((h) => {
-              const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
-              return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel };
-            })}
-            onPress={() => router.push('/(tabs)/army?tab=heroes')}
-          />
-          <ProgressSummaryCard
-            category="Troops"
-            progress={troopsProgress}
-            items={allTroopsAtTH.map((t) => {
-              const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
-              return { name: t.name, level: owned?.level ?? 0, maxLevel: t.maxLevel };
-            })}
-            onPress={() => router.push('/(tabs)/army?tab=troops')}
-          />
-          <ProgressSummaryCard
-            category="Spells"
-            progress={spellsProgress}
-            lockedMessage={allSpellsAtTH.length === 0 ? 'Unlocks at TH5' : undefined}
-            items={allSpellsAtTH.map((s) => {
-              const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
-              return { name: s.name, level: owned?.level ?? 0, maxLevel: s.maxLevel };
-            })}
-            onPress={() => router.push('/(tabs)/army?tab=spells')}
-          />
-          <ProgressSummaryCard
-            category="Equipment"
-            progress={equipProgress}
-            lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH15' : undefined}
-            items={player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
-              name: e.name,
-              level: e.level,
-              maxLevel: e.maxLevel,
-            }))}
-            onPress={() => router.push('/(tabs)/army?tab=equipment')}
-          />
-        </View>
-
-        {unlockableItems.length > 0 && (
-          <>
-            <View style={styles.sectionLabel}>
-              <Text style={styles.sectionTitle}>Available Upgrades</Text>
-            </View>
-            <View style={styles.upgradeCard}>
-              <PressableRipple style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
-                <View style={styles.upgradeHeaderLeft}>
-                  <Ionicons name="ban-outline" size={16} color="#FF3B30" />
-                  <Text style={styles.upgradeHeaderText}>{unlockableItems.length} locked</Text>
-                  {loadingCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
-                  {!loadingCosts && upgradeCosts && aggregateCost > 0 && (
-                    <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateCost)}{aggregateTime > 0 ? ` · ${fmtTime(aggregateTime)}` : ''}</Text>
-                  )}
-                </View>
-                <Ionicons name={upgradesOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
-              </PressableRipple>
-              {upgradesOpen && (() => {
-                let lastTh = -1;
-                return unlockableItems.flatMap((item, i) => {
-                  const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name);
-                  const thUrl = getTownHallImageUrl(item.unlockTh);
-                  const levelsAtTH = getMaxLevelAtTH(item.name, th);
-                  const isNewTh = item.unlockTh !== lastTh;
-                  lastTh = item.unlockTh;
-                  const elements: React.ReactNode[] = [];
-                  if (isNewTh) {
-                    elements.push(
-                      <View key={`th-${item.unlockTh}`} style={[styles.upgradeThSection, i > 0 && styles.upgradeThSectionBorder]}>
-                        <Image source={{ uri: thUrl! }} style={styles.upgradeThSectionIcon} resizeMode="contain" />
-                        <Text style={styles.upgradeThSectionTitle}>Town Hall {item.unlockTh}</Text>
-                      </View>
-                    );
-                  }
-                  const itemCost = upgradeCosts?.[item.name];
-                  elements.push(
-                    <View key={item.name} style={[styles.upgradeRow, i < unlockableItems.length - 1 && styles.upgradeRowBorder]}>
-                      <View style={styles.upgradeIconWrap}>
-                        {imageUrl ? (
-                          <Image source={{ uri: imageUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                    <>
+                      <View style={styles.statCell}>
+                        {player.leagueTier?.iconUrls?.small ? (
+                          <Image source={{ uri: player.leagueTier.iconUrls.small }} style={styles.statCellLeagueImage} resizeMode="contain" />
                         ) : (
-                          <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
+                          <Ionicons name="arrow-up-outline" size={20} color={Colors.textSecondary} />
                         )}
-                      </View>
-                      <View style={styles.upgradeInfo}>
-                        <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
-                        <Text style={styles.upgradeHint}>{levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'} at TH{th}</Text>
-                      </View>
-                      {itemCost ? (
-                        <View style={styles.upgradeCostPill}>
-                          <Text style={styles.upgradeCostText}>{fmtCost(itemCost.cost)}</Text>
-                          {itemCost.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue} numberOfLines={1}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
+                          <Text style={styles.statCellLabel}>League</Text>
                         </View>
-                      ) : loadingCosts ? (
-                        <View style={styles.upgradeCostPill}>
-                          <Text style={styles.upgradeCostText}>…</Text>
+                      </View>
+                      <View style={styles.statCell}>
+                        <Image source={STAT_ICONS.exp} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue}>{player.expLevel}</Text>
+                          <Text style={styles.statCellLabel}>Exp Level</Text>
                         </View>
-                      ) : null}
-                    </View>
-                  );
-                  return elements;
-                });
-              })()}
-            </View>
-          </>
-        )}
-
-        {rushedItems.length > 0 && (
-          <>
-            <View style={styles.sectionLabel}>
-              <Text style={styles.sectionTitle}>Rushed</Text>
-            </View>
-            <View style={styles.upgradeCard}>
-              <PressableRipple style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
-                <View style={styles.upgradeHeaderLeft}>
-                  <Ionicons name="warning-outline" size={16} color={Colors.warning} />
-                  <Text style={styles.upgradeHeaderText}>{rushedItems.length} rushed</Text>
-                  {loadingRushedCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
-                  {!loadingRushedCosts && rushedCosts && aggregateRushedCost > 0 && (
-                    <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateRushedCost)}{aggregateRushedTime > 0 ? ` · ${fmtTime(aggregateRushedTime)}` : ''}</Text>
+                      </View>
+                      <View style={styles.statCell}>
+                        <Image source={STAT_ICONS.bestTrophies} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue}>{player.bestTrophies.toLocaleString()}</Text>
+                          <Text style={styles.statCellLabel}>Best Trophies</Text>
+                        </View>
+                      </View>
+                      <View style={styles.statCell}>
+                        <Image source={STAT_ICONS.warStars} style={styles.statCellIcon} resizeMode="contain" />
+                        <View style={styles.statCellText}>
+                          <Text style={styles.statCellValue}>{player.warStars.toLocaleString()}</Text>
+                          <Text style={styles.statCellLabel}>War Stars</Text>
+                        </View>
+                      </View>
+                    </>
                   )}
                 </View>
-                <Ionicons name={rushedOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
-              </PressableRipple>
-              {rushedOpen && (() => {
-                const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
-                  { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
-                  { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
-                  { label: 'Spells', key: 'spell', icon: { set: 'ion', name: 'flask-outline' }, items: [] },
-                  { label: 'Equipment', key: 'equipment', icon: { set: 'ion', name: 'trophy-outline' }, items: [] },
-                ];
-                for (const item of rushedItems) {
-                  const g = groups.find((g) => g.key === item.type);
-                  if (g) g.items.push(item);
-                }
-                const visible = groups.filter((g) => g.items.length > 0);
-                return visible.flatMap((group, gi) => {
-                  const elements: React.ReactNode[] = [];
-                  if (gi > 0) {
-                    elements.push(<View key={`rs-sep-${gi}`} style={styles.upgradeThSectionBorder} />);
-                  }
-                  elements.push(
-                    <View key={`rs-hdr-${group.key}`} style={styles.upgradeThSection}>
-                      {group.icon.set === 'mc' ? (
-                        <MaterialCommunityIcons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
-                      ) : (
-                        <Ionicons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
-                      )}
-                      <Text style={styles.upgradeThSectionTitle}>{group.label} ({group.items.length})</Text>
+              )}
+
+              {!showBH && player.labels?.length > 0 && (
+                <PressableRipple style={styles.collapseRow} onPress={() => setLabelsOpen((v) => !v)}>
+                  <View style={styles.collapseRowIcon}>
+                    <Ionicons name="pricetags-outline" size={16} color={Colors.textSecondary} />
+                  </View>
+                  <View style={styles.collapseRowText}>
+                    <Text style={styles.collapseRowTitle}>Labels</Text>
+                    <Text style={styles.collapseRowSub}>{player.labels.length} {player.labels.length === 1 ? 'label' : 'labels'}</Text>
+                  </View>
+                  <Ionicons name={labelsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
+                </PressableRipple>
+              )}
+              {!showBH && labelsOpen && player.labels?.length > 0 && (
+                <View style={styles.statsGrid}>
+                  {player.labels.map((l) => (
+                    <View key={l.id} style={styles.statCell}>
+                      {l.iconUrls?.small ? (
+                        <Image source={{ uri: l.iconUrls.small }} style={styles.statCellLabelImage} resizeMode="contain" />
+                      ) : null}
+                      <View style={styles.statCellText}>
+                        <Text style={styles.statCellLabel}>{l.name}</Text>
+                      </View>
                     </View>
-                  );
-                  group.items.forEach((item, i) => {
-                    const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name);
-                    const costData = rushedCosts?.[item.name];
+                  ))}
+                </View>
+              )}
+
+              <PressableRipple onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
+                <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
+              </PressableRipple>
+            </View>
+          </Card>
+
+          <View style={styles.sectionLabel}>
+            <Text style={styles.sectionTitle}>Progress Overview</Text>
+          </View>
+
+          <View style={styles.progressGrid}>
+            <ProgressSummaryCard
+              category="Heroes"
+              progress={heroesProgress}
+              lockedMessage={allHeroesAtTH.length === 0 ? 'Unlocks at TH7' : undefined}
+              items={allHeroesAtTH.map((h) => {
+                const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
+                return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel };
+              })}
+              onPress={() => router.push('/(tabs)/army?tab=heroes')}
+            />
+            <ProgressSummaryCard
+              category="Troops"
+              progress={troopsProgress}
+              items={allTroopsAtTH.map((t) => {
+                const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
+                return { name: t.name, level: owned?.level ?? 0, maxLevel: t.maxLevel };
+              })}
+              onPress={() => router.push('/(tabs)/army?tab=troops')}
+            />
+            <ProgressSummaryCard
+              category="Spells"
+              progress={spellsProgress}
+              lockedMessage={allSpellsAtTH.length === 0 ? 'Unlocks at TH5' : undefined}
+              items={allSpellsAtTH.map((s) => {
+                const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
+                return { name: s.name, level: owned?.level ?? 0, maxLevel: s.maxLevel };
+              })}
+              onPress={() => router.push('/(tabs)/army?tab=spells')}
+            />
+            <ProgressSummaryCard
+              category="Equipment"
+              progress={equipProgress}
+              iconUri="https://www.clash.ninja/images/entities/171.png"
+              lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH15' : undefined}
+              items={player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
+                name: e.name,
+                level: e.level,
+                maxLevel: e.maxLevel,
+              }))}
+              onPress={() => router.push('/(tabs)/army?tab=equipment')}
+            />
+          </View>
+
+          {unlockableItems.length > 0 && (
+            <>
+              <View style={styles.sectionLabel}>
+                <Text style={styles.sectionTitle}>Available Upgrades</Text>
+              </View>
+              <View style={styles.upgradeCard}>
+                <PressableRipple style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
+                  <View style={styles.upgradeHeaderLeft}>
+                    <Ionicons name="ban-outline" size={16} color="#FF3B30" />
+                    <Text style={styles.upgradeHeaderText}>{unlockableItems.length} locked</Text>
+                    {loadingCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
+                    {!loadingCosts && upgradeCosts && aggregateCost > 0 && (
+                      <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateCost)}{aggregateTime > 0 ? ` · ${fmtTime(aggregateTime)}` : ''}</Text>
+                    )}
+                  </View>
+                  <Ionicons name={upgradesOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
+                </PressableRipple>
+                {upgradesOpen && (() => {
+                  let lastTh = -1;
+                  return unlockableItems.flatMap((item, i) => {
+                    const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name);
+                    const thUrl = getTownHallImageUrl(item.unlockTh);
+                    const levelsAtTH = getMaxLevelAtTH(item.name, th);
+                    const isNewTh = item.unlockTh !== lastTh;
+                    lastTh = item.unlockTh;
+                    const elements: React.ReactNode[] = [];
+                    if (isNewTh) {
+                      elements.push(
+                        <View key={`th-${item.unlockTh}`} style={[styles.upgradeThSection, i > 0 && styles.upgradeThSectionBorder]}>
+                          <Image source={{ uri: thUrl! }} style={styles.upgradeThSectionIcon} resizeMode="contain" />
+                          <Text style={styles.upgradeThSectionTitle}>Town Hall {item.unlockTh}</Text>
+                        </View>
+                      );
+                    }
+                    const itemCost = upgradeCosts?.[item.name];
                     elements.push(
-                      <View key={item.name} style={[styles.upgradeRow, i < group.items.length - 1 && styles.upgradeRowBorder]}>
+                      <View key={item.name} style={[styles.upgradeRow, i < unlockableItems.length - 1 && styles.upgradeRowBorder]}>
                         <View style={styles.upgradeIconWrap}>
-                          {iconUrl ? (
-                            <Image source={{ uri: iconUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                          {imageUrl ? (
+                            <Image source={{ uri: imageUrl }} style={styles.upgradeIcon} resizeMode="contain" />
                           ) : (
-                            <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
+                            <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
                           )}
                         </View>
                         <View style={styles.upgradeInfo}>
                           <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
-                          <View style={styles.upgradeHintRow}>
-                            <Text style={styles.upgradeHint}>Lv{item.currentLevel}</Text>
-                            <Ionicons name="arrow-forward" size={10} color={Colors.textTertiary} style={{ marginHorizontal: 2 }} />
-                            <Text style={styles.upgradeHint}>Lv{item.maxLevelAtPrevTH}</Text>
-                          </View>
+                          <Text style={styles.upgradeHint}>{levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'} at TH{th}</Text>
                         </View>
-                        {costData ? (
+                        {itemCost ? (
                           <View style={styles.upgradeCostPill}>
-                            <Text style={styles.upgradeCostText}>{fmtCost(costData.cost)}</Text>
-                            {costData.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(costData.timeSeconds)}</Text>}
+                            <Text style={styles.upgradeCostText}>{fmtCost(itemCost.cost)}</Text>
+                            {itemCost.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
                           </View>
-                        ) : loadingRushedCosts ? (
+                        ) : loadingCosts ? (
                           <View style={styles.upgradeCostPill}>
                             <Text style={styles.upgradeCostText}>…</Text>
                           </View>
                         ) : null}
                       </View>
                     );
+                    return elements;
                   });
-                  return elements;
-                });
-              })()}
-            </View>
-          </>
-        )}
-
-        <View style={styles.sectionLabel}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-        </View>
-
-        <View style={styles.actionsRow}>
-          <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
-            <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Saved</Text>
-          </PressableRipple>
-          <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/war')}>
-            <Ionicons name="flag-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>War</Text>
-          </PressableRipple>
-          <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
-            <Ionicons name="settings-sharp" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Settings</Text>
-          </PressableRipple>
-          <PressableRipple style={styles.actionBtn} onPress={onRefresh}>
-            <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.actionText}>Refresh</Text>
-          </PressableRipple>
-        </View>
-
-        <View style={styles.sectionLabel}>
-          <Text style={styles.sectionTitle}>Quick Stats</Text>
-        </View>
-
-        <View style={styles.statsTable}>
-          {[
-            {
-              title: 'PvP',
-              rows: [
-                { label: 'Trophies', value: player.trophies, icon: 'trophy-outline' as const },
-                { label: 'Best Trophies', value: player.bestTrophies, icon: 'trophy' as const, accentColor: Colors.warning },
-                { label: 'War Stars', value: player.warStars, icon: 'star-outline' as const },
-                { label: 'Attack Wins', value: player.attackWins, icon: 'flame-outline' as const },
-                { label: 'Defense Wins', value: player.defenseWins, icon: 'shield-outline' as const },
-              ],
-            },
-            {
-              title: 'Clan',
-              rows: [
-                { label: 'Donations', value: player.donations, icon: 'gift-outline' as const },
-                { label: 'Received', value: player.donationsReceived, icon: 'arrow-down-outline' as const, accentColor: player.donationsReceived > player.donations ? Colors.success : undefined },
-                { label: 'Capital Gold', value: player.clanCapitalContributions, icon: 'cash-outline' as const },
-              ],
-            },
-            {
-              title: 'Builder Base',
-              rows: [
-                ...(player.builderBaseTrophies !== undefined
-                  ? [{ label: 'Builder Trophies', value: player.builderBaseTrophies, icon: 'hammer-outline' as const }]
-                  : []),
-                ...(player.bestBuilderBaseTrophies !== undefined
-                  ? [{ label: 'Best Builder', value: player.bestBuilderBaseTrophies, icon: 'hammer' as const, accentColor: Colors.warning }]
-                  : []),
-              ],
-            },
-          ].filter((g) => g.rows.length > 0).flatMap((group, gi, arr) => [
-            gi > 0 ? <View key={`sep-${gi}`} style={styles.statsRowSep} /> : null,
-            <View key={`hdr-${gi}`} style={styles.statsGroupHeader}>
-              <Text style={styles.statsGroupTitle}>{group.title}</Text>
-            </View>,
-            ...group.rows.map((row, ri) => (
-              <View
-                key={`${group.title}-${ri}`}
-                style={[styles.statsRow, row.accentColor ? { borderLeftColor: row.accentColor } : null]}
-              >
-                <Ionicons name={row.icon} size={13} color={Colors.textTertiary} style={styles.statsIcon} />
-                <Text style={styles.statsLabel}>{row.label}</Text>
-                <Text style={[styles.statsValue, row.accentColor ? { color: row.accentColor } : null]}>
-                  {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
-                </Text>
+                })()}
               </View>
-            )),
-          ])}
-        </View>
+            </>
+          )}
 
-        {/* ── Active Timers ── */}
-        {reminders.length > 0 && (
-          <>
-            <View style={styles.sectionLabel}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={styles.sectionTitle}>Active Timers</Text>
-                <PressableRipple style={styles.addTimerBtn} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
-                  <Ionicons name="alarm-outline" size={14} color={Colors.textPrimary} />
-                  <Text style={styles.addTimerBtnText}>Add</Text>
-                </PressableRipple>
+          {rushedItems.length > 0 && (
+            <>
+              <View style={styles.sectionLabel}>
+                <Text style={styles.sectionTitle}>Rushed</Text>
               </View>
-            </View>
-            <View style={styles.timersCard}>
-              {reminders.map((r) => {
-                const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
-                const expired = r.status === 'expired' || remaining <= 0;
-                const days = Math.floor(remaining / 86400000);
-                const hours = Math.floor((remaining % 86400000) / 3600000);
-                const minutes = Math.floor((remaining % 3600000) / 60000);
-                const seconds = Math.floor((remaining % 60000) / 1000);
-                const pad = (n: number) => String(n).padStart(2, '0');
-                const timeStr = days > 0
-                  ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-                  : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-                return (
-                  <View key={r.id} style={styles.timerRow}>
-                    <View style={styles.timerInfo}>
-                      <Text style={styles.timerLabel} numberOfLines={1}>{r.label}</Text>
-                      <Text style={[styles.timerCountdown, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
-                    </View>
-                    <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
-                      <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
-                    </PressableRipple>
+              <View style={styles.upgradeCard}>
+                <PressableRipple style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
+                  <View style={styles.upgradeHeaderLeft}>
+                    <Ionicons name="warning-outline" size={16} color={Colors.warning} />
+                    <Text style={styles.upgradeHeaderText}>{rushedItems.length} rushed</Text>
+                    {loadingRushedCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
+                    {!loadingRushedCosts && rushedCosts && aggregateRushedCost > 0 && (
+                      <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateRushedCost)}{aggregateRushedTime > 0 ? ` · ${fmtTime(aggregateRushedTime)}` : ''}</Text>
+                    )}
                   </View>
-                );
-              })}
-            </View>
-          </>
-        )}
+                  <Ionicons name={rushedOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
+                </PressableRipple>
+                {rushedOpen && (() => {
+                  const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
+                    { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
+                    { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
+                    { label: 'Spells', key: 'spell', icon: { set: 'ion', name: 'flask-outline' }, items: [] },
+                    { label: 'Equipment', key: 'equipment', icon: { set: 'ion', name: 'trophy-outline' }, items: [] },
+                  ];
+                  for (const item of rushedItems) {
+                    const g = groups.find((g) => g.key === item.type);
+                    if (g) g.items.push(item);
+                  }
+                  const visible = groups.filter((g) => g.items.length > 0);
+                  return visible.flatMap((group, gi) => {
+                    const elements: React.ReactNode[] = [];
+                    if (gi > 0) {
+                      elements.push(<View key={`rs-sep-${gi}`} style={styles.upgradeThSectionBorder} />);
+                    }
+                    elements.push(
+                      <View key={`rs-hdr-${group.key}`} style={styles.upgradeThSection}>
+                        {group.icon.set === 'mc' ? (
+                          <MaterialCommunityIcons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
+                        ) : (
+                          <Ionicons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
+                        )}
+                        <Text style={styles.upgradeThSectionTitle}>{group.label} ({group.items.length})</Text>
+                      </View>
+                    );
+                    group.items.forEach((item, i) => {
+                      const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name);
+                      const costData = rushedCosts?.[item.name];
+                      elements.push(
+                        <View key={item.name} style={[styles.upgradeRow, i < group.items.length - 1 && styles.upgradeRowBorder]}>
+                          <View style={styles.upgradeIconWrap}>
+                            {iconUrl ? (
+                              <Image source={{ uri: iconUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                            ) : (
+                              <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
+                            )}
+                          </View>
+                          <View style={styles.upgradeInfo}>
+                            <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
+                            <View style={styles.upgradeHintRow}>
+                              <Text style={styles.upgradeHint}>Lv{item.currentLevel}</Text>
+                              <Ionicons name="arrow-forward" size={10} color={Colors.textTertiary} style={{ marginHorizontal: 2 }} />
+                              <Text style={styles.upgradeHint}>Lv{item.maxLevelAtPrevTH}</Text>
+                            </View>
+                          </View>
+                          {costData ? (
+                            <View style={styles.upgradeCostPill}>
+                              <Text style={styles.upgradeCostText}>{fmtCost(costData.cost)}</Text>
+                              {costData.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(costData.timeSeconds)}</Text>}
+                            </View>
+                          ) : loadingRushedCosts ? (
+                            <View style={styles.upgradeCostPill}>
+                              <Text style={styles.upgradeCostText}>…</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      );
+                    });
+                    return elements;
+                  });
+                })()}
+              </View>
+            </>
+          )}
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          <View style={styles.sectionLabel}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+          </View>
+
+          <View style={styles.actionsRow}>
+            <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
+              <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
+              <Text style={styles.actionText}>Saved</Text>
+            </PressableRipple>
+            <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/war')}>
+              <Ionicons name="flag-outline" size={16} color={Colors.textPrimary} />
+              <Text style={styles.actionText}>War</Text>
+            </PressableRipple>
+            <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
+              <Ionicons name="settings-sharp" size={16} color={Colors.textPrimary} />
+              <Text style={styles.actionText}>Settings</Text>
+            </PressableRipple>
+            <PressableRipple style={styles.actionBtn} onPress={onRefresh}>
+              <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
+              <Text style={styles.actionText}>Refresh</Text>
+            </PressableRipple>
+          </View>
+
+          <View style={styles.sectionLabel}>
+            <Text style={styles.sectionTitle}>Quick Stats</Text>
+          </View>
+
+          <View style={styles.statsTable}>
+            {[
+              {
+                title: 'PvP',
+                rows: [
+                  { label: 'Trophies', value: player.trophies, icon: 'trophy-outline' as const },
+                  { label: 'Best Trophies', value: player.bestTrophies, icon: 'trophy' as const, accentColor: Colors.warning },
+                  { label: 'War Stars', value: player.warStars, icon: 'star-outline' as const },
+                  { label: 'Attack Wins', value: player.attackWins, icon: 'flame-outline' as const },
+                  { label: 'Defense Wins', value: player.defenseWins, icon: 'shield-outline' as const },
+                ],
+              },
+              {
+                title: 'Clan',
+                rows: [
+                  { label: 'Donations', value: player.donations, icon: 'gift-outline' as const },
+                  { label: 'Received', value: player.donationsReceived, icon: 'arrow-down-outline' as const, accentColor: player.donationsReceived > player.donations ? Colors.success : undefined },
+                  { label: 'Capital Gold', value: player.clanCapitalContributions, icon: 'cash-outline' as const },
+                ],
+              },
+              {
+                title: 'Builder Base',
+                rows: [
+                  ...(player.builderBaseTrophies !== undefined
+                    ? [{ label: 'Builder Trophies', value: player.builderBaseTrophies, icon: 'hammer-outline' as const }]
+                    : []),
+                  ...(player.bestBuilderBaseTrophies !== undefined
+                    ? [{ label: 'Best Builder', value: player.bestBuilderBaseTrophies, icon: 'hammer' as const, accentColor: Colors.warning }]
+                    : []),
+                ],
+              },
+            ].filter((g) => g.rows.length > 0).flatMap((group, gi, arr) => [
+              gi > 0 ? <View key={`sep-${gi}`} style={styles.statsRowSep} /> : null,
+              <View key={`hdr-${gi}`} style={styles.statsGroupHeader}>
+                <Text style={styles.statsGroupTitle}>{group.title}</Text>
+              </View>,
+              ...group.rows.map((row, ri) => (
+                <View
+                  key={`${group.title}-${ri}`}
+                  style={[styles.statsRow, row.accentColor ? { borderLeftColor: row.accentColor } : null]}
+                >
+                  <Ionicons name={row.icon} size={13} color={Colors.textTertiary} style={styles.statsIcon} />
+                  <Text style={styles.statsLabel}>{row.label}</Text>
+                  <Text style={[styles.statsValue, row.accentColor ? { color: row.accentColor } : null]}>
+                    {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
+                  </Text>
+                </View>
+              )),
+            ])}
+          </View>
+
+          {/* ── Active Timers ── */}
+          {reminders.length > 0 && (
+            <>
+              <View style={styles.sectionLabel}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={styles.sectionTitle}>Active Timers</Text>
+                  <PressableRipple style={styles.addTimerBtn} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
+                    <Ionicons name="alarm-outline" size={14} color={Colors.textPrimary} />
+                    <Text style={styles.addTimerBtnText}>Add</Text>
+                  </PressableRipple>
+                </View>
+              </View>
+              <View style={styles.timersCard}>
+                {reminders.map((r) => {
+                  const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
+                  const expired = r.status === 'expired' || remaining <= 0;
+                  const days = Math.floor(remaining / 86400000);
+                  const hours = Math.floor((remaining % 86400000) / 3600000);
+                  const minutes = Math.floor((remaining % 3600000) / 60000);
+                  const seconds = Math.floor((remaining % 60000) / 1000);
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  const timeStr = days > 0
+                    ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                    : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                  return (
+                    <View key={r.id} style={styles.timerRow}>
+                      <View style={styles.timerInfo}>
+                        <Text style={styles.timerLabel} numberOfLines={1}>{r.label}</Text>
+                        <Text style={[styles.timerCountdown, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
+                      </View>
+                      <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
+                        <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
+                      </PressableRipple>
+                    </View>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          <View style={{ height: 100 }} />
+        </ScrollView>
       </Animated.View>
 
       {switchingHome && (
@@ -790,7 +863,15 @@ export default function HomeScreen() {
       <Modal visible={switcherVisible} transparent animationType="fade" onRequestClose={() => setSwitcherVisible(false)} statusBarTranslucent>
         <Pressable style={styles.switcherOverlay} onPress={() => setSwitcherVisible(false)}>
           <View style={styles.switcherCard}>
-            <Text style={styles.switcherTitle}>Switch Account</Text>
+            <View style={styles.switcherHeader}>
+              <View style={styles.switcherHeaderIcon}>
+                <Ionicons name="people" size={18} color={Colors.textPrimary} />
+              </View>
+              <View style={styles.switcherHeaderText}>
+                <Text style={styles.switcherTitle}>Accounts</Text>
+                <Text style={styles.switcherSubtitle}>Tap to switch</Text>
+              </View>
+            </View>
             {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
             {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
@@ -800,16 +881,30 @@ export default function HomeScreen() {
                   style={[styles.switcherItem, isActive && styles.switcherItemActive]}
                   onPress={() => handleHomeSwitch(acct.tag)}
                 >
-                  <View style={styles.switcherItemIcon}>
-                    <Ionicons name={isActive ? 'checkmark-circle' : 'person-circle-outline'} size={22} color={isActive ? Colors.textPrimary : Colors.textSecondary} />
+                  <View style={styles.switcherAvatar}>
+                    {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
+                      <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.switcherAvatarImg} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="person" size={18} color={Colors.textSecondary} />
+                    )}
                   </View>
                   <View style={styles.switcherItemText}>
-                    <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name}</Text>
+                    <View style={styles.switcherItemNameRow}>
+                      <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
+                      {isActive && (
+                        <View style={styles.switcherActiveChip}>
+                          <Text style={styles.switcherActiveChipText}>Active</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.switcherItemTag}>{acct.tag}</Text>
                   </View>
-                  {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
-                    <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.switcherThImage} resizeMode="contain" />
-                  ) : null}
+                  {acct.townHallLevel > 0 && (
+                    <View style={[styles.switcherThBox, isActive && styles.switcherThBoxActive]}>
+                      <Text style={[styles.switcherThBoxLevel, isActive && styles.switcherThBoxLevelActive]}>{acct.townHallLevel}</Text>
+                      <Text style={[styles.switcherThBoxLabel, isActive && styles.switcherThBoxLabelActive]}>TH</Text>
+                    </View>
+                  )}
                 </PressableRipple>
               );
             })}
@@ -907,24 +1002,47 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   switcherCard: {
-    width: '84%',
+    width: '86%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 0.5,
+    borderWidth: 0.75,
     borderColor: Colors.border,
-    padding: Spacing.xl,
-    gap: Spacing.sm,
+    padding: Spacing.base,
+    gap: Spacing.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 24,
     elevation: 10,
   },
+  switcherHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  switcherHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switcherHeaderText: {
+    flex: 1,
+  },
   switcherTitle: {
     ...Typography.title3,
     color: Colors.textPrimary,
     letterSpacing: -0.3,
-    marginBottom: Spacing.xs,
+    lineHeight: 22,
+  },
+  switcherSubtitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
   },
   switcherEmpty: {
     ...Typography.subhead,
@@ -935,6 +1053,7 @@ const styles = StyleSheet.create({
   switcherItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
@@ -942,32 +1061,94 @@ const styles = StyleSheet.create({
   switcherItemActive: {
     backgroundColor: Colors.accentGhost,
   },
-  switcherItemIcon: {
-    marginRight: Spacing.sm,
+  switcherAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  switcherAvatarImg: {
+    width: 34,
+    height: 34,
   },
   switcherItemText: {
     flex: 1,
+  },
+  switcherItemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   switcherItemName: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
+    flexShrink: 1,
   },
   switcherItemTag: {
     ...Typography.caption,
     color: Colors.textMuted,
+    marginTop: 1,
   },
-  switcherThImage: {
-    width: 22,
-    height: 22,
-    marginLeft: Spacing.sm,
+  switcherActiveChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.textPrimary,
+  },
+  switcherActiveChipText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: Colors.bg,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  switcherThBox: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switcherThBoxActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  switcherThBoxLevel: {
+    ...Typography.headline,
+    color: Colors.textSecondary,
+    fontSize: 15,
+    lineHeight: 16,
+    fontWeight: '700',
+  },
+  switcherThBoxLevelActive: {
+    color: Colors.bg,
+  },
+  switcherThBoxLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 8,
+    lineHeight: 9,
+    fontWeight: '600',
+  },
+  switcherThBoxLabelActive: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   switcherClose: {
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     marginTop: Spacing.xs,
     borderRadius: Radius.md,
-    borderWidth: 0.5,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   switcherCloseText: {
@@ -1024,11 +1205,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  metaText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
+  metaBadge: {
+    width: 13,
+    height: 13,
+    borderRadius: 2,
   },
-  metaDot: {
+  metaText: {
     ...Typography.caption,
     color: Colors.textMuted,
   },
@@ -1065,23 +1247,84 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.border,
   },
-  playerStatsRow: {
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.base,
-    paddingTop: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    paddingBottom: Spacing.sm,
   },
-  miniStat: {
+  statCell: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing.sm,
+    width: '48%',
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
   },
-  miniStatValue: {
+  statCellLeagueImage: {
+    width: 32,
+    height: 32,
+  },
+  statCellIcon: {
+    width: 28,
+    height: 28,
+  },
+  statCellLabelImage: {
+    width: 32,
+    height: 32,
+  },
+  statCellText: {
+    flex: 1,
+  },
+  statCellValue: {
     ...Typography.subhead,
-    color: Colors.textSecondary,
-    fontWeight: '500',
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  statCellLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+    marginTop: 1,
+  },
+  collapseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    paddingBottom: Spacing.xs,
+  },
+  collapseRowIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  collapseRowText: {
+    flex: 1,
+  },
+  collapseRowTitle: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  collapseRowSub: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: 1,
   },
   sectionLabel: {
     paddingHorizontal: Spacing.base,
@@ -1355,7 +1598,7 @@ const styles = StyleSheet.create({
     width: '84%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 0.5,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.xl,
     gap: Spacing.md,
@@ -1410,7 +1653,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
-    borderWidth: 0.5,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   modalCancelText: {
