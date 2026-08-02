@@ -390,7 +390,10 @@ function getTableHeaders(tableHtml: string): string[] {
     }
   }
 
-  return merged.filter(Boolean);
+  // Preserve the full logical column width so header indexes map 1:1 to body
+  // cells. Filtering out empty placeholders here would shift every later index
+  // and misalign multi-row/colspan header tables (e.g. hero equipment).
+  return merged;
 }
 
 function getHeaderRowHtml(tableHtml: string): string | null {
@@ -509,32 +512,66 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
 
       let dps: number;
       let hitpoints: number;
+      const extra: { label: string; value: string }[] = [];
+      let upgradeCost = '';
+      let upgradeTime = '';
+      let labLevel: number | null = null;
+      let thRequired: number | null = null;
+      let damagePerHit = 0;
+
       if (isEquipment) {
         dps = 0;
         hitpoints = 0;
+        damagePerHit = 0;
+        const lastIdxs: number[] = [];
+        let oreSet = false;
+        let labTargetIdx = headers.length - 1;
+        headers.forEach((h, idx) => {
+          if (/^level$/i.test(h)) return;
+          // Last/right-most column is the building level requirement for
+          // equipment ("Blacksmith Level Required"). Remember it by position so
+          // we can keep a whole block of cost columns from latching onto it.
+          if (/blacksmith|level required|lab|hero hall/i.test(h)) labTargetIdx = idx;
+          // Collect every cost column (Shiny, Glowy, elixir…), which varies
+          // from 1 to 3 per equipment rather than always being a single column.
+          else if (/ores?|elixir|gem|cost|shiny|glow/i.test(h)) lastIdxs.push(idx);
+        });
+        headers.forEach((h, idx) => {
+          const v = (cells[idx] || '').trim();
+          if (!v || /^level$/i.test(h)) return;
+          if (idx === labTargetIdx) {
+            const n = parseNumeric(v);
+            if (n > 0) labLevel = n;
+            return;
+          }
+          if (lastIdxs.includes(idx)) {
+            if (!oreSet) {
+              upgradeCost = v;
+              oreSet = true;
+            } else {
+              extra.push({ label: h, value: v });
+            }
+            return;
+          }
+          extra.push({ label: h, value: v });
+        });
       } else {
         dps = parseNumeric(pickHeaderValue(cells, headers, [/damage per second|dps/i]));
         hitpoints = parseNumeric(pickHeaderValue(cells, headers, [/hitpoints|health|hp/i]));
-      }
-      const damagePerHit = parseNumeric(pickHeaderValue(cells, headers, [/damage per hit|damage when destroyed/i]));
-      const upgradeCost = formatCostString(pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost|ore/i]) || '');
-      const upgradeTime = pickHeaderValue(cells, headers, [/clock|training time|time/i]) || '';
-      const xp = parseNumeric(pickHeaderValue(cells, headers, [/xp/i]));
-      const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab|blacksmith|hero hall/i]) || '';
-      const labLevel = parseNumeric(labLevelValue) || null;
-      const thRequired = parseNumeric(pickHeaderValue(cells, headers, [/town hall/i])) || null;
+        damagePerHit = parseNumeric(pickHeaderValue(cells, headers, [/damage per hit|damage when destroyed/i]));
+        upgradeCost = formatCostString(pickHeaderValue(cells, headers, [/upgrade|elixir|gold|dark elixir|gem|cost|ore/i]) || '');
+        upgradeTime = pickHeaderValue(cells, headers, [/clock|training time|time/i]) || '';
+        const xp = parseNumeric(pickHeaderValue(cells, headers, [/xp/i]));
+        const labLevelValue = pickHeaderValue(cells, headers, [/laboratory|lab|blacksmith|hero hall/i]) || '';
+        labLevel = parseNumeric(labLevelValue) || null;
+        thRequired = parseNumeric(pickHeaderValue(cells, headers, [/town hall/i])) || null;
 
-      const extra: { label: string; value: string }[] = [];
-      headers.forEach((h, idx) => {
-        if (isEquipment && /increase|ability|duration/i.test(h)) {
+        headers.forEach((h, idx) => {
+          if (knownHeaderPatterns.some((p) => p.test(h))) return;
           const v = (cells[idx] || '').trim();
           if (v) extra.push({ label: h, value: v });
-          return;
-        }
-        if (knownHeaderPatterns.some((p) => p.test(h))) return;
-        const v = (cells[idx] || '').trim();
-        if (v) extra.push({ label: h, value: v });
-      });
+        });
+      }
 
       levels.push({
         level,
@@ -543,7 +580,7 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
         hitpoints,
         upgradeCost,
         upgradeTime,
-        xp,
+        xp: 0,
         labLevel,
         thRequired,
         extra: extra.length ? extra : undefined,
