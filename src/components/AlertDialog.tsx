@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     width: '84%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 0.5,
+    borderWidth: 0.75,
     borderColor: Colors.border,
     paddingTop: Spacing.base,
     paddingBottom: Spacing.base,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   btnGhost: {
     backgroundColor: 'transparent',
-    borderWidth: 0.5,
+    borderWidth: 0.75,
     borderColor: Colors.border,
   },
   btnText: {
