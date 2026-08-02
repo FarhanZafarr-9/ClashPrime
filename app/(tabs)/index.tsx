@@ -48,7 +48,7 @@ export default function HomeScreen() {
   const [timerMinutes, setTimerMinutes] = useState(30);
   const [addingTimer, setAddingTimer] = useState(false);
   const [showBH, setShowBH] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [labelsOpen, setLabelsOpen] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);

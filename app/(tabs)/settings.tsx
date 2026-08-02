@@ -36,6 +36,9 @@ import {
 import { usePlayer, usePlayerActions } from '../../src/hooks/usePlayerContext';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
+import { useDiscounts } from '../../src/hooks/useDiscounts';
+import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
+import DiscountModal from '../../src/components/DiscountModal';
 import Constants from 'expo-constants';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
 
@@ -211,7 +214,16 @@ export default function SettingsScreen() {
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
+  const { discounts, setBuildingCost, setBuildingTime, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
+
+  const discountDesc = (s: ScopeDiscount) => {
+    const parts: string[] = [];
+    if (s.costPercent > 0) parts.push(`Cost -${s.costPercent}%`);
+    if (s.timePercent > 0) parts.push(`Time -${s.timePercent}%`);
+    return parts.length ? parts.join(' · ') : 'No discounts set';
+  };
 
   const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
@@ -654,6 +666,34 @@ export default function SettingsScreen() {
           />
         </SettingCard>
 
+        <SectionHeader>Discounts</SectionHeader>
+        <SettingCard>
+          <SettingRow
+            icon="business-outline"
+            title="Building Discounts"
+            desc={discountDesc(discounts.buildings)}
+            onPress={() => setDiscountModalScope('buildings')}
+            children={
+              <View style={styles.discountRowRight}>
+                <View style={[styles.discountDot, discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? styles.discountDotActive : null]} />
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+              </View>
+            }
+          />
+          <SettingRow
+            icon="shield-half-outline"
+            title="Army Discounts"
+            desc={discountDesc(discounts.army)}
+            onPress={() => setDiscountModalScope('army')}
+            children={
+              <View style={styles.discountRowRight}>
+                <View style={[styles.discountDot, discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? styles.discountDotActive : null]} />
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+              </View>
+            }
+          />
+        </SettingCard>
+
         <SectionHeader>Data &amp; Preferences</SectionHeader>
         <SettingCard>
           <SettingRow
@@ -1013,6 +1053,18 @@ export default function SettingsScreen() {
         </PressableRipple>
       </Modal>
 
+      <DiscountModal
+        visible={discountModalScope !== null}
+        onClose={() => setDiscountModalScope(null)}
+        buildings={discounts.buildings}
+        army={discounts.army}
+        onBuildingCostChange={setBuildingCost}
+        onBuildingTimeChange={setBuildingTime}
+        onArmyCostChange={setArmyCost}
+        onArmyTimeChange={setArmyTime}
+        onReset={resetDiscounts}
+      />
+
       <Dialog />
     </SafeAreaView>
   );
@@ -1120,6 +1172,20 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginLeft: Spacing.sm,
+  },
+  discountRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  discountDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.border,
+  },
+  discountDotActive: {
+    backgroundColor: Colors.warning,
   },
   switchOverlay: {
     flex: 1,

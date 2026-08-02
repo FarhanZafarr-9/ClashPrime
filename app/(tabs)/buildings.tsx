@@ -28,7 +28,6 @@ import thLevelsData from '../../src/data/th-levels.json';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
-import DiscountModal from '../../src/components/DiscountModal';
 
 const COL_ABBREV: Record<string, string> = {
   'Damage per Second': 'DPS',
@@ -521,8 +520,7 @@ function formatCostShort(cost: number): string {
 export default function BuildingsScreen() {
   const router = useRouter();
   const { player } = usePlayer();
-  const { discounts, setBuildingCost, setBuildingTime, resetDiscounts } = useDiscounts();
-  const [discountModalVisible, setDiscountModalVisible] = useState(false);
+  const { discounts } = useDiscounts();
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
@@ -568,13 +566,6 @@ export default function BuildingsScreen() {
               <PressableRipple onPress={() => router.push(`/onboarding?mode=reset&th=${th}`)} hitSlop={8} style={styles.headerBtn}>
                 <Ionicons name="refresh-outline" size={22} color={Colors.textSecondary} />
               </PressableRipple>
-              <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
-                <Ionicons
-                  name={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
-                  size={24}
-                  color={discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? Colors.warning : Colors.textSecondary}
-                />
-              </PressableRipple>
             </View>
           </View>
           <Text style={styles.subtitle}>
@@ -615,19 +606,6 @@ export default function BuildingsScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      <DiscountModal
-        visible={discountModalVisible}
-        onClose={() => setDiscountModalVisible(false)}
-        scope="buildings"
-        buildings={discounts.buildings}
-        army={discounts.army}
-        onBuildingCostChange={setBuildingCost}
-        onBuildingTimeChange={setBuildingTime}
-        onArmyCostChange={() => { }}
-        onArmyTimeChange={() => { }}
-        onReset={resetDiscounts}
-      />
     </SafeAreaView>
   );
 }

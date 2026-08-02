@@ -15,7 +15,6 @@ import type { ScopeDiscount } from '../hooks/useDiscounts';
 interface DiscountModalProps {
   visible: boolean;
   onClose: () => void;
-  scope: 'buildings' | 'army';
   buildings: ScopeDiscount;
   army: ScopeDiscount;
   onBuildingCostChange: (pct: number) => void;
@@ -57,7 +56,9 @@ function DiscountSlider({
           <Ionicons name={icon as any} size={16} color={Colors.textSecondary} />
           <Text style={styles.sliderLabel}>{label}</Text>
         </View>
-        <Text style={[styles.sliderValue, active && styles.sliderValueActive]}>{!value || isNaN(value) ? 'Off' : `${value}%`}</Text>
+        <Text style={[styles.sliderValue, active && styles.sliderValueActive]}>
+          {!value || isNaN(value) ? 'Off' : `-${value}%`}
+        </Text>
       </View>
 
       <View style={styles.pillRow}>
@@ -106,10 +107,49 @@ function DiscountSlider({
   );
 }
 
+function DiscountSection({
+  title,
+  icon,
+  cost,
+  time,
+  onCostChange,
+  onTimeChange,
+}: {
+  title: string;
+  icon: string;
+  cost: number;
+  time: number;
+  onCostChange: (pct: number) => void;
+  onTimeChange: (pct: number) => void;
+}) {
+  const anyActive = cost > 0 || time > 0;
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionIcon}>
+          <Ionicons name={icon as any} size={16} color={Colors.textPrimary} />
+        </View>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={[styles.sectionChip, !anyActive && styles.sectionChipOff]}>
+          <Text style={[styles.sectionChipText, !anyActive && styles.sectionChipTextOff]}>
+            {anyActive
+              ? `${cost > 0 ? `-${cost}% cost` : 'cost off'} · ${time > 0 ? `-${time}% time` : 'time off'}`
+              : 'Off'}
+          </Text>
+        </View>
+      </View>
+
+      <DiscountSlider label="Cost Reduction" icon="cash-outline" value={cost} onChange={onCostChange} />
+      <View style={styles.divider} />
+      <DiscountSlider label="Time Reduction" icon="time-outline" value={time} onChange={onTimeChange} />
+    </View>
+  );
+}
+
 export default function DiscountModal({
   visible,
   onClose,
-  scope,
   buildings,
   army,
   onBuildingCostChange,
@@ -118,11 +158,6 @@ export default function DiscountModal({
   onArmyTimeChange,
   onReset,
 }: DiscountModalProps) {
-  const scopeDiscount = scope === 'buildings' ? buildings : army;
-  const anyActive = scopeDiscount.costPercent > 0 || scopeDiscount.timePercent > 0;
-
-  function pctLabel(v: number) { return v === 0 ? 'Off' : `-${v}%`; }
-
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
@@ -135,9 +170,7 @@ export default function DiscountModal({
               </View>
               <View>
                 <Text style={styles.cardTitle}>Discounts</Text>
-                <Text style={styles.cardSubtitle}>
-                  {scope === 'buildings' ? 'Building upgrades' : 'Army research'}
-                </Text>
+                <Text style={styles.cardSubtitle}>Apply % reductions to upgrade costs & times</Text>
               </View>
             </View>
             <PressableRipple onPress={onClose} hitSlop={8} style={styles.closeBtn}>
@@ -146,39 +179,28 @@ export default function DiscountModal({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-            <Text style={styles.scopeLabel}>{scope === 'buildings' ? 'Buildings' : 'Army'}</Text>
-            <DiscountSlider
-              label="Cost Reduction"
-              icon="cash-outline"
-              value={scopeDiscount.costPercent}
-              onChange={scope === 'buildings' ? onBuildingCostChange : onArmyCostChange}
+            <DiscountSection
+              title="Buildings"
+              icon="business-outline"
+              cost={buildings.costPercent}
+              time={buildings.timePercent}
+              onCostChange={onBuildingCostChange}
+              onTimeChange={onBuildingTimeChange}
             />
-            <View style={styles.divider} />
-            <DiscountSlider
-              label="Time Reduction"
-              icon="time-outline"
-              value={scopeDiscount.timePercent}
-              onChange={scope === 'buildings' ? onBuildingTimeChange : onArmyTimeChange}
+            <View style={styles.sectionGap} />
+            <DiscountSection
+              title="Army"
+              icon="shield-half-outline"
+              cost={army.costPercent}
+              time={army.timePercent}
+              onCostChange={onArmyCostChange}
+              onTimeChange={onArmyTimeChange}
             />
-
-            {anyActive && (
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryBlock}>
-                  <Text style={styles.summaryLabel}>Cost</Text>
-                  <Text style={styles.summaryValue}>{pctLabel(scopeDiscount.costPercent)}</Text>
-                </View>
-                <Ionicons name="close-outline" size={14} color={Colors.textMuted} />
-                <View style={styles.summaryBlock}>
-                  <Text style={styles.summaryLabel}>Time</Text>
-                  <Text style={styles.summaryValue}>{pctLabel(scopeDiscount.timePercent)}</Text>
-                </View>
-              </View>
-            )}
           </ScrollView>
 
           <PressableRipple style={styles.resetBtn} onPress={onReset}>
             <Ionicons name="refresh-outline" size={14} color={Colors.textMuted} />
-            <Text style={styles.resetText}>Reset to defaults</Text>
+            <Text style={styles.resetText}>Reset all discounts</Text>
           </PressableRipple>
         </View>
       </View>
@@ -202,7 +224,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '88%',
-    maxHeight: '80%',
+    maxHeight: '82%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 0.75,
@@ -222,6 +244,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    flexShrink: 1,
   },
   cardIcon: {
     width: 36,
@@ -239,6 +262,7 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: 1,
+    maxWidth: 240,
   },
   closeBtn: {
     width: 28,
@@ -250,15 +274,54 @@ const styles = StyleSheet.create({
   },
   scrollBody: {
     padding: Spacing.lg,
-    gap: Spacing.md,
   },
-  scopeLabel: {
-    ...Typography.caption,
-    color: Colors.textMuted,
+  section: {
+    gap: Spacing.sm,
+  },
+  sectionGap: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  sectionIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionTitle: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: Spacing.sm,
+  },
+  sectionChip: {
+    marginLeft: 'auto',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.textPrimary,
+  },
+  sectionChipOff: {
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  sectionChipText: {
+    ...Typography.caption,
+    color: Colors.bg,
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  sectionChipTextOff: {
+    color: Colors.textMuted,
   },
   sliderSection: {
     gap: Spacing.sm,
@@ -362,33 +425,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.border,
     marginVertical: Spacing.xs,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.lg,
-    flexWrap: 'wrap',
-  },
-  summaryBlock: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  summaryLabel: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontWeight: '500',
-    fontSize: 10,
-  },
-  summaryValue: {
-    ...Typography.title3,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    fontSize: 16,
   },
   resetBtn: {
     flexDirection: 'row',

@@ -20,7 +20,6 @@ import { ItemCard } from '../../src/components/ItemCard';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
-import DiscountModal from '../../src/components/DiscountModal';
 
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -65,8 +64,7 @@ export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
   const { siegeMachineNames, superTroopNames, petNames } = useGameData();
   const { isDark, colors } = useTheme();
-  const { discounts, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
-  const [discountModalVisible, setDiscountModalVisible] = useState(false);
+  const { discounts } = useDiscounts();
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     if (['troops', 'spells', 'equipment', 'heroes', 'pets', 'siege'].includes(initialTab ?? '')) return initialTab as Tab;
@@ -673,13 +671,6 @@ export default function PlayerProfileScreen() {
             <Text style={styles.subtitle}>All your troops, heroes, spells & equipment</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-            <PressableRipple onPress={() => setDiscountModalVisible(true)} hitSlop={8}>
-              <Ionicons
-                name={discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? 'pricetag' : 'pricetag-outline'}
-                size={24}
-                color={discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? colors.warning : colors.textSecondary}
-              />
-            </PressableRipple>
             <PressableRipple
               onPress={onRefresh}
               disabled={refreshing}
@@ -991,19 +982,6 @@ export default function PlayerProfileScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      <DiscountModal
-        visible={discountModalVisible}
-        onClose={() => setDiscountModalVisible(false)}
-        scope="army"
-        buildings={discounts.buildings}
-        army={discounts.army}
-        onBuildingCostChange={() => { }}
-        onBuildingTimeChange={() => { }}
-        onArmyCostChange={setArmyCost}
-        onArmyTimeChange={setArmyTime}
-        onReset={resetDiscounts}
-      />
     </SafeAreaView>
   );
 }
