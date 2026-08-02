@@ -1,30 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import PressableRipple from './PressableRipple';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
-
-interface IconDef {
-  set: 'ion' | 'mc';
-  name: string;
-}
-
-const CATEGORY_ICONS: Record<string, IconDef> = {
-  Heroes: { set: 'ion', name: 'shield-half-outline' },
-  Troops: { set: 'mc', name: 'sword-cross' },
-  Spells: { set: 'ion', name: 'flask-outline' },
-  Equipment: { set: 'ion', name: 'trophy-outline' },
-};
+import { CATEGORY_ICONS } from '../utils/statImages';
 
 interface Props {
   category: string;
   progress: number;
   items?: { name: string; level: number; maxLevel: number }[];
   lockedMessage?: string;
+  iconUri?: string;
   onPress?: () => void;
 }
 
-export function ProgressSummaryCard({ category, progress, items, lockedMessage, onPress }: Props) {
+export function ProgressSummaryCard({ category, progress, items, lockedMessage, iconUri, onPress }: Props) {
   const isLocked = (items === undefined || (items.length === 0 && lockedMessage));
   const remaining = items?.filter((i) => i.level < i.maxLevel).length ?? 0;
 
@@ -39,19 +28,17 @@ export function ProgressSummaryCard({ category, progress, items, lockedMessage, 
     label = 'None upgraded';
   }
 
-  const iconDef = CATEGORY_ICONS[category];
+  const categoryIcon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
 
   const content = (
     <>
       <View style={styles.topRow}>
         <Text style={styles.category} numberOfLines={1}>{category}</Text>
-        {iconDef && (
-          iconDef.set === 'mc' ? (
-            <MaterialCommunityIcons name={iconDef.name as any} size={14} color={Colors.textTertiary} />
-          ) : (
-            <Ionicons name={iconDef.name as any} size={14} color={Colors.textTertiary} />
-          )
-        )}
+        {iconUri ? (
+          <Image source={{ uri: iconUri }} style={styles.categoryIcon} resizeMode="contain" />
+        ) : categoryIcon ? (
+          <Image source={categoryIcon} style={styles.categoryIcon} resizeMode="contain" />
+        ) : null}
       </View>
       <Text style={[styles.percentage, isLocked && styles.locked]}>
         {isLocked ? '—' : `${Math.round(progress * 100)}%`}
@@ -96,6 +83,10 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
     flexShrink: 1,
+  },
+  categoryIcon: {
+    width: 24,
+    height: 24,
   },
   percentage: {
     ...Typography.title1,
