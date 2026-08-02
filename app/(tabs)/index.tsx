@@ -546,7 +546,7 @@ export default function HomeScreen() {
                 {upgradesOpen && (() => {
                   let lastTh = -1;
                   return unlockableItems.flatMap((item, i) => {
-                    const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name);
+                    const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
                     const thUrl = getTownHallImageUrl(item.unlockTh);
                     const levelsAtTH = getMaxLevelAtTH(item.name, th);
                     const isNewTh = item.unlockTh !== lastTh;
@@ -638,7 +638,7 @@ export default function HomeScreen() {
                       </View>
                     );
                     group.items.forEach((item, i) => {
-                      const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name);
+                      const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
                       const costData = rushedCosts?.[item.name];
                       elements.push(
                         <View key={item.name} style={[styles.upgradeRow, i < group.items.length - 1 && styles.upgradeRowBorder]}>
