@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ClashArmy, ClashArmyUnit, ClashArmyEquipment, ClashArmyPet, ClashArmyGuide, UnitDef, EquipmentDef, PetDef } from '../types/armies';
 
-const LIST_URL = 'https://clasharmies.com/armies/popular/__data.json';
+const LIST_URL = 'https://clasharmies.com/armies/__data.json';
 const CACHE_PREFIX = 'clasharmies_v1_';
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const DEFS_CACHE_KEY = 'clasharmies_defs';
+const PAGE_SIZE = 20;
+const MAX_PAGES = 10;
 
 function resolve(data: any[], idx: number): any {
   const v = data[idx];
@@ -132,8 +134,41 @@ function resolveArmy(data: any[], armyIdx: number): ClashArmy {
   };
 }
 
-export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies: ClashArmy[]; unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> }> {
-  const cacheKey = `${CACHE_PREFIX}list`;
+interface ArmyPage {
+  armies: ClashArmy[];
+  defsData: any[];
+}
+
+async function fetchArmyPage(townHall: number | undefined, page: number): Promise<ArmyPage> {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  if (townHall !== undefined) params.set('townHall', String(townHall));
+  const json = await fetchJson(`${LIST_URL}?${params.toString()}`);
+  const nodes: any[] = json.nodes || [];
+
+  const defsNode = nodes.find((n: any) => n?.type === 'data' && Array.isArray(n.data) && n.data[0]?.units !== undefined);
+  const armiesNode = nodes.find((n: any) => n?.type === 'data' && Array.isArray(n.data) && n.data[0]?.armies !== undefined);
+
+  if (!defsNode || !armiesNode) throw new Error('ClashArmies: unexpected response structure');
+
+  const armiesData = armiesNode.data;
+  const header = armiesData[0];
+  const armiesArrIdx: number = (header as any).armies ?? -1;
+  const armies: ClashArmy[] = [];
+
+  if (armiesArrIdx >= 0 && Array.isArray(armiesData[armiesArrIdx])) {
+    for (const idx of armiesData[armiesArrIdx]) {
+      const raw = resolve(armiesData, idx);
+      if (!raw || !raw.name) continue;
+      armies.push(resolveArmy(armiesData, idx));
+    }
+  }
+
+  return { armies, defsData: defsNode.data };
+}
+
+export async function getPopularArmies(bypassCache?: boolean, townHall?: number): Promise<{ armies: ClashArmy[]; unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> }> {
+  const cacheKey = `${CACHE_PREFIX}list${townHall !== undefined ? `_th${townHall}` : ''}`;
   if (!bypassCache) {
     try {
       const raw = await AsyncStorage.getItem(cacheKey);
@@ -150,38 +185,32 @@ export async function getPopularArmies(bypassCache?: boolean): Promise<{ armies:
     } catch {}
   }
 
-  const json = await fetchJson(LIST_URL);
-  const nodes: any[] = json.nodes || [];
-
-  const defsNode = nodes.find((n: any) => n?.type === 'data' && Array.isArray(n.data) && n.data[0]?.units !== undefined);
-  const armiesNode = nodes.find((n: any) => n?.type === 'data' && Array.isArray(n.data) && n.data[0]?.armies !== undefined);
-
-  if (!defsNode || !armiesNode) throw new Error('ClashArmies: unexpected response structure');
-
-  const defsData = defsNode.data;
-  const armiesData = armiesNode.data;
-
-  const defs = parseDefinitions(defsData);
-  try {
-    await AsyncStorage.setItem(DEFS_CACHE_KEY, JSON.stringify({
-      unitsById: [...defs.unitsById.entries()],
-      equipmentById: [...defs.equipmentById.entries()],
-      petsById: [...defs.petsById.entries()],
-    }));
-  } catch {}
-
-  const header = armiesData[0];
-  const armiesArrIdx: number = (header as any).armies ?? -1;
-  if (armiesArrIdx < 0) return { armies: [], unitsById: defs.unitsById, equipmentById: defs.equipmentById, petsById: defs.petsById };
-
-  const armyIndices: number[] = armiesData[armiesArrIdx];
-  if (!Array.isArray(armyIndices)) return { armies: [], unitsById: defs.unitsById, equipmentById: defs.equipmentById, petsById: defs.petsById };
-
   const armies: ClashArmy[] = [];
-  for (const idx of armyIndices) {
-    const raw = resolve(armiesData, idx);
-    if (!raw || !raw.name) continue;
-    armies.push(resolveArmy(armiesData, idx));
+  const seen = new Set<number>();
+  let defs: { unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> } = { unitsById: new Map(), equipmentById: new Map(), petsById: new Map() };
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const result = await fetchArmyPage(townHall, page);
+    if (page === 1) {
+      defs = parseDefinitions(result.defsData);
+      try {
+        await AsyncStorage.setItem(DEFS_CACHE_KEY, JSON.stringify({
+          unitsById: [...defs.unitsById.entries()],
+          equipmentById: [...defs.equipmentById.entries()],
+          petsById: [...defs.petsById.entries()],
+        }));
+      } catch {}
+    }
+
+    let added = 0;
+    for (const army of result.armies) {
+      if (!seen.has(army.id)) {
+        seen.add(army.id);
+        armies.push(army);
+        added++;
+      }
+    }
+    if (result.armies.length < PAGE_SIZE || added === 0) break;
   }
 
   try {

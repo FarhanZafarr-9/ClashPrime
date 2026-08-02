@@ -94,7 +94,7 @@ export default function ArmiesScreen() {
     try {
       setLoading(true);
       setError(null);
-      const { armies: list, unitsById: defs, equipmentById: eqDefs, petsById: pDefs } = await getPopularArmies(bypass);
+      const { armies: list, unitsById: defs, equipmentById: eqDefs, petsById: pDefs } = await getPopularArmies(bypass, thLevel);
       setArmies(list);
       if (defs.size > 0) setUnitsById(defs);
       if (eqDefs.size > 0) setEquipmentById(eqDefs);
@@ -104,7 +104,7 @@ export default function ArmiesScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [thLevel]);
 
   const loadSavedData = useCallback(async () => {
     const [sArmies, aFavs] = await Promise.all([
@@ -169,7 +169,7 @@ export default function ArmiesScreen() {
     setDisplayCount(PAGE_SIZE);
   }, []);
 
-  const thArmies = armies.filter((a) => a.townHall === thLevel);
+  const thArmies = armies.filter((a) => a.townHall === thLevel).sort((a, b) => b.score - a.score);
   const currentArmies = selectedTag === 'All'
     ? thArmies
     : thArmies.filter((a) => a.tags.includes(selectedTag));
