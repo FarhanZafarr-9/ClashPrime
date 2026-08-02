@@ -1,5 +1,7 @@
 const FANDOM_BASE = 'https://clashofclans.fandom.com';
 
+import { entityImageUrl } from '../data/entityReference';
+
 const imageUrlOverrides = new Map<string, string>();
 
 export function setTroopImageOverride(name: string, imageUrl: string) {
@@ -18,12 +20,13 @@ const FANDOM_IMAGE_OVERRIDES: Record<string, string> = {
   'Electrofire Wizard': 'Electrofire_Wizard_info.png',
 };
 
-export function getTroopImageUrl(name: string): string | null {
+export function getTroopImageUrl(name: string, level?: number): string | null {
   const key = name.toLowerCase();
   const override = imageUrlOverrides.get(key);
   if (override) return override;
-  return getFandomDirectUrl(
-    FANDOM_IMAGE_OVERRIDES[name] ?? toFandomFilename(name),
+  return (
+    entityImageUrl(name, level) ??
+    getFandomDirectUrl(FANDOM_IMAGE_OVERRIDES[name] ?? toFandomFilename(name))
   );
 }
 
@@ -89,7 +92,7 @@ function getFandomDirectUrl(filename: string): string {
 
 export function getHeroImageUrl(name: string): string | null {
   const filename = HERO_FILENAMES[name] ?? toFandomFilename(name);
-  return getFandomDirectUrl(filename);
+  return entityImageUrl(name) ?? getFandomDirectUrl(filename);
 }
 
 export function getHeroSlug(name: string): string | null {
@@ -99,10 +102,10 @@ export function getHeroSlug(name: string): string | null {
 
 export function getPetImageUrl(name: string): string | null {
   const filename = PET_FILENAMES[name] ?? toFandomFilename(name);
-  return getFandomDirectUrl(filename);
+  return entityImageUrl(name) ?? getFandomDirectUrl(filename);
 }
 
 export function getEquipmentImageUrl(name: string): string | null {
   const filename = EQUIPMENT_FILENAMES[name] ?? toFandomFilename(name);
-  return getFandomDirectUrl(filename);
+  return entityImageUrl(name) ?? getFandomDirectUrl(filename);
 }

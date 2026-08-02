@@ -28,7 +28,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
       <View style={styles.row}>
         {icon ? (
           <View style={styles.iconWrap}>
-            <Image source={{ uri: icon }} style={styles.iconImage} />
+            <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
           </View>
         ) : (
           <View style={styles.iconWrap}>
@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrap: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iconImage: {
-    width: 26,
-    height: 26,
+    width: 34,
+    height: 34,
   },
   iconText: {
     ...Typography.caption,
