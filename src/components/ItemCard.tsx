@@ -73,7 +73,13 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
                 styles.levelBadgeText,
                 isMaxed && styles.levelBadgeTextMaxed
               ]}>
-                {level}/{effectiveMax}
+                {level}
+              </Text>
+              <Text style={[
+                styles.levelBadgeLabel,
+                isMaxed && styles.levelBadgeTextMaxed
+              ]}>
+                / {effectiveMax}
               </Text>
             </View>
           )}
@@ -156,25 +162,32 @@ const styles = StyleSheet.create({
     minWidth: 50,
   },
   levelBadgeContainer: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    width: 32,
+    height: 32,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   levelBadgeMaxed: {
-    backgroundColor: 'rgba(212, 163, 89, 0.08)',
-    borderColor: 'rgba(212, 163, 89, 0.3)',
+    backgroundColor: Colors.warning,
   },
   levelBadgeText: {
-    ...Typography.footnote,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    fontSize: 11,
+    ...Typography.headline,
+    color: Colors.bg,
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '700',
+  },
+  levelBadgeLabel: {
+    ...Typography.caption,
+    color: Colors.bg,
+    fontSize: 8,
+    opacity: 0.7,
+    lineHeight: 9,
   },
   levelBadgeTextMaxed: {
-    color: Colors.warning,
+    color: Colors.bg,
   },
   lockedHint: {
     ...Typography.footnote,
