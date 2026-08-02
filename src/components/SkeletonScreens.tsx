@@ -420,11 +420,12 @@ export function ArmiesScreenSkeleton() {
             </View>
             {/* Actions row */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: Spacing.sm }}>
-              <Skeleton width={18} height={18} borderRadius={4} style={{ padding: Spacing.xs }} />
-              <Skeleton width={18} height={18} borderRadius={4} style={{ padding: Spacing.xs }} />
               <View style={{ flex: 1 }} />
-              <Skeleton width={88} height={30} borderRadius={6} />
+              <Skeleton width={18} height={18} borderRadius={4} />
+              <Skeleton width={18} height={18} borderRadius={4} />
             </View>
+            {/* Copy Army button */}
+            <Skeleton width="100%" height={38} borderRadius={6} style={{ marginTop: Spacing.md }} />
           </View>
         ))}
       </View>
