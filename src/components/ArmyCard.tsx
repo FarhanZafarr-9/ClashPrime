@@ -15,6 +15,7 @@ interface Props {
   isSaved?: boolean;
   onFavorite?: () => void;
   onSave?: () => void;
+  onShare?: () => void;
   onCopy?: () => void;
   onPress?: () => void;
 }
@@ -50,7 +51,7 @@ function DetailTable({ rows, label }: { rows: { name: string; value: string }[];
   );
 }
 
-export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite, isSaved, onFavorite, onSave, onCopy, onPress }: Props) {
+export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite, isSaved, onFavorite, onSave, onShare, onCopy, onPress }: Props) {
   const { colors } = useTheme();
 
   const campUnits = army.units.filter((u) => u.home === 'armyCamp');
@@ -159,6 +160,11 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
         <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
           <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
         </PressableRipple>
+        {onShare && (
+          <PressableRipple onPress={onShare} hitSlop={8} style={styles.actionBtn}>
+            <Ionicons name="share-outline" size={18} color={colors.textTertiary} />
+          </PressableRipple>
+        )}
       </View>
       {onCopy && (
         <PressableRipple onPress={onCopy} style={styles.copyBtn}>

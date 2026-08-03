@@ -423,6 +423,7 @@ export function ArmiesScreenSkeleton() {
               <View style={{ flex: 1 }} />
               <Skeleton width={18} height={18} borderRadius={4} />
               <Skeleton width={18} height={18} borderRadius={4} />
+              <Skeleton width={18} height={18} borderRadius={4} />
             </View>
             {/* Copy Army button */}
             <Skeleton width="100%" height={38} borderRadius={6} style={{ marginTop: Spacing.md }} />

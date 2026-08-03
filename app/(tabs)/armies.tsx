@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
+  Share,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -165,6 +166,17 @@ export default function ArmiesScreen() {
     Linking.openURL(link);
   };
 
+  const handleShareArmy = async (army: ClashArmy) => {
+    try {
+      await Share.share({
+        message: `${army.name} · TH${army.townHall} army from ClashLy\n${army.shareLink || ''}`,
+        title: army.name,
+      });
+    } catch {
+      // Share sheet dismissed — no action needed.
+    }
+  };
+
   React.useEffect(() => {
     setDisplayCount(PAGE_SIZE);
   }, []);
@@ -264,6 +276,7 @@ export default function ArmiesScreen() {
                     isSaved={isSavedArmy}
                     onFavorite={() => handleArmyFavorite(army.id)}
                     onSave={() => handleSaveArmy(army)}
+                    onShare={army.shareLink ? () => handleShareArmy(army) : undefined}
                     onCopy={() => handleCopyArmy(army)}
                     onPress={() => {
                       if (army.guide?.youtubeUrl) {
