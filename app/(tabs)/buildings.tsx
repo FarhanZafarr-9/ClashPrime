@@ -235,7 +235,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; discounts: ScopeDiscount }) {
+function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; bhMax?: number; discounts: ScopeDiscount }) {
   const { player, upgradeBuilding, setBuildingLevel } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
@@ -251,7 +251,11 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   }, [name, lookupName]);
 
   const currentLevel = player?.buildingLevels?.[name] ?? 0;
-  const effectiveMax = getBuildingEffectiveMax(lookupName, player?.townHallLevel ?? 1);
+  // Builder Base buildings cap at the Builder Hall (supplied via bbEntries); home
+  // buildings cap at the Town Hall.
+  const effectiveMax = isBB && (bhMax ?? 0) > 0
+    ? bhMax!
+    : getBuildingEffectiveMax(lookupName, player?.townHallLevel ?? 1);
   const progress = effectiveMax > 0 ? currentLevel / effectiveMax : 0;
   const isFullyMaxed = currentLevel >= effectiveMax;
   const isLocked = currentLevel === 0;
@@ -259,7 +263,10 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, discounts }: { name: string
   const mainImgSource = getBuildingLevelImageSource(lookupName, Math.max(currentLevel, 1));
 
   const availableLevels = getBuildingAvailableLevels(lookupName);
-  const allLevels = buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l }));
+  // Only show levels the player can actually reach at their TH/BH — no stats
+  // rows or level images for unreachable future levels.
+  const allLevels = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
+    .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
   const showExpand = allLevels.length > 3;
 
   let displayLevels: any[];
@@ -599,6 +606,7 @@ export default function BuildingsScreen() {
               maxLvl={maxLvl}
               isMaxed={isMaxed}
               isBB={isBB}
+              bhMax={isBB ? maxLvl : undefined}
               discounts={discounts.buildings}
             />
           );
