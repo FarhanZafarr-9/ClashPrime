@@ -22,7 +22,7 @@ interface PlayerContextValue {
   loading: boolean;
   error: string | null;
   lastSync: Date | null;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<ClashPlayer | undefined>;
   tagVersion: number;
   upgradeBuilding: (name: string) => Promise<void>;
   setBuildingLevel: (name: string, level: number) => Promise<void>;
@@ -40,7 +40,7 @@ const PlayerContext = createContext<PlayerContextValue>({
   loading: true,
   error: null,
   lastSync: null,
-  refresh: async () => {},
+  refresh: async () => undefined,
   tagVersion: 0,
   upgradeBuilding: async () => {},
   setBuildingLevel: async () => {},
@@ -129,6 +129,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         await saveAccount(acct);
       }
       setLastSync(new Date());
+      return data;
     } catch (e: any) {
       setError(e.message || 'Failed to fetch player data');
       const cached = await getCachedPlayer();
@@ -169,7 +170,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [player]);
 
   const refresh = useCallback(async () => {
-    await fetchPlayer(true);
+    return await fetchPlayer(true);
   }, [fetchPlayer]);
 
   const bumpTagVersion = useCallback(() => {

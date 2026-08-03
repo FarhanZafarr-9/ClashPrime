@@ -35,6 +35,22 @@ import { Card } from '../../src/components/Card';
 import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
 import { getTroopDetail } from '../../src/api/troopDetail';
 import { useDialog } from '../../src/components/AlertDialog';
+import {
+  loadProgressSnapshot,
+  saveProgressSnapshot,
+  diffProgress,
+  ProgressSnapshot,
+  ProgressCategory,
+  ProgressDiff,
+} from '../../src/hooks/useProgressSnapshot';
+import type { ClashPlayer } from '../../src/types/clash';
+
+const CATEGORY_META: Record<ProgressCategory, { label: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
+  heroes: { label: 'Heroes', icon: { set: 'ion', name: 'shield-half-outline' } },
+  troops: { label: 'Troops', icon: { set: 'mc', name: 'sword-cross' } },
+  spells: { label: 'Spells', icon: { set: 'ion', name: 'flask-outline' } },
+  equipment: { label: 'Equipment', icon: { set: 'ion', name: 'trophy-outline' } },
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -43,6 +59,7 @@ export default function HomeScreen() {
   const { reminders, addTimer, dismissTimer } = useTimers();
   const { show: showDialog, Dialog } = useDialog();
   const [refreshing, setRefreshing] = useState(false);
+  const [progressDiff, setProgressDiff] = useState<ProgressDiff | null>(null);
   const [addTimerVisible, setAddTimerVisible] = useState(false);
   const [timerLabel, setTimerLabel] = useState('');
   const [timerMinutes, setTimerMinutes] = useState(30);
@@ -93,11 +110,70 @@ export default function HomeScreen() {
     setSwitchingHome(false);
   }, [switchAccount, activeAccount, switchingHome, fadeAnim]);
 
+  const buildSnapshot = useCallback((p: ClashPlayer): ProgressSnapshot => {
+    const th = p.townHallLevel ?? 0;
+    const ownedTroops = (p.troops ?? []).filter((t) => {
+      if (t.village !== 'home') return false;
+      if (superTroopNames.includes(t.name) || t.name.startsWith('Super ') || t.name.startsWith('Sneaky ') || t.name.startsWith('Rocket ')) return false;
+      return true;
+    });
+    const ownedSpells = (p.spells ?? []).filter((s: { village?: string }) => s.village === 'home' || !s.village);
+    const ownedHeroes = (p.heroes ?? []).filter((h: { village: string }) => h.village === 'home');
+    const equip = p.heroEquipment ?? [];
+
+    const calc = (ownedItems: { name: string; level: number }[], allAtTH: { name: string; maxLevel: number }[]) => {
+      if (allAtTH.length === 0) return 0;
+      const ownedMap = new Map(ownedItems.map((i) => [i.name.toLowerCase(), i.level]));
+      let sum = 0;
+      for (const { name, maxLevel } of allAtTH) {
+        const level = ownedMap.get(name.toLowerCase()) ?? 0;
+        sum += maxLevel > 0 ? level / maxLevel : 0;
+      }
+      return Math.min(sum / allAtTH.length, 1);
+    };
+
+    const allTroopsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'troop');
+    const allSpellsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'spell');
+    const allHeroesAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
+
+    const itemsMap = (list: { name: string; level: number }[]) => {
+      const m: Record<string, number> = {};
+      for (const it of list) m[it.name] = it.level;
+      return m;
+    };
+
+    return {
+      timestamp: Date.now(),
+      categories: {
+        heroes: calc(ownedHeroes, allHeroesAtTH),
+        troops: calc(ownedTroops, allTroopsAtTH),
+        spells: calc(ownedSpells, allSpellsAtTH),
+        equipment: equip.length > 0 ? equip.reduce((s, e) => s + (e.maxLevel > 0 ? e.level / e.maxLevel : 0), 0) / equip.length : 0,
+      },
+      items: {
+        heroes: itemsMap(ownedHeroes),
+        troops: itemsMap(ownedTroops),
+        spells: itemsMap(ownedSpells),
+        equipment: itemsMap(equip),
+      },
+    };
+  }, [superTroopNames]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refresh();
+    const tag = player?.tag;
+    const baseline = tag ? await loadProgressSnapshot(tag) : null;
+    const fresh = await refresh();
+    if (tag && fresh) {
+      const after = buildSnapshot(fresh);
+      if (baseline) {
+        const diff = diffProgress(baseline, after);
+        if (diff.hasChanges) setProgressDiff(diff);
+      }
+      await saveProgressSnapshot(tag, after);
+    }
     setRefreshing(false);
-  }, [refresh]);
+  }, [refresh, player?.tag, buildSnapshot]);
 
   // ── Derived data (null-safe when player is null) ──
   const th = player?.townHallLevel ?? 0;
@@ -917,6 +993,82 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      <Modal visible={progressDiff !== null} transparent animationType="fade" onRequestClose={() => setProgressDiff(null)} statusBarTranslucent>
+        <Pressable style={styles.progressOverlay} onPress={() => setProgressDiff(null)}>
+          <View style={styles.progressCard} onStartShouldSetResponder={() => true}>
+            <View style={styles.progressHeader}>
+              <View style={styles.progressHeaderIcon}>
+                <Ionicons name="trending-up" size={20} color={Colors.textPrimary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.progressTitle}>Progress Achieved</Text>
+                <Text style={styles.progressSubtitle}>
+                  {progressDiff && progressDiff.since > 0
+                    ? `Since ${new Date(progressDiff.since).toLocaleDateString()}`
+                    : 'Since your last refresh'}
+                </Text>
+              </View>
+            </View>
+
+            {progressDiff && progressDiff.categories.length > 0 && (
+              <>
+                <Text style={styles.progressSectionTitle}>Overall Progress</Text>
+                <View style={{ gap: Spacing.sm }}>
+                  {progressDiff.categories.map((c) => {
+                    const meta = CATEGORY_META[c.key];
+                    return (
+                      <View key={c.key} style={styles.progressRow}>
+                        {meta.icon.set === 'mc' ? (
+                          <MaterialCommunityIcons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
+                        ) : (
+                          <Ionicons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
+                        )}
+                        <Text style={styles.progressRowLabel}>{meta.label}</Text>
+                        <Text style={styles.progressRowValue}>
+                          <Text style={styles.progressRowBefore}>{Math.round(c.before * 100)}%</Text>
+                          {'  →  '}
+                          <Text style={styles.progressRowAfter}>{Math.round(c.after * 100)}%</Text>
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            {progressDiff && progressDiff.levelUps.length > 0 && (
+              <>
+                <Text style={styles.progressSectionTitle}>Level Ups ({progressDiff.levelUps.length})</Text>
+                <View style={styles.progressLevelUps}>
+                  {progressDiff.levelUps.map((u, i) => {
+                    const meta = CATEGORY_META[u.key];
+                    return (
+                      <View key={`${u.key}-${u.name}`} style={[styles.progressLevelRow, i < progressDiff!.levelUps.length - 1 && styles.progressLevelRowBorder]}>
+                        {meta.icon.set === 'mc' ? (
+                          <MaterialCommunityIcons name={meta.icon.name as any} size={14} color={Colors.textTertiary} />
+                        ) : (
+                          <Ionicons name={meta.icon.name as any} size={14} color={Colors.textTertiary} />
+                        )}
+                        <Text style={styles.progressLevelName} numberOfLines={1}>{u.name}</Text>
+                        <Text style={styles.progressLevelValue}>
+                          <Text style={styles.progressRowBefore}>Lv{u.before}</Text>
+                          {'  →  '}
+                          <Text style={styles.progressRowAfter}>Lv{u.after}</Text>
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            <PressableRipple style={styles.progressClose} onPress={() => setProgressDiff(null)}>
+              <Text style={styles.progressCloseText}>Nice!</Text>
+            </PressableRipple>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1674,6 +1826,134 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textPrimary,
   },
   modalConfirmText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '700',
+  },
+  progressOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  progressCard: {
+    width: '88%',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  progressHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressTitle: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+    lineHeight: 22,
+  },
+  progressSubtitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  progressSectionTitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  progressRowLabel: {
+    flex: 1,
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  progressRowValue: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  progressRowBefore: {
+    color: Colors.textTertiary,
+    fontWeight: '500',
+  },
+  progressRowAfter: {
+    color: Colors.success,
+    fontWeight: '700',
+  },
+  progressLevelUps: {
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+  },
+  progressLevelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+  },
+  progressLevelRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  progressLevelName: {
+    flex: 1,
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+  progressLevelValue: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  progressClose: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+  },
+  progressCloseText: {
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '700',
