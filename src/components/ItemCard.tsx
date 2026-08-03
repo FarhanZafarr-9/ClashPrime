@@ -12,9 +12,11 @@ interface Props {
   icon?: string;
   onPress?: () => void;
   locked?: boolean;
+  isFirst?: boolean;
+  isLast?: Boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, onPress, locked }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, onPress, locked, isFirst, isLast }: Props) {
   const { colors } = useTheme();
   const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
   const progress = effectiveMax > 0 ? level / effectiveMax : 0;
@@ -23,18 +25,25 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
   return (
     <PressableRipple
       onPress={onPress}
-      style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border, opacity: locked ? 0.55 : 1 }]}
+      style={[styles.card,
+      { backgroundColor: colors.bgCard, opacity: locked ? 0.55 : 1 },
+      isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+      isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }
+      ]}
     >
       <View style={styles.row}>
-        {icon ? (
-          <View style={styles.iconWrap}>
+
+        <View style={[styles.iconWrap,
+        isFirst && { borderTopLeftRadius: Radius.lg },
+        isLast && { borderBottomLeftRadius: Radius.lg }
+        ]}>
+          {icon ? (
+
             <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
-          </View>
-        ) : (
-          <View style={styles.iconWrap}>
+          ) : (
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
-          </View>
-        )}
+          )}
+        </View>
 
         <View style={styles.middle}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
@@ -67,7 +76,9 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
           ) : (
             <View style={[
               styles.levelBadgeContainer,
-              isMaxed && styles.levelBadgeMaxed
+              isMaxed && styles.levelBadgeMaxed,
+              isFirst && { borderTopRightRadius: Radius.lg },
+              isLast && { borderBottomRightRadius: Radius.lg }
             ]}>
               <Text style={[
                 styles.levelBadgeText,
@@ -93,11 +104,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   pressed: {
     backgroundColor: Colors.bgCardHover,
@@ -110,9 +119,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
@@ -136,6 +143,7 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
+    marginBottom: Spacing.xs / 1.25,
   },
   subtitle: {
     ...Typography.footnote,
@@ -143,7 +151,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   progressContainer: {
-    marginTop: 6,
+    marginTop: 12,
     width: '100%',
   },
   progressTrack: {
@@ -165,7 +173,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.textPrimary,
+    backgroundColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -174,14 +182,14 @@ const styles = StyleSheet.create({
   },
   levelBadgeText: {
     ...Typography.headline,
-    color: Colors.bg,
+    color: Colors.textPrimary,
     fontSize: 14,
     lineHeight: 16,
     fontWeight: '700',
   },
   levelBadgeLabel: {
     ...Typography.caption,
-    color: Colors.bg,
+    color: Colors.textPrimary,
     fontSize: 8,
     opacity: 0.7,
     lineHeight: 9,
