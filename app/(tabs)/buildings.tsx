@@ -235,7 +235,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; bhMax?: number; discounts: ScopeDiscount }) {
+function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, isLast }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; bhMax?: number; discounts: ScopeDiscount; isFirst?: boolean; isLast?: boolean }) {
   const { player, upgradeBuilding, setBuildingLevel } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
@@ -336,13 +336,17 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts }: { name:
   };
 
   return (
-    <View style={styles.itemCard}>
+    <View style={[
+      styles.itemCard,
+      isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+      isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+    ]}>
       <PressableRipple onPress={toggleExpanded} style={styles.itemCardTouchable}>
         <View style={styles.itemRow}>
           {mainImgSource ? (
-            <Image source={mainImgSource} style={styles.itemIcon} resizeMode="contain" />
+            <Image source={mainImgSource} style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
           ) : (
-            <View style={styles.itemIcon}>
+            <View style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && { borderBottomLeftRadius: Radius.lg }]}>
               <Text style={styles.itemIconText}>
                 {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
               </Text>
@@ -366,17 +370,27 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts }: { name:
               </View>
             )}
           </View>
-          <View style={[styles.levelBadge, isFullyMaxed && styles.levelBadgeMaxed]}>
-            <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-              {isLocked ? 'Locked' : `${currentLevel}/${effectiveMax}`}
-            </Text>
+          <View style={styles.right}>
+            {isLocked ? (
+              <View style={styles.lockedBadge}>
+                <Text style={styles.lockedBadgeText}>Locked</Text>
+              </View>
+            ) : (
+              <View style={[
+                styles.levelBadgeContainer,
+                isFullyMaxed && styles.levelBadgeMaxed,
+                isFirst && { borderTopRightRadius: Radius.lg },
+                isLast && { borderBottomRightRadius: Radius.lg },
+              ]}>
+                <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
+                  {currentLevel}
+                </Text>
+                <Text style={[styles.levelBadgeLabel, isFullyMaxed && styles.levelBadgeTextMaxed]}>
+                  / {effectiveMax}
+                </Text>
+              </View>
+            )}
           </View>
-          <Ionicons
-            name={expanded ? 'chevron-down' : 'chevron-forward'}
-            size={16}
-            color={Colors.textTertiary}
-            style={styles.expandArrow}
-          />
         </View>
       </PressableRipple>
 
@@ -596,7 +610,7 @@ export default function BuildingsScreen() {
           })}
         </View>
 
-        {entries.map(([name, entry]) => {
+        {entries.map(([name, entry], idx) => {
           const maxLvl = isBB ? (entry as any).level ?? 0 : (entry as any)[String(th)]?.level ?? 0;
           const isMaxed = isBB ? (entry as any).isMaxLevel ?? false : (entry as any)[String(th)]?.isMaxLevel ?? false;
           return (
@@ -608,6 +622,8 @@ export default function BuildingsScreen() {
               isBB={isBB}
               bhMax={isBB ? maxLvl : undefined}
               discounts={discounts.buildings}
+              isFirst={idx === 0}
+              isLast={idx === entries.length - 1}
             />
           );
         })}
@@ -708,10 +724,8 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
     borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
     backgroundColor: Colors.bgCard,
     overflow: 'hidden',
   },
@@ -728,7 +742,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     overflow: 'hidden',
   },
   itemIconText: {
@@ -763,27 +777,53 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 2,
   },
-  levelBadge: {
+  right: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  levelBadgeContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  levelBadgeMaxed: {
+    backgroundColor: Colors.warning,
+  },
+  levelBadgeText: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '700',
+  },
+  levelBadgeLabel: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontSize: 8,
+    opacity: 0.7,
+    lineHeight: 9,
+  },
+  levelBadgeTextMaxed: {
+    color: Colors.bg,
+  },
+  lockedBadge: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.full,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
-    marginRight: Spacing.xs,
   },
-  levelBadgeMaxed: {
-    backgroundColor: 'rgba(212, 163, 89, 0.08)',
-    borderColor: 'rgba(212, 163, 89, 0.3)',
-  },
-  levelBadgeText: {
+  lockedBadgeText: {
     ...Typography.footnote,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontWeight: '600',
-    fontSize: 11,
-  },
-  levelBadgeTextMaxed: {
-    color: Colors.warning,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   lockedText: {
     ...Typography.footnote,
@@ -873,10 +913,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     opacity: 0.85,
-  },
-  expandArrow: {
-    width: 24,
-    textAlign: 'center',
   },
   levelGridBorder: {
     borderRadius: Radius.sm,
