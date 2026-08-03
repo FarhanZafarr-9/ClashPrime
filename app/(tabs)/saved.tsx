@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { ArmyCard } from '../../src/components/ArmyCard';
-import { getPopularArmies } from '../../src/api/clashArmies';
+import { getPopularArmies, getArmyById } from '../../src/api/clashArmies';
 import {
   getSavedBases,
   getFavorites,
@@ -80,6 +80,7 @@ export default function SavedScreen() {
   const [savedArmies, setSavedArmies] = useState<SavedArmy[]>([]);
   const [armyFavorites, setArmyFavorites] = useState<Set<string>>(new Set());
   const [armies, setArmies] = useState<ClashArmy[]>([]);
+  const [savedArmyDetails, setSavedArmyDetails] = useState<Map<string, ClashArmy>>(new Map());
   const [unitsById, setUnitsById] = useState<Map<number, UnitDef>>(new Map());
   const [equipmentById, setEquipmentById] = useState<Map<number, EquipmentDef>>(new Map());
   const [petsById, setPetsById] = useState<Map<number, PetDef>>(new Map());
@@ -113,6 +114,30 @@ export default function SavedScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (savedArmies.length === 0) return;
+    const missing = savedArmies.filter(
+      (s) => !armies.some((a) => String(a.id) === s.id) && !savedArmyDetails.has(s.id)
+    );
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const map = new Map(savedArmyDetails);
+      await Promise.all(missing.map(async (s) => {
+        try {
+          const result = await getArmyById(Number(s.id));
+          if (!result || cancelled) return;
+          map.set(s.id, result.army);
+          if (result.defs.unitsById.size > 0) setUnitsById((prev) => new Map([...prev, ...result.defs.unitsById]));
+          if (result.defs.equipmentById.size > 0) setEquipmentById((prev) => new Map([...prev, ...result.defs.equipmentById]));
+          if (result.defs.petsById.size > 0) setPetsById((prev) => new Map([...prev, ...result.defs.petsById]));
+        } catch { }
+      }));
+      if (!cancelled) setSavedArmyDetails(map);
+    })();
+    return () => { cancelled = true; };
+  }, [savedArmies, armies, savedArmyDetails]);
+
   const favoriteBases = Array.from(baseFavorites);
 
   const sections: Section[] = [];
@@ -142,7 +167,7 @@ export default function SavedScreen() {
     sections.push({
       title: `Saved Armies (${savedArmies.length})`,
       type: 'army',
-      data: savedArmies.map((s) => armies.find((a) => String(a.id) === s.id) || s),
+      data: savedArmies.map((s) => savedArmyDetails.get(s.id) || armies.find((a) => String(a.id) === s.id) || s),
     });
   }
 
