@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
+  Share,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -151,6 +152,18 @@ export default function BaseLibraryScreen() {
   const handleCopy = (base: ScrapedBase) => {
     if (base.game_copy_link) {
       Linking.openURL(base.game_copy_link);
+    }
+  };
+
+  const handleShare = async (base: ScrapedBase) => {
+    try {
+      const category = CATEGORY_MAP[base.type] || base.type;
+      await Share.share({
+        message: `${base.title} · ${category} ${base.village === 'builder' ? 'BH' : 'TH'}${base.th_level} base layout from ClashLy\n${base.detail_url}`,
+        title: base.title,
+      });
+    } catch {
+      // Share sheet dismissed — no action needed.
     }
   };
 
@@ -330,6 +343,7 @@ export default function BaseLibraryScreen() {
                         onFavorite={() => handleFavorite(scrapedBase.detail_url)}
                         onCopy={() => handleCopy(scrapedBase)}
                         onSave={() => handleSave(scrapedBase)}
+                        onShare={() => handleShare(scrapedBase)}
                       />
                     );
                   })}
