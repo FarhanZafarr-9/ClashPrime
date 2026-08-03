@@ -139,6 +139,30 @@ interface ArmyPage {
   defsData: any[];
 }
 
+export async function getArmyById(id: number): Promise<{ army: ClashArmy; defs: { unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> } } | null> {
+  const json = await fetchJson(`https://clasharmies.com/armies/${id}/__data.json`);
+  const nodes: any[] = json.nodes || [];
+
+  const armyNode = nodes.find((n: any) => n?.type === 'data' && Array.isArray(n.data) && n.data[0]?.army !== undefined);
+  const defsNode = nodes.find((n: any) => n?.type === 'data' && Array.isArray(n.data) && n.data[0]?.units !== undefined);
+
+  if (!armyNode) return null;
+
+  const armyData = armyNode.data;
+  const header = armyData[0];
+  const armyIdx: number = (header as any).army ?? -1;
+  if (armyIdx < 0) return null;
+
+  const raw = resolve(armyData, armyIdx);
+  if (!raw || !raw.name) return null;
+
+  const defs = defsNode
+    ? parseDefinitions(defsNode.data)
+    : { unitsById: new Map(), equipmentById: new Map(), petsById: new Map() };
+
+  return { army: resolveArmy(armyData, armyIdx), defs };
+}
+
 async function fetchArmyPage(townHall: number | undefined, page: number): Promise<ArmyPage> {
   const params = new URLSearchParams();
   params.set('page', String(page));
