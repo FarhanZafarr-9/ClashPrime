@@ -479,6 +479,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 6,
+    paddingHorizontal: Spacing.base,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderSubtle,
   },
