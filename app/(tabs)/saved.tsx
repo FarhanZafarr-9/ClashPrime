@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
+  Share,
   SectionList,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -166,6 +167,17 @@ export default function SavedScreen() {
     loadData();
   };
 
+  const handleShareArmy = async (army: { name: string; townHall: number; id: string | number; shareLink?: string }) => {
+    try {
+      await Share.share({
+        message: `${army.name} · TH${army.townHall} army from ClashLy\n${army.shareLink || `https://clasharmies.com/armies/${army.id}`}`,
+        title: army.name,
+      });
+    } catch {
+      // Share sheet dismissed — no action needed.
+    }
+  };
+
   const handleRemoveSavedArmy = async (id: string) => {
     await removeSavedArmy(id);
     loadData();
@@ -257,6 +269,7 @@ export default function SavedScreen() {
                         if (isSaved) handleRemoveSavedArmy(String(army.id));
                         else saveArmy({ id: String(army.id), name: army.name, townHallLevel: army.townHall, username: army.username, score: army.score }).then(loadData);
                       }}
+                      onShare={() => handleShareArmy(army)}
                       onCopy={() => handleCopyArmy(army)}
                     />
                   );
@@ -275,6 +288,9 @@ export default function SavedScreen() {
                       </Text>
                     </View>
                     <View style={styles.itemActions}>
+                      <PressableRipple onPress={() => handleShareArmy({ name: savedArmy.name, townHall: savedArmy.townHallLevel, id: savedArmy.id })} hitSlop={10} style={styles.actionBtn}>
+                        <Ionicons name="share-outline" size={16} color={Colors.textTertiary} />
+                      </PressableRipple>
                       <PressableRipple onPress={() => handleToggleArmyFav(Number(savedArmy.id))} hitSlop={10} style={styles.actionBtn}>
                         <Ionicons
                           name={isFav ? 'heart' : 'heart-outline'}
