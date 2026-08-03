@@ -169,7 +169,7 @@ export default function ArmiesScreen() {
   const handleShareArmy = async (army: ClashArmy) => {
     try {
       await Share.share({
-        message: `${army.name} · TH${army.townHall} army from ClashLy\n${army.shareLink || ''}`,
+        message: `${army.name} · TH${army.townHall} army from ClashLy\n${army.shareLink || `https://clasharmies.com/armies/${army.id}`}`,
         title: army.name,
       });
     } catch {
@@ -276,7 +276,7 @@ export default function ArmiesScreen() {
                     isSaved={isSavedArmy}
                     onFavorite={() => handleArmyFavorite(army.id)}
                     onSave={() => handleSaveArmy(army)}
-                    onShare={army.shareLink ? () => handleShareArmy(army) : undefined}
+                    onShare={() => handleShareArmy(army)}
                     onCopy={() => handleCopyArmy(army)}
                     onPress={() => {
                       if (army.guide?.youtubeUrl) {

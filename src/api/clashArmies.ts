@@ -128,7 +128,7 @@ function resolveArmy(data: any[], armyIdx: number): ClashArmy {
     equipment,
     pets,
     guide,
-    shareLink: raw.shareLink || raw.copyLink || null,
+    shareLink: raw.shareLink || raw.copyLink || `https://clasharmies.com/armies/${raw.id ?? 0}`,
     createdTime: raw.createdTime ?? '',
     updatedTime: raw.updatedTime ?? '',
   };
