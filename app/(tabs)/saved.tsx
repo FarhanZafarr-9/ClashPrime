@@ -142,7 +142,7 @@ export default function SavedScreen() {
     sections.push({
       title: `Saved Armies (${savedArmies.length})`,
       type: 'army',
-      data: savedArmies,
+      data: savedArmies.map((s) => armies.find((a) => String(a.id) === s.id) || s),
     });
   }
 
