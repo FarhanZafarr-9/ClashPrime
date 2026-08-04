@@ -846,7 +846,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon="rocket-outline"
             title="Add Account (Full Setup)"
-            desc="Walk through the full setup — pick your last maxed Town Hall from the gallery"
+            desc="Walk through the full setup for a new account"
             onPress={() => router.push('/onboarding?mode=add')}
           />
         </SettingCard>
