@@ -28,6 +28,7 @@ export default ({ config }) => {
     extra: {
       ...config.extra,
       variant: isDev ? 'development' : 'production',
+      commitHash: process.env.EAS_BUILD_GIT_COMMIT_HASH || null,
     },
   };
 };
