@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
 import { getStringAsync } from 'expo-clipboard';
@@ -189,6 +190,7 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
 const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
@@ -647,6 +649,15 @@ export default function SettingsScreen() {
                 ],
               });
             }}
+          />
+          <SettingRow
+            icon="flask-outline"
+            title="Test Onboarding Flow"
+            desc="Open the full onboarding screen to add a new account"
+            pillText="TEMP"
+            pillTopOffset={8}
+            pillRightOffset={-10}
+            onPress={() => router.push('/onboarding?mode=add')}
           />
         </SettingCard>
 

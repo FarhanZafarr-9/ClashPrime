@@ -20,6 +20,7 @@ import {
   setPlayerTag,
   setApiToken,
   saveAccount,
+  setActiveAccountTag,
 } from '../src/hooks/usePlayer';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
@@ -38,7 +39,7 @@ const NAME_REV: Record<string, string> = {
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
-  const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh } = usePlayer();
+  const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
   const [step, setStep] = useState<'form' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
@@ -65,15 +66,29 @@ export default function OnboardingScreen() {
     try {
       const api = new ClashAPI(cleanToken);
       const data = await api.getPlayer(cleanTag);
-      await setPlayerTag(cleanTag);
-      await setApiToken(cleanToken);
-      await saveAccount({
-        tag: cleanTag,
-        name: cleanTag,
-        townHallLevel: data.townHallLevel,
-        addedAt: new Date().toISOString(),
-        lastUsedAt: new Date().toISOString(),
-      });
+      if (mode === 'add') {
+        await saveAccount({
+          tag: cleanTag,
+          name: cleanTag,
+          townHallLevel: data.townHallLevel,
+          addedAt: new Date().toISOString(),
+          lastUsedAt: new Date().toISOString(),
+        });
+        await setActiveAccountTag(cleanTag);
+        await refreshAccounts();
+        await setPlayerTag(cleanTag);
+        await setApiToken(cleanToken);
+      } else {
+        await setPlayerTag(cleanTag);
+        await setApiToken(cleanToken);
+        await saveAccount({
+          tag: cleanTag,
+          name: cleanTag,
+          townHallLevel: data.townHallLevel,
+          addedAt: new Date().toISOString(),
+          lastUsedAt: new Date().toISOString(),
+        });
+      }
       setPlayerData(data);
       setStep('thPicker');
       setLoading(false);
