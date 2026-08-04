@@ -5,6 +5,7 @@ const CACHE_KEY_PETS = 'pet_names';
 const CACHE_KEY_SUPER_TROOPS = 'super_troop_names';
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const FANDOM_API = 'https://clashofclans.fandom.com/api.php';
+const FETCH_TIMEOUT_MS = 10_000;
 
 interface CacheEntry {
   names: string[];
@@ -27,10 +28,22 @@ async function fetchCategoryMembers(category: string): Promise<string[]> {
     if (cmcontinue) params.set('cmcontinue', cmcontinue);
 
     const url = `${FANDOM_API}?${params}`;
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'ClashPrime/1.0 (React Native)' },
-    });
-    if (!res.ok) throw new Error(`Fandom API error: ${res.status}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        headers: { 'User-Agent': 'ClashPrime/1.0 (React Native)' },
+        signal: controller.signal,
+      });
+    } catch {
+      clearTimeout(timer);
+      break;
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) break;
+
     const data: any = await res.json();
 
     if (data.query?.categorymembers) {

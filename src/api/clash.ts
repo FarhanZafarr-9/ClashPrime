@@ -1,6 +1,7 @@
 import { ClashPlayer, ClanWar, WarLogEntry } from '../types/clash';
 
 const BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
+const FETCH_TIMEOUT_MS = 15_000;
 
 export class ClashAPIError extends Error {
   status: number;
@@ -56,13 +57,23 @@ export class ClashAPI {
 
   private async fetch<T>(path: string): Promise<T> {
     let res: Response;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-      res = await fetch(`${BASE_URL}${path}`, { headers: this.headers() });
-    } catch (e) {
+      res = await fetch(`${BASE_URL}${path}`, {
+        headers: this.headers(),
+        signal: controller.signal,
+      });
+    } catch (e: any) {
+      if (e?.name === 'AbortError') {
+        throw new ClashAPIError('Connection timed out. The Clash of Clans API may be temporarily unavailable. Try again shortly.', 0);
+      }
       throw new ClashAPIError(
         'Couldn\'t reach the Clash of Clans servers. Check your connection and try again.',
         0
       );
+    } finally {
+      clearTimeout(timer);
     }
     if (!res.ok) {
       let reason: string | undefined;
