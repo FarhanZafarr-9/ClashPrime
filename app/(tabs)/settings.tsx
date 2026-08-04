@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
-import { getStringAsync } from 'expo-clipboard';
+import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 const heartImg = require('../../images/heart.png') as any;
@@ -189,8 +189,81 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
 
 const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
+const CHANGELOG: { version: string; date: string; items: string[] }[] = [
+  {
+    version: '4.1.0',
+    date: 'August 5, 2026',
+    items: [
+      'Live Clan War League rounds on the War tab — follow each round, its result and expandable per-member breakdowns.',
+      'War tab list redesign: grouped member rows with attack dots and defense shields, rounded list corners and tighter spacing.',
+      'Onboarding Town Hall picker rebuilt as an image gallery with a current-TH badge.',
+      'Add Account (Full Setup) walks you through connecting a new village from Settings.',
+      'Saved armies now render as full cards with share actions.',
+      'Building and army discounts moved into Settings with clearer scopes.',
+      'New What\u2019s New and Developer Info sections in Settings.',
+    ],
+  },
+  {
+    version: '4.0.0',
+    date: 'August 1, 2026',
+    items: [
+      'Floating rounded bottom navigation with a More menu for the full tab set.',
+      'Progress rebuilt as a weighted average with locked items shown at their next available level.',
+      'Pinned countdown timers with system notifications.',
+      'War tab enriched with per-member attack details and an expanded result table.',
+      'Multi-account polish: smooth account-switch fade, building downgrade support and Town Hall input during onboarding.',
+      'Settings redesigned into grouped cards with separated rows.',
+    ],
+  },
+  {
+    version: '3.0.0',
+    date: 'July 27, 2026',
+    items: [
+      'Multi-account support: account registry, one-tap switching and per-account storage.',
+      'Account switcher with list, add and remove directly on the Home tab.',
+      'Settings refactored around the new account system with name backfill for existing players.',
+    ],
+  },
+  {
+    version: '2.0.0',
+    date: 'July 23, 2026',
+    items: [
+      'Dynamic light/dark theme engine — switch instantly, every screen follows.',
+      'Animated skeleton loading screens for Home, Profile, Bases and Events.',
+      'Fandom Wiki as the primary troop, hero and pet detail source with inline detail panels.',
+      'Building level data scraper and stat tables inside expanded building cards.',
+      'Home quick-stats table with Town Hall avatar, plus Privacy Policy and Feedback dialogs.',
+      'EAS build profiles for side-by-side dev and production installs.',
+    ],
+  },
+  {
+    version: '1.0.0',
+    date: 'July 19, 2026',
+    items: [
+      'ClashPrime launch — the full Clash of Clans companion app.',
+      'Home dashboard with progress cards, quick actions and quick stats.',
+      'Army tab with troops, heroes, spells and pet details.',
+      'Buildings tab covering 80+ structures with level progression.',
+      'Base library powered by ClashLy and in-game events with countdowns.',
+      'Credits and data sources documented in-app.',
+    ],
+  },
+];
+
+const DEVELOPER_PROJECTS: { name: string; blurb: string }[] = [
+  { name: 'FlexPrime', blurb: 'Academic companion for FASTians — marks analytics, attendance risk, GPA tools and past papers, shipped to Google Play.' },
+  { name: 'NotePrime', blurb: 'Material You fork of Note Safe — end-to-end encrypted, local-first notes with a privacy shield and biometric lock.' },
+  { name: 'ClashPrime', blurb: 'This app — a premium Clash of Clans companion built in React Native + Expo.' },
+  { name: 'Timers', blurb: 'Android multi-timer app with reliable notifications and zero bloat.' },
+];
+
+const DEV_AVATAR_URL = 'https://avatars.githubusercontent.com/u/94292576?v=4';
+const GITHUB_PROFILE_URL = 'https://github.com/FarhanZafarr-9';
+const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
+
 export default function SettingsScreen() {
   const router = useRouter();
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.1.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
@@ -420,7 +493,7 @@ export default function SettingsScreen() {
               <Ionicons name="shield" size={26} color={Colors.textPrimary} />
             </View>
             <View style={styles.creditHeroText}>
-              <Text style={styles.creditName}>ClashPrime v4.0.0</Text>
+              <Text style={styles.creditName}>ClashPrime {appVersion}</Text>
               <Text style={styles.creditHandle}>Premium Clash of Clans companion</Text>
             </View>
           </View>
@@ -552,6 +625,126 @@ export default function SettingsScreen() {
           primary: true,
           onPress: () => openURL(`mailto:${FEEDBACK_EMAIL}`),
         },
+        { label: 'Close' },
+      ],
+    );
+  };
+
+  const openChangelog = () => {
+    showContent(
+      'What\u2019s New',
+      (
+        <View>
+          {CHANGELOG.map((entry) => (
+            <View style={styles.changelogEntry} key={entry.version}>
+              <View style={styles.changelogVersionRow}>
+                <Text style={styles.changelogVersion}>v{entry.version}</Text>
+                <Text style={styles.changelogDate}>{entry.date}</Text>
+              </View>
+              {entry.items.map((item) => (
+                <View style={styles.changelogItem} key={item}>
+                  <View style={styles.changelogDot} />
+                  <Text style={styles.changelogItemText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      ),
+      [{ label: 'Close', primary: true }],
+    );
+  };
+
+  const openDeveloper = () => {
+    showContent(
+      'Developer Info',
+      (
+        <View>
+          <View style={styles.creditHero}>
+            <View style={styles.devAvatar}>
+              <Image source={{ uri: DEV_AVATAR_URL }} style={styles.devAvatarImg} />
+            </View>
+            <View style={styles.creditHeroText}>
+              <Text style={styles.creditName}>Farhan Zafar</Text>
+              <Text style={styles.creditHandle}>@FarhanZafarr-9</Text>
+            </View>
+          </View>
+          <Text style={styles.devTagline}>
+            every pixel intentional · every commit counts · every detail ships
+          </Text>
+          <Text style={styles.creditBlurb}>
+            Mobile and full-stack developer, currently on a BS in Data Science at FAST-NUCES Lahore. I ship real apps — React Native, Flutter and full-stack web — and obsess over the details users actually feel.
+          </Text>
+          <Text style={styles.creditSectionTitle}>Featured projects</Text>
+          {DEVELOPER_PROJECTS.map((p) => (
+            <View style={styles.devProjectRow} key={p.name}>
+              <Ionicons name="code-slash-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+              <View style={styles.creditSourceText}>
+                <Text style={styles.creditSourceName}>{p.name}</Text>
+                <Text style={styles.creditSourceUse}>{p.blurb}</Text>
+              </View>
+            </View>
+          ))}
+          <Text style={styles.creditSectionTitle}>What I do</Text>
+          {[
+            { icon: 'phone-portrait-outline', title: 'Mobile Dev', body: 'React Native · Expo · Flutter' },
+            { icon: 'globe-outline', title: 'Full Stack Web', body: 'React · Node.js · Express · SQL' },
+            { icon: 'analytics-outline', title: 'Data Science', body: 'Python · PyTorch · scikit-learn · NumPy' },
+          ].map((s) => (
+            <View style={styles.aboutFeatureRow} key={s.title}>
+              <Ionicons name={s.icon as any} size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+              <View style={styles.creditSourceText}>
+                <Text style={styles.creditSourceName}>{s.title}</Text>
+                <Text style={styles.creditSourceUse}>{s.body}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ),
+      [
+        {
+          label: 'GitHub',
+          onPress: () => openURL(GITHUB_PROFILE_URL),
+        },
+        {
+          label: 'ClashPrime Repo',
+          onPress: () => openURL(CLASHPRIME_REPO_URL),
+        },
+        { label: 'Close', primary: true },
+      ],
+    );
+  };
+
+  const openBuildDiagnostics = () => {
+    const expo = (Constants.expoConfig as any) ?? {};
+    const extra = expo.extra ?? {};
+    const easBuild = extra.eas?.build ?? {};
+    const rows: { label: string; value: string }[] = [
+      { label: 'App Version', value: expo.version ? `v${expo.version}` : '—' },
+      { label: 'Build Number', value: String(easBuild.runNumber ?? Constants.nativeBuildVersion ?? '—') },
+      { label: 'Expo SDK', value: expo.sdkVersion ?? '—' },
+      { label: 'Environment', value: extra.variant ?? (__DEV__ ? 'development' : 'production') },
+      { label: 'Git Commit', value: extra.commitHash ?? '—' },
+      { label: 'Update URL', value: expo.updates?.url ?? '—' },
+      { label: 'Platform', value: `${Platform.OS}${Platform.constants && (Platform.constants as any).Version ? ` ${(Platform.constants as any).Version}` : ''}` },
+    ];
+    showContent(
+      'Build Diagnostics',
+      (
+        <View>
+          <Text style={styles.feedbackText}>
+            Technical build details for bug reports. Tap "Copy Info" to paste them into feedback.
+          </Text>
+          {rows.map((r) => (
+            <View style={styles.devRow} key={r.label}>
+              <Text style={styles.devRowLabel}>{r.label}</Text>
+              <Text style={styles.devRowValue} numberOfLines={1}>{r.value}</Text>
+            </View>
+          ))}
+        </View>
+      ),
+      [
+        { label: 'Copy Info', primary: true, onPress: () => setStringAsync(rows.map((r) => `${r.label}: ${r.value}`).join('\n')) },
         { label: 'Close' },
       ],
     );
@@ -754,9 +947,18 @@ export default function SettingsScreen() {
             onPress={openAbout}
             children={
               <>
-                <Text style={styles.settingValue}>v4.0.0</Text>
+                <Text style={styles.settingValue}>{appVersion}</Text>
                 <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
               </>
+            }
+          />
+          <SettingRow
+            icon="sparkles-outline"
+            title="What's New"
+            desc="Recent updates and improvements"
+            onPress={openChangelog}
+            children={
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
             }
           />
           <SettingRow
@@ -779,8 +981,30 @@ export default function SettingsScreen() {
           />
         </SettingCard>
 
+        <SectionHeader>Developer</SectionHeader>
+        <SettingCard>
+          <SettingRow
+            icon="person-circle-outline"
+            title="Developer Info"
+            desc="About the developer behind ClashPrime"
+            onPress={openDeveloper}
+            children={
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            }
+          />
+          <SettingRow
+            icon="code-slash-outline"
+            title="Build Diagnostics"
+            desc="Technical build details for bug reports"
+            onPress={openBuildDiagnostics}
+            children={
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            }
+          />
+        </SettingCard>
+
         <View style={styles.footer}>
-          <Text style={styles.footerText}>ClashPrime v4.0.0</Text>
+          <Text style={styles.footerText}>ClashPrime {appVersion}</Text>
           <View style={styles.footerMadeRow}>
             <Text style={styles.footerSubtext}>Made with </Text>
             <Image source={heartImg} style={styles.footerHeart} />
@@ -1778,5 +2002,90 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '600',
+  },
+  changelogEntry: {
+    marginBottom: Spacing.lg,
+  },
+  changelogVersionRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  changelogVersion: {
+    ...Typography.title3,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  changelogDate: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  changelogItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginBottom: 6,
+  },
+  changelogDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: Colors.accent,
+    marginTop: 9,
+  },
+  changelogItemText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    flex: 1,
+    lineHeight: 20,
+  },
+  devAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  devAvatarImg: {
+    width: 52,
+    height: 52,
+  },
+  devTagline: {
+    ...Typography.caption,
+    color: Colors.accent,
+    fontWeight: '600',
+    marginTop: Spacing.md,
+  },
+  devProjectRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  devRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  devRowLabel: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+  },
+  devRowValue: {
+    ...Typography.footnote,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'right',
   },
 });
