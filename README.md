@@ -1,6 +1,6 @@
 # ClashPrime
 
-A premium monochrome companion app for Clash of Clans — track your progress, manage armies and bases, explore building levels, and stay on top of events.
+A premium monochrome companion app for Clash of Clans — track your progress, manage armies and bases, explore building levels, follow wars, and stay on top of events.
 
 <p align="center">
   <img src="images/rounded-icon.png" width="120" alt="ClashPrime Icon" />
@@ -13,13 +13,14 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Army** — troops, heroes, spells, pets, equipment with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns
 - **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles
 - **Events** — upcoming in-game events with countdown timers and progress bars
+- **War** — live war tracking with per-member attack dots and defense shields, plus live Clan War League rounds (expandable per-member breakdowns, W/L/D per round) and a searchable war history split into regular wars and CWL
 - **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback
 - **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, in-game copy, and end-of-list feedback
 - **Discount System** — modal with per-scope (Buildings / Army) cost and time reduction sliders, preset pills, custom percentage input, and instant preview across all tabs
-- **Saved** — quick access to saved and favorited bases and armies
+- **Saved** — quick access to saved and favorited bases and armies, with full army cards and share actions
 - **Awards** — standalone tab with star summary and village-filtered achievement list
-- **Settings** — API token & dark mode, plus Credits, Privacy Policy and Feedback (reach us at farhanzafarr.9@gmail.com)
-- **Onboarding** — guided first-run flow for entering API token and player tag
+- **Settings** — API token, dark mode, discounts, account management, plus a What's New changelog, About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
+- **Onboarding** — guided first-run flow with an image-based Town Hall picker and an Add Account (Full Setup) flow
 
 ## Design
 
@@ -78,6 +79,7 @@ ClashPrime/
 │       ├── bases.tsx       # Base Library
 │       ├── armies.tsx      # Army Library (ClashArmies)
 │       ├── saved.tsx       # Saved & Favorites
+│       ├── war.tsx         # War & CWL
 │       ├── achievements.tsx# Awards
 │       └── settings.tsx    # Settings
 ├── src/
@@ -138,7 +140,7 @@ npx tsx scraper/siege-machines.ts
 
 ## Roadmap
 
-- **Clan War Leagues** — The War tab already has basic CWL history grouping, but it needs thorough testing with live CWL data (attacks, promotions, medal tracking) when the next league season starts.
+- **Clan War Leagues** — Live CWL rounds are now tracked on the War tab. Remaining: medal tracking and promotion/ranking through a league season.
 - **Landing page** — A simple static HTML page for web presence, deployed via Vercel from the same repo.
 
 ## License
