@@ -26,6 +26,7 @@ import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
 import { cachePlayer } from '../src/hooks/usePlayer';
 import { getMaxLevelAtTH } from '../src/utils/thMaxLevels';
+import { getTownHallImageUrl } from '../src/utils/thImages';
 import type { ClashPlayer } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
 import buildingLevelsData from '../src/data/building-levels.json';
@@ -46,6 +47,9 @@ export default function OnboardingScreen() {
   const [tag, setTag] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currentTh = mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16;
+  const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
 
   const handleContinue = async () => {
     let cleanTag = tag.trim().toUpperCase();
@@ -204,7 +208,6 @@ export default function OnboardingScreen() {
       playerData!.buildingLevels = levels;
       playerData!.lastMaxedTH = selectedTh;
       await cachePlayer(playerData!);
-      setLoading(false);
       try { await refresh(); } catch { /* proceed even if API is unreachable */ }
       router.replace('/(tabs)');
     }
@@ -282,29 +285,56 @@ export default function OnboardingScreen() {
           </View>
         ) : (
           <View style={styles.content}>
-            <View style={styles.hero}>
-              <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
-              <Text style={styles.title}>Building Levels</Text>
-              <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
-            </View>
-            <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
-            <ScrollView style={[styles.thGrid, loading && styles.thGridLoading]} contentContainerStyle={styles.thGridInner} pointerEvents={loading ? 'none' : 'auto'}>
-              {Array.from({ length: (mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
-                <PressableRipple
-                  key={th}
-                  style={styles.thCell}
-                  onPress={() => handleThPick(th)}
-                  disabled={loading}
-                >
-                  <Text style={styles.thCellText}>TH{th}</Text>
-                </PressableRipple>
-              ))}
-            </ScrollView>
-            {loading && (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator size="small" color={Colors.textPrimary} />
-                <Text style={styles.loadingText}>Setting up your base…</Text>
+            {!loading && (
+              <View style={styles.hero}>
+                <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
+                <Text style={styles.title}>Building Levels</Text>
+                <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
               </View>
+            )}
+            {loading ? (
+              <View style={styles.loadingState}>
+                <ActivityIndicator size="small" color={Colors.textPrimary} />
+                <Text style={styles.loadingStateText}>Setting up your base…</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
+                <ScrollView style={styles.thGrid} contentContainerStyle={styles.thGridInner}>
+                  {thOptions.map((th) => {
+                    const thImg = getTownHallImageUrl(th);
+                    const isCurrent = th === currentTh;
+                    return (
+                      <View key={th} style={styles.thCell}>
+                        {isCurrent && (
+                          <View style={styles.thCellPill}>
+                            <View style={styles.thCellPillBadge}>
+                              <Ionicons name="sparkles" size={9} color={Colors.bg} />
+                              <Text style={styles.thCellPillText}>Current</Text>
+                            </View>
+                          </View>
+                        )}
+                        <PressableRipple
+                          style={[styles.thCellPress, isCurrent && styles.thCellPressCurrent]}
+                          onPress={() => handleThPick(th)}
+                        >
+                          {thImg ? (
+                            <Image source={{ uri: thImg }} style={styles.thCellImg} resizeMode="contain" />
+                          ) : (
+                            <View style={styles.thCellImgFallback}>
+                              <Text style={styles.thCellImgFallbackText}>{th}</Text>
+                            </View>
+                          )}
+                          <Text style={styles.thCellText}>TH{th}</Text>
+                        </PressableRipple>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+                <Text style={styles.thHint}>
+                  You're on TH{currentTh}. Pick the last Town Hall you've fully maxed.
+                </Text>
+              </>
             )}
           </View>
         )}
@@ -424,39 +454,94 @@ const styles = StyleSheet.create({
   thGrid: {
     maxHeight: 400,
   },
-  thGridLoading: {
-    opacity: 0.4,
-  },
   thGridInner: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
     justifyContent: 'center',
+    paddingVertical: Spacing.md,
   },
-  loadingRow: {
-    flexDirection: 'row',
+  loadingState: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    marginTop: Spacing.md,
   },
-  loadingText: {
+  loadingStateText: {
     ...Typography.subhead,
     color: Colors.textSecondary,
   },
   thCell: {
-    width: 80,
-    height: 60,
+    width: 92,
+    position: 'relative',
+  },
+  thCellPill: {
+    position: 'absolute',
+    top: -9,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    zIndex: 3,
+    pointerEvents: 'none',
+  },
+  thCellPillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  thCellPillText: {
+    color: Colors.bg,
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  thCellPress: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
+  },
+  thCellPressCurrent: {
+    borderColor: Colors.accent,
+    borderWidth: 1.25,
+    backgroundColor: Colors.accentGhost,
+  },
+  thCellImg: {
+    width: 52,
+    height: 52,
+  },
+  thCellImgFallback: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.bgSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thCellText: {
+  thCellImgFallbackText: {
     ...Typography.headline,
+    color: Colors.textSecondary,
+  },
+  thCellText: {
+    ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  thHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
 });
