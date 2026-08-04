@@ -559,7 +559,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
         </View>
@@ -651,12 +651,9 @@ export default function SettingsScreen() {
             }}
           />
           <SettingRow
-            icon="flask-outline"
-            title="Test Onboarding Flow"
-            desc="Open the full onboarding screen to add a new account"
-            pillText="TEMP"
-            pillTopOffset={8}
-            pillRightOffset={-10}
+            icon="rocket-outline"
+            title="Add Account (Full Setup)"
+            desc="Walk through the full setup — pick your last maxed Town Hall from the gallery"
             onPress={() => router.push('/onboarding?mode=add')}
           />
         </SettingCard>
