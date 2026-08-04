@@ -15,6 +15,9 @@ import { Card } from '../../src/components/Card';
 import { fetchEvents, ClashEvent, formatCountdown } from '../../src/api/eventsScraper';
 import { fetchNews, NewsItem } from '../../src/api/newsScraper';
 import { EventsScreenSkeleton } from '../../src/components/SkeletonScreens';
+import { usePlayer } from '../../src/hooks/usePlayerContext';
+import { getApiToken } from '../../src/hooks/usePlayer';
+import { ClashAPI } from '../../src/api/clash';
 
 type ViewMode = 'events' | 'news';
 
@@ -44,6 +47,7 @@ function CountdownBar({ remaining, total, featured }: { remaining: number; total
 }
 
 export default function EventsScreen() {
+  const { player } = usePlayer();
   const [view, setView] = useState<ViewMode>('events');
   const [events, setEvents] = useState<ClashEvent[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -86,6 +90,49 @@ export default function EventsScreen() {
   const activeEvents = events.filter((e) => e.isActive && e.remainingSeconds > 0);
   const upcomingEvents = events.filter((e) => !e.isActive && e.remainingSeconds > 0);
   const endedEvents = events.filter((e) => e.remainingSeconds <= 0 && !e.isActive);
+  const cwlActive = activeEvents.some((e) => e.name.toLowerCase().includes('cwl'));
+
+  const fetchCwlData = useCallback(async () => {
+    const clanTag = player?.clan?.tag ?? null;
+    const token = await getApiToken();
+    if (!clanTag) {
+      console.log('[Events][CWL] CWL event is active but no clan is linked — skipping.');
+      return;
+    }
+    if (!token) {
+      console.log('[Events][CWL] CWL event is active but no API token is configured — skipping.');
+      return;
+    }
+    const api = new ClashAPI(token);
+    try {
+      const leagueGroup = await api.getCwlLeagueGroup(clanTag);
+      console.log('[Events][CWL] league group response:', leagueGroup);
+      const rounds: string[][] = (leagueGroup?.rounds ?? []).map((r: any) => r?.warTags ?? []);
+      const seen = new Set<string>();
+      let realWars = 0;
+      for (const [roundIndex, warTags] of rounds.entries()) {
+        for (const warTag of warTags) {
+          if (!warTag || warTag === '#0' || seen.has(warTag)) continue;
+          seen.add(warTag);
+          realWars++;
+          try {
+            const war = await api.getCwlWar(warTag);
+            const isOwnWar = war?.clan?.tag === clanTag || war?.opponent?.tag === clanTag;
+            console.log(`[Events][CWL] round ${roundIndex + 1} war ${warTag}${isOwnWar ? ' (yours)' : ''}:`, war);
+          } catch (e) {
+            console.log(`[Events][CWL] failed to fetch war ${warTag}:`, e instanceof Error ? e.message : e);
+          }
+        }
+      }
+      console.log(`[Events][CWL] fetched ${realWars} real wars (skipped ${rounds.flat().length - realWars} #0/duplicate placeholders)`);
+    } catch (e) {
+      console.log('[Events][CWL] failed to fetch league group:', e instanceof Error ? e.message : e);
+    }
+  }, [player?.clan?.tag]);
+
+  useEffect(() => {
+    if (cwlActive) fetchCwlData();
+  }, [cwlActive, fetchCwlData]);
 
   if (loading) {
     return <EventsScreenSkeleton />;
@@ -95,6 +142,7 @@ export default function EventsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
