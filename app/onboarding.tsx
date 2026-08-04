@@ -38,7 +38,7 @@ const NAME_REV: Record<string, string> = {
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
-  const { player: contextPlayer, setBulkLevels, setLastMaxed } = usePlayer();
+  const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh } = usePlayer();
   const [step, setStep] = useState<'form' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
@@ -189,6 +189,8 @@ export default function OnboardingScreen() {
       playerData!.buildingLevels = levels;
       playerData!.lastMaxedTH = selectedTh;
       await cachePlayer(playerData!);
+      setLoading(false);
+      try { await refresh(); } catch { /* proceed even if API is unreachable */ }
       router.replace('/(tabs)');
     }
   };

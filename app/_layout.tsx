@@ -8,6 +8,9 @@ import { TimerProvider } from '../src/hooks/useTimerContext';
 import { useTheme, loadTheme } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
 import { loadDiscounts } from '../src/hooks/useDiscounts';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const router = useRouter();
@@ -24,6 +27,7 @@ export default function RootLayout() {
         router.replace('/onboarding');
       }
       setChecked(true);
+      SplashScreen.hideAsync().catch(() => {});
     })();
   }, []);
 
