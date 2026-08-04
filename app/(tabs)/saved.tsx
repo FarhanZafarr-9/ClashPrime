@@ -243,7 +243,7 @@ export default function SavedScreen() {
           <Text style={styles.emptyDesc}>Save bases and armies to find them here quickly.</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {sections.map((section) => (
             <View key={section.title} style={styles.section}>
               <Text style={styles.sectionTitle}>{section.title}</Text>

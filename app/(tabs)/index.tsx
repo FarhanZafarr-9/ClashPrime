@@ -373,6 +373,7 @@ export default function HomeScreen() {
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
         <ScrollView
           contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -592,7 +593,7 @@ export default function HomeScreen() {
               category="Equipment"
               progress={equipProgress}
               iconUri="https://www.clash.ninja/images/entities/171.png"
-              lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH15' : undefined}
+              lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH8' : undefined}
               items={player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
                 name: e.name,
                 level: e.level,

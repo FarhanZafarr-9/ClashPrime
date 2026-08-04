@@ -785,6 +785,7 @@ export default function PlayerProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -1252,7 +1253,7 @@ export default function PlayerProfileScreen() {
                 <EmptyState
                   icon="🛡️"
                   title="No equipment yet"
-                  description="Hero equipment unlocks at TH15 with the Blacksmith. Equip your heroes with special abilities."
+                  description="Hero equipment unlocks at TH8 with the Blacksmith. Equip your heroes with special abilities."
                 />
               ) : (
                 <>
