@@ -766,7 +766,10 @@ function CwlRoundCard({ round, war, myClanTag, now, isFirst, isLast }: { round: 
         ]}
         onPress={() => setExpanded(e => !e)}
       >
-        <View style={styles.itemIconTile}>
+        <View style={[styles.itemIconTile, 
+          isFirst && { borderTopLeftRadius: Radius.lg },
+          isLast && { borderBottomLeftRadius: Radius.lg },
+        ]}>
           {theirs.badgeUrls?.medium ? (
             <Image source={{ uri: theirs.badgeUrls.medium }} style={styles.itemIconImage} />
           ) : (
@@ -842,6 +845,7 @@ function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { m
           styles.memberRow,
           isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
           isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+          expanded && {borderBottomLeftRadius: 0, borderBottomRightRadius: 0},
         ]}
         onPress={() => setExpanded(e => !e)}
       >
@@ -1027,7 +1031,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   clanBadgeImg: { width: 28, height: 28 },
-  scrollContent: { padding: Spacing.lg, gap: Spacing.md },
+  scrollContent: { padding: Spacing.lg, gap: Spacing.xs },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   errorText: { ...Typography.body, color: Colors.textMuted, textAlign: 'center' },
   retryBtn: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: Radius.full, backgroundColor: Colors.bgSubtle },
@@ -1207,7 +1211,7 @@ const styles = StyleSheet.create({
   prepText: { ...Typography.body, color: Colors.textPrimary, fontWeight: '600', marginTop: Spacing.xs },
   prepSub: { ...Typography.caption, color: Colors.textMuted },
 
-  memberList: { gap: 2 },
+  memberList: { gap: Spacing.xs },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1234,7 +1238,7 @@ const styles = StyleSheet.create({
   thBadgeText: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   memberName: { ...Typography.subhead, color: Colors.textPrimary, flex: 1 },
   memberRight: { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border, opacity: 0.8 },
+  memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border },
   attackDots: { flexDirection: 'row', gap: 6 },
   attackDot: { width: 10, height: 10, borderRadius: 3 },
   attackDotBest: {
@@ -1337,7 +1341,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.sm,
-    marginBottom: 1,
   },
   cwlRoundRight: {
     flexDirection: 'row',
@@ -1365,9 +1368,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   cwlRoundDetail: {
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.md,
+    marginVertical: Spacing.xs,
+    paddingVertical: Spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    marginBottom: Spacing.md
   },
 });
