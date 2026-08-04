@@ -13,14 +13,14 @@ const MAIN_TABS: { key: string; icon: IconDef }[] = [
   { key: 'army', icon: { set: 'mc', name: 'sword-cross' } },
   { key: 'buildings', icon: { set: 'mc', name: 'castle' } },
   { key: 'bases', icon: { set: 'ion', name: 'grid' } },
-  { key: 'events', icon: { set: 'ion', name: 'calendar-outline' } },
-  { key: 'settings', icon: { set: 'ion', name: 'settings-sharp' } },
+  { key: 'war', icon: { set: 'ion', name: 'flag-outline' } },
 ];
 
 const EXTRA_TABS: { key: string; icon: IconDef }[] = [
+  { key: 'settings', icon: { set: 'ion', name: 'settings-sharp' } },
+  { key: 'events', icon: { set: 'ion', name: 'calendar-outline' } },
   { key: 'armies', icon: { set: 'ion', name: 'shield-half-outline' } },
   { key: 'achievements', icon: { set: 'ion', name: 'trophy-outline' } },
-  { key: 'war', icon: { set: 'ion', name: 'flag-outline' } },
   { key: 'saved', icon: { set: 'ion', name: 'bookmarks-outline' } },
 ];
 
@@ -80,7 +80,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
               style={[styles.tabItem, isActive && styles.tabItemActive]}
               onPress={() => navigate(tab.key)}
             >
-              <TabIcon icon={tab.icon} color={isActive ? Colors.textPrimary : Colors.textMuted} />
+              <TabIcon icon={tab.icon} color={ Colors.textMuted} />
             </PressableRipple>
           );
         })}
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabItemActive: {
-    backgroundColor: Colors.accentSubtle,
+    backgroundColor: Colors.textPrimary,
   },
   tabItemSkeleton: {
     alignItems: 'center',
