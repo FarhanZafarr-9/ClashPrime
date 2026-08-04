@@ -95,38 +95,25 @@ export default function EventsScreen() {
   const fetchCwlData = useCallback(async () => {
     const clanTag = player?.clan?.tag ?? null;
     const token = await getApiToken();
-    if (!clanTag) {
-      console.log('[Events][CWL] CWL event is active but no clan is linked — skipping.');
-      return;
-    }
-    if (!token) {
-      console.log('[Events][CWL] CWL event is active but no API token is configured — skipping.');
-      return;
-    }
+    if (!clanTag || !token) return;
     const api = new ClashAPI(token);
     try {
       const leagueGroup = await api.getCwlLeagueGroup(clanTag);
-      console.log('[Events][CWL] league group response:', leagueGroup);
       const rounds: string[][] = (leagueGroup?.rounds ?? []).map((r: any) => r?.warTags ?? []);
       const seen = new Set<string>();
-      let realWars = 0;
-      for (const [roundIndex, warTags] of rounds.entries()) {
+      for (const warTags of rounds) {
         for (const warTag of warTags) {
           if (!warTag || warTag === '#0' || seen.has(warTag)) continue;
           seen.add(warTag);
-          realWars++;
           try {
-            const war = await api.getCwlWar(warTag);
-            const isOwnWar = war?.clan?.tag === clanTag || war?.opponent?.tag === clanTag;
-            console.log(`[Events][CWL] round ${roundIndex + 1} war ${warTag}${isOwnWar ? ' (yours)' : ''}:`, war);
-          } catch (e) {
-            console.log(`[Events][CWL] failed to fetch war ${warTag}:`, e instanceof Error ? e.message : e);
+            await api.getCwlWar(warTag);
+          } catch {
+            // ignore individual CWL war failures
           }
         }
       }
-      console.log(`[Events][CWL] fetched ${realWars} real wars (skipped ${rounds.flat().length - realWars} #0/duplicate placeholders)`);
-    } catch (e) {
-      console.log('[Events][CWL] failed to fetch league group:', e instanceof Error ? e.message : e);
+    } catch {
+      // ignore league group failures
     }
   }, [player?.clan?.tag]);
 
