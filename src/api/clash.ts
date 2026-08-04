@@ -112,4 +112,8 @@ export class ClashAPI {
   async getCwlLeagueGroup(clanTag: string): Promise<any> {
     return this.fetch(`/clans/${encodeURIComponent(clanTag)}/currentwar/leaguegroup`);
   }
+
+  async getCwlWar(warTag: string): Promise<ClanWar> {
+    return this.fetch(`/clanwarleagues/wars/${encodeURIComponent(warTag)}`);
+  }
 }

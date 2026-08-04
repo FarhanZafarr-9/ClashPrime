@@ -24,6 +24,16 @@ interface WarScreenData {
   warLog: WarLogEntry[];
 }
 
+interface CwlRoundWar {
+  round: number;
+  war: ClanWar;
+}
+
+interface CwlLeagueData {
+  season: string | null;
+  wars: CwlRoundWar[];
+}
+
 interface WarIssue {
   key: string;
   title: string;
@@ -220,6 +230,7 @@ function WarScreenSkeleton() {
 export default function WarScreen() {
   const { player } = usePlayer();
   const [data, setData] = useState<WarScreenData | null>(null);
+  const [cwlLeague, setCwlLeague] = useState<CwlLeagueData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -237,6 +248,7 @@ export default function WarScreen() {
   const regularWars = (data?.warLog || []).filter(e => e.attacksPerMember === 2);
   const cwlWars = (data?.warLog || []).filter(e => e.attacksPerMember === 1);
   const warLogBlocked = fetchIssues.some(i => i.key === 'warLog');
+  const cwlActive = (cwlLeague?.wars.length ?? 0) > 0;
 
   function groupByMonth(entries: WarLogEntry[]): { key: string; label: string; wars: WarLogEntry[]; wins: number; losses: number; draws: number; totalStars: number }[] {
     const groups: Record<string, WarLogEntry[]> = {};
@@ -261,10 +273,16 @@ export default function WarScreen() {
 
   const cwlGroups = groupByMonth(cwlWars);
 
+  const hasHistory = regularWars.length > 0 || cwlGroups.length > 0;
+  const showHistorySection = hasHistory || warLogBlocked;
+
   const loadWarData = useCallback(async (forceRefresh = false) => {
     try {
-      setError(null);
-      setFetchIssues([]);
+      if (!forceRefresh) {
+        setError(null);
+        setFetchIssues([]);
+        setCwlLeague(null);
+      }
       const token = await getApiToken();
       if (!token) {
         setError('API token not configured.');
@@ -275,10 +293,15 @@ export default function WarScreen() {
         return;
       }
       const api = new ClashAPI(token);
-      const [currentWarRes, warLogRes] = await Promise.allSettled([
+      const [currentWarRes, warLogRes, leagueGroupRes] = await Promise.allSettled([
         api.getCurrentWar(clanTag),
         api.getWarLog(clanTag),
+        api.getCwlLeagueGroup(clanTag),
       ]);
+
+      const leagueGroup = leagueGroupRes.status === 'fulfilled' ? leagueGroupRes.value : null;
+      const lgState: string | undefined = leagueGroup?.state;
+      const inCwlLeague = !!lgState && lgState !== 'notInWar';
 
       let currentWar: ClanWar | null = null;
       if (currentWarRes.status === 'fulfilled') {
@@ -289,7 +312,7 @@ export default function WarScreen() {
         }
         if (currentWarRes.value.state !== 'notInWar') currentWar = currentWarRes.value;
       }
-      if (currentWarRes.status === 'rejected') {
+      if (currentWarRes.status === 'rejected' && !inCwlLeague) {
         const desc = describeWarError(currentWarRes.reason, 'currentWar');
         setFetchIssues(prev => [...prev, {
           key: 'currentWar',
@@ -302,7 +325,7 @@ export default function WarScreen() {
       let warLog: WarLogEntry[] = [];
       if (warLogRes.status === 'fulfilled') {
         warLog = warLogRes.value.items || [];
-      } else {
+      } else if (!inCwlLeague) {
         const desc = describeWarError(warLogRes.reason, 'warLog');
         setFetchIssues(prev => [...prev, {
           key: 'warLog',
@@ -311,6 +334,29 @@ export default function WarScreen() {
           severity: warLogRes.reason instanceof ClashAPIError && warLogRes.reason.status >= 500 ? 'warning' : 'error',
         }]);
       }
+
+      let cwl: CwlLeagueData | null = null;
+      if (inCwlLeague) {
+        const rounds: { warTags?: string[] }[] = leagueGroup?.rounds ?? [];
+        const wars: CwlRoundWar[] = [];
+        const seen = new Set<string>();
+        for (const [roundIdx, round] of rounds.entries()) {
+          for (const warTag of round?.warTags ?? []) {
+            if (!warTag || warTag === '#0' || seen.has(warTag)) continue;
+            seen.add(warTag);
+            try {
+              const war = await api.getCwlWar(warTag);
+              if (war && (war.clan?.tag === clanTag || war.opponent?.tag === clanTag)) {
+                wars.push({ round: roundIdx + 1, war });
+              }
+            } catch {
+              // ignore individual CWL war failures
+            }
+          }
+        }
+        cwl = { season: leagueGroup?.season ?? null, wars };
+      }
+      setCwlLeague(cwl);
 
       setData({ currentWar, warLog });
     } catch (e: any) {
@@ -401,13 +447,19 @@ export default function WarScreen() {
           />
         }
       >
-        {data?.currentWar ? (
-          <CurrentWarSection war={data.currentWar} now={now} />
-        ) : (
+        {data?.currentWar && (
+          <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} />
+        )}
+
+        {!data?.currentWar && !cwlActive && (
           <Card style={styles.noWarCard}>
             <Ionicons name="flag-outline" size={32} color={Colors.textTertiary} />
             <Text style={styles.noWarTitle}>No Active War</Text>
-            <Text style={styles.noWarSub}>Your clan is currently not in a war. Check back when war starts.</Text>
+            <Text style={styles.noWarSub}>
+              {showHistorySection
+                ? 'Your clan isn\u2019t in a war right now. Recent results are below.'
+                : 'Your clan isn\u2019t in a regular war or Clan War League right now. Results will appear here once a war ends.'}
+            </Text>
           </Card>
         )}
 
@@ -429,12 +481,29 @@ export default function WarScreen() {
           </View>
         )}
 
-        <View style={styles.sectionHeader}>
-          <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
-          <Text style={styles.sectionTitle}>War History</Text>
-        </View>
+        {cwlLeague && cwlActive && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="flash-outline" size={16} color={Colors.textSecondary} />
+              <Text style={styles.sectionTitle}>Clan War Leagues</Text>
+            </View>
+            <Text style={styles.cwlSeasonText}>
+              {cwlLeague.season}{cwlLeague.season ? ' · ' : ''}{cwlLeague.wars.length} round{cwlLeague.wars.length === 1 ? '' : 's'}
+            </Text>
+            {cwlLeague.wars.map(({ round, war }, i) => (
+              <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+            ))}
+          </>
+        )}
 
-        <View style={styles.pillRow}>
+        {showHistorySection && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
+              <Text style={styles.sectionTitle}>War History</Text>
+            </View>
+
+            <View style={styles.pillRow}>
           <PressableRipple
             style={[styles.pill, warLogView === 'regular' && styles.pillActive]}
             onPress={() => setWarLogView('regular')}
@@ -454,16 +523,18 @@ export default function WarScreen() {
         {warLogView === 'regular' ? (
           regularWars.length > 0 ? (
             regularWars.map((entry, i) => (
-              <WarLogRow key={i} entry={entry} />
+              <WarLogRow key={i} entry={entry} isFirst={i === 0} isLast={i === regularWars.length - 1} />
             ))
           ) : (
             <Card style={styles.noWarCard}>
               <Ionicons name={warLogBlocked ? 'lock-closed-outline' : 'shield-outline'} size={24} color={Colors.textTertiary} />
               <Text style={styles.noWarTitle}>{warLogBlocked ? 'War log unavailable' : 'No Regular Wars Yet'}</Text>
               <Text style={styles.noWarSub}>
-                {warLogBlocked
-                  ? 'This clan\u2019s war log is private or has fewer than 5 wars, so it can\u2019t be read through the API.'
-                  : 'Regular wars are 2-attack wars. History will appear here after your first war ends.'}
+                {warLogBlocked && cwlActive
+                  ? 'Regular war history can\u2019t be read during a CWL season. It will return after the league ends.'
+                  : warLogBlocked
+                    ? 'This clan\u2019s war log is private or has fewer than 5 wars, so it can\u2019t be read through the API.'
+                    : 'Regular wars are 2-attack wars. History will appear here after your first war ends.'}
               </Text>
             </Card>
           )
@@ -479,7 +550,7 @@ export default function WarScreen() {
                   </Text>
                 </View>
                 {group.wars.map((entry, i) => (
-                  <WarLogRow key={i} entry={entry} />
+                  <WarLogRow key={i} entry={entry} isFirst={i === 0} isLast={i === group.wars.length - 1} />
                 ))}
               </View>
             ))
@@ -488,12 +559,16 @@ export default function WarScreen() {
               <Ionicons name={warLogBlocked ? 'lock-closed-outline' : 'flash-outline'} size={24} color={Colors.textTertiary} />
               <Text style={styles.noWarTitle}>{warLogBlocked ? 'War log unavailable' : 'No CWL Wars'}</Text>
               <Text style={styles.noWarSub}>
-                {warLogBlocked
-                  ? 'This clan\u2019s war log is private or has fewer than 5 wars, so CWL history can\u2019t be read through the API.'
-                  : 'Clan War Leagues use 1 attack per day. CWL history will show here once your clan participates.'}
+                {warLogBlocked && cwlActive
+                  ? 'Your clan is currently in a league — see the Clan War Leagues section above for live CWL rounds.'
+                  : warLogBlocked
+                    ? 'This clan\u2019s war log is private or has fewer than 5 wars, so CWL history can\u2019t be read through the API.'
+                    : 'Clan War Leagues use 1 attack per day. CWL history will show here once your clan participates.'}
               </Text>
             </Card>
           )
+        )}
+          </>
         )}
 
         <View style={{ height: 40 }} />
@@ -502,17 +577,23 @@ export default function WarScreen() {
   );
 }
 
-function CurrentWarSection({ war, now }: { war: ClanWar; now: number }) {
+function CurrentWarSection({ war, now, isCwl = false, myClanTag }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null }) {
   const isPreparation = war.state === 'preparation';
   const isInWar = war.state === 'inWar';
   const isWarEnded = war.state === 'warEnded';
-  const opponentNames = new Map(war.opponent.members.map(m => [m.tag, m.name]));
-  const clanNames = new Map(war.clan.members.map(m => [m.tag, m.name]));
+  const swapped = myClanTag != null && war.opponent.tag === myClanTag && war.clan.tag !== myClanTag;
+  const clan = swapped ? war.opponent : war.clan;
+  const opponent = swapped ? war.clan : war.opponent;
+  const opponentNames = new Map(opponent.members.map(m => [m.tag, m.name]));
+  const clanNames = new Map(clan.members.map(m => [m.tag, m.name]));
   const defenderName = (tag: string) => opponentNames.get(tag) ?? clanNames.get(tag) ?? tag;
+  const members = isCwl
+    ? [...clan.members].sort((a, b) => b.townhallLevel - a.townhallLevel)
+    : clan.members;
 
   const status = STATUS_CONFIG[war.state] ?? STATUS_CONFIG.notInWar;
-  const clanStars = war.clan.stars ?? 0;
-  const oppStars = war.opponent.stars ?? 0;
+  const clanStars = clan.stars ?? 0;
+  const oppStars = opponent.stars ?? 0;
 
   let countdown: { icon: keyof typeof Ionicons.glyphMap; text: string } | null = null;
   if (isPreparation) {
@@ -555,21 +636,21 @@ function CurrentWarSection({ war, now }: { war: ClanWar; now: number }) {
       </View>
 
       <View style={styles.warHeader}>
-        <WarClanCard clan={war.clan} align="left" />
+        <WarClanCard clan={clan} align="left" />
         <View style={styles.vsContainer}>
           <Text style={styles.vsLabel}>VS</Text>
           {!isPreparation && (
-            <Text style={[styles.vsScore, clanStars > oppStars && styles.vsScoreWin]}>{war.clan.stars}</Text>
+            <Text style={[styles.vsScore, clanStars > oppStars && styles.vsScoreWin]}>{clan.stars}</Text>
           )}
           <View style={styles.vsDash}>
             <Text style={styles.vsDashText}>—</Text>
           </View>
           {!isPreparation && (
-            <Text style={[styles.vsScoreOpp, oppStars > clanStars && styles.vsScoreOppWin]}>{war.opponent.stars}</Text>
+            <Text style={[styles.vsScoreOpp, oppStars > clanStars && styles.vsScoreOppWin]}>{opponent.stars}</Text>
           )}
           <Text style={styles.vsTeamSize}>{war.teamSize}v{war.teamSize}</Text>
         </View>
-        <WarClanCard clan={war.opponent} align="right" />
+        <WarClanCard clan={opponent} align="right" />
       </View>
 
       {isPreparation && (
@@ -591,8 +672,8 @@ function CurrentWarSection({ war, now }: { war: ClanWar; now: number }) {
             <Text style={[styles.resultLabel, { color: result.color }]}>{result.label}</Text>
             <Text style={styles.resultSub}>
               {clanStars}★ vs {oppStars}★
-              {war.clan.destructionPercentage != null && war.opponent.destructionPercentage != null
-                ? ` · ${war.clan.destructionPercentage.toFixed(1)}% vs ${war.opponent.destructionPercentage.toFixed(1)}%`
+              {clan.destructionPercentage != null && opponent.destructionPercentage != null
+                ? ` · ${clan.destructionPercentage.toFixed(1)}% vs ${opponent.destructionPercentage.toFixed(1)}%`
                 : ''}
             </Text>
           </View>
@@ -603,23 +684,23 @@ function CurrentWarSection({ war, now }: { war: ClanWar; now: number }) {
         <View style={styles.warTable}>
           <View style={styles.warTableRow}>
             <Text style={[styles.warTableHead, { width: 76, flex: 0 }]} />
-            <Text style={[styles.warTableCell, styles.warTableHead]}>{war.clan.name}</Text>
-            <Text style={[styles.warTableCell, styles.warTableHead]}>{war.opponent.name}</Text>
+            <Text style={[styles.warTableCell, styles.warTableHead]}>{clan.name}</Text>
+            <Text style={[styles.warTableCell, styles.warTableHead]}>{opponent.name}</Text>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt]}>
             <Text style={styles.warTableLabel}>Stars</Text>
-            <Text style={[styles.warTableCell, clanStars > oppStars && styles.warTableCellWin]}>{war.clan.stars}</Text>
-            <Text style={[styles.warTableCell, oppStars > clanStars && styles.warTableCellWin]}>{war.opponent.stars}</Text>
+            <Text style={[styles.warTableCell, clanStars > oppStars && styles.warTableCellWin]}>{clan.stars}</Text>
+            <Text style={[styles.warTableCell, oppStars > clanStars && styles.warTableCellWin]}>{opponent.stars}</Text>
           </View>
           <View style={styles.warTableRow}>
             <Text style={styles.warTableLabel}>Destruction</Text>
-            <Text style={styles.warTableCell}>{war.clan.destructionPercentage != null ? war.clan.destructionPercentage.toFixed(1) : '—'}%</Text>
-            <Text style={styles.warTableCell}>{war.opponent.destructionPercentage != null ? war.opponent.destructionPercentage.toFixed(1) : '—'}%</Text>
+            <Text style={styles.warTableCell}>{clan.destructionPercentage != null ? clan.destructionPercentage.toFixed(1) : '—'}%</Text>
+            <Text style={styles.warTableCell}>{opponent.destructionPercentage != null ? opponent.destructionPercentage.toFixed(1) : '—'}%</Text>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt, { borderBottomWidth: 0 }]}>
             <Text style={styles.warTableLabel}>Attacks</Text>
-            <Text style={styles.warTableCell}>{war.clan.attacks ?? '—'}/{war.teamSize * 2}</Text>
-            <Text style={styles.warTableCell}>{war.opponent.attacks ?? '—'}/{war.teamSize * 2}</Text>
+            <Text style={styles.warTableCell}>{clan.attacks ?? '—'}/{isCwl ? war.teamSize : war.teamSize * 2}</Text>
+            <Text style={styles.warTableCell}>{opponent.attacks ?? '—'}/{isCwl ? war.teamSize : war.teamSize * 2}</Text>
           </View>
         </View>
       )}
@@ -633,8 +714,8 @@ function CurrentWarSection({ war, now }: { war: ClanWar; now: number }) {
 
       {!isPreparation && (
         <View style={styles.memberList}>
-          {war.clan.members.map((m, i) => (
-            <MemberRow key={m.tag} member={m} defenderName={defenderName} />
+          {members.map((m, i) => (
+            <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isFirst={i === 0} isLast={i === members.length - 1} />
           ))}
         </View>
       )}
@@ -654,54 +735,168 @@ function WarClanCard({ clan, align }: { clan: WarClanDetail; align: 'left' | 'ri
   );
 }
 
-function MemberRow({ member, defenderName }: { member: WarMember; defenderName: (tag: string) => string }) {
-  const attacks = member.attacks ?? [];
-  const attacksUsed = attacks.length;
-  const maxAttacks = 2;
-  const totalStars = attacks.reduce((s, a) => s + a.stars, 0);
-  const thImg = getTownHallImageUrl(member.townhallLevel);
+function CwlRoundCard({ round, war, myClanTag, now, isFirst, isLast }: { round: number; war: ClanWar; myClanTag: string | null; now: number; isFirst?: boolean; isLast?: boolean }) {
+  const mine = war.clan.tag === myClanTag ? war.clan : war.opponent;
+  const theirs = war.clan.tag === myClanTag ? war.opponent : war.clan;
+  const myStars = mine.stars ?? 0;
+  const theirStars = theirs.stars ?? 0;
+  const ended = war.state === 'warEnded';
+  const result = ended
+    ? myStars > theirStars
+      ? { label: 'W', color: '#4CAF50', bg: 'rgba(76,175,80,0.15)' }
+      : theirStars > myStars
+        ? { label: 'L', color: '#f44336', bg: 'rgba(244,67,54,0.15)' }
+        : { label: 'D', color: Colors.textSecondary, bg: Colors.bgSubtle }
+    : null;
+  const detail = war.state === 'preparation'
+    ? `Starts ${formatDateTime(war.startTime)}`
+    : war.state === 'inWar'
+      ? `Ends ${formatDateTime(war.endTime)}`
+      : `${myStars}★ vs ${theirStars}★`;
+  const isPreparation = war.state === 'preparation';
   const [expanded, setExpanded] = useState(false);
 
   return (
     <View>
-      <PressableRipple style={styles.memberRow} onPress={() => setExpanded(e => !e)}>
-        <View style={styles.memberLeft}>
-          {thImg ? (
-            <Image source={{ uri: thImg }} style={styles.thBadge} resizeMode="contain" />
+      <PressableRipple
+        style={[
+          styles.cwlRoundCard,
+          isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+          isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+        ]}
+        onPress={() => setExpanded(e => !e)}
+      >
+        <View style={styles.itemIconTile}>
+          {theirs.badgeUrls?.medium ? (
+            <Image source={{ uri: theirs.badgeUrls.medium }} style={styles.itemIconImage} />
           ) : (
-            <View style={styles.thBadge}>
-              <Text style={styles.thBadgeText}>{member.townhallLevel}</Text>
+            <Ionicons name="shield-outline" size={18} color={Colors.textTertiary} />
+          )}
+        </View>
+        <View style={styles.logInfo}>
+          <View style={styles.cwlRoundTitleRow}>
+            <Text style={styles.logClanName} numberOfLines={1}>{theirs.name}</Text>
+            <View style={styles.cwlRoundBadge}>
+              <Text style={styles.cwlRoundBadgeText}>R{round}</Text>
+            </View>
+          </View>
+          <Text style={styles.logDetail} numberOfLines={1}>
+            {detail}
+            {!isPreparation ? ` · ${mine.attacks ?? 0}/${war.teamSize} attacks` : ''}
+          </Text>
+        </View>
+        <View style={styles.cwlRoundRight}>
+          {result ? (
+            <View style={[styles.logResultBadge, { backgroundColor: result.bg }]}>
+              <Text style={[styles.logResultText, { color: result.color }]}>{result.label}</Text>
+            </View>
+          ) : (
+            <View style={styles.countdownChip}>
+              <Ionicons name={isPreparation ? 'hourglass-outline' : 'flame-outline'} size={12} color={Colors.textSecondary} />
+              <Text style={styles.countdownText}>
+                {isPreparation ? 'Prep' : 'In War'}
+              </Text>
             </View>
           )}
+          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
+        </View>
+      </PressableRipple>
+      {expanded && (
+        <View style={styles.cwlRoundDetail}>
+          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+const ATTACK_DOT_COLORS: Record<0 | 1 | 2, string> = {
+  0: '#f44336',
+  1: '#FFB74D',
+  2: '#4CAF50',
+};
+
+function shieldConfig(member: WarMember): { name: keyof typeof Ionicons.glyphMap; color: string } | null {
+  const attacked = member.opponentAttacks ?? 0;
+  if (attacked === 0) return null;
+  const conceded = member.bestOpponentAttack?.stars ?? 0;
+  const saved = 3 - conceded;
+  if (saved >= 3) return { name: 'shield-checkmark', color: '#FFFFFF' };
+  if (saved === 2) return { name: 'shield-checkmark-outline', color: '#4CAF50' };
+  if (saved === 1) return { name: 'shield-half-outline', color: '#FFB74D' };
+  return { name: 'shield-outline', color: '#f44336' };
+}
+
+function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { member: WarMember; defenderName: (tag: string) => string; isCwl?: boolean; isFirst?: boolean; isLast?: boolean }) {
+  const attacks = member.attacks ?? [];
+  const maxAttacks = isCwl ? 1 : 2;
+  const thImg = getTownHallImageUrl(member.townhallLevel);
+  const [expanded, setExpanded] = useState(false);
+
+  const shield = shieldConfig(member);
+
+  return (
+    <View>
+      <PressableRipple
+        style={[
+          styles.memberRow,
+          isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+          isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+        ]}
+        onPress={() => setExpanded(e => !e)}
+      >
+        <View style={styles.memberLeft}>
+          <View style={styles.memberIconTile}>
+            {thImg ? (
+              <Image source={{ uri: thImg }} style={styles.memberIconImage} resizeMode="contain" />
+            ) : (
+              <Text style={styles.thBadgeText}>{member.townhallLevel}</Text>
+            )}
+          </View>
           <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
         </View>
         <View style={styles.memberRight}>
-          {totalStars > 0 && (
-            <View style={styles.memberStars}>
-              <Ionicons name="star" size={11} color={Colors.warning} />
-              <Text style={styles.memberStarsText}>{totalStars}</Text>
-            </View>
-          )}
-          <Text style={styles.memberAttackCount}>
-            {attacksUsed}/{maxAttacks}
-          </Text>
+          <Ionicons
+            name={shield ? shield.name : 'shield-outline'}
+            size={13}
+            color={shield ? shield.color : Colors.textTertiary}
+          />
+          <View style={styles.memberDivider} />
           <View style={styles.attackDots}>
-            {Array.from({ length: maxAttacks }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.attackDot,
-                  i < attacksUsed ? styles.attackDotUsed : styles.attackDotEmpty,
-                ]}
-              />
-            ))}
+            {Array.from({ length: 2 }).map((_, i) => {
+              if (isCwl && i >= maxAttacks) {
+                return (
+                  <View key={i} style={[styles.attackDot, styles.attackDotDisabled]}>
+                    <Ionicons name="close" size={8} color={Colors.textMuted} />
+                  </View>
+                );
+              }
+              const attack = attacks[i];
+              const dotStyle = attack
+                ? attack.stars >= 3
+                  ? styles.attackDotBest
+                  : { backgroundColor: ATTACK_DOT_COLORS[attack.stars as 0 | 1 | 2] }
+                : styles.attackDotEmpty;
+              return (
+                <View
+                  key={i}
+                  style={[
+                    styles.attackDot,
+                    dotStyle,
+                  ]}
+                />
+              );
+            })}
           </View>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
         </View>
       </PressableRipple>
       {expanded && (
-        <View style={styles.memberDetail}>
-          <Text style={styles.memberDetailLabel}>Attacks</Text>
+        <View style={[styles.memberDetail, isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }]}>
+          <View style={[styles.memberDetailHeader, { marginTop: 0 }]}>
+            <Ionicons name="flash-outline" size={12} color={Colors.textTertiary} />
+            <Text style={styles.memberDetailLabel}>Attacks</Text>
+          </View>
           {attacks.length === 0 ? (
             <Text style={styles.memberDetailEmpty}>No attacks used yet</Text>
           ) : (
@@ -721,7 +916,10 @@ function MemberRow({ member, defenderName }: { member: WarMember; defenderName: 
               </View>
             ))
           )}
-          <Text style={styles.memberDetailLabel}>Defense</Text>
+          <View style={styles.memberDetailHeader}>
+            <Ionicons name="shield-outline" size={12} color={Colors.textTertiary} />
+            <Text style={styles.memberDetailLabel}>Defense</Text>
+          </View>
           {member.bestOpponentAttack ? (
             <View style={styles.memberAttackRow}>
               <View style={styles.memberAttackInfo}>
@@ -747,16 +945,26 @@ function MemberRow({ member, defenderName }: { member: WarMember; defenderName: 
   );
 }
 
-function WarLogRow({ entry }: { entry: WarLogEntry }) {
+function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: boolean; isLast?: boolean }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <View>
-      <PressableRipple style={styles.logRow} onPress={() => setExpanded(e => !e)}>
-        <WarResultBadge result={entry.result} />
-        {entry.opponent.badgeUrls?.medium && (
-          <Image source={{ uri: entry.opponent.badgeUrls.medium }} style={styles.logBadge} />
-        )}
+      <PressableRipple
+        style={[
+          styles.logRow,
+          isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+          isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+        ]}
+        onPress={() => setExpanded(e => !e)}
+      >
+        <View style={styles.itemIconTile}>
+          {entry.opponent.badgeUrls?.medium ? (
+            <Image source={{ uri: entry.opponent.badgeUrls.medium }} style={styles.itemIconImage} />
+          ) : (
+            <Ionicons name="shield-outline" size={18} color={Colors.textTertiary} />
+          )}
+        </View>
         <View style={styles.logInfo}>
           <Text style={styles.logClanName} numberOfLines={1}>{entry.opponent.name}</Text>
           <Text style={styles.logDetail}>{formatTime(entry.endTime)}</Text>
@@ -770,6 +978,7 @@ function WarLogRow({ entry }: { entry: WarLogEntry }) {
             {entry.opponent.stars ?? '—'}
           </Text>
         </Text>
+        <WarResultBadge result={entry.result} />
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
       </PressableRipple>
       {expanded && (
@@ -998,7 +1207,7 @@ const styles = StyleSheet.create({
   prepText: { ...Typography.body, color: Colors.textPrimary, fontWeight: '600', marginTop: Spacing.xs },
   prepSub: { ...Typography.caption, color: Colors.textMuted },
 
-  memberList: { gap: Spacing.xs },
+  memberList: { gap: 2 },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1007,37 +1216,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border
   },
   memberLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
-  thBadge: {
-    width: 20,
-    height: 20,
+  memberIconTile: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  thBadgeText: { fontSize: 9, fontWeight: '700', color: Colors.textSecondary },
+  memberIconImage: {
+    width: 24,
+    height: 24,
+  },
+  thBadgeText: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   memberName: { ...Typography.subhead, color: Colors.textPrimary, flex: 1 },
-  memberRight: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  memberStars: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  memberStarsText: { ...Typography.caption, color: Colors.warning, fontWeight: '700' },
-  memberAttackCount: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600', minWidth: 22 },
+  memberRight: { flexDirection: 'row', gap: 5, alignItems: 'center' },
+  memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border, opacity: 0.8 },
   attackDots: { flexDirection: 'row', gap: 6 },
   attackDot: { width: 10, height: 10, borderRadius: 3 },
-  attackDotUsed: { backgroundColor: '#4CAF50' },
+  attackDotBest: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#3A3A3A',
+  },
   attackDotEmpty: { backgroundColor: Colors.border },
+  attackDotDisabled: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.6,
+  },
   memberDetail: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgSubtle,
     borderBottomLeftRadius: Radius.sm,
     borderBottomRightRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderTopWidth: 0,
-    borderColor: Colors.border,
-    marginTop: -1,
+  },
+  memberDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: Spacing.sm,
+    marginBottom: 3,
   },
   memberDetailLabel: {
     ...Typography.caption,
@@ -1045,8 +1271,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginTop: Spacing.sm,
-    marginBottom: 2,
   },
   memberDetailEmpty: { ...Typography.caption, color: Colors.textMuted, paddingVertical: 2 },
   memberAttackRow: {
@@ -1077,14 +1301,73 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border
+    marginBottom: 2,
   },
-  logBadge: { width: 28, height: 28, borderRadius: 14 },
-  logInfo: { flex: 1, gap: 1 },
-  logClanName: { ...Typography.body, color: Colors.textPrimary, fontWeight: '600' },
-  logDetail: { ...Typography.caption, color: Colors.textMuted, fontSize: 10 },
+  itemIconTile: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  itemIconImage: {
+    width: 34,
+    height: 34,
+  },
+  logInfo: { flex: 1, gap: 2 },
+  logClanName: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
+  logDetail: { ...Typography.footnote, color: Colors.textTertiary },
   logStars: { ...Typography.body, fontWeight: '700' },
   logResultBadge: { width: 28, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   logResultText: { fontSize: 12, fontWeight: '800' },
+
+  cwlSeasonText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: -4,
+    marginBottom: Spacing.xs,
+  },
+  cwlRoundCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+    marginBottom: 1,
+  },
+  cwlRoundRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  cwlRoundTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  cwlRoundBadge: {
+    paddingHorizontal: 7,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cwlRoundBadgeText: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    fontWeight: '800',
+  },
+  cwlRoundDetail: {
+    marginTop: Spacing.xs,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+  },
 });
