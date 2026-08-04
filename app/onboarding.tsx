@@ -392,6 +392,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   btn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.textPrimary,
