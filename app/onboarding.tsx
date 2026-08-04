@@ -288,7 +288,7 @@ export default function OnboardingScreen() {
               <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
             </View>
             <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
-            <ScrollView style={styles.thGrid} contentContainerStyle={styles.thGridInner}>
+            <ScrollView style={[styles.thGrid, loading && styles.thGridLoading]} contentContainerStyle={styles.thGridInner} pointerEvents={loading ? 'none' : 'auto'}>
               {Array.from({ length: (mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
                 <PressableRipple
                   key={th}
@@ -300,7 +300,12 @@ export default function OnboardingScreen() {
                 </PressableRipple>
               ))}
             </ScrollView>
-            {loading && <ActivityIndicator size="small" color={Colors.textPrimary} style={{ marginTop: Spacing.md }} />}
+            {loading && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={Colors.textPrimary} />
+                <Text style={styles.loadingText}>Setting up your base…</Text>
+              </View>
+            )}
           </View>
         )}
       </KeyboardAvoidingView>
@@ -418,11 +423,25 @@ const styles = StyleSheet.create({
   thGrid: {
     maxHeight: 400,
   },
+  thGridLoading: {
+    opacity: 0.4,
+  },
   thGridInner: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
     justifyContent: 'center',
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  loadingText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
   },
   thCell: {
     width: 80,
