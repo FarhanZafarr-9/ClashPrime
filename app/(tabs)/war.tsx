@@ -1266,7 +1266,7 @@ const styles = StyleSheet.create({
   memberDetail: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderBottomLeftRadius: Radius.sm,
     borderBottomRightRadius: Radius.sm,
   },
@@ -1385,7 +1385,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   cwlRoundDetail: {
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderBottomLeftRadius: Radius.sm,
     borderBottomRightRadius: Radius.sm,
     padding: Spacing.md,
