@@ -15,6 +15,8 @@ interface Props {
   expanded?: boolean;
   onPress?: () => void;
   showVillage?: boolean;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
 const VILLAGE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -23,30 +25,34 @@ const VILLAGE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   clanCapital: 'flag-outline',
 };
 
-export function AchievementCard({ achievement: a, expanded, onPress, showVillage }: Props) {
+export function AchievementCard({ achievement: a, expanded, onPress, showVillage, isFirst, isLast }: Props) {
   const progress = getAchievementProgress(a);
   const isComplete = a.stars === 3;
   const icon = getAchievementIcon(a.name);
   const remaining = Math.max(0, a.target - a.value);
+  const hasDetail = !!a.info;
 
   return (
     <PressableRipple
-      onPress={onPress}
-      style={styles.card}
+      onPress={hasDetail ? onPress : undefined}
+      disabled={!hasDetail}
+      style={[
+        styles.card,
+        isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+        isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+      ]}
     >
       <View style={styles.row}>
-        <View style={[styles.iconWrap, isComplete && styles.iconWrapComplete]}>
+        <View style={[styles.iconWrap, isComplete && styles.iconWrapComplete, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && { borderBottomLeftRadius: Radius.lg }]}>
           <Ionicons name={icon} size={16} color={isComplete ? Colors.bg : Colors.textSecondary} />
         </View>
         <View style={styles.left}>
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>{a.name}</Text>
-
           </View>
           <Text style={styles.info} numberOfLines={1}>
             {a.completionInfo || a.info}
           </Text>
-
         </View>
         <View style={styles.right}>
           <View style={styles.starsRow}>
@@ -62,9 +68,10 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
               />
             ))}
           </View>
+          {hasDetail && (
+            <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} style={{ marginLeft: 4, marginTop: 1 }} />
+          )}
         </View>
-
-
       </View>
 
       {!isComplete && a.target > 0 && (
@@ -77,8 +84,10 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
           )}
         </View>
       )}
-      {expanded && a.info && a.completionInfo && (
-        <Text style={styles.detailInfo}>{a.info}</Text>
+      {expanded && hasDetail && (
+        <View style={styles.detailWrap}>
+          <Text style={styles.detailInfo}>{a.info}</Text>
+        </View>
       )}
     </PressableRipple>
   );
@@ -87,29 +96,27 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    borderRadius: Radius.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: 2,
+    overflow: 'hidden',
   },
   cardPressed: {
     opacity: 0.85,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   iconWrap: {
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
+    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
-    marginTop: 2,
   },
   iconWrapComplete: {
     backgroundColor: Colors.textPrimary,
@@ -130,15 +137,21 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   info: {
-    ...Typography.caption,
+    ...Typography.footnote,
     color: Colors.textTertiary,
     marginTop: 2,
   },
   detailInfo: {
     ...Typography.footnote,
     color: Colors.textSecondary,
-    marginTop: Spacing.sm,
     lineHeight: 18,
+  },
+  detailWrap: {
+    backgroundColor: Colors.bgSubtle,
+    borderRadius: Radius.sm,
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
   },
   progressRow: {
     flexDirection: 'row',
@@ -149,7 +162,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -165,9 +178,9 @@ const styles = StyleSheet.create({
     marginBottom: 2
   },
   right: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 2,
-    marginTop: 0,
   },
   starsRow: {
     flexDirection: 'row',

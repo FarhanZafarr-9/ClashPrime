@@ -13,7 +13,7 @@ import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { AchievementCard } from '../../src/components/AchievementCard';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
-import { groupAchievements, getTotalStars } from '../../src/utils/achievements';
+import { groupAchievementsByStars, getTotalStars } from '../../src/utils/achievements';
 import type { Village } from '../../src/types/clash';
 
 type AchievementVillageFilter = 'all' | Village;
@@ -37,7 +37,7 @@ export default function AchievementsScreen() {
   const filteredAchievements = achievementVillageFilter === 'all'
     ? player.achievements
     : player.achievements.filter((a) => a.village === achievementVillageFilter);
-  const achievementGroups = groupAchievements(filteredAchievements);
+  const achievementGroups = groupAchievementsByStars(filteredAchievements);
   const starTotals = getTotalStars(filteredAchievements);
   const achievementVillageCounts = {
     all: player.achievements.length,
@@ -64,16 +64,20 @@ export default function AchievementsScreen() {
         ) : (
           <>
             <View style={styles.achievementSummary}>
-              <View style={styles.achievementSummaryTop}>
-                <View style={styles.achievementSummaryRow}>
-                  <Ionicons name="star" size={14} color={Colors.warning} />
-                  <Text style={styles.achievementSummaryTitle}>
-                    {starTotals.earned}/{starTotals.max}
-                  </Text>
-                  <Text style={styles.achievementSummaryLabel}>stars</Text>
+              <View style={styles.achievementSummaryRow}>
+                <View style={styles.achievementSummaryIcon}>
+                  <Ionicons name="star-outline" size={16} color={Colors.textPrimary} />
                 </View>
-                <Text style={styles.achievementSummarySub}>
-                  {filteredAchievements.filter((a) => a.stars === 3).length}/{filteredAchievements.length} complete
+                <View style={styles.achievementSummaryText}>
+                  <Text style={styles.achievementSummaryTitle}>
+                    {starTotals.earned}/{starTotals.max} stars
+                  </Text>
+                  <Text style={styles.achievementSummarySub}>
+                    {filteredAchievements.filter((a) => a.stars === 3).length}/{filteredAchievements.length} complete
+                  </Text>
+                </View>
+                <Text style={styles.achievementSummaryPct}>
+                  {starTotals.max > 0 ? Math.round((starTotals.earned / starTotals.max) * 100) : 0}%
                 </Text>
               </View>
               <View style={styles.achievementSummaryBarRow}>
@@ -85,9 +89,6 @@ export default function AchievementsScreen() {
                     ]}
                   />
                 </View>
-                <Text style={styles.achievementSummaryPct}>
-                  {starTotals.max > 0 ? Math.round((starTotals.earned / starTotals.max) * 100) : 0}%
-                </Text>
               </View>
             </View>
 
@@ -147,6 +148,8 @@ export default function AchievementsScreen() {
                           achievement={a}
                           expanded={expandedAchievement === key}
                           showVillage={achievementVillageFilter === 'all'}
+                          isFirst={idx === 0}
+                          isLast={idx === group.items.length - 1}
                           onPress={() => setExpandedAchievement(expandedAchievement === key ? null : key)}
                         />
                       );
@@ -197,54 +200,53 @@ const styles = StyleSheet.create({
   },
   achievementSummary: {
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    padding: Spacing.base,
+    borderRadius: Radius.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     marginHorizontal: Spacing.base,
     marginTop: Spacing.base,
     marginBottom: Spacing.lg,
   },
-  achievementSummaryTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   achievementSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: Spacing.base,
+  },
+  achievementSummaryIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  achievementSummaryText: {
+    flex: 1,
   },
   achievementSummaryTitle: {
-    ...Typography.headline,
+    fontSize: 13,
+    fontWeight: '600',
     color: Colors.textPrimary,
+    marginBottom: 2,
   },
-  achievementSummaryLabel: {
-    ...Typography.caption,
+  achievementSummarySub: {
+    fontSize: 12,
     color: Colors.textTertiary,
-    marginLeft: 1,
+    opacity: 0.85,
   },
   achievementSummaryPct: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    fontWeight: '600',
-    minWidth: 34,
+    ...Typography.headline,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    minWidth: 40,
     textAlign: 'right',
   },
   achievementSummaryBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
     marginTop: Spacing.sm,
   },
-  achievementSummarySub: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-  },
   achievementSummaryBar: {
-    flex: 1,
     height: 4,
-    backgroundColor: Colors.borderSubtle,
+    backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
   },

@@ -45,6 +45,34 @@ export function groupAchievements(achievements: Achievement[]): { group: Achieve
     }));
 }
 
+export type StarGroup = 'three' | 'two' | 'one' | 'none';
+
+const STAR_GROUP_ORDER: StarGroup[] = ['three', 'two', 'one', 'none'];
+
+const STAR_GROUP_LABELS: Record<StarGroup, string> = {
+  three: 'Completed',
+  two: '2 Stars',
+  one: '1 Star',
+  none: 'In Progress',
+};
+
+export function groupAchievementsByStars(achievements: Achievement[]): { group: StarGroup; label: string; items: Achievement[] }[] {
+  const buckets: Record<StarGroup, Achievement[]> = { three: [], two: [], one: [], none: [] };
+  for (const a of achievements) {
+    if (a.stars >= 3) buckets.three.push(a);
+    else if (a.stars === 2) buckets.two.push(a);
+    else if (a.stars === 1) buckets.one.push(a);
+    else buckets.none.push(a);
+  }
+  return STAR_GROUP_ORDER
+    .filter((g) => buckets[g].length > 0)
+    .map((g) => ({
+      group: g,
+      label: STAR_GROUP_LABELS[g],
+      items: buckets[g].sort((a, b) => getAchievementProgress(b) - getAchievementProgress(a)),
+    }));
+}
+
 export function getTotalStars(achievements: Achievement[]): { earned: number; max: number } {
   const earned = achievements.reduce((sum, a) => sum + a.stars, 0);
   return { earned, max: achievements.length * 3 };
