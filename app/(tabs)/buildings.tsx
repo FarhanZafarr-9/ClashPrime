@@ -1025,6 +1025,8 @@ const styles = StyleSheet.create({
   expandedSection: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
   },
   expandTableBtn: {
     flexDirection: 'row',
