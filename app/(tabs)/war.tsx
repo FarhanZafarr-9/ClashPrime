@@ -577,7 +577,7 @@ export default function WarScreen() {
   );
 }
 
-function CurrentWarSection({ war, now, isCwl = false, myClanTag }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null }) {
+function CurrentWarSection({ war, now, isCwl = false, myClanTag, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; embedded?: boolean }) {
   const isPreparation = war.state === 'preparation';
   const isInWar = war.state === 'inWar';
   const isWarEnded = war.state === 'warEnded';
@@ -622,18 +622,20 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag }: { war: ClanWa
 
   return (
     <View>
-      <View style={styles.warStatusRow}>
-        <View style={[styles.statusChip, { backgroundColor: status.bg }]}>
-          <Ionicons name={status.icon} size={12} color={status.color} />
-          <Text style={[styles.statusChipText, { color: status.color }]}>{status.label}</Text>
-        </View>
-        {countdown && (
-          <View style={styles.countdownChip}>
-            <Ionicons name={countdown.icon} size={12} color={Colors.textSecondary} />
-            <Text style={styles.countdownText}>{countdown.text}</Text>
+      {!embedded && (
+        <View style={styles.warStatusRow}>
+          <View style={[styles.statusChip, { backgroundColor: status.bg }]}>
+            <Ionicons name={status.icon} size={12} color={status.color} />
+            <Text style={[styles.statusChipText, { color: status.color }]}>{status.label}</Text>
           </View>
-        )}
-      </View>
+          {countdown && (
+            <View style={styles.countdownChip}>
+              <Ionicons name={countdown.icon} size={12} color={Colors.textSecondary} />
+              <Text style={styles.countdownText}>{countdown.text}</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.warHeader}>
         <WarClanCard clan={clan} align="left" />
@@ -665,7 +667,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag }: { war: ClanWa
         </Card>
       )}
 
-      {isWarEnded && result && (
+      {!embedded && isWarEnded && result && (
         <View style={[styles.resultBanner, { backgroundColor: result.bg }]}>
           <Ionicons name={result.icon} size={20} color={result.color} />
           <View style={{ flex: 1 }}>
@@ -763,6 +765,7 @@ function CwlRoundCard({ round, war, myClanTag, now, isFirst, isLast }: { round: 
           styles.cwlRoundCard,
           isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
           isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+          expanded && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
         ]}
         onPress={() => setExpanded(e => !e)}
       >
@@ -805,8 +808,8 @@ function CwlRoundCard({ round, war, myClanTag, now, isFirst, isLast }: { round: 
         </View>
       </PressableRipple>
       {expanded && (
-        <View style={styles.cwlRoundDetail}>
-          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} />
+        <View style={[styles.cwlRoundDetail, isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }]}>
+          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} embedded />
         </View>
       )}
     </View>
@@ -907,14 +910,16 @@ function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { m
             attacks.map((a, i) => (
               <View key={i} style={styles.memberAttackRow}>
                 <View style={styles.memberAttackInfo}>
-                  <Text style={styles.memberAttackOrder}>#{i + 1}</Text>
+                  <Text style={styles.memberAttackOrder}>{i + 1}</Text>
                   <Text style={styles.memberAttackTarget} numberOfLines={1}>
                     {defenderName(a.defenderTag) || a.defenderTag}
                   </Text>
                 </View>
-                <Text style={[styles.memberAttackStars, a.stars === 3 && styles.memberAttackStars3]}>
-                  {a.stars}★
-                </Text>
+                <View style={styles.memberAttackStarsRow}>
+                  {[1, 2, 3].map((s) => (
+                    <Ionicons key={s} name={s <= a.stars ? 'star' : 'star-outline'} size={12} color={s <= a.stars ? Colors.warning : Colors.textTertiary} />
+                  ))}
+                </View>
                 <Text style={styles.memberAttackDestruction}>{a.destructionPercentage}%</Text>
                 <Text style={styles.memberAttackDuration}>{a.duration}s</Text>
               </View>
@@ -932,9 +937,11 @@ function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { m
                   {defenderName(member.bestOpponentAttack.attackerTag) || member.bestOpponentAttack.attackerTag}
                 </Text>
               </View>
-              <Text style={[styles.memberAttackStars, member.bestOpponentAttack.stars === 3 && styles.memberAttackStars3]}>
-                {member.bestOpponentAttack.stars}★
-              </Text>
+              <View style={styles.memberAttackStarsRow}>
+                {[1, 2, 3].map((s) => (
+                  <Ionicons key={s} name={s <= member.bestOpponentAttack!.stars ? 'star' : 'star-outline'} size={12} color={s <= member.bestOpponentAttack!.stars ? Colors.warning : Colors.textTertiary} />
+                ))}
+              </View>
               <Text style={styles.memberAttackDestruction}>{member.bestOpponentAttack.destructionPercentage}%</Text>
               <Text style={styles.memberAttackDuration}>{member.bestOpponentAttack.duration}s</Text>
             </View>
@@ -959,6 +966,7 @@ function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: b
           styles.logRow,
           isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
           isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+          expanded && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
         ]}
         onPress={() => setExpanded(e => !e)}
       >
@@ -986,7 +994,7 @@ function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: b
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
       </PressableRipple>
       {expanded && (
-        <View style={styles.warTable}>
+        <View style={[styles.warTable, { marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTopWidth: 0 }]}>
           <View style={styles.warTableRow}>
             <Text style={[styles.warTableHead, { width: 76, flex: 0 }]} />
             <Text style={[styles.warTableCell, styles.warTableHead]}>{entry.clan.name}</Text>
@@ -1285,15 +1293,24 @@ const styles = StyleSheet.create({
   },
   memberAttackInfo: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
   memberAttackOrder: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    fontWeight: '700',
     width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.bgCardHover,
+    color: Colors.textMuted,
+    fontSize: 9,
+    fontWeight: '700',
     textAlign: 'center',
+    lineHeight: 18,
+    overflow: 'hidden',
   },
   memberAttackTarget: { ...Typography.caption, color: Colors.textPrimary, flex: 1 },
-  memberAttackStars: { ...Typography.caption, color: Colors.textMuted, fontWeight: '700', minWidth: 26, textAlign: 'right' },
-  memberAttackStars3: { color: Colors.warning },
+  memberAttackStarsRow: {
+    flexDirection: 'row',
+    gap: 2,
+    minWidth: 44,
+    justifyContent: 'flex-end',
+  },
   memberAttackDestruction: { ...Typography.caption, color: Colors.textSecondary, minWidth: 44, textAlign: 'right' },
   memberAttackDuration: { ...Typography.caption, color: Colors.textTertiary, minWidth: 32, textAlign: 'right' },
 
@@ -1368,12 +1385,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   cwlRoundDetail: {
-    marginVertical: Spacing.xs,
-    paddingVertical: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    marginBottom: Spacing.md
+    backgroundColor: Colors.bgSubtle,
+    borderBottomLeftRadius: Radius.sm,
+    borderBottomRightRadius: Radius.sm,
+    padding: Spacing.md,
+    overflow: 'hidden',
   },
 });
