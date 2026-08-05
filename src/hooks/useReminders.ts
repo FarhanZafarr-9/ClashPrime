@@ -2,8 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { TimerReminder } from '../types/clash';
 
-const REMINDERS_KEY = 'clashprime_reminders';
+const LEGACY_KEY = 'clashprime_reminders';
 const CHANNEL_ID = 'timer-expiry';
+
+function remindersKey(accountTag: string): string {
+  if (!accountTag) return LEGACY_KEY;
+  return `clashprime_reminders_${accountTag.replace(/[^a-zA-Z0-9]/g, '')}`;
+}
 
 let Notifications: any = null;
 let SchedulableTriggerInputTypes: any = null;
@@ -47,14 +52,14 @@ export async function requestPermission(): Promise<boolean> {
   } catch { return false; }
 }
 
-export async function getReminders(): Promise<TimerReminder[]> {
-  const raw = await AsyncStorage.getItem(REMINDERS_KEY);
+export async function getReminders(accountTag: string): Promise<TimerReminder[]> {
+  const raw = await AsyncStorage.getItem(remindersKey(accountTag));
   if (!raw) return [];
   return JSON.parse(raw) as TimerReminder[];
 }
 
-async function saveReminders(reminders: TimerReminder[]): Promise<void> {
-  await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders));
+async function saveReminders(accountTag: string, reminders: TimerReminder[]): Promise<void> {
+  await AsyncStorage.setItem(remindersKey(accountTag), JSON.stringify(reminders));
 }
 
 function generateId(): string {
@@ -84,7 +89,27 @@ async function scheduleSystems(reminders: TimerReminder[]) {
   } catch {}
 }
 
-export async function createReminder(label: string, durationMinutes: number): Promise<TimerReminder> {
+export async function rescheduleReminders(accountTag: string): Promise<void> {
+  const reminders = await getReminders(accountTag);
+  await scheduleSystems(reminders);
+}
+
+export async function migrateLegacyReminders(accountTag: string): Promise<void> {
+  if (!accountTag) return;
+  const key = remindersKey(accountTag);
+  if (key === LEGACY_KEY) return;
+  const legacy = await AsyncStorage.getItem(LEGACY_KEY);
+  if (!legacy) return;
+  const existing = await AsyncStorage.getItem(key);
+  if (existing) {
+    await AsyncStorage.removeItem(LEGACY_KEY);
+    return;
+  }
+  await AsyncStorage.setItem(key, legacy);
+  await AsyncStorage.removeItem(LEGACY_KEY);
+}
+
+export async function createReminder(accountTag: string, label: string, durationMinutes: number): Promise<TimerReminder> {
   const now = Date.now();
   const targetDate = new Date(now + durationMinutes * 60_000);
   const reminder: TimerReminder = {
@@ -95,9 +120,9 @@ export async function createReminder(label: string, durationMinutes: number): Pr
     status: 'active',
   };
 
-  const reminders = await getReminders();
+  const reminders = await getReminders(accountTag);
   reminders.push(reminder);
-  await saveReminders(reminders);
+  await saveReminders(accountTag, reminders);
 
   const permission = await requestPermission();
   if (permission) {
@@ -108,17 +133,17 @@ export async function createReminder(label: string, durationMinutes: number): Pr
   return reminder;
 }
 
-export async function dismissReminder(id: string): Promise<void> {
-  const reminders = await getReminders();
+export async function dismissReminder(accountTag: string, id: string): Promise<void> {
+  const reminders = await getReminders(accountTag);
   const idx = reminders.findIndex((r) => r.id === id);
   if (idx === -1) return;
   reminders.splice(idx, 1);
-  await saveReminders(reminders);
+  await saveReminders(accountTag, reminders);
   await scheduleSystems(reminders);
 }
 
-export async function markExpiredReminders(): Promise<TimerReminder[]> {
-  const reminders = await getReminders();
+export async function markExpiredReminders(accountTag: string): Promise<TimerReminder[]> {
+  const reminders = await getReminders(accountTag);
   const now = Date.now();
   let changed = false;
   for (const r of reminders) {
@@ -127,6 +152,6 @@ export async function markExpiredReminders(): Promise<TimerReminder[]> {
       changed = true;
     }
   }
-  if (changed) await saveReminders(reminders);
+  if (changed) await saveReminders(accountTag, reminders);
   return reminders;
 }
