@@ -56,7 +56,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts } = usePlayer();
   const { superTroopNames } = useGameData();
-  const { reminders, addTimer, dismissTimer } = useTimers();
+  const { reminders, addTimer, dismissTimer, hasPermission } = useTimers();
   const { show: showDialog, Dialog } = useDialog();
   const [refreshing, setRefreshing] = useState(false);
   const [progressDiff, setProgressDiff] = useState<ProgressDiff | null>(null);
@@ -64,6 +64,20 @@ export default function HomeScreen() {
   const [timerLabel, setTimerLabel] = useState('');
   const [timerMinutes, setTimerMinutes] = useState(30);
   const [addingTimer, setAddingTimer] = useState(false);
+  const [timerInputFocused, setTimerInputFocused] = useState(false);
+  const timerCardAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (addTimerVisible) {
+      timerCardAnim.setValue(0);
+      Animated.spring(timerCardAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 60,
+      }).start();
+    }
+  }, [addTimerVisible, timerCardAnim]);
   const [showBH, setShowBH] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [labelsOpen, setLabelsOpen] = useState(false);
@@ -836,43 +850,46 @@ export default function HomeScreen() {
           </View>
 
           {/* ── Active Timers ── */}
-          {reminders.length > 0 && (
-            <>
-              <View style={styles.sectionLabel}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={styles.sectionTitle}>Active Timers</Text>
-                  <PressableRipple style={styles.addTimerBtn} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
-                    <Ionicons name="alarm-outline" size={14} color={Colors.textPrimary} />
-                    <Text style={styles.addTimerBtnText}>Add</Text>
-                  </PressableRipple>
-                </View>
-              </View>
-              <View style={styles.timersCard}>
-                {reminders.map((r) => {
-                  const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
-                  const expired = r.status === 'expired' || remaining <= 0;
-                  const days = Math.floor(remaining / 86400000);
-                  const hours = Math.floor((remaining % 86400000) / 3600000);
-                  const minutes = Math.floor((remaining % 3600000) / 60000);
-                  const seconds = Math.floor((remaining % 60000) / 1000);
-                  const pad = (n: number) => String(n).padStart(2, '0');
-                  const timeStr = days > 0
-                    ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-                    : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-                  return (
-                    <View key={r.id} style={styles.timerRow}>
-                      <View style={styles.timerInfo}>
-                        <Text style={styles.timerLabel} numberOfLines={1}>{r.label}</Text>
-                        <Text style={[styles.timerCountdown, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
-                      </View>
-                      <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
-                        <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
-                      </PressableRipple>
+          <View style={styles.sectionLabel}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={styles.sectionTitle}>Active Timers</Text>
+              <PressableRipple style={styles.addTimerBtn} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
+                <Ionicons name="alarm-outline" size={14} color={Colors.textPrimary} />
+                <Text style={styles.addTimerBtnText}>Add</Text>
+              </PressableRipple>
+            </View>
+          </View>
+          {reminders.length > 0 ? (
+            <View style={styles.timersCard}>
+              {reminders.map((r) => {
+                const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
+                const expired = r.status === 'expired' || remaining <= 0;
+                const days = Math.floor(remaining / 86400000);
+                const hours = Math.floor((remaining % 86400000) / 3600000);
+                const minutes = Math.floor((remaining % 3600000) / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                const pad = (n: number) => String(n).padStart(2, '0');
+                const timeStr = days > 0
+                  ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                  : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                return (
+                  <View key={r.id} style={styles.timerRow}>
+                    <View style={styles.timerInfo}>
+                      <Text style={styles.timerLabel} numberOfLines={1}>{r.label}</Text>
+                      <Text style={[styles.timerCountdown, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
                     </View>
-                  );
-                })}
-              </View>
-            </>
+                    <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
+                      <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
+                    </PressableRipple>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.timersEmpty}>
+              <Ionicons name="alarm-outline" size={16} color={Colors.textTertiary} />
+              <Text style={styles.timersEmptyText}>No active timers. Add one to get reminded when it's time to log back in and re-set your builders.</Text>
+            </View>
           )}
 
           <View style={{ height: 100 }} />
@@ -888,56 +905,109 @@ export default function HomeScreen() {
       <Dialog />
 
       <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => setAddTimerVisible(false)} statusBarTranslucent>
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable style={styles.modalOverlay} onPress={() => setAddTimerVisible(false)}>
-            <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
-              <Text style={styles.modalTitle}>New Timer</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Label (e.g. Archer Queen)"
-                placeholderTextColor={Colors.textMuted}
-                value={timerLabel}
-                onChangeText={setTimerLabel}
-                autoFocus
-              />
-              <View style={styles.durationPresets}>
-                {[15, 30, 60, 120, 240, 480, 720, 1440].map((m) => {
-                  const label = m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 60 / 24}d`;
-                  return (
-                    <PressableRipple
-                      key={m}
-                      style={[styles.durationPill, timerMinutes === m && styles.durationPillActive]}
-                      onPress={() => setTimerMinutes(m)}
-                    >
-                      <Text style={[styles.durationPillText, timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
-                    </PressableRipple>
-                  );
-                })}
-              </View>
-              <View style={styles.modalActions}>
-                <PressableRipple style={styles.modalCancelBtn} onPress={() => setAddTimerVisible(false)}>
-                  <Text style={styles.modalCancelText}>Cancel</Text>
-                </PressableRipple>
-                <PressableRipple
-                  style={[styles.modalConfirmBtn, (!timerLabel.trim() || addingTimer) && { opacity: 0.4 }]}
-                  disabled={!timerLabel.trim() || addingTimer}
-                  onPress={async () => {
-                    setAddingTimer(true);
-                    await addTimer(timerLabel.trim(), timerMinutes);
-                    setAddingTimer(false);
-                    setAddTimerVisible(false);
-                  }}
-                >
-                  {addingTimer ? (
-                    <ActivityIndicator size="small" color={Colors.bg} />
-                  ) : (
-                    <Text style={styles.modalConfirmText}>Start Timer</Text>
-                  )}
-                </PressableRipple>
-              </View>
-            </View>
-          </Pressable>
-        </KeyboardAvoidingView>
+        <View style={styles.modalRoot}>
+          <KeyboardAvoidingView
+            style={styles.modalRoot}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setAddTimerVisible(false)}>
+              <Animated.View
+                style={[
+                  styles.modalCard,
+                  {
+                    opacity: timerCardAnim,
+                    transform: [
+                      { scale: timerCardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
+                    ],
+                  },
+                ]}
+                onStartShouldSetResponder={() => true}
+              >
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalHeaderIcon}>
+                    <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
+                  </View>
+                  <View style={styles.modalHeaderText}>
+                    <Text style={styles.modalTitle}>New Timer</Text>
+                    <Text style={styles.modalSubtitle}>Get a reminder when the time is up</Text>
+                  </View>
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>LABEL</Text>
+                  <TextInput
+                    style={[styles.modalInput, timerInputFocused && styles.modalInputFocused]}
+                    placeholder="e.g. Archer Queen"
+                    placeholderTextColor={Colors.textMuted}
+                    value={timerLabel}
+                    onChangeText={setTimerLabel}
+                    onFocus={() => setTimerInputFocused(true)}
+                    onBlur={() => setTimerInputFocused(false)}
+                    autoFocus
+                    maxLength={40}
+                    returnKeyType="done"
+                  />
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>DURATION</Text>
+                  <View style={styles.durationPresets}>
+                    {[15, 30, 60, 120, 240, 480, 720, 1440].map((m) => {
+                      const label = m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 60 / 24}d`;
+                      return (
+                        <PressableRipple
+                          key={m}
+                          style={[styles.durationPill, timerMinutes === m && styles.durationPillActive]}
+                          onPress={() => setTimerMinutes(m)}
+                        >
+                          <Text style={[styles.durationPillText, timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
+                        </PressableRipple>
+                      );
+                    })}
+                  </View>
+                  <View style={styles.durationSummary}>
+                    <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
+                    <Text style={styles.durationSummaryText}>
+                      Ends at{' '}
+                      <Text style={styles.durationSummaryTime}>
+                        {new Date(Date.now() + timerMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      </Text>
+                    </Text>
+                  </View>
+                </View>
+
+                {!hasPermission && (
+                  <View style={styles.notifHint}>
+                    <Ionicons name="notifications-off-outline" size={13} color={Colors.warning} />
+                    <Text style={styles.notifHintText}>Notifications are off — you won't get a reminder.</Text>
+                  </View>
+                )}
+
+                <View style={styles.modalActions}>
+                  <PressableRipple style={styles.modalCancelBtn} onPress={() => setAddTimerVisible(false)}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </PressableRipple>
+                  <PressableRipple
+                    style={[styles.modalConfirmBtn, (!timerLabel.trim() || addingTimer) && { opacity: 0.4 }]}
+                    disabled={!timerLabel.trim() || addingTimer}
+                    onPress={async () => {
+                      setAddingTimer(true);
+                      await addTimer(timerLabel.trim(), timerMinutes);
+                      setAddingTimer(false);
+                      setAddTimerVisible(false);
+                    }}
+                  >
+                    {addingTimer ? (
+                      <ActivityIndicator size="small" color={Colors.bg} />
+                    ) : (
+                      <Text style={styles.modalConfirmText}>Start Timer</Text>
+                    )}
+                  </PressableRipple>
+                </View>
+              </Animated.View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       <Modal visible={switcherVisible} transparent animationType="fade" onRequestClose={() => setSwitcherVisible(false)} statusBarTranslucent>
@@ -1746,34 +1816,95 @@ const styles = StyleSheet.create({
   timerDismiss: {
     padding: 4,
   },
+  timersEmpty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.base,
+    padding: Spacing.md,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  timersEmptyText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    flex: 1,
+    lineHeight: 16,
+  },
+  modalRoot: {
+    flex: 1,
+    backgroundColor: Colors.overlay,
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: Spacing.base,
   },
   modalCard: {
-    width: '84%',
+    width: '100%',
+    maxWidth: 420,
     backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.xxl,
     borderWidth: 0.75,
     borderColor: Colors.border,
-    padding: Spacing.xl,
-    gap: Spacing.md,
+    padding: Spacing.lg,
+    gap: Spacing.base,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 32,
+    elevation: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  modalHeaderIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalHeaderText: {
+    flex: 1,
   },
   modalTitle: {
     ...Typography.title3,
     color: Colors.textPrimary,
     letterSpacing: -0.3,
+    lineHeight: 22,
+  },
+  modalSubtitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  fieldBlock: {
+    gap: Spacing.xs,
+  },
+  fieldLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   modalInput: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
+    borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.md,
-    padding: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+  },
+  modalInputFocused: {
+    borderColor: Colors.textPrimary,
   },
   durationPresets: {
     flexDirection: 'row',
@@ -1801,6 +1932,38 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '700',
   },
+  durationSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingTop: Spacing.xs,
+  },
+  durationSummaryText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+  },
+  durationSummaryTime: {
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  notifHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  notifHintText: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    flex: 1,
+    lineHeight: 16,
+  },
   modalActions: {
     flexDirection: 'row',
     gap: Spacing.sm,
@@ -1813,6 +1976,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 0.75,
     borderColor: Colors.border,
+    backgroundColor: Colors.bgSubtle,
   },
   modalCancelText: {
     ...Typography.subhead,
