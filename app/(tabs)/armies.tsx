@@ -17,6 +17,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
 import { getPopularArmies } from '../../src/api/clashArmies';
+import { buildCopyArmyLink } from '../../src/utils/armyLinks';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -150,26 +151,13 @@ export default function ArmiesScreen() {
   };
 
   const handleCopyArmy = (army: ClashArmy) => {
-    const campTroops = army.units.filter((u) => u.home === 'armyCamp' && unitsById.get(u.unitId)?.type !== 'Spell');
-    const campSpells = army.units.filter((u) => u.home === 'armyCamp' && unitsById.get(u.unitId)?.type === 'Spell');
-    const ccTroops = army.units.filter((u) => u.home === 'clanCastle' && unitsById.get(u.unitId)?.type !== 'Spell');
-    const ccSpells = army.units.filter((u) => u.home === 'clanCastle' && unitsById.get(u.unitId)?.type === 'Spell');
-    const toStr = (list: typeof army.units) => list.map((u) => {
-      const def = unitsById.get(u.unitId);
-      return def ? `${u.amount}x${def.clashId}` : null;
-    }).filter(Boolean).join('-');
-    let link = 'https://link.clashofclans.com/en?action=CopyArmy&army=';
-    if (ccTroops.length) link += `i${toStr(ccTroops)}`;
-    if (ccSpells.length) link += `d${toStr(ccSpells)}`;
-    link += `u${toStr(campTroops)}`;
-    link += `s${toStr(campSpells)}`;
-    Linking.openURL(link);
+    Linking.openURL(buildCopyArmyLink(army.units, unitsById));
   };
 
   const handleShareArmy = async (army: ClashArmy) => {
     try {
       await Share.share({
-        message: `${army.name} · TH${army.townHall} army from ClashLy\n${army.shareLink || `https://clasharmies.com/armies/${army.id}`}`,
+        message: `${army.name} · TH${army.townHall} army from ClashLy\n${buildCopyArmyLink(army.units, unitsById)}\n${army.shareLink || `https://clasharmies.com/armies/${army.id}`}`,
         title: army.name,
       });
     } catch {

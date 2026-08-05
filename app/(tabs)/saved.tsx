@@ -21,7 +21,8 @@ import {
   toggleFavorite as toggleBaseFavorite,
 } from '../../src/hooks/usePlayer';
 import type { SavedBase } from '../../src/hooks/usePlayer';
-import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
+import type { ClashArmy, ClashArmyUnit, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
+import { buildCopyArmyLink } from '../../src/utils/armyLinks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SAVED_ARMIES_KEY = 'clashprime_saved_armies';
@@ -192,10 +193,11 @@ export default function SavedScreen() {
     loadData();
   };
 
-  const handleShareArmy = async (army: { name: string; townHall: number; id: string | number; shareLink?: string }) => {
+  const handleShareArmy = async (army: { name: string; townHall: number; id: string | number; shareLink?: string; units?: ClashArmyUnit[] }) => {
     try {
+      const directLink = army.units && army.units.length ? buildCopyArmyLink(army.units, unitsById) : null;
       await Share.share({
-        message: `${army.name} · TH${army.townHall} army from ClashLy\n${army.shareLink || `https://clasharmies.com/armies/${army.id}`}`,
+        message: `${army.name} · TH${army.townHall} army from ClashLy\n${directLink ? `${directLink}\n` : ''}${army.shareLink || `https://clasharmies.com/armies/${army.id}`}`,
         title: army.name,
       });
     } catch {
@@ -214,20 +216,7 @@ export default function SavedScreen() {
   };
 
   const handleCopyArmy = (army: ClashArmy) => {
-    const campTroops = army.units.filter((u) => u.home === 'armyCamp' && unitsById.get(u.unitId)?.type !== 'Spell');
-    const campSpells = army.units.filter((u) => u.home === 'armyCamp' && unitsById.get(u.unitId)?.type === 'Spell');
-    const ccTroops = army.units.filter((u) => u.home === 'clanCastle' && unitsById.get(u.unitId)?.type !== 'Spell');
-    const ccSpells = army.units.filter((u) => u.home === 'clanCastle' && unitsById.get(u.unitId)?.type === 'Spell');
-    const toStr = (list: typeof army.units) => list.map((u) => {
-      const def = unitsById.get(u.unitId);
-      return def ? `${u.amount}x${def.clashId}` : null;
-    }).filter(Boolean).join('-');
-    let link = 'https://link.clashofclans.com/en?action=CopyArmy&army=';
-    if (ccTroops.length) link += `i${toStr(ccTroops)}`;
-    if (ccSpells.length) link += `d${toStr(ccSpells)}`;
-    link += `u${toStr(campTroops)}`;
-    link += `s${toStr(campSpells)}`;
-    Linking.openURL(link);
+    Linking.openURL(buildCopyArmyLink(army.units, unitsById));
   };
 
   return (
