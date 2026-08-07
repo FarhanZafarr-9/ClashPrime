@@ -39,6 +39,7 @@ interface SettingRowProps {
   accentColor?: string;
   isExtra?: boolean;
   isFirst?: boolean;
+  isLast?: boolean;
   compact?: boolean;
 }
 
@@ -58,6 +59,7 @@ export function SettingRow({
   accentColor,
   isExtra,
   isFirst,
+  isLast,
   compact,
 }: SettingRowProps) {
   const { colors } = useTheme();
@@ -85,7 +87,12 @@ export function SettingRow({
         ]}
       >
         {icon && (
-          <View style={[styles.settingRowIcon, accent && { backgroundColor: `${accent}2e` }]}>
+          <View style={[
+            styles.settingRowIcon,
+            accent && { backgroundColor: `${accent}2e` },
+            isFirst && styles.settingRowIconFirst,
+            isLast && styles.settingRowIconLast,
+          ]}>
             <Ionicons
               name={icon as any}
               size={15}
@@ -138,6 +145,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  settingRowIconFirst: {
+    borderTopLeftRadius: Radius.lg,
+  },
+  settingRowIconLast: {
+    borderBottomLeftRadius: Radius.lg,
   },
   settingTextBlock: {
     flex: 1,
