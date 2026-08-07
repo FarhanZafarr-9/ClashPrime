@@ -32,8 +32,9 @@ import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
 import { Card } from '../../src/components/Card';
-import { ProgressSummaryCard } from '../../src/components/ProgressSummaryCard';
-import { getTroopDetail } from '../../src/api/troopDetail';
+import { SettingRow } from '../../src/components/SettingRow';
+import { ItemCard } from '../../src/components/ItemCard';
+import { getTroopDetail, type TroopDetail } from '../../src/api/troopDetail';
 import { useDialog } from '../../src/components/AlertDialog';
 import {
   loadProgressSnapshot,
@@ -51,6 +52,85 @@ const CATEGORY_META: Record<ProgressCategory, { label: string; icon: { set: 'ion
   spells: { label: 'Spells', icon: { set: 'ion', name: 'flask-outline' } },
   equipment: { label: 'Equipment', icon: { set: 'ion', name: 'trophy-outline' } },
 };
+
+const RUSHED_ACCENT = '#F6C453';
+
+type HomeStatRow = { label: string; desc?: string; value: number | string; icon: keyof typeof Ionicons.glyphMap; accentColor?: string };
+type HomeStatGroup = { title: string; icon: keyof typeof Ionicons.glyphMap; desc: string; rows: HomeStatRow[] };
+
+function CollapsibleSection({
+  title,
+  icon,
+  description,
+  count,
+  totalLevel,
+  totalMax,
+  badge,
+  isFirst,
+  isLast,
+  onOpen,
+  defaultOpen,
+  destructive,
+  accentColor,
+  compact,
+  children,
+}: {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  description: React.ReactNode;
+  count: number;
+  totalLevel: number;
+  totalMax: number;
+  badge?: React.ReactNode;
+  isFirst?: boolean;
+  isLast?: boolean;
+  onOpen?: () => void;
+  defaultOpen?: boolean;
+  destructive?: boolean;
+  accentColor?: string;
+  compact?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen ?? false);
+  if (count === 0) return null;
+  const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
+  const toggle = () => {
+    if (!open) onOpen?.();
+    setOpen(!open);
+  };
+  return (
+    <>
+      <SettingRow
+        icon={icon}
+        title={title}
+        desc={description}
+        isFirst={isFirst || open}
+        onPress={toggle}
+        destructive={destructive}
+        accentColor={accentColor}
+        compact={compact}
+      >
+        {badge != null ? badge : (
+          <View style={styles.sectionBadges}>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>{count}</Text>
+            </View>
+            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed]}>
+              <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
+              <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+            </View>
+          </View>
+        )}
+      </SettingRow>
+      {open && (
+        <View style={styles.sectionBody}>
+          {children}
+          {!isLast && <View style={styles.sectionSeparator} />}
+        </View>
+      )}
+    </>
+  );
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -80,6 +160,7 @@ export default function HomeScreen() {
   }, [addTimerVisible, timerCardAnim]);
   const [showBH, setShowBH] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [equipDetails, setEquipDetails] = useState<Record<string, TroopDetail | null>>({});
   const [labelsOpen, setLabelsOpen] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
@@ -199,6 +280,37 @@ export default function HomeScreen() {
   }) ?? [];
   const homeSpells = player?.spells?.filter((s: { village?: string }) => s.village === 'home' || !s.village) ?? [];
   const heroEquipment = player?.heroEquipment ?? [];
+
+  // Prefetch hero-equipment details (full level list) so equipment rows show the
+  // item's full max level instead of the API's Blacksmith-capped maxLevel.
+  const prefetchEquipDetails = useCallback(async () => {
+    const names = heroEquipment.map((e) => e.name);
+    if (names.length === 0) return;
+    const pending = names.filter((n) => equipDetails[n] === undefined);
+    if (pending.length === 0) return;
+    const fetched = await Promise.all(pending.map((name) => getTroopDetail(name).catch(() => null)));
+    setEquipDetails((prev) => {
+      const next = { ...prev };
+      fetched.forEach((detail, i) => { next[pending[i]] = detail; });
+      return next;
+    });
+  }, [heroEquipment, equipDetails]);
+
+  useEffect(() => {
+    prefetchEquipDetails();
+  }, [prefetchEquipDetails]);
+
+  const getEquipFullMax = (name: string, fallback: number): number => {
+    const detail = equipDetails[name];
+    if (detail && detail.levels.length > 0) {
+      let max = 0;
+      for (const lvl of detail.levels) {
+        if (lvl.level > max) max = lvl.level;
+      }
+      return max;
+    }
+    return fallback;
+  };
 
   const ownedNames = new Set([
     ...(player?.troops ?? []).map((t: { name: string }) => t.name.toLowerCase()),
@@ -379,8 +491,100 @@ export default function HomeScreen() {
   const troopsProgress = calcProgress(homeTroops, allTroopsAtTH);
   const spellsProgress = calcProgress(homeSpells, allSpellsAtTH);
   const equipProgress = heroEquipment.length > 0
-    ? heroEquipment.reduce((s, e) => s + (e.maxLevel > 0 ? e.level / e.maxLevel : 0), 0) / heroEquipment.length
+    ? heroEquipment.reduce((s, e) => s + (getEquipFullMax(e.name, e.maxLevel) > 0 ? e.level / getEquipFullMax(e.name, e.maxLevel) : 0), 0) / heroEquipment.length
     : 0;
+
+  const progressGroups: {
+    key: string;
+    title: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    progress: number;
+    pushTo: string;
+    rows: { name: string; level: number; maxLevel: number; icon?: string }[];
+  }[] = [
+    {
+      key: 'heroes',
+      title: 'Heroes',
+      icon: 'shield-half-outline',
+      progress: heroesProgress,
+      pushTo: '/(tabs)/army?tab=heroes',
+      rows: allHeroesAtTH.map((h) => {
+        const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
+        return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel, icon: getHeroImageUrl(h.name) || undefined };
+      }),
+    },
+    {
+      key: 'troops',
+      title: 'Troops',
+      icon: 'bonfire-outline',
+      progress: troopsProgress,
+      pushTo: '/(tabs)/army?tab=troops',
+      rows: allTroopsAtTH.map((t) => {
+        const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
+        const level = owned?.level ?? 0;
+        return { name: t.name, level, maxLevel: t.maxLevel, icon: getTroopImageUrl(t.name, level) || undefined };
+      }),
+    },
+    {
+      key: 'spells',
+      title: 'Spells',
+      icon: 'flash-outline',
+      progress: spellsProgress,
+      pushTo: '/(tabs)/army?tab=spells',
+      rows: allSpellsAtTH.map((s) => {
+        const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
+        const level = owned?.level ?? 0;
+        return { name: s.name, level, maxLevel: s.maxLevel, icon: getTroopImageUrl(s.name, level) || undefined };
+      }),
+    },
+    {
+      key: 'equipment',
+      title: 'Equipment',
+      icon: 'hammer-outline',
+      progress: equipProgress,
+      pushTo: '/(tabs)/army?tab=equipment',
+      rows: player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
+        name: e.name,
+        level: e.level,
+        maxLevel: getEquipFullMax(e.name, e.maxLevel),
+        icon: getEquipmentImageUrl(e.name) || undefined,
+      })),
+    },
+  ];
+
+  const homeStatGroups: HomeStatGroup[] = [
+    {
+      title: 'PvP',
+      icon: 'trophy-outline',
+      desc: 'Attack & defense record',
+      rows: [
+        { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
+        { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
+        { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
+        { label: 'Attack Wins', desc: 'Attacks won', value: player.attackWins, icon: 'flame-outline' },
+        { label: 'Defense Wins', desc: 'Defenses won', value: player.defenseWins, icon: 'shield-outline' },
+      ],
+    },
+    {
+      title: 'Clan',
+      icon: 'people-outline',
+      desc: 'Clan participation',
+      rows: [
+        { label: 'Donations', desc: 'Troops donated', value: player.donations, icon: 'gift-outline' },
+        { label: 'Received', desc: 'Troops received', value: player.donationsReceived, icon: 'arrow-down-outline', accentColor: player.donationsReceived > player.donations ? Colors.success : undefined },
+        { label: 'Capital Gold', desc: 'Capital gold donated', value: player.clanCapitalContributions, icon: 'cash-outline' },
+      ],
+    },
+    {
+      title: 'Builder Base',
+      icon: 'hammer-outline',
+      desc: 'Builder village record',
+      rows: [
+        ...(player.builderBaseTrophies !== undefined ? [{ label: 'Builder Trophies', desc: 'Current trophy count', value: player.builderBaseTrophies, icon: 'hammer-outline' as const }] : []),
+        ...(player.bestBuilderBaseTrophies !== undefined ? [{ label: 'Best Builder', desc: 'All-time best', value: player.bestBuilderBaseTrophies, icon: 'hammer' as const, accentColor: Colors.warning }] : []),
+      ],
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -401,9 +605,14 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <Text style={styles.greeting}>ClashPrime</Text>
-              <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
-                <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
-              </PressableRipple>
+              <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+                <PressableRipple style={styles.searchBtn} onPress={() => router.push('/player')} hitSlop={8} accessibilityLabel="Inspect a player by tag" accessibilityRole="button">
+                  <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
+                </PressableRipple>
+                <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
+                  <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
+                </PressableRipple>
+              </View>
             </View>
             <Text style={styles.timestamp}>
               {lastSync
@@ -573,138 +782,138 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Progress Overview</Text>
           </View>
 
-          <View style={styles.progressGrid}>
-            <ProgressSummaryCard
-              category="Heroes"
-              progress={heroesProgress}
-              lockedMessage={allHeroesAtTH.length === 0 ? 'Unlocks at TH7' : undefined}
-              items={allHeroesAtTH.map((h) => {
-                const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
-                return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel };
-              })}
-              onPress={() => router.push('/(tabs)/army?tab=heroes')}
-            />
-            <ProgressSummaryCard
-              category="Troops"
-              progress={troopsProgress}
-              items={allTroopsAtTH.map((t) => {
-                const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
-                return { name: t.name, level: owned?.level ?? 0, maxLevel: t.maxLevel };
-              })}
-              onPress={() => router.push('/(tabs)/army?tab=troops')}
-            />
-            <ProgressSummaryCard
-              category="Spells"
-              progress={spellsProgress}
-              lockedMessage={allSpellsAtTH.length === 0 ? 'Unlocks at TH5' : undefined}
-              items={allSpellsAtTH.map((s) => {
-                const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
-                return { name: s.name, level: owned?.level ?? 0, maxLevel: s.maxLevel };
-              })}
-              onPress={() => router.push('/(tabs)/army?tab=spells')}
-            />
-            <ProgressSummaryCard
-              category="Equipment"
-              progress={equipProgress}
-              iconUri="https://www.clash.ninja/images/entities/171.png"
-              lockedMessage={player.heroEquipment.length === 0 ? 'Unlocks at TH8' : undefined}
-              items={player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
-                name: e.name,
-                level: e.level,
-                maxLevel: e.maxLevel,
-              }))}
-              onPress={() => router.push('/(tabs)/army?tab=equipment')}
-            />
+          <View style={styles.progressSections}>
+            {progressGroups.filter((g) => g.rows.some((r) => r.level > 0 && r.level < r.maxLevel)).map((group, gi, groups) => {
+              const remainingRows = group.rows.filter((r) => r.level > 0 && r.level < r.maxLevel);
+              const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
+              const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
+              return (
+                <CollapsibleSection
+                  key={group.key}
+                  isFirst={gi === 0}
+                  isLast={gi === groups.length - 1}
+                  icon={group.icon}
+                  title={group.title}
+                  compact
+                  description={(
+                    <View style={styles.progressHeaderDesc}>
+                      <View style={styles.progressHeaderBar}>
+                        <View style={[styles.progressHeaderFill, { width: `${Math.min(group.progress, 1) * 100}%` }]} />
+                      </View>
+                    </View>
+                  )}
+                  count={group.rows.length}
+                  totalLevel={totalLevel}
+                  totalMax={totalMax}
+                >
+                  {remainingRows.map((row, ri) => (
+                    <ItemCard
+                      key={`${group.key}-${ri}`}
+                      name={row.name}
+                      level={row.level}
+                      maxLevel={row.maxLevel}
+                      icon={row.icon}
+                      isLast={ri === remainingRows.length - 1}
+                      onPress={() => router.push(group.pushTo)}
+                    />
+                  ))}
+                </CollapsibleSection>
+              );
+            })}
           </View>
 
-          {unlockableItems.length > 0 && (
+          {(unlockableItems.length > 0 || rushedItems.length > 0) && (
             <>
               <View style={styles.sectionLabel}>
-                <Text style={styles.sectionTitle}>Available Upgrades</Text>
+                <Text style={styles.sectionTitle}>Backlog</Text>
               </View>
-              <View style={styles.upgradeCard}>
-                <PressableRipple style={styles.upgradeHeader} onPress={() => setUpgradesOpen((v) => !v)}>
-                  <View style={styles.upgradeHeaderLeft}>
-                    <Ionicons name="ban-outline" size={16} color="#FF3B30" />
-                    <Text style={styles.upgradeHeaderText}>{unlockableItems.length} locked</Text>
-                    {loadingCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
-                    {!loadingCosts && upgradeCosts && aggregateCost > 0 && (
-                      <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateCost)}{aggregateTime > 0 ? ` · ${fmtTime(aggregateTime)}` : ''}</Text>
-                    )}
+              <View style={styles.progressSections}>
+              {unlockableItems.length > 0 && (
+              <CollapsibleSection
+                isFirst
+                isLast={rushedItems.length === 0}
+                icon="ban-outline"
+                title={`${unlockableItems.length} locked`}
+                destructive
+                compact
+                onOpen={() => setUpgradesOpen(true)}
+                description={loadingCosts ? 'Calculating costs & time…' : (upgradeCosts && aggregateCost > 0 ? `${fmtCost(aggregateCost)}${aggregateTime > 0 ? ` · ${fmtTime(aggregateTime)}` : ''}` : 'Items locked at your Town Hall')}
+                count={unlockableItems.length}
+                totalLevel={0}
+                totalMax={0}
+                badge={(
+                  <View style={[styles.sectionBadge, styles.sectionBadgeDanger]}>
+                    <Text style={[styles.sectionBadgeText, styles.sectionBadgeDangerText]}>{unlockableItems.length}</Text>
                   </View>
-                  <Ionicons name={upgradesOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
-                </PressableRipple>
-                {upgradesOpen && (() => {
+                )}
+              >
+                {(() => {
                   let lastTh = -1;
                   return unlockableItems.flatMap((item, i) => {
-                    const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
-                    const thUrl = getTownHallImageUrl(item.unlockTh);
-                    const levelsAtTH = getMaxLevelAtTH(item.name, th);
                     const isNewTh = item.unlockTh !== lastTh;
                     lastTh = item.unlockTh;
-                    const elements: React.ReactNode[] = [];
-                    if (isNewTh) {
-                      if (i > 0) {
-                        elements.push(<View key={`th-sep-${item.unlockTh}`} style={styles.upgradeGroupSep} />);
-                      }
-                      elements.push(
-                        <View key={`th-${item.unlockTh}`} style={styles.upgradeThSection}>
-                          <Image source={{ uri: thUrl! }} style={styles.upgradeThSectionIcon} resizeMode="contain" />
-                          <Text style={styles.upgradeThSectionTitle}>Town Hall {item.unlockTh}</Text>
-                        </View>
-                      );
-                    }
+                    const thUrl = getTownHallImageUrl(item.unlockTh);
+                    const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
+                    const levelsAtTH = getMaxLevelAtTH(item.name, th);
                     const itemCost = upgradeCosts?.[item.name];
-                    elements.push(
-                      <View key={item.name} style={[styles.upgradeRow, i < unlockableItems.length - 1 && styles.upgradeRowBorder]}>
-                        <View style={styles.upgradeIconWrap}>
+                    return (
+                      <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
+                        <View style={styles.statRowIcon}>
                           {imageUrl ? (
-                            <Image source={{ uri: imageUrl }} style={styles.upgradeIcon} resizeMode="contain" />
+                            <Image source={{ uri: imageUrl }} style={styles.statRowIconImage} resizeMode="contain" />
                           ) : (
                             <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
                           )}
                         </View>
-                        <View style={styles.upgradeInfo}>
-                          <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
-                          <Text style={styles.upgradeHint}>{levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'} at TH{th}</Text>
+                        <View style={styles.statRowText}>
+                          <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
+                          <Text style={styles.statRowSub}>
+                            {levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'}
+                            {itemCost && itemCost.timeSeconds > 0 ? ` · ${fmtTime(itemCost.timeSeconds)}` : ''}
+                          </Text>
                         </View>
-                        {itemCost ? (
-                          <View style={styles.upgradeCostPill}>
-                            <Text style={styles.upgradeCostText}>{fmtCost(itemCost.cost)}</Text>
-                            {itemCost.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
+                        <View style={styles.statRowRightRow}>
+                          <View style={styles.statRowRightBadge}>
+                            {itemCost ? (
+                              <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>
+                            ) : loadingCosts ? (
+                              <Text style={styles.statRowValue}>…</Text>
+                            ) : null}
+                            {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
                           </View>
-                        ) : loadingCosts ? (
-                          <View style={styles.upgradeCostPill}>
-                            <Text style={styles.upgradeCostText}>…</Text>
-                          </View>
-                        ) : null}
+                          {isNewTh && thUrl ? (
+                            <View style={styles.thImageBadge}>
+                              <Image source={{ uri: thUrl }} style={styles.thImageBadgeImg} resizeMode="contain" />
+                            </View>
+                          ) : null}
+                        </View>
                       </View>
                     );
-                    return elements;
                   });
                 })()}
-              </View>
-            </>
-          )}
+              </CollapsibleSection>
+              )}
 
-          {rushedItems.length > 0 && (
-            <>
-              <View style={styles.sectionLabel}>
-                <Text style={styles.sectionTitle}>Rushed</Text>
-              </View>
-              <View style={styles.upgradeCard}>
-                <PressableRipple style={styles.upgradeHeader} onPress={() => setRushedOpen((v) => !v)}>
-                  <View style={styles.upgradeHeaderLeft}>
-                    <Ionicons name="warning-outline" size={16} color={Colors.warning} />
-                    <Text style={styles.upgradeHeaderText}>{rushedItems.length} rushed</Text>
-                    {loadingRushedCosts && <Text style={styles.upgradeHeaderMeta}> …</Text>}
-                    {!loadingRushedCosts && rushedCosts && aggregateRushedCost > 0 && (
-                      <Text style={styles.upgradeHeaderMeta}>· {fmtCost(aggregateRushedCost)}{aggregateRushedTime > 0 ? ` · ${fmtTime(aggregateRushedTime)}` : ''}</Text>
-                    )}
+              {rushedItems.length > 0 && (
+              <CollapsibleSection
+                isFirst={unlockableItems.length === 0}
+                isLast
+                icon="warning-outline"
+                title={`${rushedItems.length} rushed`}
+                accentColor={RUSHED_ACCENT}
+                compact
+                onOpen={() => setRushedOpen(true)}
+                description={loadingRushedCosts ? 'Calculating costs & time…' : (rushedCosts && aggregateRushedCost > 0 ? `${fmtCost(aggregateRushedCost)}${aggregateRushedTime > 0 ? ` · ${fmtTime(aggregateRushedTime)}` : ''}` : 'Items below the previous Town Hall max')}
+                count={rushedItems.length}
+                totalLevel={0}
+                totalMax={0}
+                badge={(
+                  <View style={[styles.sectionBadge, styles.sectionBadgeWarning]}>
+                    <Text style={[styles.sectionBadgeText, styles.sectionBadgeWarningText]}>{rushedItems.length}</Text>
                   </View>
-                  <Ionicons name={rushedOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
-                </PressableRipple>
-                {rushedOpen && (() => {
+                )}
+              >
+                {(() => {
                   const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
                     { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
                     { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
@@ -716,58 +925,40 @@ export default function HomeScreen() {
                     if (g) g.items.push(item);
                   }
                   const visible = groups.filter((g) => g.items.length > 0);
-                  return visible.flatMap((group, gi) => {
-                    const elements: React.ReactNode[] = [];
-                    if (gi > 0) {
-                      elements.push(<View key={`rs-sep-${gi}`} style={styles.upgradeGroupSep} />);
-                    }
-                    elements.push(
-                      <View key={`rs-hdr-${group.key}`} style={styles.upgradeThSection}>
-                        {group.icon.set === 'mc' ? (
-                          <MaterialCommunityIcons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
-                        ) : (
-                          <Ionicons name={group.icon.name as any} size={14} color={Colors.textTertiary} />
-                        )}
-                        <Text style={styles.upgradeThSectionTitle}>{group.label} ({group.items.length})</Text>
-                      </View>
-                    );
-                    group.items.forEach((item, i) => {
-                      const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
-                      const costData = rushedCosts?.[item.name];
-                      elements.push(
-                        <View key={item.name} style={[styles.upgradeRow, i < group.items.length - 1 && styles.upgradeRowBorder]}>
-                          <View style={styles.upgradeIconWrap}>
-                            {iconUrl ? (
-                              <Image source={{ uri: iconUrl }} style={styles.upgradeIcon} resizeMode="contain" />
-                            ) : (
-                              <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
-                            )}
-                          </View>
-                          <View style={styles.upgradeInfo}>
-                            <Text style={styles.upgradeName} numberOfLines={1}>{item.name}</Text>
-                            <View style={styles.upgradeHintRow}>
-                              <Text style={styles.upgradeHint}>Lv{item.currentLevel}</Text>
-                              <Ionicons name="arrow-forward" size={10} color={Colors.textTertiary} style={{ marginHorizontal: 2 }} />
-                              <Text style={styles.upgradeHint}>Lv{item.maxLevelAtPrevTH}</Text>
-                            </View>
-                          </View>
+                  const allItems = visible.flatMap((g) => g.items);
+                  return allItems.map((item, i) => {
+                    const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
+                    const costData = rushedCosts?.[item.name];
+                    return (
+                      <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
+                        <View style={styles.statRowIcon}>
+                          {iconUrl ? (
+                            <Image source={{ uri: iconUrl }} style={styles.statRowIconImage} resizeMode="contain" />
+                          ) : (
+                            <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
+                          )}
+                        </View>
+                        <View style={styles.statRowText}>
+                          <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
+                          <Text style={styles.statRowSub}>Lv{item.currentLevel} → Lv{item.maxLevelAtPrevTH}</Text>
+                        </View>
+                        <View style={styles.statRowRight}>
                           {costData ? (
-                            <View style={styles.upgradeCostPill}>
-                              <Text style={styles.upgradeCostText}>{fmtCost(costData.cost)}</Text>
-                              {costData.timeSeconds > 0 && <Text style={styles.upgradeCostSub}>{fmtTime(costData.timeSeconds)}</Text>}
-                            </View>
+                            <>
+                              <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>
+                              {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
+                            </>
                           ) : loadingRushedCosts ? (
-                            <View style={styles.upgradeCostPill}>
-                              <Text style={styles.upgradeCostText}>…</Text>
-                            </View>
+                            <Text style={styles.statRowValue}>…</Text>
                           ) : null}
                         </View>
-                      );
-                    });
-                    return elements;
+                      </View>
+                    );
                   });
                 })()}
-              </View>
+              </CollapsibleSection>
+              )}
+            </View>
             </>
           )}
 
@@ -798,55 +989,41 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Quick Stats</Text>
           </View>
 
-          <View style={styles.statsTable}>
-            {[
-              {
-                title: 'PvP',
-                rows: [
-                  { label: 'Trophies', value: player.trophies, icon: 'trophy-outline' as const },
-                  { label: 'Best Trophies', value: player.bestTrophies, icon: 'trophy' as const, accentColor: Colors.warning },
-                  { label: 'War Stars', value: player.warStars, icon: 'star-outline' as const },
-                  { label: 'Attack Wins', value: player.attackWins, icon: 'flame-outline' as const },
-                  { label: 'Defense Wins', value: player.defenseWins, icon: 'shield-outline' as const },
-                ],
-              },
-              {
-                title: 'Clan',
-                rows: [
-                  { label: 'Donations', value: player.donations, icon: 'gift-outline' as const },
-                  { label: 'Received', value: player.donationsReceived, icon: 'arrow-down-outline' as const, accentColor: player.donationsReceived > player.donations ? Colors.success : undefined },
-                  { label: 'Capital Gold', value: player.clanCapitalContributions, icon: 'cash-outline' as const },
-                ],
-              },
-              {
-                title: 'Builder Base',
-                rows: [
-                  ...(player.builderBaseTrophies !== undefined
-                    ? [{ label: 'Builder Trophies', value: player.builderBaseTrophies, icon: 'hammer-outline' as const }]
-                    : []),
-                  ...(player.bestBuilderBaseTrophies !== undefined
-                    ? [{ label: 'Best Builder', value: player.bestBuilderBaseTrophies, icon: 'hammer' as const, accentColor: Colors.warning }]
-                    : []),
-                ],
-              },
-            ].filter((g) => g.rows.length > 0).flatMap((group, gi, arr) => [
-              gi > 0 ? <View key={`sep-${gi}`} style={styles.statsRowSep} /> : null,
-              <View key={`hdr-${gi}`} style={styles.statsGroupHeader}>
-                <Text style={styles.statsGroupTitle}>{group.title}</Text>
-              </View>,
-              ...group.rows.map((row, ri) => (
-                <View
-                  key={`${group.title}-${ri}`}
-                  style={[styles.statsRow, row.accentColor ? { borderLeftColor: row.accentColor } : null]}
-                >
-                  <Ionicons name={row.icon} size={13} color={Colors.textTertiary} style={styles.statsIcon} />
-                  <Text style={styles.statsLabel}>{row.label}</Text>
-                  <Text style={[styles.statsValue, row.accentColor ? { color: row.accentColor } : null]}>
-                    {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
-                  </Text>
-                </View>
-              )),
-            ])}
+          <View style={styles.statsCard}>
+            {homeStatGroups.filter((g) => g.rows.length > 0).map((group, gi, groups) => (
+              <CollapsibleSection
+                key={group.title}
+                isFirst={gi === 0}
+                isLast={gi === groups.length - 1}
+                icon={group.icon}
+                title={group.title}
+                description={group.desc}
+                compact
+                count={group.rows.length}
+                totalLevel={0}
+                totalMax={0}
+                badge={(
+                  <View style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>{group.rows.length}</Text>
+                  </View>
+                )}
+              >
+                {group.rows.map((row, ri) => (
+                  <View key={`${group.title}-${ri}`} style={[styles.statRow, ri === group.rows.length - 1 && styles.statRowLast]}>
+                    <View style={styles.statRowIcon}>
+                      <Ionicons name={row.icon} size={16} color={Colors.textPrimary} />
+                    </View>
+                    <View style={styles.statRowText}>
+                      <Text style={styles.statRowLabel}>{row.label}</Text>
+                      {row.desc ? <Text style={styles.statRowSub}>{row.desc}</Text> : null}
+                    </View>
+                    <Text style={[styles.statRowValue, row.accentColor ? { color: row.accentColor } : null]}>
+                      {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
+                    </Text>
+                  </View>
+                ))}
+              </CollapsibleSection>
+            ))}
           </View>
 
           {/* ── Active Timers ── */}
@@ -860,30 +1037,51 @@ export default function HomeScreen() {
             </View>
           </View>
           {reminders.length > 0 ? (
-            <View style={styles.timersCard}>
-              {reminders.map((r) => {
-                const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
-                const expired = r.status === 'expired' || remaining <= 0;
-                const days = Math.floor(remaining / 86400000);
-                const hours = Math.floor((remaining % 86400000) / 3600000);
-                const minutes = Math.floor((remaining % 3600000) / 60000);
-                const seconds = Math.floor((remaining % 60000) / 1000);
-                const pad = (n: number) => String(n).padStart(2, '0');
-                const timeStr = days > 0
-                  ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-                  : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-                return (
-                  <View key={r.id} style={styles.timerRow}>
-                    <View style={styles.timerInfo}>
-                      <Text style={styles.timerLabel} numberOfLines={1}>{r.label}</Text>
-                      <Text style={[styles.timerCountdown, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
-                    </View>
-                    <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
-                      <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
-                    </PressableRipple>
+            <View style={styles.progressSections}>
+              <CollapsibleSection
+                isFirst
+                isLast
+                defaultOpen
+                icon="alarm-outline"
+                title={`${reminders.length} active`}
+                description="Countdown reminders"
+                compact
+                count={reminders.length}
+                totalLevel={0}
+                totalMax={0}
+                badge={(
+                  <View style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>{reminders.length}</Text>
                   </View>
-                );
-              })}
+                )}
+              >
+                {reminders.map((r, i) => {
+                  const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
+                  const expired = r.status === 'expired' || remaining <= 0;
+                  const days = Math.floor(remaining / 86400000);
+                  const hours = Math.floor((remaining % 86400000) / 3600000);
+                  const minutes = Math.floor((remaining % 3600000) / 60000);
+                  const seconds = Math.floor((remaining % 60000) / 1000);
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  const timeStr = days > 0
+                    ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                    : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                  return (
+                    <View key={r.id} style={[styles.statRow, i === reminders.length - 1 && styles.statRowLast]}>
+                      <View style={styles.statRowIcon}>
+                        <Ionicons name="time-outline" size={16} color={Colors.textPrimary} />
+                      </View>
+                      <View style={styles.statRowText}>
+                        <Text style={styles.statRowLabel} numberOfLines={1}>{r.label}</Text>
+                        <Text style={[styles.statRowSub, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
+                      </View>
+                      <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
+                        <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
+                      </PressableRipple>
+                    </View>
+                  );
+                })}
+              </CollapsibleSection>
             </View>
           ) : (
             <View style={styles.timersEmpty}>
@@ -1200,6 +1398,14 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   switchBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchBtn: {
     width: 36,
     height: 36,
     borderRadius: Radius.md,
@@ -1561,182 +1767,166 @@ const styles = StyleSheet.create({
     ...Typography.headline,
     color: Colors.textPrimary,
   },
-  progressGrid: {
+  progressSections: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
+    borderRadius: Radius.xl * 1.25,
+    overflow: 'hidden',
+  },
+  progressHeaderDesc: {
+    marginTop: 6,
+  },
+  progressHeaderBar: {
+    height: 4,
+    backgroundColor: Colors.progressTrack,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressHeaderFill: {
+    height: '100%',
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 2,
+  },
+  statsCard: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
+    borderRadius: Radius.xl * 1.25,
+    overflow: 'hidden',
+  },
+  sectionBadges: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
+    alignItems: 'center',
     gap: Spacing.xs,
   },
-  statsTable: {
-    marginHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.sm,
-    overflow: 'hidden',
-  },
-  statsGroupHeader: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xs,
-    backgroundColor: Colors.bgCard,
-  },
-  statsGroupTitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.base,
-    borderLeftWidth: 2.5,
-    borderLeftColor: Colors.border,
-    backgroundColor: Colors.bgCard,
-  },
-  statsIcon: {
-    marginRight: Spacing.sm,
-  },
-  statsLabel: {
-    flex: 1,
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    textAlign: 'left',
-  },
-  statsValue: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    textAlign: 'right',
-    fontVariant: ['tabular-nums'],
-  },
-  statsRowSep: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.base,
-    marginVertical: Spacing.md,
-  },
-  upgradeCard: {
-    marginHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  upgradeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
-  },
-  upgradeHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  upgradeHeaderText: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  upgradeHeaderMeta: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    fontWeight: '500',
-  },
-  upgradeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    gap: Spacing.md,
-  },
-  upgradeRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  upgradeIconWrap: {
-    width: 32,
+  sectionBadge: {
+    minWidth: 36,
     height: 32,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  sectionBadgeMaxed: {
+    backgroundColor: Colors.warning,
+  },
+  sectionBadgeDanger: {
+    backgroundColor: 'rgba(244,67,54,0.14)',
     borderWidth: 0.75,
-    borderColor: Colors.border,
+    borderColor: 'rgba(244,67,54,0.45)',
+  },
+  sectionBadgeDangerText: {
+    color: '#F44336',
+  },
+  sectionBadgeWarning: {
+    backgroundColor: 'rgba(246,196,83,0.14)',
+    borderWidth: 0.75,
+    borderColor: 'rgba(246,196,83,0.45)',
+  },
+  sectionBadgeWarningText: {
+    color: RUSHED_ACCENT,
+  },
+  sectionBadgeText: {
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  sectionBadgeTextMaxed: {
+    color: Colors.bg,
+  },
+  sectionBadgeLabel: {
+    fontSize: 8,
+    lineHeight: 9,
+    color: Colors.textPrimary,
+    opacity: 0.7,
+    fontVariant: ['tabular-nums'],
+  },
+  sectionBody: {
+    paddingTop: 0,
+  },
+  sectionSeparator: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    margin: Spacing.lg,
+  },
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xs,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+  },
+  statRowLast: {
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
+  },
+  statRowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statRowText: {
+    flex: 1,
+  },
+  statRowLabel: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  statRowSub: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: Spacing.xs / 2,
+  },
+  statRowValue: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  statRowIconImage: {
+    width: 26,
+    height: 26,
+  },
+  statRowRight: {
+    alignItems: 'flex-end',
+  },
+  statRowValueSub: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  statRowRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statRowRightBadge: {
+    alignItems: 'flex-end',
+  },
+  thImageBadge: {
+    width: 32,
+    height: 32,
+    marginLeft: Spacing.lg,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  upgradeIcon: {
+  thImageBadgeImg: {
     width: 26,
     height: 26,
-  },
-  upgradeInfo: {
-    flex: 1,
-  },
-  upgradeName: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  upgradeHint: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 1,
-  },
-  upgradeHintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  upgradeThSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    backgroundColor: Colors.bgSubtle,
-  },
-  upgradeGroupSep: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.sm,
-  },
-  upgradeThSectionIcon: {
-    width: 18,
-    height: 18,
-  },
-  upgradeThSectionTitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  upgradeCostPill: {
-    alignItems: 'flex-end',
-    gap: 1,
-  },
-  upgradeCostText: {
-    ...Typography.caption,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-    fontSize: 10,
-  },
-  upgradeCostSub: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontWeight: '500',
-    fontVariant: ['tabular-nums'],
-    fontSize: 9,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -1778,36 +1968,6 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '600',
-  },
-  timersCard: {
-    marginHorizontal: Spacing.base,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  timerInfo: {
-    flex: 1,
-  },
-  timerLabel: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  timerCountdown: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-    marginTop: 2,
   },
   timerExpired: {
     color: Colors.success,
