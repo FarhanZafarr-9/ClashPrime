@@ -15,6 +15,7 @@ import {
   Platform,
   Animated,
   BackHandler,
+  Linking,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -105,6 +106,7 @@ function CollapsibleSection({
         title={title}
         desc={description}
         isFirst={isFirst || open}
+        isLast={isLast}
         onPress={toggle}
         destructive={destructive}
         accentColor={accentColor}
@@ -115,7 +117,7 @@ function CollapsibleSection({
             <View style={styles.sectionBadge}>
               <Text style={styles.sectionBadgeText}>{count}</Text>
             </View>
-            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed]}>
+            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && styles.sectionBadgeLast]}>
               <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
               <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
             </View>
@@ -161,7 +163,6 @@ export default function HomeScreen() {
   const [showBH, setShowBH] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [equipDetails, setEquipDetails] = useState<Record<string, TroopDetail | null>>({});
-  const [labelsOpen, setLabelsOpen] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -612,6 +613,9 @@ export default function HomeScreen() {
                 <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
                 </PressableRipple>
+                <PressableRipple style={styles.appBtn} onPress={() => Linking.openURL('https://link.clashofclans.com/en?action=OpenApp')} hitSlop={8} accessibilityLabel="Open Clash of Clans" accessibilityRole="button">
+                  <Image source={require('../../assets/icon.png')} style={styles.appIcon} resizeMode="contain" />
+                </PressableRipple>
               </View>
             </View>
             <Text style={styles.timestamp}>
@@ -745,33 +749,6 @@ export default function HomeScreen() {
                 </View>
               )}
 
-              {!showBH && player.labels?.length > 0 && (
-                <PressableRipple style={styles.collapseRow} onPress={() => setLabelsOpen((v) => !v)}>
-                  <View style={styles.collapseRowIcon}>
-                    <Ionicons name="pricetags-outline" size={16} color={Colors.textSecondary} />
-                  </View>
-                  <View style={styles.collapseRowText}>
-                    <Text style={styles.collapseRowTitle}>Labels</Text>
-                    <Text style={styles.collapseRowSub}>{player.labels.length} {player.labels.length === 1 ? 'label' : 'labels'}</Text>
-                  </View>
-                  <Ionicons name={labelsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
-                </PressableRipple>
-              )}
-              {!showBH && labelsOpen && player.labels?.length > 0 && (
-                <View style={styles.statsGrid}>
-                  {player.labels.map((l) => (
-                    <View key={l.id} style={styles.statCell}>
-                      {l.iconUrls?.small ? (
-                        <Image source={{ uri: l.iconUrls.small }} style={styles.statCellLabelImage} resizeMode="contain" />
-                      ) : null}
-                      <View style={styles.statCellText}>
-                        <Text style={styles.statCellLabel}>{l.name}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-
               <PressableRipple onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
                 <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
               </PressableRipple>
@@ -842,7 +819,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeDanger]}>
+                  <View style={[styles.sectionBadge, styles.sectionBadgeDanger, styles.sectionBadgeFirst]}>
                     <Text style={[styles.sectionBadgeText, styles.sectionBadgeDangerText]}>{unlockableItems.length}</Text>
                   </View>
                 )}
@@ -908,7 +885,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeWarning]}>
+                  <View style={[styles.sectionBadge, styles.sectionBadgeWarning, styles.sectionBadgeLast]}>
                     <Text style={[styles.sectionBadgeText, styles.sectionBadgeWarningText]}>{rushedItems.length}</Text>
                   </View>
                 )}
@@ -967,14 +944,6 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.actionsRow}>
-            <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/saved')}>
-              <Ionicons name="bookmarks-outline" size={16} color={Colors.textPrimary} />
-              <Text style={styles.actionText}>Saved</Text>
-            </PressableRipple>
-            <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/war')}>
-              <Ionicons name="flag-outline" size={16} color={Colors.textPrimary} />
-              <Text style={styles.actionText}>War</Text>
-            </PressableRipple>
             <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
               <Ionicons name="settings-sharp" size={16} color={Colors.textPrimary} />
               <Text style={styles.actionText}>Settings</Text>
@@ -1003,7 +972,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={styles.sectionBadge}>
+                  <View style={[styles.sectionBadge, gi === 0 && styles.sectionBadgeFirst, gi === groups.length - 1 && styles.sectionBadgeLast]}>
                     <Text style={styles.sectionBadgeText}>{group.rows.length}</Text>
                   </View>
                 )}
@@ -1050,7 +1019,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={styles.sectionBadge}>
+                  <View style={[styles.sectionBadge, styles.sectionBadgeFirst, styles.sectionBadgeLast]}>
                     <Text style={styles.sectionBadgeText}>{reminders.length}</Text>
                   </View>
                 )}
@@ -1084,10 +1053,18 @@ export default function HomeScreen() {
               </CollapsibleSection>
             </View>
           ) : (
-            <View style={styles.timersEmpty}>
-              <Ionicons name="alarm-outline" size={16} color={Colors.textTertiary} />
-              <Text style={styles.timersEmptyText}>No active timers. Add one to get reminded when it's time to log back in and re-set your builders.</Text>
-            </View>
+            <PressableRipple style={styles.timersEmpty} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
+              <View style={styles.timersEmptyIcon}>
+                <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
+              </View>
+              <View style={styles.timersEmptyText}>
+                <Text style={styles.timersEmptyTitle}>No active timers</Text>
+                <Text style={styles.timersEmptySub}>Add a countdown to know exactly when a builder frees up.</Text>
+              </View>
+              <View style={styles.timersEmptyAdd}>
+                <Ionicons name="add" size={16} color={Colors.bg} />
+              </View>
+            </PressableRipple>
           )}
 
           <View style={{ height: 100 }} />
@@ -1412,6 +1389,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  appBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
   },
   timestamp: {
     ...Typography.caption,
@@ -1706,10 +1695,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
   },
-  statCellLabelImage: {
-    width: 32,
-    height: 32,
-  },
   statCellText: {
     flex: 1,
   },
@@ -1835,6 +1820,12 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
+  sectionBadgeFirst: {
+    borderTopRightRadius: Radius.lg,
+  },
+  sectionBadgeLast: {
+    borderBottomRightRadius: Radius.lg,
+  },
   sectionBadgeTextMaxed: {
     color: Colors.bg,
   },
@@ -1941,8 +1932,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: Radius.sm,
@@ -1982,16 +1971,38 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginHorizontal: Spacing.base,
     padding: Spacing.md,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.bgCard,
+  },
+  timersEmptyIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timersEmptyText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
     flex: 1,
+    gap: 2,
+  },
+  timersEmptyTitle: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  timersEmptySub: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
     lineHeight: 16,
+  },
+  timersEmptyAdd: {
+    width: 24,
+    height: 24,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalRoot: {
     flex: 1,
