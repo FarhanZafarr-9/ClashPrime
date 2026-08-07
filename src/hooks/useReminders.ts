@@ -20,7 +20,6 @@ try {
 if (Notifications) {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
       shouldShowBanner: true,
@@ -74,8 +73,8 @@ async function scheduleSystems(reminders: TimerReminder[]) {
       if (r.status !== 'active') continue;
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Timer Expired',
-          body: `"${r.label}" — the time is up!`,
+          title: 'Builder free!',
+          body: `"${r.label}" is done — log in to set your next upgrade.`,
           sound: true,
           ...(Platform.OS === 'android' ? {
             sticky: true,
