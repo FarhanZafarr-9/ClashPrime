@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  Keyboard,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -63,6 +65,7 @@ function CollapsibleSection({
   badge,
   isFirst,
   isLast,
+  compact,
   children,
 }: {
   title: string;
@@ -74,6 +77,7 @@ function CollapsibleSection({
   badge?: React.ReactNode;
   isFirst?: boolean;
   isLast?: boolean;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -86,6 +90,8 @@ function CollapsibleSection({
         title={title}
         desc={description}
         isFirst={isFirst || open}
+        isLast={isLast}
+        compact={compact}
         onPress={() => setOpen((o) => !o)}
       >
         {badge != null ? badge : (
@@ -93,7 +99,7 @@ function CollapsibleSection({
             <View style={styles.sectionBadge}>
               <Text style={styles.sectionBadgeText}>{count}</Text>
             </View>
-            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed]}>
+            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && styles.sectionBadgeLast]}>
               <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
               <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
             </View>
@@ -118,11 +124,14 @@ export default function PlayerInspectScreen() {  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [adding, setAdding] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
 
   const load = useCallback(async (raw: string) => {
     const tag = normalizeTag(raw);
     if (!tag) return;
     setQuery(tag);
+    searchInputRef.current?.blur();
+    Keyboard.dismiss();
     setLoading(true);
     setError(null);
     try {
@@ -169,6 +178,10 @@ export default function PlayerInspectScreen() {  const router = useRouter();
 
   const copyTag = useCallback(() => {
     if (player) Clipboard.setStringAsync(player.tag);
+  }, [player]);
+
+  const openInGame = useCallback(() => {
+    if (player) Linking.openURL(`https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${encodeURIComponent(player.tag)}`);
   }, [player]);
 
   const heroRows = (player?.heroes ?? []).filter((h: Hero) => h.village === 'home');
@@ -275,6 +288,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={16} color={Colors.textTertiary} />
           <TextInput
+            ref={searchInputRef}
             style={styles.searchInput}
             value={query}
             onChangeText={setQuery}
@@ -390,6 +404,11 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                 <Text style={[styles.actionBtnText, styles.actionBtnTextGhost]}>Copy tag</Text>
               </PressableRipple>
             </View>
+
+            <PressableRipple style={styles.openGameBtn} onPress={openInGame}>
+              <Ionicons name="game-controller-outline" size={14} color={Colors.textPrimary} />
+              <Text style={styles.openGameBtnText}>Open in game</Text>
+            </PressableRipple>
           </Card>
 
           {/* ── Stats ── */}
@@ -405,8 +424,9 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                 count={group.rows.length}
                 totalLevel={0}
                 totalMax={0}
+                compact
                 badge={(
-                  <View style={styles.sectionBadge}>
+                  <View style={[styles.sectionBadge, gi === 0 && styles.sectionBadgeFirst, gi === groups.length - 1 && styles.sectionBadgeLast]}>
                     <Text style={styles.sectionBadgeText}>{group.rows.length}</Text>
                   </View>
                 )}
@@ -438,7 +458,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
             </Card>
           ) : (
             <View style={styles.armyCard}>
-              <CollapsibleSection isFirst isLast={lastArmySectionKey === 'heroes'} title="Heroes" icon="shield-half-outline" description="Hero levels" count={heroRows.length} totalLevel={sumLevel(heroRows)} totalMax={sumMax(heroRows)}>
+              <CollapsibleSection isFirst isLast={lastArmySectionKey === 'heroes'} compact title="Heroes" icon="shield-half-outline" description="Hero levels" count={heroRows.length} totalLevel={sumLevel(heroRows)} totalMax={sumMax(heroRows)}>
             {heroRows.map((h, i) => (
               <ItemCard
                 key={`${h.name}-${i}`}
@@ -450,7 +470,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Troops" icon="bonfire-outline" description="Troop levels" count={troopRows.length} totalLevel={sumLevel(troopRows)} totalMax={sumMax(troopRows)} isLast={lastArmySectionKey === 'troops'}>
+          <CollapsibleSection compact title="Troops" icon="bonfire-outline" description="Troop levels" count={troopRows.length} totalLevel={sumLevel(troopRows)} totalMax={sumMax(troopRows)} isLast={lastArmySectionKey === 'troops'}>
             {troopRows.map((t, i) => (
               <ItemCard
                 key={`${t.name}-${i}`}
@@ -462,7 +482,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Dark Elixir" icon="water-outline" description="Dark troop levels" count={darkTroopRows.length} totalLevel={sumLevel(darkTroopRows)} totalMax={sumMax(darkTroopRows)} isLast={lastArmySectionKey === 'dark'}>
+          <CollapsibleSection compact title="Dark Elixir" icon="water-outline" description="Dark troop levels" count={darkTroopRows.length} totalLevel={sumLevel(darkTroopRows)} totalMax={sumMax(darkTroopRows)} isLast={lastArmySectionKey === 'dark'}>
             {darkTroopRows.map((t, i) => (
               <ItemCard
                 key={`${t.name}-${i}`}
@@ -474,7 +494,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Super Troops" icon="rocket-outline" description="Super troop levels" count={superTroopRows.length} totalLevel={sumLevel(superTroopRows)} totalMax={sumMax(superTroopRows)} isLast={lastArmySectionKey === 'super'}>
+          <CollapsibleSection compact title="Super Troops" icon="rocket-outline" description="Super troop levels" count={superTroopRows.length} totalLevel={sumLevel(superTroopRows)} totalMax={sumMax(superTroopRows)} isLast={lastArmySectionKey === 'super'}>
             {superTroopRows.map((t, i) => (
               <ItemCard
                 key={`${t.name}-${i}`}
@@ -486,7 +506,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Siege Machines" icon="build-outline" description="Siege levels" count={siegeRows.length} totalLevel={sumLevel(siegeRows)} totalMax={sumMax(siegeRows)} isLast={lastArmySectionKey === 'siege'}>
+          <CollapsibleSection compact title="Siege Machines" icon="build-outline" description="Siege levels" count={siegeRows.length} totalLevel={sumLevel(siegeRows)} totalMax={sumMax(siegeRows)} isLast={lastArmySectionKey === 'siege'}>
             {siegeRows.map((s, i) => (
               <ItemCard
                 key={`${s.name}-${i}`}
@@ -498,7 +518,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Spells" icon="flash-outline" description="Spell levels" count={spellRows.length} totalLevel={sumLevel(spellRows)} totalMax={sumMax(spellRows)} isLast={lastArmySectionKey === 'spells'}>
+          <CollapsibleSection compact title="Spells" icon="flash-outline" description="Spell levels" count={spellRows.length} totalLevel={sumLevel(spellRows)} totalMax={sumMax(spellRows)} isLast={lastArmySectionKey === 'spells'}>
             {spellRows.map((s, i) => (
               <ItemCard
                 key={`${s.name}-${i}`}
@@ -510,7 +530,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Pets" icon="paw-outline" description="Pet levels" count={petRows.length} totalLevel={sumLevel(petRows)} totalMax={sumMax(petRows)} isLast={lastArmySectionKey === 'pets'}>
+          <CollapsibleSection compact title="Pets" icon="paw-outline" description="Pet levels" count={petRows.length} totalLevel={sumLevel(petRows)} totalMax={sumMax(petRows)} isLast={lastArmySectionKey === 'pets'}>
             {petRows.map((p, i) => (
               <ItemCard
                 key={`${p.name}-${i}`}
@@ -522,7 +542,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               />
             ))}
           </CollapsibleSection>
-          <CollapsibleSection title="Equipment" icon="hammer-outline" description="Equipment levels" count={equipRows.length} totalLevel={sumLevel(equipRows)} totalMax={sumMax(equipRows)} isLast={lastArmySectionKey === 'equip'}>
+          <CollapsibleSection compact title="Equipment" icon="hammer-outline" description="Equipment levels" count={equipRows.length} totalLevel={sumLevel(equipRows)} totalMax={sumMax(equipRows)} isLast={lastArmySectionKey === 'equip'}>
             {equipRows.map((e, i) => (
               <ItemCard
                 key={`${e.name}-${i}`}
@@ -546,6 +566,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                 icon="star-outline"
                 title="Achievements"
                 isFirst
+                compact
                 desc={
                   <View style={styles.achievementHeaderDesc}>
                     <View style={styles.achievementHeaderBar}>
@@ -555,7 +576,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                 }
               >
                 <View style={styles.sectionBadges}>
-                  <View style={[styles.sectionBadge, allAchievementsComplete && styles.sectionBadgeMaxed]}>
+                  <View style={[styles.sectionBadge, styles.sectionBadgeFirst, allAchievementsComplete && styles.sectionBadgeMaxed]}>
                     <Text style={[styles.sectionBadgeText, allAchievementsComplete && styles.sectionBadgeTextMaxed]}>{starTotals.earned}</Text>
                     <Text style={[styles.sectionBadgeLabel, allAchievementsComplete && styles.sectionBadgeTextMaxed]}>/ {starTotals.max}</Text>
                   </View>
@@ -565,6 +586,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                 <CollapsibleSection
                   key={group.group}
                   isLast={gi === achievementGroups.length - 1}
+                  compact
                   icon={ACHIEVEMENT_GROUP_META[group.group].icon}
                   title={group.label}
                   description={ACHIEVEMENT_GROUP_META[group.group].desc}
@@ -572,7 +594,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                   totalLevel={0}
                   totalMax={0}
                   badge={(
-                    <View style={styles.sectionBadge}>
+                    <View style={[styles.sectionBadge, gi === achievementGroups.length - 1 && styles.sectionBadgeLast]}>
                       <Text style={styles.sectionBadgeText}>{group.items.length}</Text>
                     </View>
                   )}
@@ -582,6 +604,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                       key={`${a.name}-${idx}`}
                       achievement={a}
                       showVillage
+                      isFirst={idx === 0}
                       isLast={idx === group.items.length - 1}
                     />
                   ))}
@@ -687,8 +710,6 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -726,11 +747,22 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     backgroundColor: Colors.textPrimary,
   },
-  actionBtnSaved: { backgroundColor: Colors.accentGhost, borderWidth: 0.75, borderColor: Colors.border },
+  actionBtnSaved: { backgroundColor: Colors.accentGhost },
   actionBtnText: { ...Typography.subhead, color: Colors.bg, fontWeight: '700' },
   actionBtnTextSaved: { color: Colors.textPrimary },
-  actionBtnGhost: { backgroundColor: Colors.bgSubtle, borderWidth: 0.75, borderColor: Colors.border },
+  actionBtnGhost: { backgroundColor: Colors.bgSubtle },
   actionBtnTextGhost: { color: Colors.textPrimary },
+  openGameBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgSubtle,
+  },
+  openGameBtnText: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
   errorRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
   errorText: { flex: 1, ...Typography.subhead, color: Colors.textSecondary, lineHeight: 18 },
   retryBtn: {
@@ -812,6 +844,12 @@ const styles = StyleSheet.create({
   },
   sectionBadgeMaxed: {
     backgroundColor: Colors.warning,
+  },
+  sectionBadgeFirst: {
+    borderTopRightRadius: Radius.lg,
+  },
+  sectionBadgeLast: {
+    borderBottomRightRadius: Radius.lg,
   },
   sectionBadgeText: {
     fontSize: 14,
