@@ -244,6 +244,7 @@ export default function WarScreen() {
   }, []);
 
   const clanTag = player?.clan?.tag ?? null;
+  const myPlayerTag = player?.tag ?? null;
 
   const regularWars = (data?.warLog || []).filter(e => e.attacksPerMember === 2);
   const cwlWars = (data?.warLog || []).filter(e => e.attacksPerMember === 1);
@@ -448,7 +449,7 @@ export default function WarScreen() {
         }
       >
         {data?.currentWar && (
-          <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} />
+          <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} myPlayerTag={myPlayerTag} />
         )}
 
         {!data?.currentWar && !cwlActive && (
@@ -491,7 +492,7 @@ export default function WarScreen() {
               {cwlLeague.season}{cwlLeague.season ? ' · ' : ''}{cwlLeague.wars.length} round{cwlLeague.wars.length === 1 ? '' : 's'}
             </Text>
             {cwlLeague.wars.map(({ round, war }, i) => (
-              <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+              <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
             ))}
           </>
         )}
@@ -577,7 +578,7 @@ export default function WarScreen() {
   );
 }
 
-function CurrentWarSection({ war, now, isCwl = false, myClanTag, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; embedded?: boolean }) {
+function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; myPlayerTag?: string | null; embedded?: boolean }) {
   const isPreparation = war.state === 'preparation';
   const isInWar = war.state === 'inWar';
   const isWarEnded = war.state === 'warEnded';
@@ -717,7 +718,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, embedded = fals
       {!isPreparation && (
         <View style={styles.memberList}>
           {members.map((m, i) => (
-            <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isFirst={i === 0} isLast={i === members.length - 1} />
+            <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isFirst={i === 0} isLast={i === members.length - 1} />
           ))}
         </View>
       )}
@@ -737,7 +738,7 @@ function WarClanCard({ clan, align }: { clan: WarClanDetail; align: 'left' | 'ri
   );
 }
 
-function CwlRoundCard({ round, war, myClanTag, now, isFirst, isLast }: { round: number; war: ClanWar; myClanTag: string | null; now: number; isFirst?: boolean; isLast?: boolean }) {
+function CwlRoundCard({ round, war, myClanTag, myPlayerTag, now, isFirst, isLast }: { round: number; war: ClanWar; myClanTag: string | null; myPlayerTag?: string | null; now: number; isFirst?: boolean; isLast?: boolean }) {
   const mine = war.clan.tag === myClanTag ? war.clan : war.opponent;
   const theirs = war.clan.tag === myClanTag ? war.opponent : war.clan;
   const myStars = mine.stars ?? 0;
@@ -809,7 +810,7 @@ function CwlRoundCard({ round, war, myClanTag, now, isFirst, isLast }: { round: 
       </PressableRipple>
       {expanded && (
         <View style={[styles.cwlRoundDetail, isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }]}>
-          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} embedded />
+          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} myPlayerTag={myPlayerTag} embedded />
         </View>
       )}
     </View>
@@ -833,7 +834,7 @@ function shieldConfig(member: WarMember): { name: keyof typeof Ionicons.glyphMap
   return { name: 'shield-outline', color: '#f44336' };
 }
 
-function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { member: WarMember; defenderName: (tag: string) => string; isCwl?: boolean; isFirst?: boolean; isLast?: boolean }) {
+function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirst, isLast }: { member: WarMember; defenderName: (tag: string) => string; isCwl?: boolean; isMine?: boolean; isFirst?: boolean; isLast?: boolean }) {
   const attacks = member.attacks ?? [];
   const maxAttacks = isCwl ? 1 : 2;
   const thImg = getTownHallImageUrl(member.townhallLevel);
@@ -846,6 +847,7 @@ function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { m
       <PressableRipple
         style={[
           styles.memberRow,
+          isMine && styles.memberRowMine,
           isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
           isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
           expanded && {borderBottomLeftRadius: 0, borderBottomRightRadius: 0},
@@ -853,14 +855,19 @@ function MemberRow({ member, defenderName, isCwl = false, isFirst, isLast }: { m
         onPress={() => setExpanded(e => !e)}
       >
         <View style={styles.memberLeft}>
-          <View style={styles.memberIconTile}>
+          <View style={[styles.memberIconTile, isMine && styles.memberIconTileMine]}>
             {thImg ? (
               <Image source={{ uri: thImg }} style={styles.memberIconImage} resizeMode="contain" />
             ) : (
-              <Text style={styles.thBadgeText}>{member.townhallLevel}</Text>
+              <Text style={[styles.thBadgeText, isMine && styles.thBadgeTextMine]}>{member.townhallLevel}</Text>
             )}
           </View>
-          <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
+          {isMine && (
+            <View style={styles.youPill}>
+              <Text style={styles.youPillText}>You</Text>
+            </View>
+          )}
+          <Text style={[styles.memberName, isMine && styles.memberNameMine]} numberOfLines={1}>{member.name}</Text>
         </View>
         <View style={styles.memberRight}>
           <Ionicons
@@ -1229,6 +1236,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.sm,
   },
+  memberRowMine: {
+    backgroundColor: Colors.textPrimary,
+    borderWidth: 0.75,
+    borderColor: Colors.bg,
+  },
   memberLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
   memberIconTile: {
     width: 32,
@@ -1239,12 +1251,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  memberIconTileMine: {
+    backgroundColor: Colors.bg,
+  },
   memberIconImage: {
     width: 24,
     height: 24,
   },
   thBadgeText: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
+  thBadgeTextMine: { color: Colors.textPrimary },
+  youPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bg,
+  },
+  youPillText: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   memberName: { ...Typography.subhead, color: Colors.textPrimary, flex: 1 },
+  memberNameMine: { color: Colors.bg, fontWeight: '700' },
   memberRight: { flexDirection: 'row', gap: 5, alignItems: 'center' },
   memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border },
   attackDots: { flexDirection: 'row', gap: 6 },
