@@ -675,12 +675,14 @@ export default function SettingsScreen() {
                 icon="person-outline"
                 title="Player Tag"
                 desc={playerTag || 'Not set'}
+                compact
                 onPress={handleEditTag}
               />
               <SettingRow
                 icon="key-outline"
                 title="API Token"
                 desc="Required for API access"
+                compact
                 pillText="Required"
                 pillTopOffset={18}
                 pillRightOffset={-4}
@@ -698,6 +700,7 @@ export default function SettingsScreen() {
               icon={switchingAccount ? 'ellipsis-horizontal' : 'people-outline'}
               title={activeAccount?.name || 'Accounts'}
               desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} · ${activeAccount?.tag || ''}`}
+              compact
               onPress={() => setSwitchModalVisible(true)}
               children={
                 <>
@@ -716,6 +719,7 @@ export default function SettingsScreen() {
               icon="key-outline"
               title="API Token"
               desc="Required for API access"
+              compact
               pillText="Required"
               pillTopOffset={8}
               pillRightOffset={-10}
@@ -732,6 +736,7 @@ export default function SettingsScreen() {
             icon="add-circle-outline"
             title={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
             desc="Connect a new player tag"
+            compact
             onPress={() => {
               setOnboardingTag('');
               setOnboardingThLevel('');
@@ -742,6 +747,7 @@ export default function SettingsScreen() {
             icon="sync-outline"
             title="Sync Now"
             desc="Pull fresh data from the API"
+            compact
             onPress={() => {
               showDialog({
                 title: 'Sync Now',
@@ -757,6 +763,7 @@ export default function SettingsScreen() {
             icon="rocket-outline"
             title="Add Account (Full Setup)"
             desc="Walk through the full setup for a new account"
+            compact
             onPress={() => router.push('/onboarding?mode=add')}
           />
         </SettingCard>
@@ -767,6 +774,7 @@ export default function SettingsScreen() {
             icon="moon-outline"
             title="Dark Mode"
             desc="Switch between dark and light theme"
+            compact
             children={
               <Switch
                 value={isDark}
@@ -784,6 +792,7 @@ export default function SettingsScreen() {
             icon="business-outline"
             title="Building Discounts"
             desc={discountDesc(discounts.buildings)}
+            compact
             onPress={() => setDiscountModalScope('buildings')}
             children={
               <View style={styles.discountRowRight}>
@@ -796,6 +805,7 @@ export default function SettingsScreen() {
             icon="shield-half-outline"
             title="Army Discounts"
             desc={discountDesc(discounts.army)}
+            compact
             onPress={() => setDiscountModalScope('army')}
             children={
               <View style={styles.discountRowRight}>
@@ -812,6 +822,7 @@ export default function SettingsScreen() {
             icon="trash-outline"
             title="Clear Cache"
             desc="Remove all locally cached data"
+            compact
             destructive
             pillText="Destructive"
             pillTopOffset={18}
@@ -822,12 +833,14 @@ export default function SettingsScreen() {
             icon="download-outline"
             title="Export Data"
             desc="Share your data as a JSON backup"
+            compact
             onPress={handleExportData}
           />
           <SettingRow
             icon="refresh-outline"
             title="Refresh Game Data"
             desc="Re-fetch reference data from the wiki"
+            compact
             onPress={() => {
               showDialog({
                 title: 'Refresh Game Data',
@@ -847,6 +860,7 @@ export default function SettingsScreen() {
             icon="cloud-outline"
             title="Check for Updates"
             desc="Look for the latest version"
+            compact
             onPress={handleCheckUpdates}
             children={checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
           />
@@ -854,6 +868,7 @@ export default function SettingsScreen() {
             icon="information-circle-outline"
             title="About ClashPrime"
             desc="What this app does, its features and sources"
+            compact
             onPress={openAbout}
             children={
               <>
@@ -866,6 +881,7 @@ export default function SettingsScreen() {
             icon="sparkles-outline"
             title="What's New"
             desc="Recent updates and improvements"
+            compact
             onPress={openChangelog}
             children={
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
@@ -875,18 +891,21 @@ export default function SettingsScreen() {
             icon="document-text-outline"
             title="Privacy Policy"
             desc="How your data is handled"
+            compact
             onPress={openPrivacy}
           />
           <SettingRow
             icon="heart-outline"
             title="Credits"
             desc="Made with love by Parzival"
+            compact
             onPress={openCredits}
           />
           <SettingRow
             icon="chatbubble-outline"
             title="Send Feedback"
             desc="Report a bug or share an idea"
+            compact
             onPress={openFeedback}
           />
         </SettingCard>
@@ -897,6 +916,7 @@ export default function SettingsScreen() {
             icon="person-circle-outline"
             title="Developer Info"
             desc="About the developer behind ClashPrime"
+            compact
             onPress={openDeveloper}
             children={
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
@@ -906,6 +926,7 @@ export default function SettingsScreen() {
             icon="code-slash-outline"
             title="Build Diagnostics"
             desc="Technical build details for bug reports"
+            compact
             onPress={openBuildDiagnostics}
             children={
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
