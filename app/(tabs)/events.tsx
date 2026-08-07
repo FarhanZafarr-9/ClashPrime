@@ -145,6 +145,17 @@ export default function EventsScreen() {
           <Text style={styles.subtitle}>Upcoming in-game events</Text>
         </View>
 
+        <PressableRipple style={styles.storeBanner} onPress={() => Linking.openURL('https://store.supercell.com/clashofclans')}>
+          <View style={styles.storeBannerIcon}>
+            <Ionicons name="storefront-outline" size={22} color={Colors.textPrimary} />
+          </View>
+          <View style={styles.storeBannerText}>
+            <Text style={styles.storeBannerTitle}>Supercell Store</Text>
+            <Text style={styles.storeBannerSub}>Offers, freebies & events — opens in your browser</Text>
+          </View>
+          <Ionicons name="open-outline" size={16} color={Colors.textTertiary} />
+        </PressableRipple>
+
         <View style={styles.pillRow}>
           <PressableRipple
             style={[styles.pill, view === 'events' && styles.pillActive]}
@@ -359,6 +370,40 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textTertiary,
     marginTop: 2,
+  },
+  storeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.base,
+    padding: Spacing.md,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  storeBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storeBannerText: {
+    flex: 1,
+  },
+  storeBannerTitle: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
+  },
+  storeBannerSub: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 1,
   },
   pillRow: {
     flexDirection: 'row',
