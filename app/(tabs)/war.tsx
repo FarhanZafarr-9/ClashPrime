@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -835,6 +836,7 @@ function shieldConfig(member: WarMember): { name: keyof typeof Ionicons.glyphMap
 }
 
 function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirst, isLast }: { member: WarMember; defenderName: (tag: string) => string; isCwl?: boolean; isMine?: boolean; isFirst?: boolean; isLast?: boolean }) {
+  const router = useRouter();
   const attacks = member.attacks ?? [];
   const maxAttacks = isCwl ? 1 : 2;
   const thImg = getTownHallImageUrl(member.townhallLevel);
@@ -902,6 +904,14 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
               );
             })}
           </View>
+          <PressableRipple
+            style={styles.memberInspectBtn}
+            onPress={() => router.push({ pathname: '/player', params: { tag: member.tag } })}
+            hitSlop={6}
+            accessibilityLabel={`Inspect ${member.name}`}
+          >
+            <Ionicons name="search-outline" size={14} color={Colors.textTertiary} />
+          </PressableRipple>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
         </View>
       </PressableRipple>
@@ -1275,6 +1285,14 @@ const styles = StyleSheet.create({
   memberName: { ...Typography.subhead, color: Colors.textPrimary, flex: 1 },
   memberNameMine: { color: Colors.bg, fontWeight: '700' },
   memberRight: { flexDirection: 'row', gap: 5, alignItems: 'center' },
+  memberInspectBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border },
   attackDots: { flexDirection: 'row', gap: 6 },
   attackDot: { width: 10, height: 10, borderRadius: 3 },
