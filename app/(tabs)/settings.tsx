@@ -101,6 +101,20 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '4.2.0',
+    date: 'August 7, 2026',
+    items: [
+      'Player inspect screen — search any player by tag to view their stats, army, achievements and clan, copy their tag, add them to your accounts or open their profile in-game.',
+      'Home screen rebuilt into collapsible sections: Progress Overview, a Backlog of locked and rushed upgrades, Quick Stats and Active Timers.',
+      'Builder timers scoped per account, with an improved active-timers section and a redesigned new-timer modal.',
+      'Achievements rows and summary restyled to match the settings rows, grouped by stars with corner rounding.',
+      'Highlight your own member in war and CWL member lists, plus polished expanded war detail sections.',
+      'Supercell Store deep-link banner on the Events tab.',
+      'Home tab polish: header open-in-game button, rounded icon and badge corners, smarter empty-timers banner.',
+      'Home skeleton loading reworked for the new collapsible layout, and shared SettingRow component powering Home, Player, Achievements and Settings.',
+    ],
+  },
+  {
     version: '4.1.0',
     date: 'August 5, 2026',
     items: [
@@ -173,7 +187,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.1.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.2.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
