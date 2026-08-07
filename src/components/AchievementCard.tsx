@@ -34,8 +34,8 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
 
   return (
     <PressableRipple
-      onPress={hasDetail ? onPress : undefined}
-      disabled={!hasDetail}
+      onPress={hasDetail && onPress ? onPress : undefined}
+      disabled={!hasDetail || !onPress}
       style={[
         styles.card,
         isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
@@ -68,7 +68,7 @@ export function AchievementCard({ achievement: a, expanded, onPress, showVillage
               />
             ))}
           </View>
-          {hasDetail && (
+          {hasDetail && onPress && (
             <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} style={{ marginLeft: 4, marginTop: 1 }} />
           )}
         </View>
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    marginBottom: 2,
+    marginBottom: Spacing.xs,
     overflow: 'hidden',
   },
   cardPressed: {
