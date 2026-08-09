@@ -11,7 +11,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Home Dashboard** — overview of your village with progress cards, quick actions, and quick stats
 - **Multi-Account** — add and switch between multiple player tags from Settings or the Home dashboard. Each account keeps its own building levels, saved bases, and favorites. Shared data (events, troop details) is fetched once.
 - **Army** — troops, heroes, spells, pets, equipment with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns
-- **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles
+- **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles. Multi-copy buildings (Cannons, Walls, Traps, etc.) are grouped into collapsible sections with per-copy level tracking, aggregated remaining cost/time, and quick upgrade/downgrade controls
 - **Events** — upcoming in-game events with countdown timers and progress bars
 - **War** — live war tracking with per-member attack dots and defense shields, plus live Clan War League rounds (expandable per-member breakdowns, W/L/D per round) and a searchable war history split into regular wars and CWL
 - **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback
@@ -133,6 +133,12 @@ npx tsx scraper/fandom-buildings.ts
 
 # Re-download building images + regenerate asset mapping
 npx tsx scraper/download-building-images.ts
+
+# Scrape building levels + per-TH copy counts from Fandom wiki (regenerates building-levels.json)
+npx tsx scraper/run-building-levels.ts
+
+# Verify/copy building counts into building-levels.json from Fandom wiki templates
+npx tsx scraper/run-building-counts.ts
 
 # Scrape siege machine names from Fandom wiki (dev verification only — app fetches dynamically)
 npx tsx scraper/siege-machines.ts

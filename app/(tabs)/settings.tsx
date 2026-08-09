@@ -101,6 +101,15 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '4.3.0',
+    date: 'August 9, 2026',
+    items: [
+      'Buildings tab tracks every copy of multi-copy buildings individually — Cannons, Archer Towers, Walls, Traps and more are grouped into collapsible sections with a per-building progress bar, aggregate remaining cost/time and level badges.',
+      'Quick upgrade/downgrade controls on each building card: tap ▲ to upgrade, hold ▲ to max out, tap ▼ to downgrade — no need to expand the card.',
+      'Building copy counts come straight from the Clash of Clans wiki (per-TH and per-BH), so new copies unlocked at higher Town Halls seed correctly at level 1.',
+    ],
+  },
+  {
     version: '4.2.0',
     date: 'August 7, 2026',
     items: [
@@ -187,7 +196,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.2.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.3.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
