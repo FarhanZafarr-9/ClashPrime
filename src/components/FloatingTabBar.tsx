@@ -72,12 +72,17 @@ export default function FloatingTabBar({ state, navigation }: any) {
           </>
         ) : (
         <>
-        {visibleTabs.map((tab) => {
+        {visibleTabs.map((tab, i) => {
           const isActive = activeKey === tab.key;
+          const isFirst = i === 0;
           return (
             <PressableRipple
               key={tab.key}
-              style={[styles.tabItem, isActive && styles.tabItemActive]}
+              style={[
+                styles.tabItem,
+                isActive && styles.tabItemActive,
+                isActive && isFirst && styles.tabItemActiveFirst,
+              ]}
               onPress={() => navigate(tab.key)}
             >
               <TabIcon icon={tab.icon} color={ Colors.textMuted} />
@@ -114,9 +119,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     backgroundColor: Colors.bgElevated,
-    borderRadius: 8,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    borderRadius: Radius.full,
     padding: 4,
     width: '100%',
     maxWidth: 400,
@@ -137,6 +140,9 @@ const styles = StyleSheet.create({
   },
   tabItemActive: {
     backgroundColor: Colors.textPrimary,
+  },
+  tabItemActiveFirst: {
+    borderRadius: Radius.full,
   },
   tabItemSkeleton: {
     alignItems: 'center',

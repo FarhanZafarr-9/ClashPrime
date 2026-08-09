@@ -31,7 +31,12 @@ export default function PressableRipple({
   accessibilityRole,
 }: Props) {
   const flat = StyleSheet.flatten(style) ?? {};
-  const radius = typeof flat.borderRadius === 'number' ? flat.borderRadius : Radius.md;
+  const hasCornerRadii =
+    flat.borderTopLeftRadius != null ||
+    flat.borderTopRightRadius != null ||
+    flat.borderBottomLeftRadius != null ||
+    flat.borderBottomRightRadius != null;
+  const radius = !hasCornerRadii && typeof flat.borderRadius === 'number' ? flat.borderRadius : Radius.md;
   const radiusAnim = useRef(new Animated.Value(radius)).current;
   const pressedRadius = radius + PRESSED_RADIUS_OFFSET;
 
@@ -51,7 +56,7 @@ export default function PressableRipple({
   return (
     <AnimatedTouchableRipple
       borderless
-      style={[flat, { borderRadius: radiusAnim }]}
+      style={hasCornerRadii ? flat : [flat, { borderRadius: radiusAnim }]}
       onPress={onPress}
       onLongPress={onLongPress}
       onPressIn={() => animateRadius(pressedRadius)}
