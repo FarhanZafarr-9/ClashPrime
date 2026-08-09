@@ -22,6 +22,8 @@ import {
   formatCost as fmtCost,
   formatTime as fmtTime,
 } from '../../src/utils/buildingImages';
+import { getBuildingCopies, getCountAtTH, getCountAtBH } from '../../src/utils/buildingCopies';
+import type { BuildingCopies } from '../../src/utils/buildingCopies';
 import buildingLevelsData from '../../src/data/building-levels.json';
 import thLevelsData from '../../src/data/th-levels.json';
 
@@ -235,8 +237,19 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, isLast }: { name: string; maxLvl: number; isMaxed: boolean; isBB?: boolean; bhMax?: number; discounts: ScopeDiscount; isFirst?: boolean; isLast?: boolean }) {
-  const { player, upgradeBuilding, setBuildingLevel } = usePlayer();
+function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription }: {
+  name: string;
+  copyIndex: number;
+  count: number;
+  copies: BuildingCopies;
+  effectiveMax: number;
+  isBB?: boolean;
+  discounts: ScopeDiscount;
+  isFirst?: boolean;
+  isLast?: boolean;
+  showDescription?: boolean;
+}) {
+  const { setBuildingCopies } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [tableViewportW, setTableViewportW] = useState(0);
@@ -250,12 +263,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
     return match || null;
   }, [name, lookupName]);
 
-  const currentLevel = player?.buildingLevels?.[name] ?? 0;
-  // Builder Base buildings cap at the Builder Hall (supplied via bbEntries); home
-  // buildings cap at the Town Hall.
-  const effectiveMax = isBB && (bhMax ?? 0) > 0
-    ? bhMax!
-    : getBuildingEffectiveMax(lookupName, player?.townHallLevel ?? 1);
+  const currentLevel = copies.levels[copyIndex] ?? 0;
   const progress = effectiveMax > 0 ? currentLevel / effectiveMax : 0;
   const isFullyMaxed = currentLevel >= effectiveMax;
   const isLocked = currentLevel === 0;
@@ -293,6 +301,12 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
     if (lvl['Build Time']) totalTime += parseTimeToSeconds(String(lvl['Build Time']));
   }
   const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
+
+  const setCopyLevel = (level: number) => {
+    const next = [...copies.levels];
+    next[copyIndex] = level;
+    setBuildingCopies(lookupName, next, copies.maxLevel);
+  };
 
   const renderGrid = () => (
     <View style={styles.levelGridBorder}>
@@ -339,21 +353,28 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
     <View style={[
       styles.itemCard,
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
-      isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+      isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
     ]}>
       <PressableRipple onPress={toggleExpanded} style={styles.itemCardTouchable}>
         <View style={styles.itemRow}>
           {mainImgSource ? (
-            <Image source={mainImgSource} style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
+            <Image source={mainImgSource} style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
           ) : (
-            <View style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && { borderBottomLeftRadius: Radius.lg }]}>
+            <View style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]}>
               <Text style={styles.itemIconText}>
                 {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
               </Text>
             </View>
           )}
           <View style={styles.itemInfo}>
-            <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
+            <View style={styles.itemNameRow}>
+              <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
+              {count > 1 && (
+                <View style={styles.copyCountChip}>
+                  <Text style={styles.copyCountChipText}>({copyIndex + 1})</Text>
+                </View>
+              )}
+            </View>
             {isLocked ? (
               <Text style={styles.lockedText}>Locked</Text>
             ) : (
@@ -380,7 +401,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
                 styles.levelBadgeContainer,
                 isFullyMaxed && styles.levelBadgeMaxed,
                 isFirst && { borderTopRightRadius: Radius.lg },
-                isLast && { borderBottomRightRadius: Radius.lg },
+                isLast && !expanded && { borderBottomRightRadius: Radius.lg },
               ]}>
                 <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
                   {currentLevel}
@@ -397,7 +418,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
       {isLocked && effectiveMax > 0 && (
         <View style={styles.expandedSection}>
           <Text style={styles.buildingDesc} numberOfLines={3}>This building is available at your Town Hall level. Tap to unlock it.</Text>
-          <PressableRipple style={styles.upgradeBtn} onPress={() => upgradeBuilding(name)}>
+          <PressableRipple style={styles.upgradeBtn} onPress={() => setCopyLevel(1)}>
             <Text style={styles.upgradeBtnText}>Unlock {name}</Text>
             <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
           </PressableRipple>
@@ -406,7 +427,7 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
 
       {!isLocked && expanded && displayLevels.length > 0 && (
         <View style={styles.expandedSection}>
-          {buildingStats?.description ? (
+          {showDescription && buildingStats?.description ? (
             <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
           {renderGrid()}
@@ -500,17 +521,25 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
             <View style={styles.upgradeRow}>
               <PressableRipple
                 style={styles.upgradeBtn}
-                onPress={() => upgradeBuilding(name)}
+                onPress={() => setCopyLevel(currentLevel + 1)}
               >
                 <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
                 <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
               </PressableRipple>
-              {currentLevel > 0 && (
+              {currentLevel > 1 && (
                 <PressableRipple
                   style={styles.downgradeBtn}
-                  onPress={() => setBuildingLevel(name, currentLevel - 1)}
+                  onPress={() => setCopyLevel(currentLevel - 1)}
                 >
                   <Ionicons name="arrow-back" size={16} color={Colors.bg} />
+                </PressableRipple>
+              )}
+              {!isFullyMaxed && (
+                <PressableRipple
+                  style={styles.maxBtn}
+                  onPress={() => setCopyLevel(effectiveMax)}
+                >
+                  <Ionicons name="arrow-up-circle" size={16} color={Colors.bg} />
                 </PressableRipple>
               )}
             </View>
@@ -518,6 +547,151 @@ function BuildingCard({ name, maxLvl, isMaxed, isBB, bhMax, discounts, isFirst, 
         </View>
       )}
     </View>
+  );
+}
+
+function BuildingCollapsibleSection({
+  title,
+  count,
+  copies,
+  effectiveMax,
+  isBB,
+  discounts,
+  isFirst,
+  isLast,
+  onOpen,
+  children,
+}: {
+  title: string;
+  count: number;
+  copies: BuildingCopies;
+  effectiveMax: number;
+  isBB: boolean;
+  discounts: ScopeDiscount;
+  isFirst: boolean;
+  isLast: boolean;
+  onOpen?: () => void;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
+  const totalMax = copies.levels.length * effectiveMax;
+  const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
+  const toggle = () => {
+    if (!open) onOpen?.();
+    setOpen(!open);
+  };
+  const availableCopyLevels = copies.levels.filter((l) => l > 0);
+  const icon = getBuildingLevelImageSource(title, availableCopyLevels.length > 0 ? Math.min(...availableCopyLevels) : 1);
+
+  const buildingStats = useMemo(() => {
+    const lookupName = NAME_FIX[title] ?? title;
+    const match = (buildingLevelsData as any).find((b: any) => {
+      const bName = b.name.toLowerCase();
+      return bName === title.toLowerCase() || bName === lookupName.toLowerCase();
+    });
+    return match || null;
+  }, [title]);
+
+  const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
+  const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
+
+  // Aggregate remaining levels/cost/time across every copy.
+  const aggregate = useMemo(() => {
+    let remainingLevels = 0;
+    let totalCost = 0;
+    let totalTime = 0;
+    const lookupName = NAME_FIX[title] ?? title;
+    const availableLevels = getBuildingAvailableLevels(lookupName);
+    const allLevels = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
+      .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
+    for (const lvl of copies.levels) {
+      if (lvl <= 0) continue;
+      const rem = allLevels.filter((l: any) => l.Level > lvl && l.Level <= effectiveMax);
+      remainingLevels += rem.length;
+      for (const l of rem) {
+        if (l['Build Cost']) totalCost += parseCost(String(l['Build Cost']));
+        if (l['Build Time']) totalTime += parseTimeToSeconds(String(l['Build Time']));
+      }
+    }
+    return { remainingLevels, totalCost, totalTime };
+  }, [title, copies, effectiveMax, buildingStats]);
+
+  const hasRemaining = aggregate.remainingLevels > 0 && aggregate.totalCost > 0;
+
+  return (
+    <>
+      <PressableRipple
+        onPress={toggle}
+        style={[
+          styles.buildingSectionHeader,
+          (isFirst || open) && styles.buildingSectionHeaderFirst,
+          isLast && !open && styles.buildingSectionHeaderLast,
+        ]}
+      >
+        <View style={styles.buildingSectionIcon}>
+          {icon ? (
+            <Image source={icon} style={styles.buildingSectionIconImg} resizeMode="contain" />
+          ) : (
+            <Text style={styles.buildingSectionIconText}>
+              {title.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+            </Text>
+          )}
+        </View>
+        <View style={styles.buildingSectionText}>
+          <Text style={styles.buildingSectionTitle}>{title}</Text>
+          <View style={styles.buildingSectionDesc}>
+            <View style={styles.buildingSectionBar}>
+              <View
+                style={[
+                  styles.buildingSectionFill,
+                  {
+                    width: `${Math.min(totalMax > 0 ? totalLevel / totalMax : 0, 1) * 100}%`,
+                    backgroundColor: isSectionMaxed ? Colors.warning : Colors.textPrimary,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        </View>
+        <View style={styles.buildingSectionBadges}>
+          <View style={styles.buildingSectionBadge}>
+            <Text style={styles.buildingSectionBadgeText}>{count}</Text>
+          </View>
+          <View style={[styles.buildingSectionBadge, isSectionMaxed && styles.buildingSectionBadgeMaxed]}>
+            <Text style={[styles.buildingSectionBadgeText, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>{totalLevel}</Text>
+            <Text style={[styles.buildingSectionBadgeLabel, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {totalMax}</Text>
+          </View>
+        </View>
+      </PressableRipple>
+      {open && (
+        <View style={styles.buildingSectionBody}>
+          {buildingStats?.description ? (
+            <Text style={styles.buildingSectionDescText} numberOfLines={3}>{buildingStats.description}</Text>
+          ) : null}
+          {hasRemaining && (
+            <View style={styles.buildingSectionRemaining}>
+              <View style={styles.remainingRow}>
+                <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
+                <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
+                <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
+              </View>
+              <View style={styles.remainingTotalRow}>
+                <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{aggregate.remainingLevels} levels</Text>
+                <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                  {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
+                </Text>
+                <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                  {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
+                </Text>
+              </View>
+            </View>
+          )}
+          {children}
+          {!isLast && <View style={styles.buildingSectionSeparator} />}
+        </View>
+      )}
+    </>
   );
 }
 
@@ -577,6 +751,53 @@ export default function BuildingsScreen() {
       })
       : [];
 
+  // Flatten each building type into one card per copy, sorted so buildings with
+  // fewer copies come first (higher count sinks lower in the list). Copies of the
+  // same building are grouped together and ordered by level so higher-level
+  // copies sink lower within the group.
+  // Group buildings into collapsible sections. Buildings with more copies sink
+  // lower in the list. Single-copy buildings are rendered directly.
+  const buildingSections = useMemo(() => {
+    type Section = {
+      name: string;
+      count: number;
+      copies: BuildingCopies;
+      effectiveMax: number;
+      copyIndices: number[];
+    };
+    const sections: Section[] = [];
+    const singles: Section[] = [];
+    for (const [name, entry] of entries) {
+      const lookupName = NAME_FIX[name] ?? name;
+      const maxLvl = isBB ? (entry as any).level ?? 0 : (entry as any)[String(th)]?.level ?? 0;
+      const effectiveMax = isBB && maxLvl > 0
+        ? maxLvl
+        : getBuildingEffectiveMax(lookupName, th);
+      const count = isBB ? getCountAtBH(lookupName, bh) : getCountAtTH(lookupName, th);
+      const copies = getBuildingCopies(
+        lookupName,
+        player?.buildingLevels,
+        player?.buildings,
+        effectiveMax,
+        count,
+        player?.lastMaxedTH,
+        isBB ? undefined : th,
+      );
+      const copyIndices = copies.levels
+        .map((_, i) => i)
+        .sort((a, b) => (copies.levels[a] ?? 0) - (copies.levels[b] ?? 0));
+      const section = { name, count, copies, effectiveMax, copyIndices };
+      if (count > 1) {
+        sections.push(section);
+      } else {
+        singles.push(section);
+      }
+    }
+    sections.sort((a, b) => a.count - b.count || a.name.localeCompare(b.name));
+    singles.sort((a, b) => a.name.localeCompare(b.name));
+    return [...singles, ...sections];
+  }, [entries, isBB, th, bh, player]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -610,20 +831,50 @@ export default function BuildingsScreen() {
           })}
         </View>
 
-        {entries.map(([name, entry], idx) => {
-          const maxLvl = isBB ? (entry as any).level ?? 0 : (entry as any)[String(th)]?.level ?? 0;
-          const isMaxed = isBB ? (entry as any).isMaxLevel ?? false : (entry as any)[String(th)]?.isMaxLevel ?? false;
+        {buildingSections.map((section, idx) => {
+          const isFirst = idx === 0;
+          const isLast = idx === buildingSections.length - 1;
+          if (section.count > 1) {
+            return (
+              <BuildingCollapsibleSection
+                key={section.name}
+                title={section.name}
+                count={section.count}
+                copies={section.copies}
+                effectiveMax={section.effectiveMax}
+                isBB={isBB}
+                discounts={discounts.buildings}
+                isFirst={isFirst}
+                isLast={isLast}
+              >
+                {section.copyIndices.map((copyIndex) => (
+                  <BuildingCard
+                    key={copyIndex}
+                    name={section.name}
+                    copyIndex={copyIndex}
+                    count={section.count}
+                    copies={section.copies}
+                    effectiveMax={section.effectiveMax}
+                    isBB={isBB}
+                    discounts={discounts.buildings}
+                  />
+                ))}
+              </BuildingCollapsibleSection>
+            );
+          }
           return (
             <BuildingCard
-              key={name}
-              name={name}
-              maxLvl={maxLvl}
-              isMaxed={isMaxed}
+              key={section.name}
+              name={section.name}
+              copyIndex={section.copyIndices[0] ?? 0}
+              count={1}
+              copies={section.copies}
+              effectiveMax={section.effectiveMax}
               isBB={isBB}
-              bhMax={isBB ? maxLvl : undefined}
               discounts={discounts.buildings}
-              isFirst={idx === 0}
-              isLast={idx === entries.length - 1}
+              isFirst={isFirst}
+              isLast={isLast}
+              showDescription
             />
           );
         })}
@@ -759,6 +1010,25 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  itemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  copyCountChip: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  copyCountChipText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    fontSize: 10,
   },
   levelBadgeRow: {
     flexDirection: 'row',
@@ -913,6 +1183,130 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     opacity: 0.85,
+  },
+  maxBtn: {
+    width: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.textPrimary,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    opacity: 0.85,
+  },
+  buildingSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.base,
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.xs,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+  },
+  buildingSectionHeaderFirst: {
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
+  },
+  buildingSectionHeaderLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
+  },
+  buildingSectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buildingSectionIconImg: {
+    width: 24,
+    height: 24,
+  },
+  buildingSectionIconText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+  },
+  buildingSectionText: {
+    flex: 1,
+  },
+  buildingSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  buildingSectionDesc: {
+    marginTop: 2,
+  },
+  buildingSectionBar: {
+    height: 4,
+    backgroundColor: Colors.progressTrack,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  buildingSectionFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  buildingSectionBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  buildingSectionBadge: {
+    minWidth: 36,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  buildingSectionBadgeMaxed: {
+    backgroundColor: Colors.warning,
+  },
+  buildingSectionBadgeText: {
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  buildingSectionBadgeTextMaxed: {
+    color: Colors.bg,
+  },
+  buildingSectionBadgeLabel: {
+    fontSize: 8,
+    lineHeight: 9,
+    color: Colors.textPrimary,
+    opacity: 0.7,
+    fontVariant: ['tabular-nums'],
+  },
+  buildingSectionBody: {
+    paddingTop: 0,
+  },
+  buildingSectionDescText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    lineHeight: 18,
+  },
+  buildingSectionRemaining: {
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+    marginHorizontal: Spacing.base,
+    marginVertical: Spacing.sm,
+  },
+  buildingSectionSeparator: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    margin: Spacing.lg,
   },
   levelGridBorder: {
     borderRadius: Radius.sm,
