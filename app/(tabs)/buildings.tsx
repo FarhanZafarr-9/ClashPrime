@@ -600,6 +600,37 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   );
 }
 
+function LevelGroupPresets({
+  value,
+  max,
+  onUpgrade,
+}: {
+  value: number;
+  max: number;
+  onUpgrade: (count: number) => void;
+}) {
+  const presets = [1, 10, 50, value];
+  const labels = ['+1', '+10', '+50', 'All'];
+  return (
+    <View style={styles.presetRow}>
+      {presets.map((p, i) => (
+        <PressableRipple
+          key={labels[i]}
+          style={[
+            styles.presetBtn,
+            (value <= 0 || (p === value && labels[i] !== 'All')) && styles.presetBtnDisabled,
+          ]}
+          onPress={() => onUpgrade(Math.min(p, value))}
+          disabled={value <= 0}
+          accessibilityLabel={`Upgrade ${labels[i]}`}
+        >
+          <Text style={styles.presetBtnText}>{labels[i]}</Text>
+        </PressableRipple>
+      ))}
+    </View>
+  );
+}
+
 function BuildingCollapsibleSection({
   title,
   count,
@@ -611,6 +642,7 @@ function BuildingCollapsibleSection({
   isLast,
   onOpen,
   compact,
+  groupByLevel,
   children,
 }: {
   title: string;
@@ -623,6 +655,7 @@ function BuildingCollapsibleSection({
   isLast: boolean;
   onOpen?: () => void;
   compact?: boolean;
+  groupByLevel?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -641,8 +674,101 @@ function BuildingCollapsibleSection({
     const next = copies.levels.map(() => effectiveMax);
     setBuildingCopies(lookupName, next, copies.maxLevel);
   };
+
+  // Group copies by their current level so high-count buildings (e.g. Walls)
+  // collapse into one row per distinct level instead of N individual cards.
+  const levelGroups = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const lvl of copies.levels) {
+      if (lvl <= 0) continue;
+      map.set(lvl, (map.get(lvl) ?? 0) + 1);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([level, numCopies]) => ({ level, numCopies }));
+  }, [copies.levels]);
+
+  // Upgrade up to `count` copies sitting at `level` by one level. Used by the
+  // per-group quick-upgrade preset buttons (+1/+10/+50/All).
+  const upgradeLevelCopies = (level: number, count: number) => {
+    const next = [...copies.levels];
+    let moved = 0;
+    for (let i = 0; i < next.length && moved < count; i++) {
+      if (next[i] === level) {
+        next[i] = Math.min(level + 1, effectiveMax);
+        moved++;
+      }
+    }
+    if (moved > 0) setBuildingCopies(lookupName, next, copies.maxLevel);
+  };
+
+  const buildLevelGroups = () => (
+    <View>
+      {levelGroups.map((g, i) => {
+        const isLastGroup = i === levelGroups.length - 1;
+        const imgSource = getBuildingLevelImageSource(lookupName, g.level);
+        const groupProgress = effectiveMax > 0 ? g.level / effectiveMax : 0;
+        const isMaxed = g.level >= effectiveMax;
+        return (
+          <View
+            key={g.level}
+            style={[
+              styles.itemCard,
+              isLastGroup && { borderBottomLeftRadius: Radius.lg, borderBottomRightRadius: Radius.lg },
+            ]}
+          >
+            <View style={styles.itemRow}>
+              <View style={styles.itemCardTouchable}>
+                <View style={styles.itemRowInner}>
+                  {imgSource ? (
+                    <Image source={imgSource} style={[styles.itemIcon, isLastGroup && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
+                  ) : (
+                    <View style={[styles.itemIcon, isLastGroup && { borderBottomLeftRadius: Radius.lg }]}>
+                      <Text style={styles.itemIconText}>
+                        {title.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.itemInfo}>
+                    <View style={styles.itemNameRow}>
+                      <Text style={styles.itemName} numberOfLines={1}>{title}</Text>
+                      <View style={styles.copyCountChip}>
+                        <Text style={styles.copyCountChipText}>×{g.numCopies}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.itemProgressRow}>
+                      <View style={[styles.progressTrack, styles.progressTrackFlex]}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            {
+                              width: `${Math.min(groupProgress, 1) * 100}%`,
+                              backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                    <LevelGroupPresets
+                      value={g.numCopies}
+                      max={copies.levels.length}
+                      onUpgrade={(n) => upgradeLevelCopies(g.level, n)}
+                    />
+                  </View>
+                  <View style={styles.levelBadgeContainer}>
+                    <Text style={styles.levelBadgeText}>{g.level}</Text>
+                    <Text style={styles.levelBadgeLabel}>/ {effectiveMax}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
   const availableCopyLevels = copies.levels.filter((l) => l > 0);
-  const icon = getBuildingLevelImageSource(title, availableCopyLevels.length > 0 ? Math.min(...availableCopyLevels) : 1);
+  const icon = getBuildingLevelImageSource(lookupName, availableCopyLevels.length > 0 ? Math.min(...availableCopyLevels) : 1);
 
   const buildingStats = useMemo(() => {
     const lookupName = NAME_FIX[title] ?? title;
@@ -655,6 +781,12 @@ function BuildingCollapsibleSection({
 
   const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
   const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
+
+  // Format large level counts as rounded thousands (e.g. 2000 -> "2K").
+  const fmtLevels = (n: number): string => {
+    if (n >= 1000) return Math.round(n / 1000) + 'K';
+    return n.toString();
+  };
 
   // Aggregate remaining levels/cost/time across every copy.
   const aggregate = useMemo(() => {
@@ -707,7 +839,11 @@ function BuildingCollapsibleSection({
           isLast && !open && styles.buildingSectionHeaderLast,
         ]}
       >
-        <View style={[styles.buildingSectionIcon, open && styles.buildingSectionIconTopLeftRounded]}>
+        <View style={[
+          styles.buildingSectionIcon,
+          (isFirst || open) && styles.buildingSectionIconTopLeftRounded,
+          isLast && !open && styles.buildingSectionIconBottomLeftRounded,
+        ]}>
           {icon ? (
             <Image source={icon} style={styles.buildingSectionIconImg} resizeMode="contain" />
           ) : (
@@ -736,9 +872,14 @@ function BuildingCollapsibleSection({
           <View style={styles.buildingSectionBadge}>
             <Text style={styles.buildingSectionBadgeText}>{count}</Text>
           </View>
-          <View style={[styles.buildingSectionBadge, open && styles.buildingSectionBadgeTopRightRounded, isSectionMaxed && styles.buildingSectionBadgeMaxed]}>
-            <Text style={[styles.buildingSectionBadgeText, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>{totalLevel}</Text>
-            <Text style={[styles.buildingSectionBadgeLabel, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {totalMax}</Text>
+          <View style={[
+            styles.buildingSectionBadge,
+            (isFirst || open) && styles.buildingSectionBadgeTopRightRounded,
+            isLast && !open && styles.buildingSectionBadgeBottomRightRounded,
+            isSectionMaxed && styles.buildingSectionBadgeMaxed,
+          ]}>
+            <Text style={[styles.buildingSectionBadgeText, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>{fmtLevels(totalLevel)}</Text>
+            <Text style={[styles.buildingSectionBadgeLabel, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {fmtLevels(totalMax)}</Text>
           </View>
         </View>
       </PressableRipple>
@@ -756,7 +897,7 @@ function BuildingCollapsibleSection({
                   <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
                 </View>
                 <View style={styles.remainingTotalRow}>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{aggregate.remainingLevels} levels</Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
                   <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
                     {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
                   </Text>
@@ -870,7 +1011,9 @@ function BuildingCollapsibleSection({
               )}
             </View>
           )}
-          {children}
+          {groupByLevel
+            ? buildLevelGroups()
+            : children}
           {!isLast && <View style={styles.buildingSectionSeparator} />}
         </View>
       )}
@@ -1030,8 +1173,9 @@ export default function BuildingsScreen() {
                 isFirst={isFirst}
                 isLast={isLast}
                 compact
+                groupByLevel={section.name === 'Walls'}
               >
-                {section.copyIndices.map((copyIndex) => (
+                {section.name !== 'Walls' && section.copyIndices.map((copyIndex) => (
                   <BuildingCard
                     key={copyIndex}
                     name={section.name}
@@ -1279,6 +1423,34 @@ const styles = StyleSheet.create({
   quickBtnDisabled: {
     opacity: 0.4,
   },
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: 6,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: 6,
+  },
+  presetBtn: {
+    paddingHorizontal: 8,
+    height: 24,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  presetBtnDisabled: {
+    opacity: 0.4,
+  },
+  presetBtnText: {
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   levelBadgeContainer: {
     width: 32,
     height: 32,
@@ -1456,6 +1628,9 @@ const styles = StyleSheet.create({
   buildingSectionIconTopLeftRounded: {
     borderTopLeftRadius: Radius.lg,
   },
+  buildingSectionIconBottomLeftRounded: {
+    borderBottomLeftRadius: Radius.lg,
+  },
   buildingSectionIconImg: {
     width: 40,
     height: 40,
@@ -1516,6 +1691,9 @@ const styles = StyleSheet.create({
   },
   buildingSectionBadgeTopRightRounded: {
     borderTopRightRadius: Radius.lg,
+  },
+  buildingSectionBadgeBottomRightRounded: {
+    borderBottomRightRadius: Radius.lg,
   },
   buildingSectionBadgeText: {
     fontSize: 14,
@@ -1687,6 +1865,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.xs,
     paddingVertical: Spacing.md,
+    marginBottom: Spacing.md,
   },
   expandTableText: {
     ...Typography.caption,
