@@ -237,7 +237,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription }: {
+function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription, inSection }: {
   name: string;
   copyIndex: number;
   count: number;
@@ -248,6 +248,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   isFirst?: boolean;
   isLast?: boolean;
   showDescription?: boolean;
+  inSection?: boolean;
 }) {
   const { setBuildingCopies } = usePlayer();
   const [expanded, setExpanded] = useState(false);
@@ -341,6 +342,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   );
 
   const toggleExpanded = () => {
+    if (inSection) return;
     if (expanded) {
       setExpanded(false);
       setShowFull(false);
@@ -378,6 +380,27 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
               </View>
               {isLocked ? (
                 <Text style={styles.lockedText}>Locked</Text>
+              ) : inSection ? (
+                <View style={styles.itemProgressRow}>
+                  <View style={[styles.progressTrack, styles.progressTrackFlex]}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${Math.min(progress, 1) * 100}%`,
+                          backgroundColor: isFullyMaxed ? Colors.warning : Colors.textSecondary,
+                        },
+                      ]}
+                    />
+                  </View>
+                  {hasRemaining && (
+                    <Text style={styles.itemProgressMeta} numberOfLines={1}>
+                      {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
+                      {' · '}
+                      {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
+                    </Text>
+                  )}
+                </View>
               ) : (
                 <View style={styles.progressTrack}>
                   <View
@@ -442,7 +465,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
         </View>
       </View>
 
-      {isLocked && effectiveMax > 0 && (
+      {isLocked && effectiveMax > 0 && !inSection && (
         <View style={styles.expandedSection}>
           <Text style={styles.buildingDesc} numberOfLines={3}>This building is available at your Town Hall level. Tap to unlock it.</Text>
           <PressableRipple style={styles.upgradeBtn} onPress={() => setCopyLevel(1)}>
@@ -452,7 +475,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
         </View>
       )}
 
-      {!isLocked && expanded && displayLevels.length > 0 && (
+      {!isLocked && !inSection && expanded && displayLevels.length > 0 && (
         <View style={styles.expandedSection}>
           {showDescription && buildingStats?.description ? (
             <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
@@ -587,6 +610,7 @@ function BuildingCollapsibleSection({
   isFirst,
   isLast,
   onOpen,
+  compact,
   children,
 }: {
   title: string;
@@ -598,15 +622,24 @@ function BuildingCollapsibleSection({
   isFirst: boolean;
   isLast: boolean;
   onOpen?: () => void;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [showAllLevels, setShowAllLevels] = useState(false);
+  const [tableViewportW, setTableViewportW] = useState(0);
+  const { setBuildingCopies } = usePlayer();
   const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
   const totalMax = copies.levels.length * effectiveMax;
   const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
   const toggle = () => {
     if (!open) onOpen?.();
     setOpen(!open);
+  };
+  const lookupName = NAME_FIX[title] ?? title;
+  const maxAllCopies = () => {
+    const next = copies.levels.map(() => effectiveMax);
+    setBuildingCopies(lookupName, next, copies.maxLevel);
   };
   const availableCopyLevels = copies.levels.filter((l) => l > 0);
   const icon = getBuildingLevelImageSource(title, availableCopyLevels.length > 0 ? Math.min(...availableCopyLevels) : 1);
@@ -646,17 +679,35 @@ function BuildingCollapsibleSection({
 
   const hasRemaining = aggregate.remainingLevels > 0 && aggregate.totalCost > 0;
 
+  // Merged level grid + stats table across every copy. Concise state shows a
+  // span from just below the lowest copy level up to 2 levels ahead of the
+  // highest (clamped to effectiveMax); "show all" expands to the full range.
+  const availableLevels = getBuildingAvailableLevels(lookupName);
+  const allLevels = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
+    .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
+  const posLevels = copies.levels.filter((l) => l > 0);
+  const minCopyLevel = posLevels.length > 0 ? Math.min(...posLevels) : 1;
+  const maxCopyLevel = posLevels.length > 0 ? Math.max(...posLevels) : effectiveMax;
+  const spanMin = Math.max(1, minCopyLevel - 1);
+  const spanMax = Math.max(maxCopyLevel, Math.min(effectiveMax, maxCopyLevel + 2));
+  const showLevelSpan = allLevels.length > (spanMax - spanMin + 1);
+  const mergedDisplayLevels = showAllLevels
+    ? allLevels
+    : allLevels.filter((l: any) => l.Level >= spanMin && l.Level <= spanMax);
+  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
+
   return (
     <>
       <PressableRipple
         onPress={toggle}
         style={[
           styles.buildingSectionHeader,
+          compact && styles.buildingSectionHeaderCompact,
           (isFirst || open) && styles.buildingSectionHeaderFirst,
           isLast && !open && styles.buildingSectionHeaderLast,
         ]}
       >
-        <View style={styles.buildingSectionIcon}>
+        <View style={[styles.buildingSectionIcon, open && styles.buildingSectionIconTopLeftRounded]}>
           {icon ? (
             <Image source={icon} style={styles.buildingSectionIconImg} resizeMode="contain" />
           ) : (
@@ -685,7 +736,7 @@ function BuildingCollapsibleSection({
           <View style={styles.buildingSectionBadge}>
             <Text style={styles.buildingSectionBadgeText}>{count}</Text>
           </View>
-          <View style={[styles.buildingSectionBadge, isSectionMaxed && styles.buildingSectionBadgeMaxed]}>
+          <View style={[styles.buildingSectionBadge, open && styles.buildingSectionBadgeTopRightRounded, isSectionMaxed && styles.buildingSectionBadgeMaxed]}>
             <Text style={[styles.buildingSectionBadgeText, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>{totalLevel}</Text>
             <Text style={[styles.buildingSectionBadgeLabel, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {totalMax}</Text>
           </View>
@@ -697,21 +748,126 @@ function BuildingCollapsibleSection({
             <Text style={styles.buildingSectionDescText} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
           {hasRemaining && (
-            <View style={styles.buildingSectionRemaining}>
-              <View style={styles.remainingRow}>
-                <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
-                <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
-                <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
+            <View style={styles.buildingSectionRemainingRow}>
+              <View style={styles.buildingSectionRemaining}>
+                <View style={styles.remainingRow}>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
+                  <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
+                </View>
+                <View style={styles.remainingTotalRow}>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{aggregate.remainingLevels} levels</Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
+                  </Text>
+                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.remainingTotalRow}>
-                <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{aggregate.remainingLevels} levels</Text>
-                <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
-                  {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
-                </Text>
-                <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
-                  {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
-                </Text>
+              {!isSectionMaxed && (
+                <PressableRipple
+                  onPress={maxAllCopies}
+                  style={styles.buildingSectionMaxAllBtn}
+                  hitSlop={4}
+                  accessibilityLabel={`Max all ${title} copies`}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="arrow-up-circle" size={20} color={Colors.textSecondary} />
+                </PressableRipple>
+              )}
+            </View>
+          )}
+          {mergedDisplayLevels.length > 0 && (
+            <View style={styles.buildingSectionMerged}>
+              <View style={styles.levelGridBorder}>
+                <View style={styles.levelGrid}>
+                  {mergedDisplayLevels.map((levelData: any) => {
+                    const lvl = levelData.Level;
+                    const cellSource = getBuildingLevelImageSource(lookupName, lvl);
+                    const isCurrent = copies.levels.includes(lvl);
+                    return (
+                      <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
+                        <View style={styles.levelGridImgWrap}>
+                          {cellSource ? (
+                            <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
+                          ) : (
+                            <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
+                              <Text style={styles.levelGridFallbackText}>
+                                {title.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                              </Text>
+                            </View>
+                          )}
+                          <View style={[styles.levelGridBadge, isCurrent && styles.levelGridBadgeCurrent]}>
+                            <Text style={styles.levelGridBadgeText}>{lvl}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
               </View>
+              {buildingStats && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
+                  <View style={[styles.buildingStatsTable, { minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
+                    <View style={styles.buildingStatRow}>
+                      <View style={styles.buildingStatCellIcon}>
+                        <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
+                      </View>
+                      {statCols.map((col: string) => {
+                        const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
+                        return (
+                          <Text
+                            key={col}
+                            style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                            numberOfLines={1}
+                          >
+                            {label}
+                          </Text>
+                        );
+                      })}
+                    </View>
+                    {mergedDisplayLevels.map((levelData: any) => {
+                      const lvl = levelData.Level;
+                      const isCurrent = copies.levels.includes(lvl);
+                      return (
+                        <View key={lvl} style={[styles.buildingStatRow, isCurrent && styles.buildingStatRowCurrent]}>
+                          <View style={styles.buildingStatCellIcon}>
+                            <Text style={[styles.buildingStatLvlNum, isCurrent && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+                          </View>
+                          {statCols.map((col: string) => {
+                            const val = levelData[col] ?? '—';
+                            const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                            const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
+                            const displayVal = isDiscounted
+                              ? (col === 'Build Cost'
+                                ? applyCostDiscount(formatted, discounts)
+                                : applyTimeDiscount(String(val), discounts))
+                              : formatted;
+                            return (
+                              <Text
+                                key={col}
+                                style={[styles.buildingStatCell, { color: isDiscounted ? Colors.warning : Colors.textSecondary, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                                numberOfLines={1}
+                              >
+                                {displayVal}
+                              </Text>
+                            );
+                          })}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              )}
+              {showLevelSpan && (
+                <PressableRipple style={styles.expandTableBtn} onPress={() => setShowAllLevels(!showAllLevels)}>
+                  <Ionicons name={showAllLevels ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
+                  <Text style={styles.expandTableText}>
+                    {showAllLevels ? 'Show fewer' : `Show all ${allLevels.length} levels`}
+                  </Text>
+                </PressableRipple>
+              )}
             </View>
           )}
           {children}
@@ -873,6 +1029,7 @@ export default function BuildingsScreen() {
                 discounts={discounts.buildings}
                 isFirst={isFirst}
                 isLast={isLast}
+                compact
               >
                 {section.copyIndices.map((copyIndex) => (
                   <BuildingCard
@@ -884,6 +1041,8 @@ export default function BuildingsScreen() {
                     effectiveMax={section.effectiveMax}
                     isBB={isBB}
                     discounts={discounts.buildings}
+                    inSection
+                    isLast={copyIndex === section.copyIndices[section.copyIndices.length - 1]}
                   />
                 ))}
               </BuildingCollapsibleSection>
@@ -1019,7 +1178,7 @@ const styles = StyleSheet.create({
   itemRowInner: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: Spacing.md,
   },
   itemIcon: {
@@ -1038,6 +1197,7 @@ const styles = StyleSheet.create({
   },
   itemInfo: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   itemName: {
     ...Typography.subhead,
@@ -1074,7 +1234,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
-    marginTop: 4,
+  },
+  progressTrackFlex: {
+    flex: 1,
+  },
+  itemProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  itemProgressMeta: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   progressFill: {
     height: '100%',
@@ -1173,7 +1347,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
-    backgroundColor: Colors.bgSubtle,
   },
   remainingHead: {
     ...Typography.caption,
@@ -1196,6 +1369,7 @@ const styles = StyleSheet.create({
   },
   remainingTotalRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
@@ -1249,7 +1423,7 @@ const styles = StyleSheet.create({
   },
   buildingSectionHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: Spacing.base,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.base,
@@ -1262,21 +1436,29 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radius.xl * 1.25,
     borderTopRightRadius: Radius.xl * 1.25,
   },
+  buildingSectionHeaderCompact: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+  },
   buildingSectionHeaderLast: {
     borderBottomLeftRadius: Radius.xl * 1.25,
     borderBottomRightRadius: Radius.xl * 1.25,
   },
   buildingSectionIcon: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  buildingSectionIconTopLeftRounded: {
+    borderTopLeftRadius: Radius.lg,
   },
   buildingSectionIconImg: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
   },
   buildingSectionIconText: {
     ...Typography.caption,
@@ -1285,21 +1467,23 @@ const styles = StyleSheet.create({
   },
   buildingSectionText: {
     flex: 1,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
   },
   buildingSectionTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: Colors.textPrimary,
-    marginBottom: 2,
   },
   buildingSectionDesc: {
-    marginTop: 2,
+    justifyContent: 'flex-end',
   },
   buildingSectionBar: {
     height: 4,
     backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
+    marginBottom: 2,
   },
   buildingSectionFill: {
     height: '100%',
@@ -1310,8 +1494,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
   },
+  buildingSectionMaxAllBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   buildingSectionBadge: {
-    minWidth: 36,
+    width: 32,
     height: 32,
     borderRadius: Radius.sm,
     backgroundColor: Colors.border,
@@ -1321,6 +1513,9 @@ const styles = StyleSheet.create({
   },
   buildingSectionBadgeMaxed: {
     backgroundColor: Colors.warning,
+  },
+  buildingSectionBadgeTopRightRounded: {
+    borderTopRightRadius: Radius.lg,
   },
   buildingSectionBadgeText: {
     fontSize: 14,
@@ -1349,18 +1544,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     lineHeight: 18,
   },
+  buildingSectionRemainingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+    marginHorizontal: Spacing.base,
+    marginVertical: Spacing.sm,
+  },
   buildingSectionRemaining: {
+    flex: 1,
     borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
-    marginHorizontal: Spacing.base,
-    marginVertical: Spacing.sm,
   },
   buildingSectionSeparator: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
     margin: Spacing.lg,
+  },
+  buildingSectionMerged: {
+    marginHorizontal: Spacing.base,
   },
   levelGridBorder: {
     borderRadius: Radius.sm,
@@ -1427,6 +1631,7 @@ const styles = StyleSheet.create({
   },
   buildingStatsTable: {
     marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
     borderWidth: 0.75,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
