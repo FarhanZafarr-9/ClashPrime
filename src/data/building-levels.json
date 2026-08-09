@@ -225,7 +225,16 @@
         "Experience": 360,
         "Town Hall Level": 15
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 2,
+      "TH5": 3,
+      "TH7": 5,
+      "TH10": 6,
+      "TH11": 7,
+      "TH16": 7,
+      "TH17": 7
+    }
   },
   {
     "name": "Archer Tower",
@@ -453,7 +462,20 @@
         "Experience": 415,
         "Town Hall Level": 15
       }
-    ]
+    ],
+    "counts": {
+      "TH2": 1,
+      "TH4": 2,
+      "TH5": 3,
+      "TH7": 4,
+      "TH8": 5,
+      "TH9": 6,
+      "TH10": 7,
+      "TH11": 8,
+      "TH16": 8,
+      "TH17": 9,
+      "TH18": 9
+    }
   },
   {
     "name": "Mortar",
@@ -651,7 +673,13 @@
         "Experience": 1039,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH3": 1,
+      "TH6": 2,
+      "TH7": 3,
+      "TH8": 4
+    }
   },
   {
     "name": "Air Defense",
@@ -829,7 +857,13 @@
         "Experience": 1069,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH4": 1,
+      "TH6": 2,
+      "TH7": 3,
+      "TH9": 4
+    }
   },
   {
     "name": "Wizard Tower",
@@ -1017,7 +1051,15 @@
         "Experience": 689,
         "Town Hall Level": 17
       }
-    ]
+    ],
+    "counts": {
+      "TH5": 1,
+      "TH6": 2,
+      "TH8": 3,
+      "TH9": 4,
+      "TH11": 5,
+      "TH18": 6
+    }
   },
   {
     "name": "Air Sweeper",
@@ -1097,7 +1139,11 @@
         "Experience": 509,
         "Town Hall Level": 11
       }
-    ]
+    ],
+    "counts": {
+      "TH6": 1,
+      "TH9": 2
+    }
   },
   {
     "name": "Hidden Tesla",
@@ -1285,7 +1331,13 @@
         "Experience": 1059,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH7": 2,
+      "TH8": 3,
+      "TH9": 4,
+      "TH12": 5
+    }
   },
   {
     "name": "Bomb Tower",
@@ -1447,7 +1499,11 @@
         "Experience": 1059,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH8": 1,
+      "TH10": 2
+    }
   },
   {
     "name": "X-Bow",
@@ -1595,7 +1651,12 @@
         "Experience": 1080,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH9": 2,
+      "TH10": 3,
+      "TH11": 4
+    }
   },
   {
     "name": "Inferno Tower",
@@ -1787,7 +1848,11 @@
         "After 5.25s": 1080,
         "Initial_2": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH10": 2,
+      "TH12": 3
+    }
   },
   {
     "name": "Eagle Artillery",
@@ -1883,7 +1948,11 @@
         "Experience": 905,
         "Town Hall Level": 16
       }
-    ]
+    ],
+    "counts": {
+      "TH11": 1,
+      "TH17": 0
+    }
   },
   {
     "name": "Scattershot",
@@ -1979,7 +2048,10 @@
         "Experience": 1138,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH13": 2
+    }
   },
   {
     "name": "Builder's Hut",
@@ -2095,7 +2167,11 @@
         "Experience": 1059,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 5,
+      "TH14": 5
+    }
   },
   {
     "name": "Spell Tower",
@@ -2148,7 +2224,10 @@
         "Experience": 929,
         "Town Hall Level": 17
       }
-    ]
+    ],
+    "counts": {
+      "TH15": 2
+    }
   },
   {
     "name": "Monolith",
@@ -2222,7 +2301,10 @@
         "Experience": 1138,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH15": 1
+    }
   },
   {
     "name": "Multi-Archer Tower",
@@ -2280,7 +2362,12 @@
         "Experience": 1099,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH16": 2,
+      "TH17": 3,
+      "TH18": 4
+    }
   },
   {
     "name": "Ricochet Cannon",
@@ -2343,7 +2430,11 @@
         "Experience": 1080,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH16": 2,
+      "TH17": 3
+    }
   },
   {
     "name": "Multi-Gear Tower",
@@ -2391,7 +2482,10 @@
         "Experience": 1099,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH17": 1
+    }
   },
   {
     "name": "Firespitter",
@@ -2439,7 +2533,10 @@
         "Experience": 1138,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH17": 2
+    }
   },
   {
     "name": "Revenge Tower",
@@ -2471,7 +2568,10 @@
         "Experience": 1099,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH18": 1
+    }
   },
   {
     "name": "Super Wizard Tower",
@@ -2512,7 +2612,10 @@
         "Experience": 1099,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH18": 2
+    }
   },
   {
     "name": "Wall",
@@ -2720,7 +2823,20 @@
         "Build Cost_5": 10,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH2": 25,
+      "TH3": 50,
+      "TH4": 75,
+      "TH5": 100,
+      "TH6": 125,
+      "TH7": 175,
+      "TH8": 225,
+      "TH9": 250,
+      "TH10": 275,
+      "TH11": 300,
+      "TH14": 325
+    }
   },
   {
     "name": "Town Hall",
@@ -2899,7 +3015,10 @@
         "Maximum Number of Buildings Available*": "94<!-- +1: -2 from Super Wizard Tower merge, +1 Wizard Tower, +1 Revenge Tower, +1 Crafting Station-->",
         "Maximum Number of Traps Available": 47
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1
+    }
   },
   {
     "name": "Gold Mine",
@@ -3141,7 +3260,16 @@
         "Catch-Up Point*": "25d",
         "Town Hall Level": 16
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1,
+      "TH2": 2,
+      "TH3": 3,
+      "TH4": 4,
+      "TH5": 5,
+      "TH6": 6,
+      "TH9": 7
+    }
   },
   {
     "name": "Elixir Collector",
@@ -3383,7 +3511,16 @@
         "Catch-Up Point*": "25d",
         "Town Hall Level": 16
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1,
+      "TH2": 2,
+      "TH3": 3,
+      "TH4": 4,
+      "TH5": 5,
+      "TH6": 6,
+      "TH9": 7
+    }
   },
   {
     "name": "Dark Elixir Drill",
@@ -3547,7 +3684,12 @@
         "Catch-Up Point*": "54d",
         "Town Hall Level": 16
       }
-    ]
+    ],
+    "counts": {
+      "TH7": 1,
+      "TH8": 2,
+      "TH9": 3
+    }
   },
   {
     "name": "Gold Storage",
@@ -3735,7 +3877,13 @@
         "Experience": 1039,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1,
+      "TH3": 2,
+      "TH8": 3,
+      "TH9": 4
+    }
   },
   {
     "name": "Elixir Storage",
@@ -3923,7 +4071,13 @@
         "Experience": 1039,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1,
+      "TH3": 2,
+      "TH8": 3,
+      "TH9": 4
+    }
   },
   {
     "name": "Dark Elixir Storage",
@@ -4057,7 +4211,10 @@
         "Experience": 1059,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH7": 1
+    }
   },
   {
     "name": "Clan Castle",
@@ -4245,7 +4402,12 @@
         "Experience": 1099,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1,
+      "TH2": 1,
+      "TH3": 1
+    }
   },
   {
     "name": "Army Camp",
@@ -4388,7 +4550,13 @@
         "Experience": 1138,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1,
+      "TH3": 2,
+      "TH5": 3,
+      "TH7": 4
+    }
   },
   {
     "name": "Barracks",
@@ -4576,7 +4744,10 @@
         "Experience": 952,
         "Town Hall Level": 17
       }
-    ]
+    ],
+    "counts": {
+      "TH1": 1
+    }
   },
   {
     "name": "Dark Barracks",
@@ -4710,7 +4881,10 @@
         "Experience": 929,
         "Town Hall Level": 16
       }
-    ]
+    ],
+    "counts": {
+      "TH7": 1
+    }
   },
   {
     "name": "Laboratory",
@@ -4854,7 +5028,10 @@
         "Experience": 1175,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH3": 1
+    }
   },
   {
     "name": "Spell Factory",
@@ -4962,7 +5139,10 @@
         "Experience": 881,
         "Town Hall Level": 16
       }
-    ]
+    ],
+    "counts": {
+      "TH5": 1
+    }
   },
   {
     "name": "Hero Hall",
@@ -5100,7 +5280,10 @@
         "Experience": 1080,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH7": 1
+    }
   },
   {
     "name": "Dark Spell Factory",
@@ -5198,7 +5381,10 @@
         "Experience": 929,
         "Town Hall Level": 15
       }
-    ]
+    ],
+    "counts": {
+      "TH8": 1
+    }
   },
   {
     "name": "Blacksmith",
@@ -5362,7 +5548,10 @@
         "Glowy Ore": 929,
         "Starry Ore": 17
       }
-    ]
+    ],
+    "counts": {
+      "TH8": 1
+    }
   },
   {
     "name": "Workshop",
@@ -5470,7 +5659,10 @@
         "Experience": 1080,
         "Town Hall Level": 17
       }
-    ]
+    ],
+    "counts": {
+      "TH12": 1
+    }
   },
   {
     "name": "Pet House",
@@ -5595,7 +5787,10 @@
         "Experience": 1080,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH14": 1
+    }
   },
   {
     "name": "Bomb",
@@ -5723,7 +5918,14 @@
         "Experience": 831,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH3": 2,
+      "TH5": 4,
+      "TH7": 6,
+      "TH13": 7,
+      "TH14": 8
+    }
   },
   {
     "name": "Spring Trap",
@@ -5857,7 +6059,14 @@
         "Experience": 974,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH4": 2,
+      "TH6": 4,
+      "TH8": 6,
+      "TH12": 8,
+      "TH13": 9
+    }
   },
   {
     "name": "Giant Bomb",
@@ -5982,7 +6191,17 @@
         "Experience": 952,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH6": 1,
+      "TH7": 2,
+      "TH8": 3,
+      "TH9": 4,
+      "TH10": 5,
+      "TH12": 6,
+      "TH14": 7,
+      "TH17": 8
+    }
   },
   {
     "name": "Air Bomb",
@@ -6102,7 +6321,15 @@
         "Experience": 881,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH5": 2,
+      "TH8": 4,
+      "TH10": 5,
+      "TH12": 6,
+      "TH14": 7,
+      "TH18": 8
+    }
   },
   {
     "name": "Seeking Air Mine",
@@ -6182,7 +6409,17 @@
         "Experience": 996,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH7": 1,
+      "TH8": 2,
+      "TH9": 4,
+      "TH10": 5,
+      "TH12": 6,
+      "TH13": 7,
+      "TH14": 8,
+      "TH17": 9
+    }
   },
   {
     "name": "Skeleton Trap",
@@ -6244,7 +6481,12 @@
         "Experience": 777,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH8": 2,
+      "TH10": 3,
+      "TH14": 4
+    }
   },
   {
     "name": "Tornado Trap",
@@ -6288,7 +6530,10 @@
         "Experience": 415,
         "Town Hall Level": 12
       }
-    ]
+    ],
+    "counts": {
+      "TH11": 1
+    }
   },
   {
     "name": "Giga Bomb",
@@ -6336,7 +6581,10 @@
         "Experience": 1059,
         "Town Hall Level": 18
       }
-    ]
+    ],
+    "counts": {
+      "TH17": 1
+    }
   },
   {
     "name": "Double Cannon",
@@ -6454,7 +6702,12 @@
         "Experience": 929,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH2": 1,
+      "BH5": 2,
+      "BH8": 3
+    }
   },
   {
     "name": "BB Archer Tower",
@@ -6572,7 +6825,12 @@
         "Experience": 881,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH2": 1,
+      "BH4": 2,
+      "BH6": 3
+    }
   },
   {
     "name": "BB Hidden Tesla",
@@ -6690,7 +6948,12 @@
         "Experience": 929,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 1,
+      "BH6": 2,
+      "BH7": 3
+    }
   },
   {
     "name": "Firecrackers",
@@ -6808,7 +7071,14 @@
         "Experience": 881,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 1,
+      "BH5": 2,
+      "BH7": 3,
+      "BH8": 4,
+      "BH9": 5
+    }
   },
   {
     "name": "Crusher",
@@ -6926,7 +7196,11 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 1,
+      "BH6": 2
+    }
   },
   {
     "name": "Guard Post",
@@ -7033,7 +7307,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH4": 1
+    }
   },
   {
     "name": "BB Air Bombs",
@@ -7151,7 +7428,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH4": 1
+    }
   },
   {
     "name": "Multi Mortar",
@@ -7291,7 +7571,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH5": 1
+    }
   },
   {
     "name": "O.T.T.O's Outpost",
@@ -7398,7 +7681,10 @@
         "Experience": 974,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH6": 1
+    }
   },
   {
     "name": "BB Roaster",
@@ -7516,7 +7802,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH6": 1
+    }
   },
   {
     "name": "Giant Cannon",
@@ -7634,7 +7923,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH7": 1
+    }
   },
   {
     "name": "Mega Tesla",
@@ -7752,7 +8044,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH8": 1
+    }
   },
   {
     "name": "BB Lava Launcher",
@@ -7903,7 +8198,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH9": 1
+    }
   },
   {
     "name": "BB X-Bow",
@@ -7971,7 +8269,10 @@
         "Experience": 1018,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH10": 1
+    }
   },
   {
     "name": "BB Walls",
@@ -8089,7 +8390,18 @@
         "Wall Ring Cost": 2,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 10,
+      "BH2": 20,
+      "BH3": 50,
+      "BH4": 75,
+      "BH5": 100,
+      "BH6": 120,
+      "BH7": 140,
+      "BH8": 160,
+      "BH9": 180
+    }
   },
   {
     "name": "Push Trap",
@@ -8185,7 +8497,14 @@
         "Experience": 415,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH2": 1,
+      "BH3": 2,
+      "BH4": 3,
+      "BH5": 4,
+      "BH7": 5
+    }
   },
   {
     "name": "BB Spring Trap",
@@ -8247,7 +8566,14 @@
         "Experience": 509,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 2,
+      "BH5": 3,
+      "BH7": 4,
+      "BH8": 5,
+      "BH9": 6
+    }
   },
   {
     "name": "Mine",
@@ -8343,7 +8669,14 @@
         "Experience": 464,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 2,
+      "BH4": 3,
+      "BH5": 4,
+      "BH6": 5,
+      "BH10": 6
+    }
   },
   {
     "name": "Mega Mine",
@@ -8439,7 +8772,13 @@
         "Experience": 587,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH4": 1,
+      "BH6": 2,
+      "BH8": 3,
+      "BH9": 4
+    }
   },
   {
     "name": "Builder Hall",
@@ -8535,7 +8874,10 @@
         "Experience": 777,
         "Maximum Number of Buildings Available": 55
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 1
+    }
   },
   {
     "name": "BB Gold Mine",
@@ -8675,7 +9017,12 @@
         "Catch-Up Point*": "24d",
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 1,
+      "BH6": 2,
+      "BH8": 3
+    }
   },
   {
     "name": "BB Elixir Collector",
@@ -8815,7 +9162,12 @@
         "Catch-Up Point*": "24d",
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 1,
+      "BH6": 2,
+      "BH8": 3
+    }
   },
   {
     "name": "BB Gold Storage",
@@ -8922,7 +9274,11 @@
         "Experience": 657,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 1,
+      "BH5": 2
+    }
   },
   {
     "name": "BB Elixir Storage",
@@ -9029,7 +9385,11 @@
         "Experience": 657,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 1,
+      "BH5": 2
+    }
   },
   {
     "name": "Gem Mine",
@@ -9180,7 +9540,10 @@
         "Catch-up Point**": "160d",
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH3": 1
+    }
   },
   {
     "name": "Builder Barracks",
@@ -9305,7 +9668,10 @@
         "Experience": 657,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 1
+    }
   },
   {
     "name": "BB Army Camp",
@@ -9313,7 +9679,15 @@
     "description": "\"Your troops are stationed in Army Camps. Each camp can house only one troop type at a time. Some troops can be upgraded to fit more units per camp!\"",
     "maxLevel": 0,
     "statsColumns": [],
-    "levels": []
+    "levels": [],
+    "counts": {
+      "BH1": 1,
+      "BH2": 2,
+      "BH3": 3,
+      "BH4": 4,
+      "BH6": 5,
+      "BH7": 6
+    }
   },
   {
     "name": "BB Cannon",
@@ -9429,7 +9803,12 @@
         "Experience": 881,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 1,
+      "BH3": 2,
+      "BH7": 3
+    }
   },
   {
     "name": "Star Laboratory",
@@ -9525,7 +9904,10 @@
         "Experience": 929,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH1": 1
+    }
   },
   {
     "name": "Battle Machine Altar",
@@ -9533,7 +9915,10 @@
     "description": "\"The Master Builders prize invention smashes enemy buildings to bits. What better way is there to show whos the best builder around? Unlock the Electric Hammer ability to give opponents a real pounding!\"",
     "maxLevel": 0,
     "statsColumns": [],
-    "levels": []
+    "levels": [],
+    "counts": {
+      "BH5": 1
+    }
   },
   {
     "name": "Reinforcement Camp",
@@ -9541,7 +9926,11 @@
     "description": "\"Reinforcement Camps provide helpful reinforcements during battles when reaching the corresponding stage.\"",
     "maxLevel": 0,
     "statsColumns": [],
-    "levels": []
+    "levels": [],
+    "counts": {
+      "BH6": 1,
+      "BH9": 2
+    }
   },
   {
     "name": "Healing Hut",
@@ -9612,7 +10001,10 @@
         "Experience": 720,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH6": 1
+    }
   },
   {
     "name": "Battle Copter Altar",
@@ -9620,7 +10012,10 @@
     "description": "\"Get to the Copter! Tired of hammering through Walls, Master Builders next-generation flying machine lets him soar over them. The Battle Copter attacks from afar with its powerful cannons; or can get up close and personal when using its Bomb Rush ability.\"",
     "maxLevel": 0,
     "statsColumns": [],
-    "levels": []
+    "levels": [],
+    "counts": {
+      "BH8": 1
+    }
   },
   {
     "name": "B.O.T.O's Shack",
@@ -9628,7 +10023,10 @@
     "description": "Master Builder saved this little guy from the scrap heap. Despite a few loose screws, B.O.T.O is eager to help with tasks around Builder Base!",
     "maxLevel": 0,
     "statsColumns": [],
-    "levels": []
+    "levels": [],
+    "counts": {
+      "BH2": 1
+    }
   },
   {
     "name": "Clock Tower",
@@ -9779,7 +10177,10 @@
         "Experience": 657,
         "Town Hall Level": 10
       }
-    ]
+    ],
+    "counts": {
+      "BH4": 1
+    }
   },
   {
     "name": "Elixir Cart",

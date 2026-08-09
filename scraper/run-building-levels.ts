@@ -1,106 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { ALL_BUILDINGS, extractCounts } from './building-counts-lib.ts';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const API_BASE = 'https://clashofclans.fandom.com/api.php';
 const DELAY_MS = 400;
 const OUTPUT_PATH = path.join(__dirname, '..', 'src', 'data', 'building-levels.json');
 
 // ── All buildings ────────────────────────────────────────────────────────
-const ALL_BUILDINGS: Record<string, string> = {
-  // ── Defenses ──
-  'Cannon': 'Cannon/Home_Village',
-  'Archer Tower': 'Archer_Tower/Home_Village',
-  'Mortar': 'Mortar',
-  'Air Defense': 'Air_Defense/Home_Village',
-  'Wizard Tower': 'Wizard_Tower',
-  'Air Sweeper': 'Air_Sweeper',
-  'Hidden Tesla': 'Hidden_Tesla/Home_Village',
-  'Bomb Tower': 'Bomb_Tower/Home_Village',
-  'X-Bow': 'X-Bow/Home_Village',
-  'Inferno Tower': 'Inferno_Tower/Home_Village',
-  'Eagle Artillery': 'Eagle_Artillery',
-  'Scattershot': 'Scattershot',
-  "Builder's Hut": "Builder's_Hut",
-  'Spell Tower': 'Spell_Tower',
-  'Monolith': 'Monolith',
-  'Multi-Archer Tower': 'Multi-Archer_Tower',
-  'Ricochet Cannon': 'Ricochet_Cannon',
-  'Multi-Gear Tower': 'Multi-Gear_Tower',
-  'Firespitter': 'Firespitter',
-  'Revenge Tower': 'Revenge_Tower',
-  'Super Wizard Tower': 'Super_Wizard_Tower/Home_Village',
-  'Wall': 'Wall/Home_Village',
-  // ── Resources ──
-  'Town Hall': 'Town_Hall',
-  'Gold Mine': 'Gold_Mine/Home_Village',
-  'Elixir Collector': 'Elixir_Collector/Home_Village',
-  'Dark Elixir Drill': 'Dark_Elixir_Drill',
-  'Gold Storage': 'Gold_Storage/Home_Village',
-  'Elixir Storage': 'Elixir_Storage/Home_Village',
-  'Dark Elixir Storage': 'Dark_Elixir_Storage',
-  'Clan Castle': 'Clan_Castle',
-  // ── Army ──
-  'Army Camp': 'Army_Camp/Home_Village',
-  'Barracks': 'Barracks',
-  'Dark Barracks': 'Dark_Barracks',
-  'Laboratory': 'Laboratory',
-  'Spell Factory': 'Spell_Factory',
-  'Hero Hall': 'Hero_Hall',
-  'Dark Spell Factory': 'Dark_Spell_Factory',
-  'Blacksmith': 'Blacksmith',
-  'Workshop': 'Workshop',
-  'Pet House': 'Pet_House',
-  // ── Traps ──
-  'Bomb': 'Bomb',
-  'Spring Trap': 'Spring_Trap/Home_Village',
-  'Giant Bomb': 'Giant_Bomb',
-  'Air Bomb': 'Air_Bomb',
-  'Seeking Air Mine': 'Seeking_Air_Mine',
-  'Skeleton Trap': 'Skeleton_Trap',
-  'Tornado Trap': 'Tornado_Trap',
-  'Giga Bomb': 'Giga_Bomb',
-  // Builder Base - Defenses
-  'Double Cannon': 'Double_Cannon',
-  'BB Archer Tower': 'Archer_Tower/Builder_Base',
-  'BB Hidden Tesla': 'Hidden_Tesla/Builder_Base',
-  'Firecrackers': 'Firecrackers',
-  'Crusher': 'Crusher/Builder_Base',
-  'Guard Post': 'Guard_Post',
-  'BB Air Bombs': 'Air_Bombs/Builder_Base',
-  'Multi Mortar': 'Multi_Mortar/Builder_Base',
-  "O.T.T.O's Outpost": "O.T.T.O's_Outpost",
-  'BB Roaster': 'Roaster/Builder_Base',
-  'Giant Cannon': 'Giant_Cannon/Builder_Base',
-  'Mega Tesla': 'Mega_Tesla',
-  'BB Lava Launcher': 'Lava_Launcher/Builder_Base',
-  'BB X-Bow': 'X-Bow/Builder_Base',
-  // Builder Base - Walls
-  'BB Walls': 'Wall/Builder_Base',
-  // Builder Base - Traps
-  'Push Trap': 'Push_Trap',
-  'BB Spring Trap': 'Spring_Trap/Builder_Base',
-  'Mine': 'Mine/Builder_Base',
-  'Mega Mine': 'Mega_Mine/Builder_Base',
-  // Builder Base - Resources
-  'Builder Hall': 'Builder_Hall',
-  'BB Gold Mine': 'Gold_Mine/Builder_Base',
-  'BB Elixir Collector': 'Elixir_Collector/Builder_Base',
-  'BB Gold Storage': 'Gold_Storage/Builder_Base',
-  'BB Elixir Storage': 'Elixir_Storage/Builder_Base',
-  'Gem Mine': 'Gem_Mine',
-  // Builder Base - Army
-  'Builder Barracks': 'Builder_Barracks',
-  'BB Army Camp': 'Army_Camp/Builder_Base',
-  'Star Laboratory': 'Star_Laboratory',
-  'Battle Machine Altar': 'Battle_Machine_Altar',
-  'Reinforcement Camp': 'Reinforcement_Camp',
-  'Healing Hut': 'Healing_Hut',
-  'Battle Copter Altar': 'Battle_Copter_Altar',
-  // Builder Base - Other
-  "B.O.T.O's Shack": "B.O.T.O's_Shack",
-  'Clock Tower': 'Clock_Tower',
-  'Elixir Cart': 'Elixir_Cart',
-};
+// (shared with building-counts-lib so names/slugs stay in sync)
 
 // ── Types ────────────────────────────────────────────────────────────────
 export interface BuildingLevel {
@@ -115,6 +24,7 @@ export interface BuildingData {
   maxLevel: number;
   statsColumns: string[];
   levels: BuildingLevel[];
+  counts?: Record<string, number> | null;
 }
 
 // ── Fandom API helpers ──────────────────────────────────────────────────
@@ -384,6 +294,7 @@ async function scrapeBuilding(name: string, slug: string): Promise<BuildingData 
   const description = extractDescription(wt);
   const maxLevel = extractMaxLevel(wt);
   const stats = findStatsTable(wt);
+  const counts = extractCounts(wt);
 
   const result: BuildingData = {
     name,
@@ -392,12 +303,14 @@ async function scrapeBuilding(name: string, slug: string): Promise<BuildingData 
     maxLevel,
     statsColumns: stats?.columns ?? [],
     levels: stats?.rows ?? [],
+    counts,
   };
 
   const lvlRange = maxLevel > 0 ? `Lv1-${maxLevel}` : 'no gallery';
   const rowCount = stats?.rows.length ?? 0;
   const colCount = stats?.columns.length ?? 0;
-  console.log(`${lvlRange}, ${rowCount} rows, ${colCount} cols`);
+  const countSummary = counts ? `, ${Object.keys(counts).length} count pts` : '';
+  console.log(`${lvlRange}, ${rowCount} rows, ${colCount} cols${countSummary}`);
   return result;
 }
 
