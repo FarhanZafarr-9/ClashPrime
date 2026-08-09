@@ -5,8 +5,6 @@ import {
   getApiToken,
   getCachedPlayer,
   cachePlayer,
-  updatePlayerBuildingLevel,
-  setBulkBuildingLevels,
   setLastMaxedTH,
   getActiveAccountTag,
   getActiveAccount,
@@ -16,6 +14,7 @@ import {
   saveAccount,
 } from './usePlayer';
 import { ClashAPI } from '../api/clash';
+import { toJsonName, toStoreName } from '../utils/buildingCopies';
 
 interface PlayerContextValue {
   player: ClashPlayer | null;
@@ -24,8 +23,7 @@ interface PlayerContextValue {
   lastSync: Date | null;
   refresh: () => Promise<ClashPlayer | undefined>;
   tagVersion: number;
-  upgradeBuilding: (name: string) => Promise<void>;
-  setBuildingLevel: (name: string, level: number) => Promise<void>;
+  setBuildingCopies: (name: string, levels: number[], maxLevel: number) => Promise<void>;
   setBulkLevels: (levels: Record<string, number>) => Promise<void>;
   setLastMaxed: (th: number) => Promise<void>;
   activeAccount: StoredAccount | null;
@@ -42,8 +40,7 @@ const PlayerContext = createContext<PlayerContextValue>({
   lastSync: null,
   refresh: async () => undefined,
   tagVersion: 0,
-  upgradeBuilding: async () => {},
-  setBuildingLevel: async () => {},
+  setBuildingCopies: async () => {},
   setBulkLevels: async () => {},
   setLastMaxed: async () => {},
   activeAccount: null,
@@ -109,11 +106,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const cached = await getCachedPlayer();
       if (cached) {
         data.buildingLevels = cached.buildingLevels;
+        data.buildings = cached.buildings ?? data.buildings;
         data.lastMaxedTH = cached.lastMaxedTH;
       } else {
         const prev = playerRef.current;
         if (prev) {
           data.buildingLevels = prev.buildingLevels;
+          data.buildings = prev.buildings ?? data.buildings;
           data.lastMaxedTH = prev.lastMaxedTH;
         }
       }
@@ -177,20 +176,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setTagVersion((v) => v + 1);
   }, []);
 
-  const setBuildingLevel = useCallback(async (name: string, level: number) => {
+  const setBuildingCopies = useCallback(async (name: string, levels: number[], maxLevel: number) => {
     setPlayer((prev) => {
       const base = prev || {} as ClashPlayer;
-      const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), [name]: level } };
-      if (base.tag) cachePlayer(updated, base.tag);
-      return updated;
-    });
-  }, []);
-
-  const upgradeBuilding = useCallback(async (name: string) => {
-    setPlayer((prev) => {
-      const base = prev || {} as ClashPlayer;
-      const current = base.buildingLevels?.[name] ?? 0;
-      const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), [name]: current + 1 } };
+      const jsonName = toJsonName(name);
+      const storeName = toStoreName(name);
+      const buildings = (base.buildings ?? []).filter((b) => b.name.toLowerCase() !== jsonName.toLowerCase());
+      const copies = levels.map((level) => ({ name: jsonName, level, maxLevel }));
+      const updated = { ...base, buildings: [...buildings, ...copies] };
+      const rep = levels.filter((l) => l > 0).sort((a, b) => b - a)[0] ?? 0;
+      updated.buildingLevels = { ...(base.buildingLevels || {}), [storeName]: rep };
       if (base.tag) cachePlayer(updated, base.tag);
       return updated;
     });
@@ -200,6 +195,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setPlayer((prev) => {
       const base = prev || {} as ClashPlayer;
       const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), ...levels } };
+      if (base.buildings?.length) {
+        updated.buildings = base.buildings.map((b) =>
+          levels[b.name] != null ? { ...b, level: levels[b.name] } : b,
+        );
+      }
       if (base.tag) cachePlayer(updated, base.tag);
       return updated;
     });
@@ -222,8 +222,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     refresh,
     tagVersion,
     bumpTagVersion,
-    upgradeBuilding,
-    setBuildingLevel,
+    setBuildingCopies,
     setBulkLevels,
     setLastMaxed,
     activeAccount,

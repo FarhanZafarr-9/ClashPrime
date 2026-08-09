@@ -214,6 +214,12 @@ export interface Pet {
   village: 'home' | 'builderBase';
 }
 
+export interface PlayerBuilding {
+  name: string;
+  level: number;
+  maxLevel: number;
+}
+
 export interface ClashPlayer {
   tag: string;
   name: string;
@@ -249,5 +255,6 @@ export interface ClashPlayer {
   spells: Spell[];
   pets: Pet[];
   buildingLevels?: Record<string, number>;
+  buildings?: PlayerBuilding[];
   lastMaxedTH?: number;
 }
