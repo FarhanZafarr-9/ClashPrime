@@ -355,65 +355,92 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
     ]}>
-      <PressableRipple onPress={toggleExpanded} style={styles.itemCardTouchable}>
-        <View style={styles.itemRow}>
-          {mainImgSource ? (
-            <Image source={mainImgSource} style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
-          ) : (
-            <View style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]}>
-              <Text style={styles.itemIconText}>
-                {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-              </Text>
-            </View>
-          )}
-          <View style={styles.itemInfo}>
-            <View style={styles.itemNameRow}>
-              <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
-              {count > 1 && (
-                <View style={styles.copyCountChip}>
-                  <Text style={styles.copyCountChipText}>({copyIndex + 1})</Text>
+      <View style={styles.itemRow}>
+        <PressableRipple onPress={toggleExpanded} style={styles.itemCardTouchable}>
+          <View style={styles.itemRowInner}>
+            {mainImgSource ? (
+              <Image source={mainImgSource} style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
+            ) : (
+              <View style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]}>
+                <Text style={styles.itemIconText}>
+                  {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.itemInfo}>
+              <View style={styles.itemNameRow}>
+                <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
+                {count > 1 && (
+                  <View style={styles.copyCountChip}>
+                    <Text style={styles.copyCountChipText}>({copyIndex + 1})</Text>
+                  </View>
+                )}
+              </View>
+              {isLocked ? (
+                <Text style={styles.lockedText}>Locked</Text>
+              ) : (
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${Math.min(progress, 1) * 100}%`,
+                        backgroundColor: isFullyMaxed ? Colors.warning : Colors.textSecondary,
+                      },
+                    ]}
+                  />
                 </View>
               )}
             </View>
-            {isLocked ? (
-              <Text style={styles.lockedText}>Locked</Text>
-            ) : (
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min(progress, 1) * 100}%`,
-                      backgroundColor: isFullyMaxed ? Colors.warning : Colors.textSecondary,
-                    },
-                  ]}
-                />
-              </View>
-            )}
           </View>
-          <View style={styles.right}>
-            {isLocked ? (
-              <View style={styles.lockedBadge}>
-                <Text style={styles.lockedBadgeText}>Locked</Text>
+        </PressableRipple>
+        <View style={styles.right}>
+          {isLocked ? (
+            <View style={styles.lockedBadge}>
+              <Text style={styles.lockedBadgeText}>Locked</Text>
+            </View>
+          ) : (
+              <View style={styles.rightBtns}>
+                <View style={[
+                  styles.levelBadgeContainer,
+                  isFullyMaxed && styles.levelBadgeMaxed,
+                ]}>
+                  <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
+                    {currentLevel}
+                  </Text>
+                  <Text style={[styles.levelBadgeLabel, isFullyMaxed && styles.levelBadgeTextMaxed]}>
+                    / {effectiveMax}
+                  </Text>
+                </View>
+                {count > 1 && (
+                  <View style={styles.quickBtnRow}>
+                    <PressableRipple
+                      onPress={() => setCopyLevel(Math.min(currentLevel + 1, effectiveMax))}
+                      onLongPress={() => setCopyLevel(effectiveMax)}
+                      disabled={isFullyMaxed}
+                      style={[styles.quickBtn, isFullyMaxed && styles.quickBtnDisabled]}
+                      hitSlop={4}
+                      accessibilityLabel={`Upgrade ${name} copy ${copyIndex + 1}`}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="chevron-up" size={14} color={isFullyMaxed ? Colors.textTertiary : Colors.textPrimary} />
+                    </PressableRipple>
+                    <PressableRipple
+                      onPress={() => setCopyLevel(Math.max(currentLevel - 1, 1))}
+                      disabled={currentLevel <= 1}
+                      style={[styles.quickBtn, currentLevel <= 1 && styles.quickBtnDisabled]}
+                      hitSlop={4}
+                      accessibilityLabel={`Downgrade ${name} copy ${copyIndex + 1}`}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="chevron-down" size={14} color={currentLevel <= 1 ? Colors.textTertiary : Colors.textPrimary} />
+                    </PressableRipple>
+                  </View>
+                )}
               </View>
-            ) : (
-              <View style={[
-                styles.levelBadgeContainer,
-                isFullyMaxed && styles.levelBadgeMaxed,
-                isFirst && { borderTopRightRadius: Radius.lg },
-                isLast && !expanded && { borderBottomRightRadius: Radius.lg },
-              ]}>
-                <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-                  {currentLevel}
-                </Text>
-                <Text style={[styles.levelBadgeLabel, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-                  / {effectiveMax}
-                </Text>
-              </View>
-            )}
-          </View>
+          )}
         </View>
-      </PressableRipple>
+      </View>
 
       {isLocked && effectiveMax > 0 && (
         <View style={styles.expandedSection}>
@@ -981,10 +1008,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   itemCardTouchable: {
+    flex: 1,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
   },
   itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemRowInner: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
@@ -1050,6 +1083,27 @@ const styles = StyleSheet.create({
   right: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+  },
+  rightBtns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingRight: Spacing.sm,
+  },
+  quickBtnRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  quickBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickBtnDisabled: {
+    opacity: 0.4,
   },
   levelBadgeContainer: {
     width: 32,
