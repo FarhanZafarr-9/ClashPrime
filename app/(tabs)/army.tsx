@@ -386,9 +386,14 @@ export default function PlayerProfileScreen() {
     if (isEquipmentName(detail.name)) {
       return detail.levels.filter((l) => l.labLevel == null || l.labLevel <= blacksmithLevel);
     }
-    // Spells/equipment don't have DPS/HP, so they aren't gated by the troop Lab — show all.
+    // Spells don't have DPS/HP so they aren't gated by the troop Lab, but cap
+    // them at the max level the current Town Hall allows (matches the card badge).
     const hasTroopStats = detail.levels.some((l) => l.dps > 0 || l.hitpoints > 0);
-    if (!hasTroopStats) return detail.levels;
+    if (!hasTroopStats) {
+      const maxAtTH = getMaxLevelAtTH(detail.name, player.townHallLevel);
+      if (maxAtTH !== null) return detail.levels.filter((l) => l.level <= maxAtTH);
+      return detail.levels;
+    }
     const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
     return detail.levels.filter((l) => {
       if (isHero) {
