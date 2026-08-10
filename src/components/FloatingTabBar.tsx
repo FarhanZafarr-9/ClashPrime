@@ -81,7 +81,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
               style={[
                 styles.tabItem,
                 isActive && styles.tabItemActive,
-                isActive && isFirst && styles.tabItemActiveFirst,
               ]}
               onPress={() => navigate(tab.key)}
             >
@@ -119,7 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     backgroundColor: Colors.bgElevated,
-    borderRadius: Radius.full,
+    borderRadius: Radius.md,
     padding: 4,
     width: '100%',
     maxWidth: 400,
@@ -133,7 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 40,
     height: 46,
-    borderRadius: 8,
+    borderRadius: Radius.md,
     marginRight: 4,
     alignItems: 'center',
     justifyContent: 'center',
