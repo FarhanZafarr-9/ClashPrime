@@ -101,6 +101,16 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '4.5.0',
+    date: 'August 11, 2026',
+    items: [
+      'War tab: enemy member list with the same grouped rows and colors, a heuristic Attack Plan card — your mirror plus the top targets with expected stars, cleanup estimates and Best/Mirror/Cleanup/Risky tags — and a collapsible legend for the attack and defense colors.',
+      'Home tab: Progress Overview, Buildings and Backlog now nest into collapsible sections with progress bars, so the whole village fits on one screen.',
+      'Buildings tab: bulk Max out all buildings action with a confirmation summary of every category affected.',
+      'Home polish: quick actions as compact setting rows, softer borderless profile card, and rounded corners that now match across section headers, badges and icons.',
+    ],
+  },
+  {
     version: '4.3.0',
     date: 'August 9, 2026',
     items: [
@@ -196,7 +206,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.3.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.5.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
