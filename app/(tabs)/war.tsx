@@ -16,9 +16,11 @@ import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../../src/api/clash';
 import { getApiToken } from '../../src/hooks/usePlayer';
-import type { ClanWar, WarLogEntry, WarClanDetail, WarMember, WarState } from '../../src/types/clash';
+import type { ClanWar, WarLogEntry, WarClanDetail, WarMember, WarState, ClashPlayer } from '../../src/types/clash';
+import { filterHomeTroops } from '../../src/types/clash';
 import { Card } from '../../src/components/Card';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 
 interface WarScreenData {
   currentWar: ClanWar | null;
@@ -121,6 +123,137 @@ function formatTime(iso: string): string {
   if (diffHrs > 0) return `${diffHrs}h ago`;
   const diffMin = Math.floor(diffMs / 60000);
   return `${Math.max(1, diffMin)}m ago`;
+}
+
+// ── Attack plan heuristics ──
+interface AttackSuggestion {
+  member: WarMember;
+  position: number;
+  thDelta: number;
+  expectedStars: number;
+  remaining: number;
+  isMirror: boolean;
+  attackedByUs: number;
+  ev: number;
+  tag: 'best' | 'mirror' | 'cleanup' | 'risky' | null;
+}
+
+interface AttackPlan {
+  myTH: number;
+  offense: number;
+  mirror: AttackSuggestion | null;
+  suggestions: AttackSuggestion[];
+}
+
+function computeOffensePower(player: ClashPlayer): number {
+  const th = player.townHallLevel;
+  if (th <= 0) return 0.5;
+  const ownedMap = (list: { name: string; level: number }[]): Record<string, number> => {
+    const m: Record<string, number> = {};
+    for (const it of list) m[it.name.toLowerCase()] = it.level;
+    return m;
+  };
+  const ratio = (owned: Record<string, number>, allAtTH: { name: string; maxLevel: number }[]) => {
+    if (allAtTH.length === 0) return 1;
+    let sum = 0;
+    for (const { name, maxLevel } of allAtTH) {
+      const level = owned[name.toLowerCase()] ?? 0;
+      sum += maxLevel > 0 ? level / maxLevel : 1;
+    }
+    return sum / allAtTH.length;
+  };
+  const homeTroops = filterHomeTroops(player.troops);
+  const homeHeroes = player.heroes.filter((h) => h.village === 'home');
+  const homeSpells = player.spells.filter((s) => s.village === 'home' || !s.village);
+  const all = getAllItemsAtTH(th);
+  const ratios = [
+    ratio(ownedMap(homeTroops), all.filter((i) => i.type === 'troop')),
+    ratio(ownedMap(homeSpells), all.filter((i) => i.type === 'spell')),
+    ratio(ownedMap(homeHeroes), all.filter((i) => i.type === 'hero')),
+  ];
+  if (player.heroEquipment.length > 0) {
+    ratios.push(player.heroEquipment.reduce((s, e) => s + (e.maxLevel > 0 ? Math.min(e.level / e.maxLevel, 1) : 1), 0) / player.heroEquipment.length);
+  }
+  return ratios.length > 0 ? ratios.reduce((s, r) => s + r, 0) / ratios.length : 0.5;
+}
+
+function estimateFreshStars(myTH: number, targetTH: number, offense: number): number {
+  const delta = targetTH - myTH;
+  let stars = 2.2 + 0.8 * offense;
+  if (delta > 0) stars -= 1.1 * delta;
+  else if (delta < 0) stars += 0.35 * delta;
+  return Math.max(0, Math.min(3, stars));
+}
+
+function estimateCleanupStars(remaining: number, offense: number): number {
+  return Math.max(0, Math.min(remaining, remaining * (0.55 + 0.45 * offense)));
+}
+
+function buildAttackPlan(opts: {
+  player: ClashPlayer | null | undefined;
+  clan: WarClanDetail;
+  opponent: WarClanDetail;
+  myPlayerTag?: string | null;
+  clanStars: number;
+  opponentStars: number;
+}): AttackPlan | null {
+  const { player, clan, opponent, myPlayerTag, clanStars, opponentStars } = opts;
+  if (!player || !myPlayerTag) return null;
+  const me = clan.members.find((m) => m.tag === myPlayerTag);
+  if (!me) return null;
+  const myTH = player.townHallLevel;
+  const offense = computeOffensePower(player);
+
+  const attackCounts = new Map<string, number>();
+  for (const m of clan.members) {
+    for (const a of m.attacks ?? []) {
+      attackCounts.set(a.defenderTag, (attackCounts.get(a.defenderTag) ?? 0) + 1);
+    }
+  }
+
+  const margin = clanStars - opponentStars;
+  const suggestions: AttackSuggestion[] = [];
+  for (const target of opponent.members) {
+    const takenStars = target.bestOpponentAttack?.stars ?? 0;
+    const remaining = Math.max(0, 3 - takenStars);
+    if (remaining === 0) continue;
+    const freshStars = estimateFreshStars(myTH, target.townhallLevel, offense);
+    const expectedStars = remaining < 3 ? estimateCleanupStars(remaining, offense) : freshStars;
+
+    let ev = expectedStars;
+    const attackedByUs = attackCounts.get(target.tag) ?? target.opponentAttacks ?? 0;
+    if (attackedByUs === 0) ev += 0.1;
+    if (margin < 0) ev *= 1 + Math.min(0.25, -margin * 0.05);
+    else if (margin >= 6) ev += 0.05;
+
+    suggestions.push({
+      member: target,
+      position: target.mapPosition,
+      thDelta: target.townhallLevel - myTH,
+      expectedStars,
+      remaining,
+      isMirror: target.mapPosition === me.mapPosition,
+      attackedByUs,
+      ev,
+      tag: null,
+    });
+  }
+
+  suggestions.sort((a, b) => b.ev - a.ev);
+  const top = suggestions.slice(0, 5);
+  top.forEach((s) => {
+    if (s === top[0]) s.tag = 'best';
+    else if (s.isMirror) s.tag = 'mirror';
+    else if (s.remaining < 3) s.tag = 'cleanup';
+    else if (s.expectedStars < 1) s.tag = 'risky';
+  });
+
+  return {
+    myTH,
+    offense,
+    mirror: suggestions.find((s) => s.isMirror) ?? null,
+    suggestions: top,
+  };
 }
 
 function WarResultBadge({ result }: { result: string }) {
@@ -307,11 +440,6 @@ export default function WarScreen() {
 
       let currentWar: ClanWar | null = null;
       if (currentWarRes.status === 'fulfilled') {
-        if (__DEV__) {
-          console.log('[War] current war response:', JSON.stringify(currentWarRes.value, null, 2));
-          const member = currentWarRes.value.clan?.members?.[0];
-          if (member) console.log('[War] first member raw:', JSON.stringify(member, null, 2));
-        }
         if (currentWarRes.value.state !== 'notInWar') currentWar = currentWarRes.value;
       }
       if (currentWarRes.status === 'rejected' && !inCwlLeague) {
@@ -449,8 +577,10 @@ export default function WarScreen() {
           />
         }
       >
+        <LegendCard />
+
         {data?.currentWar && (
-          <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} myPlayerTag={myPlayerTag} />
+          <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} />
         )}
 
         {!data?.currentWar && !cwlActive && (
@@ -493,7 +623,7 @@ export default function WarScreen() {
               {cwlLeague.season}{cwlLeague.season ? ' · ' : ''}{cwlLeague.wars.length} round{cwlLeague.wars.length === 1 ? '' : 's'}
             </Text>
             {cwlLeague.wars.map(({ round, war }, i) => (
-              <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+              <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
             ))}
           </>
         )}
@@ -573,13 +703,13 @@ export default function WarScreen() {
           </>
         )}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 70 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; myPlayerTag?: string | null; embedded?: boolean }) {
+function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, player, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; myPlayerTag?: string | null; player?: ClashPlayer | null; embedded?: boolean }) {
   const isPreparation = war.state === 'preparation';
   const isInWar = war.state === 'inWar';
   const isWarEnded = war.state === 'warEnded';
@@ -592,10 +722,17 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, em
   const members = isCwl
     ? [...clan.members].sort((a, b) => b.townhallLevel - a.townhallLevel)
     : clan.members;
+  const opponentMembers = isCwl
+    ? [...opponent.members].sort((a, b) => b.townhallLevel - a.townhallLevel)
+    : opponent.members;
 
   const status = STATUS_CONFIG[war.state] ?? STATUS_CONFIG.notInWar;
   const clanStars = clan.stars ?? 0;
   const oppStars = opponent.stars ?? 0;
+
+  const plan = isInWar
+    ? buildAttackPlan({ player, clan, opponent, myPlayerTag, clanStars, opponentStars: oppStars })
+    : null;
 
   let countdown: { icon: keyof typeof Ionicons.glyphMap; text: string } | null = null;
   if (isPreparation) {
@@ -709,19 +846,32 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, em
         </View>
       )}
 
-      {!isPreparation && (
-        <View style={styles.sectionHeader}>
-          <Ionicons name="people-outline" size={16} color={Colors.textSecondary} />
-          <Text style={styles.sectionTitle}>Members</Text>
-        </View>
+      {plan && (
+        <AttackPlanCard plan={plan} isCwl={isCwl} />
       )}
 
       {!isPreparation && (
-        <View style={styles.memberList}>
-          {members.map((m, i) => (
-            <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isFirst={i === 0} isLast={i === members.length - 1} />
-          ))}
-        </View>
+        <>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="people-outline" size={16} color={Colors.textSecondary} />
+            <Text style={styles.sectionTitle}>Members</Text>
+          </View>
+          <View style={styles.memberList}>
+            {members.map((m, i) => (
+              <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isFirst={i === 0} isLast={i === members.length - 1} />
+            ))}
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Ionicons name="shield-outline" size={16} color={Colors.textSecondary} />
+            <Text style={styles.sectionTitle}>Enemy Members</Text>
+          </View>
+          <View style={styles.memberList}>
+            {opponentMembers.map((m, i) => (
+              <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isMine={false} isFirst={i === 0} isLast={i === opponentMembers.length - 1} />
+            ))}
+          </View>
+        </>
       )}
     </View>
   );
@@ -739,7 +889,7 @@ function WarClanCard({ clan, align }: { clan: WarClanDetail; align: 'left' | 'ri
   );
 }
 
-function CwlRoundCard({ round, war, myClanTag, myPlayerTag, now, isFirst, isLast }: { round: number; war: ClanWar; myClanTag: string | null; myPlayerTag?: string | null; now: number; isFirst?: boolean; isLast?: boolean }) {
+function CwlRoundCard({ round, war, myClanTag, myPlayerTag, player, now, isFirst, isLast }: { round: number; war: ClanWar; myClanTag: string | null; myPlayerTag?: string | null; player?: ClashPlayer | null; now: number; isFirst?: boolean; isLast?: boolean }) {
   const mine = war.clan.tag === myClanTag ? war.clan : war.opponent;
   const theirs = war.clan.tag === myClanTag ? war.opponent : war.clan;
   const myStars = mine.stars ?? 0;
@@ -811,7 +961,7 @@ function CwlRoundCard({ round, war, myClanTag, myPlayerTag, now, isFirst, isLast
       </PressableRipple>
       {expanded && (
         <View style={[styles.cwlRoundDetail, isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }]}>
-          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} myPlayerTag={myPlayerTag} embedded />
+          <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} myPlayerTag={myPlayerTag} player={player} embedded />
         </View>
       )}
     </View>
@@ -973,21 +1123,177 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
   );
 }
 
+function LegendCard() {
+  const [open, setOpen] = useState(false);
+  const attackRows: { dot: 'best' | 'empty' | string; label: string }[] = [
+    { dot: 'best', label: '3★ attack' },
+    { dot: ATTACK_DOT_COLORS[2], label: '2★ attack' },
+    { dot: ATTACK_DOT_COLORS[1], label: '1★ attack' },
+    { dot: ATTACK_DOT_COLORS[0], label: '0★ attack' },
+    { dot: 'empty', label: 'Attack not used' },
+  ];
+  const shieldRows: { icon: keyof typeof Ionicons.glyphMap; color: string; label: string }[] = [
+    { icon: 'shield-checkmark', color: '#FFFFFF', label: 'Perfect defense (0★ taken)' },
+    { icon: 'shield-checkmark-outline', color: '#4CAF50', label: '1★ conceded' },
+    { icon: 'shield-half-outline', color: '#FFB74D', label: '2★ conceded' },
+    { icon: 'shield-outline', color: '#f44336', label: '3★ conceded' },
+    { icon: 'shield-outline', color: Colors.textTertiary, label: 'Not attacked' },
+  ];
+
+  return (
+    <Card compact style={styles.legendCard}>
+      <PressableRipple style={styles.planHeader} onPress={() => setOpen(o => !o)}>
+        <View style={styles.planHeaderIcon}>
+          <Ionicons name="color-palette-outline" size={15} color={Colors.textPrimary} />
+        </View>
+        <View style={styles.planHeaderText}>
+          <Text style={styles.planTitle}>Legend</Text>
+          <Text style={styles.planSubtitle}>Member row attack & defense colors</Text>
+        </View>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
+      </PressableRipple>
+
+      {open && (
+        <View style={styles.legendBody}>
+          <View style={styles.legendColumn}>
+            <Text style={styles.planSectionLabel}>Attacks</Text>
+            {attackRows.map(r => (
+              <View key={r.label} style={styles.legendRow}>
+                <View style={styles.legendDotSlot}>
+                  <View
+                    style={[
+                      styles.legendDot,
+                      r.dot === 'best' && styles.legendDotBest,
+                      r.dot === 'empty' && styles.legendDotEmpty,
+                      r.dot !== 'best' && r.dot !== 'empty' && { backgroundColor: r.dot },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.legendLabel}>{r.label}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.legendColumn}>
+            <Text style={styles.planSectionLabel}>Defense</Text>
+            {shieldRows.map(r => (
+              <View key={r.label} style={styles.legendRow}>
+                <View style={styles.legendShieldSlot}>
+                  <Ionicons name={r.icon} size={15} color={r.color} />
+                </View>
+                <Text style={styles.legendLabel}>{r.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+    </Card>
+  );
+}
+
+function AttackPlanCard({ plan, isCwl }: { plan: AttackPlan; isCwl: boolean }) {
+  const [open, setOpen] = useState(true);
+  const starsColor = (s: number) => (s >= 2.5 ? '#4CAF50' : s >= 1.5 ? '#FFB74D' : '#f44336');
+  const deltaColor = (d: number) => (d > 0 ? '#f44336' : d < 0 ? '#4CAF50' : Colors.textMuted);
+  const tags = (s: AttackSuggestion) => {
+    const out: { label: string; color: string; bg: string }[] = [];
+    if (s.tag === 'best') out.push({ label: 'Best', color: '#4CAF50', bg: 'rgba(76,175,80,0.15)' });
+    if (s.isMirror) out.push({ label: 'Mirror', color: Colors.textSecondary, bg: Colors.bgSubtle });
+    if (s.tag === 'cleanup') out.push({ label: 'Cleanup', color: '#4FC3F7', bg: 'rgba(79,195,247,0.15)' });
+    if (s.tag === 'risky') out.push({ label: 'Risky', color: '#f44336', bg: 'rgba(244,67,54,0.15)' });
+    return out;
+  };
+
+  return (
+    <Card compact style={styles.planCard}>
+      <PressableRipple style={styles.planHeader} onPress={() => setOpen(o => !o)}>
+        <View style={styles.planHeaderIcon}>
+          <Ionicons name="locate-outline" size={15} color={Colors.textPrimary} />
+        </View>
+        <View style={styles.planHeaderText}>
+          <Text style={styles.planTitle}>Attack Plan</Text>
+          <Text style={styles.planSubtitle}>
+            TH{plan.myTH} · Offense {Math.round(plan.offense * 100)}% · {isCwl ? '1 attack' : '2 attacks'}
+          </Text>
+        </View>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
+      </PressableRipple>
+
+      {open && (
+        <View style={styles.planBody}>
+          {plan.mirror && (
+            <View style={styles.planMirror}>
+              <View style={styles.planMirrorInfo}>
+                <Text style={styles.planMirrorLabel}>Your mirror</Text>
+                <Text style={styles.planMirrorName} numberOfLines={1}>{plan.mirror.member.name}</Text>
+              </View>
+              <View style={styles.planMirrorRight}>
+                <Text style={[styles.planDelta, { color: deltaColor(plan.mirror.thDelta) }]}>
+                  {plan.mirror.thDelta > 0 ? `+${plan.mirror.thDelta}` : plan.mirror.thDelta} TH
+                </Text>
+                <Text style={[styles.planStars, { color: starsColor(plan.mirror.expectedStars) }]}>
+                  {plan.mirror.expectedStars.toFixed(1)}★
+                </Text>
+              </View>
+            </View>
+          )}
+
+          <View style={styles.planDivider} />
+          <Text style={styles.planSectionLabel}>Best options</Text>
+          {plan.suggestions.map((s, i) => (
+            <View key={s.member.tag} style={[styles.planRow, i === plan.suggestions.length - 1 && styles.planRowLast]}>
+              <View style={styles.planRowLeft}>
+                <Text style={styles.planPos}>#{s.position}</Text>
+                <View style={styles.planRowName}>
+                  <Text style={styles.planName} numberOfLines={1}>{s.member.name}</Text>
+                  <View style={styles.planTagRow}>
+                    {tags(s).map(t => (
+                      <View key={t.label} style={[styles.planTag, { backgroundColor: t.bg }]}>
+                        <Text style={[styles.planTagText, { color: t.color }]}>{t.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
+              <View style={styles.planRowRight}>
+                <Text style={[styles.planDelta, { color: deltaColor(s.thDelta) }]}>
+                  {s.thDelta > 0 ? `+${s.thDelta}` : s.thDelta} TH
+                </Text>
+                <Text style={[styles.planStars, { color: starsColor(s.expectedStars) }]}>
+                  {s.expectedStars.toFixed(1)}★
+                </Text>
+              </View>
+            </View>
+          ))}
+          <Text style={styles.planNote}>
+            Heuristic based on TH difference and your offense — defense strength isn't available from the API.
+          </Text>
+        </View>
+      )}
+    </Card>
+  );
+}
+
 function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: boolean; isLast?: boolean }) {
   const [expanded, setExpanded] = useState(false);
+
 
   return (
     <View>
       <PressableRipple
         style={[
           styles.logRow,
-          isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
-          isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+          expanded && styles.logRowExpanded,
+          (isFirst || expanded) && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+          isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
           expanded && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
         ]}
         onPress={() => setExpanded(e => !e)}
       >
-        <View style={styles.itemIconTile}>
+        <View style={[styles.itemIconTile,
+          (isFirst || expanded) && { borderTopLeftRadius: Radius.lg },
+          isLast && !expanded && { borderBottomLeftRadius: Radius.lg },
+          expanded && { borderBottomLeftRadius: 0 },
+        ]}>
           {entry.opponent.badgeUrls?.medium ? (
             <Image source={{ uri: entry.opponent.badgeUrls.medium }} style={styles.itemIconImage} />
           ) : (
@@ -1011,7 +1317,7 @@ function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: b
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
       </PressableRipple>
       {expanded && (
-        <View style={[styles.warTable, { marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTopWidth: 0 }]}>
+        <View style={[styles.warTable, styles.warTableExpanded, { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }]}>
           <View style={styles.warTableRow}>
             <Text style={[styles.warTableHead, { width: 76, flex: 0 }]} />
             <Text style={[styles.warTableCell, styles.warTableHead]}>{entry.clan.name}</Text>
@@ -1190,6 +1496,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: Spacing.md,
   },
+  warTableExpanded: {
+    marginTop: 0,
+    borderWidth: 0,
+    borderRadius: 0,
+    marginBottom: Spacing.md,
+  },
   warTableRow: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -1313,7 +1625,7 @@ const styles = StyleSheet.create({
   memberDetail: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgSubtle,
     borderBottomLeftRadius: Radius.sm,
     borderBottomRightRadius: Radius.sm,
   },
@@ -1332,6 +1644,59 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   memberDetailEmpty: { ...Typography.caption, color: Colors.textMuted, paddingVertical: 2 },
+  planCard: { marginTop: Spacing.md },
+  legendCard: { marginBottom: Spacing.xs },
+  legendBody: { flexDirection: 'row', gap: Spacing.lg, marginTop: Spacing.sm },
+  legendColumn: { flex: 1, gap: 6 },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  legendDotSlot: { width: 16, alignItems: 'center', justifyContent: 'center' },
+  legendDot: { width: 10, height: 10, borderRadius: 4 },
+  legendDotBest: { backgroundColor: '#FFFFFF' },
+  legendDotEmpty: { backgroundColor: Colors.border },
+  legendShieldSlot: { width: 16, alignItems: 'center', justifyContent: 'center' },
+  legendLabel: { ...Typography.caption, color: Colors.textSecondary, fontSize: 11, flex: 1 },
+  planHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  planHeaderIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.accentGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planHeaderText: { flex: 1 },
+  planTitle: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '700' },
+  planSubtitle: { ...Typography.caption, color: Colors.textTertiary, fontSize: 10, marginTop: 1 },
+  planBody: { marginTop: Spacing.sm, gap: Spacing.xs },
+  planMirror: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+  },
+  planMirrorInfo: { flex: 1, gap: 1 },
+  planMirrorLabel: { ...Typography.caption, color: Colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  planMirrorName: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
+  planMirrorRight: { alignItems: 'flex-end', gap: 2 },
+  planDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border, marginVertical: Spacing.xs },
+  planSectionLabel: { ...Typography.caption, color: Colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: Spacing.xs },
+  planRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm, paddingVertical: Spacing.sm },
+  planRowLast: { paddingBottom: 0 },
+  planRowLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
+  planPos: { ...Typography.caption, color: Colors.textTertiary, fontSize: 10, fontWeight: '700', width: 30 },
+  planRowName: { flex: 1 },
+  planName: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
+  planTagRow: { flexDirection: 'row', gap: 4, marginTop: 2, flexWrap: 'wrap' },
+  planTag: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
+  planTagText: { fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+  planRowRight: { alignItems: 'flex-end', gap: 2 },
+  planDelta: { ...Typography.caption, fontSize: 10, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  planStars: { ...Typography.subhead, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  planNote: { ...Typography.caption, color: Colors.textMuted, fontSize: 9, lineHeight: 13, marginTop: Spacing.xs },
   memberAttackRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1342,7 +1707,7 @@ const styles = StyleSheet.create({
   memberAttackOrder: {
     width: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgCardHover,
     color: Colors.textMuted,
     fontSize: 9,
@@ -1369,7 +1734,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.sm,
-    marginBottom: 2,
+    marginBottom: 1,
+  },
+  logRowExpanded: {
+    marginBottom: 0,
   },
   itemIconTile: {
     width: 40,
