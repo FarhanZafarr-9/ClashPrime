@@ -19,7 +19,7 @@ interface DialogAction {
 
 interface DialogConfig {
   title: string;
-  message?: string;
+  message?: React.ReactNode;
   actions: DialogAction[];
 }
 
@@ -74,7 +74,9 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
           <View style={styles.accent} />
           <Text style={styles.title}>{config.title}</Text>
           {config.message ? (
-            <Text style={styles.message}>{config.message}</Text>
+            typeof config.message === 'string'
+              ? <Text style={styles.message}>{config.message}</Text>
+              : config.message
           ) : null}
           <View style={styles.actions}>
             {config.actions.map((action, i) => (
