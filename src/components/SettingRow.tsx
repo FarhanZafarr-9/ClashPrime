@@ -86,6 +86,7 @@ export function SettingRow({
           accent && { backgroundColor: `${accent}1a`, borderColor: `${accent}40` },
           disabled && styles.settingBlockDisabled,
           isFirst && styles.settingBlockFirst,
+          isLast && styles.settingBlockLast,
         ]}
       >
         {icon && (
@@ -142,6 +143,10 @@ const styles = StyleSheet.create({
   settingBlockFirst: {
     borderTopLeftRadius: Radius.xl * 1.25,
     borderTopRightRadius: Radius.xl * 1.25,
+  },
+  settingBlockLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
   },
   settingRowIcon: {
     marginRight: 4,
