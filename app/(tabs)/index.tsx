@@ -121,7 +121,17 @@ function CollapsibleSection({
         accentColor={accentColor}
         compact={compact}
       >
-        {badge != null ? badge : (
+        {badge != null ? (
+          React.isValidElement(badge)
+            ? React.cloneElement(badge as React.ReactElement<{ style?: any }>, {
+                style: [
+                  (badge as React.ReactElement<{ style?: any }>).props.style,
+                  isFirst && styles.sectionBadgeFirst,
+                  isLast && !open && styles.sectionBadgeLast,
+                ],
+              })
+            : badge
+        ) : (
           <View style={styles.sectionBadges}>
             <View style={styles.sectionBadge}>
               <Text style={styles.sectionBadgeText}>{count}</Text>
@@ -837,7 +847,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeDanger, styles.sectionBadgeFirst]}>
+                  <View style={[styles.sectionBadge, styles.sectionBadgeDanger]}>
                     <Text style={[styles.sectionBadgeText, styles.sectionBadgeDangerText]}>{unlockableItems.length}</Text>
                   </View>
                 )}
@@ -903,7 +913,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeWarning, styles.sectionBadgeLast]}>
+                  <View style={[styles.sectionBadge, styles.sectionBadgeWarning]}>
                     <Text style={[styles.sectionBadgeText, styles.sectionBadgeWarningText]}>{rushedItems.length}</Text>
                   </View>
                 )}
@@ -990,7 +1000,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={[styles.sectionBadge, gi === 0 && styles.sectionBadgeFirst, gi === groups.length - 1 && styles.sectionBadgeLast]}>
+                  <View style={styles.sectionBadge}>
                     <Text style={styles.sectionBadgeText}>{group.rows.length}</Text>
                   </View>
                 )}
@@ -1037,7 +1047,7 @@ export default function HomeScreen() {
                 totalLevel={0}
                 totalMax={0}
                 badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeFirst, styles.sectionBadgeLast]}>
+                  <View style={styles.sectionBadge}>
                     <Text style={styles.sectionBadgeText}>{reminders.length}</Text>
                   </View>
                 )}
