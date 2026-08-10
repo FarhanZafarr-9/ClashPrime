@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -28,6 +28,7 @@ import buildingLevelsData from '../../src/data/building-levels.json';
 import thLevelsData from '../../src/data/th-levels.json';
 
 import { useDiscounts } from '../../src/hooks/useDiscounts';
+import { useDialog } from '../../src/components/AlertDialog';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
 
@@ -1040,12 +1041,14 @@ function formatCostShort(cost: number): string {
 
 export default function BuildingsScreen() {
   const router = useRouter();
-  const { player } = usePlayer();
+  const { cat: initialCat } = useLocalSearchParams<{ cat?: string }>();
+  const { player, setBuildingCopies } = usePlayer();
+  const { show: showDialog, Dialog } = useDialog();
   const { discounts } = useDiscounts();
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const categories = thLevelsData.categories as Record<string, Record<string, Record<string, { level: number | null; isMaxLevel: boolean }>>>;
-  const [selectedCat, setSelectedCat] = useState('');
+  const [selectedCat, setSelectedCat] = useState(initialCat ?? '');
 
   const bbEntries = useMemo(() => {
     if (!player || th < 6) return [];
@@ -1067,6 +1070,12 @@ export default function BuildingsScreen() {
 
   const isBB = selectedCat === 'Builder Base';
   const activeCat = selectedCat || availableCats[0] || '';
+
+  useEffect(() => {
+    if (initialCat && availableCats.includes(initialCat)) {
+      setSelectedCat(initialCat);
+    }
+  }, [initialCat, th]);
 
   const entries = isBB
     ? bbEntries
@@ -1124,6 +1133,71 @@ export default function BuildingsScreen() {
     return [...singles, ...sections];
   }, [entries, isBB, th, bh, player]);
 
+  const maxOutAllBuildings = () => {
+    const summary = SHOW_CATEGORIES.map((cat) => {
+      const items = categories[cat] ?? {};
+      const types = Object.entries(items).filter(([, thData]) => {
+        const thEntry = thData[String(th)];
+        return thEntry != null && (thEntry.level ?? 0) > 0;
+      });
+      return { cat, types };
+    }).filter((s) => s.types.length > 0);
+    const totalTypes = summary.reduce((s, g) => s + g.types.length, 0);
+
+    showDialog({
+      title: 'Max out all buildings?',
+      message: (
+        <View style={styles.dialogMessage}>
+          <Text style={styles.dialogMessageText}>
+            Sets every Home Village building to its max level for TH{th}. This cannot be undone.
+          </Text>
+          <View style={styles.dialogSummary}>
+            {summary.map(({ cat, types }) => (
+              <View key={cat} style={styles.dialogSummaryRow}>
+                <Text style={styles.dialogSummaryCat}>{cat}</Text>
+                <Text style={styles.dialogSummaryCount}>{types.length} types</Text>
+              </View>
+            ))}
+            <View style={styles.dialogSummaryTotal}>
+              <Text style={styles.dialogSummaryCat}>Total</Text>
+              <Text style={styles.dialogSummaryCount}>{totalTypes} building types</Text>
+            </View>
+          </View>
+        </View>
+      ),
+      actions: [
+        { label: 'Cancel', onPress: () => {} },
+        {
+          label: 'Max Out',
+          destructive: true,
+          onPress: () => {
+            for (const cat of SHOW_CATEGORIES) {
+              const items = categories[cat] ?? {};
+              for (const [name, thData] of Object.entries(items)) {
+                const thEntry = thData[String(th)];
+                if (thEntry == null || (thEntry.level ?? 0) <= 0) continue;
+                const lookupName = NAME_FIX[name] ?? name;
+                const effectiveMax = getBuildingEffectiveMax(lookupName, th);
+                const count = getCountAtTH(lookupName, th);
+                const copies = getBuildingCopies(
+                  lookupName,
+                  player?.buildingLevels,
+                  player?.buildings,
+                  effectiveMax,
+                  count,
+                  player?.lastMaxedTH,
+                  th,
+                );
+                const next = copies.levels.map(() => effectiveMax);
+                setBuildingCopies(lookupName, next, copies.maxLevel);
+              }
+            }
+          },
+        },
+      ],
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -1131,11 +1205,15 @@ export default function BuildingsScreen() {
           <View style={styles.headerRow}>
             <Text style={styles.title}>Buildings</Text>
             <View style={styles.headerActions}>
+              <PressableRipple onPress={maxOutAllBuildings} hitSlop={8} style={styles.headerBtn}>
+                <Ionicons name="rocket-outline" size={20} color={Colors.textSecondary} />
+              </PressableRipple>
               <PressableRipple onPress={() => router.push(`/onboarding?mode=reset&th=${th}`)} hitSlop={8} style={styles.headerBtn}>
-                <Ionicons name="refresh-outline" size={22} color={Colors.textSecondary} />
+                <Ionicons name="flag-outline" size={20} color={Colors.textSecondary} />
               </PressableRipple>
             </View>
           </View>
+          <Dialog />
           <Text style={styles.subtitle}>
             {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
           </Text>
@@ -1239,7 +1317,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   headerBtn: {
-    borderRadius: Radius.sm,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     ...Typography.largeTitle,
@@ -1249,6 +1332,47 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textTertiary,
     marginTop: 2,
+  },
+  dialogMessage: {
+    gap: Spacing.md,
+  },
+  dialogMessageText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    letterSpacing: 0.1,
+  },
+  dialogSummary: {
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+  },
+  dialogSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  dialogSummaryTotal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.bgSubtle,
+  },
+  dialogSummaryCat: {
+    ...Typography.subhead,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  dialogSummaryCount: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
   },
   pillRow: {
     flexDirection: 'row',
