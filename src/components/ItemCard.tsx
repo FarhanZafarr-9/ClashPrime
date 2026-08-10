@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import PressableRipple from './PressableRipple';
 import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
@@ -10,13 +10,14 @@ interface Props {
   thMaxLevel?: number | null;
   subtitle?: string;
   icon?: string;
+  iconSource?: ImageSourcePropType;
   onPress?: () => void;
   locked?: boolean;
   isFirst?: boolean;
   isLast?: Boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, onPress, locked, isFirst, isLast }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, iconSource, onPress, locked, isFirst, isLast }: Props) {
   const { colors } = useTheme();
   const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
   const progress = effectiveMax > 0 ? level / effectiveMax : 0;
@@ -37,7 +38,9 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, on
         isFirst && { borderTopLeftRadius: Radius.lg },
         isLast && { borderBottomLeftRadius: Radius.lg }
         ]}>
-          {icon ? (
+          {iconSource ? (
+            <Image source={iconSource} style={styles.iconImage} resizeMode="contain" />
+          ) : icon ? (
 
             <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
           ) : (
