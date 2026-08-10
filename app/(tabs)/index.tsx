@@ -778,7 +778,7 @@ export default function HomeScreen() {
               const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
               const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
               const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-              const navigateInstead = group.rows.length >= 10;
+              const navigateInstead = displayRows.length >= 10;
               return (
                 <CollapsibleSection
                   key={group.key}
