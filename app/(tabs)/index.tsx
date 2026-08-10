@@ -71,6 +71,7 @@ function CollapsibleSection({
   isFirst,
   isLast,
   onOpen,
+  onPressOverride,
   defaultOpen,
   destructive,
   accentColor,
@@ -88,6 +89,7 @@ function CollapsibleSection({
   isFirst?: boolean;
   isLast?: boolean;
   onOpen?: () => void;
+  onPressOverride?: () => void;
   defaultOpen?: boolean;
   destructive?: boolean;
   accentColor?: string;
@@ -98,6 +100,10 @@ function CollapsibleSection({
   if (count === 0) return null;
   const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
   const toggle = () => {
+    if (onPressOverride) {
+      onPressOverride();
+      return;
+    }
     if (!open) onOpen?.();
     setOpen(!open);
   };
@@ -109,7 +115,7 @@ function CollapsibleSection({
         title={title}
         desc={description}
         isFirst={isFirst || open}
-        isLast={isLast}
+        isLast={isLast && !open}
         onPress={toggle}
         destructive={destructive}
         accentColor={accentColor}
@@ -120,7 +126,7 @@ function CollapsibleSection({
             <View style={styles.sectionBadge}>
               <Text style={styles.sectionBadgeText}>{count}</Text>
             </View>
-            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && styles.sectionBadgeLast]}>
+            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && !open && styles.sectionBadgeLast]}>
               <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
               <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
             </View>
@@ -768,10 +774,11 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.progressSections}>
-            {progressGroups.filter((g) => g.rows.some((r) => r.level > 0 && r.level < r.maxLevel)).map((group, gi, groups) => {
-              const remainingRows = group.rows.filter((r) => r.level > 0 && r.level < r.maxLevel);
+            {progressGroups.filter((g) => g.rows.some((r) => r.level < r.maxLevel)).map((group, gi, groups) => {
+              const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
               const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
               const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
+              const navigateInstead = group.rows.length >= 10;
               return (
                 <CollapsibleSection
                   key={group.key}
@@ -781,6 +788,7 @@ export default function HomeScreen() {
                   iconUrl={group.iconUrl}
                   title={group.title}
                   compact
+                  onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
                   description={(
                     <View style={styles.progressHeaderDesc}>
                       <View style={styles.progressHeaderBar}>
@@ -792,14 +800,15 @@ export default function HomeScreen() {
                   totalLevel={totalLevel}
                   totalMax={totalMax}
                 >
-                  {remainingRows.map((row, ri) => (
+                  {displayRows.map((row, ri) => (
                     <ItemCard
                       key={`${group.key}-${ri}`}
                       name={row.name}
                       level={row.level}
                       maxLevel={row.maxLevel}
                       icon={row.icon}
-                      isLast={ri === remainingRows.length - 1}
+                      locked={row.level === 0}
+                      isLast={ri === displayRows.length - 1}
                       onPress={() => router.push(group.pushTo)}
                     />
                   ))}
