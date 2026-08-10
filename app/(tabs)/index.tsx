@@ -62,6 +62,7 @@ type HomeStatGroup = { title: string; icon: keyof typeof Ionicons.glyphMap; desc
 function CollapsibleSection({
   title,
   icon,
+  iconUrl,
   description,
   count,
   totalLevel,
@@ -78,6 +79,7 @@ function CollapsibleSection({
 }: {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
+  iconUrl?: string;
   description: React.ReactNode;
   count: number;
   totalLevel: number;
@@ -103,6 +105,7 @@ function CollapsibleSection({
     <>
       <SettingRow
         icon={icon}
+        iconUrl={iconUrl}
         title={title}
         desc={description}
         isFirst={isFirst || open}
@@ -499,6 +502,7 @@ export default function HomeScreen() {
     key: string;
     title: string;
     icon: keyof typeof Ionicons.glyphMap;
+    iconUrl?: string;
     progress: number;
     pushTo: string;
     rows: { name: string; level: number; maxLevel: number; icon?: string }[];
@@ -507,6 +511,7 @@ export default function HomeScreen() {
       key: 'heroes',
       title: 'Heroes',
       icon: 'shield-half-outline',
+      iconUrl: getHeroImageUrl('Barbarian King') || undefined,
       progress: heroesProgress,
       pushTo: '/(tabs)/army?tab=heroes',
       rows: allHeroesAtTH.map((h) => {
@@ -518,6 +523,7 @@ export default function HomeScreen() {
       key: 'troops',
       title: 'Troops',
       icon: 'bonfire-outline',
+      iconUrl: getTroopImageUrl('Barbarian', 1) || undefined,
       progress: troopsProgress,
       pushTo: '/(tabs)/army?tab=troops',
       rows: allTroopsAtTH.map((t) => {
@@ -530,6 +536,7 @@ export default function HomeScreen() {
       key: 'spells',
       title: 'Spells',
       icon: 'flash-outline',
+      iconUrl: getTroopImageUrl('Lightning Spell', 1) || undefined,
       progress: spellsProgress,
       pushTo: '/(tabs)/army?tab=spells',
       rows: allSpellsAtTH.map((s) => {
@@ -542,6 +549,7 @@ export default function HomeScreen() {
       key: 'equipment',
       title: 'Equipment',
       icon: 'hammer-outline',
+      iconUrl: getEquipmentImageUrl('Barbarian Puppet') || undefined,
       progress: equipProgress,
       pushTo: '/(tabs)/army?tab=equipment',
       rows: player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
@@ -770,6 +778,7 @@ export default function HomeScreen() {
                   isFirst={gi === 0}
                   isLast={gi === groups.length - 1}
                   icon={group.icon}
+                  iconUrl={group.iconUrl}
                   title={group.title}
                   compact
                   description={(
