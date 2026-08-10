@@ -31,7 +31,9 @@ import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
 import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
-import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
+import { getBuildingLevelImageSource, getBuildingEffectiveMax } from '../../src/utils/buildingImages';
+import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
+import thLevelsData from '../../src/data/th-levels.json';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
@@ -76,6 +78,7 @@ function CollapsibleSection({
   destructive,
   accentColor,
   compact,
+  maxed,
   children,
 }: {
   title: string;
@@ -94,12 +97,14 @@ function CollapsibleSection({
   destructive?: boolean;
   accentColor?: string;
   compact?: boolean;
+  maxed?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
-  if (count === 0) return null;
+  if (count === 0 && !maxed) return null;
   const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
   const toggle = () => {
+    if (maxed) return;
     if (onPressOverride) {
       onPressOverride();
       return;
@@ -121,7 +126,17 @@ function CollapsibleSection({
         accentColor={accentColor}
         compact={compact}
       >
-        {badge != null ? (
+        {maxed ? (
+          <View style={styles.sectionBadges}>
+            <View style={[styles.sectionBadge, styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && styles.sectionBadgeLast]}>
+              <Ionicons name="checkmark" size={18} color={Colors.bg} />
+            </View>
+            <View style={[styles.sectionBadge, styles.sectionBadgeMaxed, isLast && styles.sectionBadgeLast]}>
+              <Text style={[styles.sectionBadgeText, styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
+              <Text style={[styles.sectionBadgeLabel, styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+            </View>
+          </View>
+        ) : badge != null ? (
           React.isValidElement(badge)
             ? React.cloneElement(badge as React.ReactElement<{ style?: any }>, {
                 style: [
@@ -136,10 +151,12 @@ function CollapsibleSection({
             <View style={styles.sectionBadge}>
               <Text style={styles.sectionBadgeText}>{count}</Text>
             </View>
-            <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && !open && styles.sectionBadgeLast]}>
-              <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
-              <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
-            </View>
+            {totalMax > 0 && (
+              <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && !open && styles.sectionBadgeLast]}>
+                <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
+                <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+              </View>
+            )}
           </View>
         )}
       </SettingRow>
@@ -276,10 +293,10 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const tag = player?.tag;
-    const baseline = tag ? await loadProgressSnapshot(tag) : null;
     const fresh = await refresh();
-    if (tag && fresh) {
+    if (fresh?.tag) {
+      const tag = fresh.tag;
+      const baseline = await loadProgressSnapshot(tag);
       const after = buildSnapshot(fresh);
       if (baseline) {
         const diff = diffProgress(baseline, after);
@@ -288,7 +305,7 @@ export default function HomeScreen() {
       await saveProgressSnapshot(tag, after);
     }
     setRefreshing(false);
-  }, [refresh, player?.tag, buildSnapshot]);
+  }, [refresh, buildSnapshot]);
 
   // ── Derived data (null-safe when player is null) ──
   const th = player?.townHallLevel ?? 0;
@@ -577,6 +594,48 @@ export default function HomeScreen() {
     },
   ];
 
+  const BUILDING_CAT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+    'Defenses': 'shield-half-outline',
+    'Resources': 'cash-outline',
+    'Traps': 'warning-outline',
+    'Army': 'hammer-outline',
+    'Walls': 'grid-outline',
+  };
+  const SHOW_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
+
+  const buildingGroups = SHOW_BUILDING_CATS.map((cat) => {
+    const items = (thLevelsData.categories as Record<string, Record<string, any>>)[cat] ?? {};
+    const entries = Object.entries(items).filter(([, thData]) => {
+      const thEntry = thData[String(th)];
+      return thEntry != null && (thEntry.level ?? 0) > 0;
+    });
+    const rows = entries.map(([name]) => {
+      const effectiveMax = getBuildingEffectiveMax(name, th);
+      const count = getCountAtTH(name, th);
+      const copies = getBuildingCopies(name, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
+      const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
+      const totalMax = count * effectiveMax;
+      const copyLevel = copies.levels.length > 0 ? Math.max(...copies.levels) : 1;
+      return {
+        name,
+        level: totalLevel,
+        maxLevel: totalMax,
+        iconSource: getBuildingLevelImageSource(toJsonName(name), Math.max(copyLevel, 1)) || undefined,
+      };
+    });
+    const totalLevel = rows.reduce((s, r) => s + r.level, 0);
+    const totalMax = rows.reduce((s, r) => s + r.maxLevel, 0);
+    return {
+      key: cat,
+      title: cat,
+      icon: BUILDING_CAT_ICONS[cat] ?? 'apps-outline',
+      progress: totalMax > 0 ? totalLevel / totalMax : 0,
+      maxed: rows.length > 0 && rows.every((r) => r.maxLevel > 0 && r.level >= r.maxLevel),
+      pushTo: `/(tabs)/buildings?cat=${cat}`,
+      rows,
+    };
+  });
+
   const homeStatGroups: HomeStatGroup[] = [
     {
       title: 'PvP',
@@ -779,11 +838,26 @@ export default function HomeScreen() {
             </View>
           </Card>
 
-          <View style={styles.sectionLabel}>
-            <Text style={styles.sectionTitle}>Progress Overview</Text>
-          </View>
-
           <View style={styles.progressSections}>
+            <CollapsibleSection
+              isFirst
+              isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
+              icon="apps-outline"
+              title="Progress Overview"
+              compact
+              defaultOpen
+              count={progressGroups.reduce((s, g) => s + g.rows.length, 0)}
+              totalLevel={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
+              totalMax={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
+              description={(
+                <View style={styles.progressHeaderDesc}>
+                  <View style={styles.progressHeaderBar}>
+                    <View style={[styles.progressHeaderFill, { width: `${Math.min(progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0) / Math.max(progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0), 1), 1) * 100}%` }]} />
+                  </View>
+                </View>
+              )}
+            >
+            <View style={styles.progressInner}>
             {progressGroups.filter((g) => g.rows.some((r) => r.level < r.maxLevel)).map((group, gi, groups) => {
               const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
               const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
@@ -792,7 +866,6 @@ export default function HomeScreen() {
               return (
                 <CollapsibleSection
                   key={group.key}
-                  isFirst={gi === 0}
                   isLast={gi === groups.length - 1}
                   icon={group.icon}
                   iconUrl={group.iconUrl}
@@ -825,17 +898,88 @@ export default function HomeScreen() {
                 </CollapsibleSection>
               );
             })}
-          </View>
+            </View>
+            </CollapsibleSection>
 
-          {(unlockableItems.length > 0 || rushedItems.length > 0) && (
-            <>
-              <View style={styles.sectionLabel}>
-                <Text style={styles.sectionTitle}>Backlog</Text>
-              </View>
-              <View style={styles.progressSections}>
+            {(() => {
+              const countedGroups = buildingGroups.filter((g) => g.key !== 'Walls');
+              return (
+                <CollapsibleSection
+                  isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
+                  icon="business-outline"
+                  title="Buildings"
+                  compact
+                  defaultOpen
+                  count={countedGroups.reduce((s, g) => s + g.rows.length, 0)}
+                  totalLevel={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
+                  totalMax={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
+                  description={(
+                    <View style={styles.progressHeaderDesc}>
+                      <View style={styles.progressHeaderBar}>
+                        <View style={[styles.progressHeaderFill, { width: `${Math.min(countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0) / Math.max(countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0), 1), 1) * 100}%` }]} />
+                      </View>
+                    </View>
+                  )}
+                >
+                <View style={styles.progressInner}>
+                {buildingGroups.map((group, gi, groups) => {
+              const displayRows = group.rows.filter((r) => r.maxLevel > 0 && r.level < r.maxLevel);
+              const navigateInstead = displayRows.length >= 10;
+              return (
+                <CollapsibleSection
+                  key={group.key}
+                  isLast={gi === groups.length - 1}
+                  icon={group.icon}
+                  title={group.title}
+                  compact
+                  maxed={group.maxed}
+                  onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
+                  description={(
+                    <View style={styles.progressHeaderDesc}>
+                      <View style={styles.progressHeaderBar}>
+                        <View style={[styles.progressHeaderFill, { width: `${Math.min(group.progress, 1) * 100}%` }]} />
+                      </View>
+                    </View>
+                  )}
+                  count={displayRows.length}
+                  totalLevel={group.rows.reduce((s, r) => s + r.level, 0)}
+                  totalMax={group.rows.reduce((s, r) => s + r.maxLevel, 0)}
+                >
+                  {displayRows.map((row, ri) => (
+                    <ItemCard
+                      key={`${group.key}-${ri}`}
+                      name={row.name}
+                      level={row.level}
+                      maxLevel={row.maxLevel}
+                      iconSource={row.iconSource}
+                      locked={row.level === 0}
+                      isLast={ri === displayRows.length - 1}
+                      onPress={() => router.push(group.pushTo)}
+                    />
+                  ))}
+                </CollapsibleSection>
+              );
+                })}
+                </View>
+                </CollapsibleSection>
+              );
+            })()}
+
+            {(unlockableItems.length > 0 || rushedItems.length > 0) && (
+              <CollapsibleSection
+                isLast
+                icon="list-outline"
+                title="Backlog"
+                compact
+                defaultOpen
+                count={unlockableItems.length + rushedItems.length}
+                totalLevel={0}
+                totalMax={0}
+                description="Items waiting to be upgraded"
+              >
+              <View style={styles.progressInner}>
               {unlockableItems.length > 0 && (
               <CollapsibleSection
-                isFirst
                 isLast={rushedItems.length === 0}
                 icon="ban-outline"
                 title={`${unlockableItems.length} locked`}
@@ -901,7 +1045,6 @@ export default function HomeScreen() {
 
               {rushedItems.length > 0 && (
               <CollapsibleSection
-                isFirst={unlockableItems.length === 0}
                 isLast
                 icon="warning-outline"
                 title={`${rushedItems.length} rushed`}
@@ -963,23 +1106,36 @@ export default function HomeScreen() {
                 })()}
               </CollapsibleSection>
               )}
-            </View>
-            </>
+              </View>
+              </CollapsibleSection>
           )}
+          </View>
 
           <View style={styles.sectionLabel}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
           </View>
 
-          <View style={styles.actionsRow}>
-            <PressableRipple style={styles.actionBtn} onPress={() => router.push('/(tabs)/settings')}>
-              <Ionicons name="settings-sharp" size={16} color={Colors.textPrimary} />
-              <Text style={styles.actionText}>Settings</Text>
-            </PressableRipple>
-            <PressableRipple style={styles.actionBtn} onPress={onRefresh}>
-              <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
-              <Text style={styles.actionText}>Refresh</Text>
-            </PressableRipple>
+          <View style={styles.progressSections}>
+            <SettingRow
+              isFirst
+              compact
+              icon="settings-sharp"
+              title="Settings"
+              desc="App preferences, accounts & data"
+              onPress={() => router.push('/(tabs)/settings')}
+            >
+              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+            </SettingRow>
+            <SettingRow
+              isLast
+              compact
+              icon="refresh-outline"
+              title="Refresh"
+              desc="Re-sync your account data"
+              onPress={onRefresh}
+            >
+              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+            </SettingRow>
           </View>
 
           <View style={styles.sectionLabel}>
@@ -1607,7 +1763,9 @@ const styles = StyleSheet.create({
   },
   playerCard: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.sm
+    marginBottom: Spacing.base,
+    borderWidth: 0,
+    borderRadius: Radius.lg,
   },
   playerCardInner: {
     position: 'relative',
@@ -1866,6 +2024,9 @@ const styles = StyleSheet.create({
   },
   sectionBody: {
     paddingTop: 0,
+  },
+  progressInner: {
+    gap: Spacing.xs,
   },
   sectionSeparator: {
     borderTopWidth: StyleSheet.hairlineWidth,
