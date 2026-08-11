@@ -392,7 +392,8 @@ export default function WarScreen() {
 
   const regularWars = (data?.warLog || []).filter(e => e.attacksPerMember === 2);
   const cwlWars = (data?.warLog || []).filter(e => e.attacksPerMember === 1);
-  const warLogBlocked = fetchIssues.some(i => i.key === 'warLog');
+  const warLogBlocked = fetchIssues.some(i => i.key === 'warLog' || i.key === 'warLogPrivacy');
+  const warLogPrivate = fetchIssues.some(i => i.key === 'warLogPrivacy');
   const cwlActive = (cwlLeague?.wars.length ?? 0) > 0;
 
   function groupByMonth(entries: WarLogEntry[]): { key: string; label: string; wars: WarLogEntry[]; wins: number; losses: number; draws: number; totalStars: number }[] {
@@ -438,44 +439,68 @@ export default function WarScreen() {
         return;
       }
       const api = new ClashAPI(token);
-      const [currentWarRes, warLogRes, leagueGroupRes] = await Promise.allSettled([
+      const [currentWarRes, warLogRes, leagueGroupRes, clanRes] = await Promise.allSettled([
         api.getCurrentWar(clanTag),
         api.getWarLog(clanTag),
         api.getCwlLeagueGroup(clanTag),
+        api.getClan(clanTag),
       ]);
       console.log('[War] currentWar:', currentWarRes.status === 'fulfilled' ? `state=${currentWarRes.value.state}` : currentWarRes.reason);
       console.log('[War] warLog:', warLogRes.status === 'fulfilled' ? `items=${warLogRes.value.items?.length ?? 0}` : warLogRes.reason);
       console.log('[War] leagueGroup:', leagueGroupRes.status === 'fulfilled' ? `state=${leagueGroupRes.value?.state ?? 'none'}` : leagueGroupRes.reason);
+      console.log('[War] clan:', clanRes.status === 'fulfilled' ? `isWarLogPublic=${clanRes.value.isWarLogPublic}` : clanRes.reason);
 
       const leagueGroup = leagueGroupRes.status === 'fulfilled' ? leagueGroupRes.value : null;
       const lgState: string | undefined = leagueGroup?.state;
       const inCwlLeague = !!lgState && lgState !== 'notInWar';
+      const warLogPublic = clanRes.status === 'fulfilled' ? clanRes.value.isWarLogPublic : true;
+
+      const warLogBlockedByPrivacy = (reason: unknown) =>
+        reason instanceof ClashAPIError && reason.status === 403 && !warLogPublic;
 
       let currentWar: ClanWar | null = null;
       if (currentWarRes.status === 'fulfilled') {
         if (currentWarRes.value.state !== 'notInWar') currentWar = currentWarRes.value;
       }
       if (currentWarRes.status === 'rejected' && !inCwlLeague) {
-        const desc = describeWarError(currentWarRes.reason, 'currentWar');
-        setFetchIssues(prev => [...prev, {
-          key: 'currentWar',
-          title: desc.title,
-          message: desc.message,
-          severity: currentWarRes.reason instanceof ClashAPIError && currentWarRes.reason.status >= 500 ? 'warning' : 'error',
-        }]);
+        if (warLogBlockedByPrivacy(currentWarRes.reason)) {
+          setFetchIssues(prev => [...prev, {
+            key: 'warLogPrivacy',
+            title: 'Clan war data is private',
+            message: 'This clan has Public War Log turned off, so the API hides its war data. A clan leader can enable it under Clan Settings \u2192 Public War Log, then pull to refresh.',
+            severity: 'warning',
+          }]);
+        } else {
+          const desc = describeWarError(currentWarRes.reason, 'currentWar');
+          setFetchIssues(prev => [...prev, {
+            key: 'currentWar',
+            title: desc.title,
+            message: desc.message,
+            severity: currentWarRes.reason instanceof ClashAPIError && currentWarRes.reason.status >= 500 ? 'warning' : 'error',
+          }]);
+        }
       }
 
       let warLog: WarLogEntry[] = [];
       if (warLogRes.status === 'fulfilled') {
         warLog = warLogRes.value.items || [];
       } else if (!inCwlLeague) {
-        const desc = describeWarError(warLogRes.reason, 'warLog');
-        setFetchIssues(prev => [...prev, {
-          key: 'warLog',
-          title: desc.title,
-          message: desc.message,
-          severity: warLogRes.reason instanceof ClashAPIError && warLogRes.reason.status >= 500 ? 'warning' : 'error',
-        }]);
+        if (warLogBlockedByPrivacy(warLogRes.reason)) {
+          setFetchIssues(prev => [...prev, {
+            key: 'warLogPrivacy',
+            title: 'Clan war data is private',
+            message: 'This clan has Public War Log turned off, so the API hides its war data. A clan leader can enable it under Clan Settings \u2192 Public War Log, then pull to refresh.',
+            severity: 'warning',
+          }]);
+        } else {
+          const desc = describeWarError(warLogRes.reason, 'warLog');
+          setFetchIssues(prev => [...prev, {
+            key: 'warLog',
+            title: desc.title,
+            message: desc.message,
+            severity: warLogRes.reason instanceof ClashAPIError && warLogRes.reason.status >= 500 ? 'warning' : 'error',
+          }]);
+        }
       }
 
       let cwl: CwlLeagueData | null = null;
@@ -601,9 +626,11 @@ export default function WarScreen() {
             <Ionicons name="flag-outline" size={32} color={Colors.textTertiary} />
             <Text style={styles.noWarTitle}>No Active War</Text>
             <Text style={styles.noWarSub}>
-              {showHistorySection
-                ? 'Your clan isn\u2019t in a war right now. Recent results are below.'
-                : 'Your clan isn\u2019t in a regular war or Clan War League right now. Results will appear here once a war ends.'}
+              {warLogPrivate
+                ? 'War data is hidden because this clan has Public War Log turned off. A leader can enable it in Clan Settings, then pull to refresh.'
+                : showHistorySection
+                  ? 'Your clan isn\u2019t in a war right now. Recent results are below.'
+                  : 'Your clan isn\u2019t in a regular war or Clan War League right now. Results will appear here once a war ends.'}
             </Text>
           </Card>
         )}
@@ -677,9 +704,11 @@ export default function WarScreen() {
               <Text style={styles.noWarSub}>
                 {warLogBlocked && cwlActive
                   ? 'Regular war history can\u2019t be read during a CWL season. It will return after the league ends.'
-                  : warLogBlocked
-                    ? 'This clan\u2019s war log is private or has fewer than 5 wars, so it can\u2019t be read through the API.'
-                    : 'Regular wars are 2-attack wars. History will appear here after your first war ends.'}
+                  : warLogPrivate
+                    ? 'The clan has Public War Log turned off. A leader can enable it in Clan Settings so history shows here.'
+                    : warLogBlocked
+                      ? 'This clan\u2019s war log is private or has fewer than 5 wars, so it can\u2019t be read through the API.'
+                      : 'Regular wars are 2-attack wars. History will appear here after your first war ends.'}
               </Text>
             </Card>
           )
@@ -706,9 +735,11 @@ export default function WarScreen() {
               <Text style={styles.noWarSub}>
                 {warLogBlocked && cwlActive
                   ? 'Your clan is currently in a league — see the Clan War Leagues section above for live CWL rounds.'
-                  : warLogBlocked
-                    ? 'This clan\u2019s war log is private or has fewer than 5 wars, so CWL history can\u2019t be read through the API.'
-                    : 'Clan War Leagues use 1 attack per day. CWL history will show here once your clan participates.'}
+                  : warLogPrivate
+                    ? 'The clan has Public War Log turned off. A leader can enable it in Clan Settings so CWL history shows here.'
+                    : warLogBlocked
+                      ? 'This clan\u2019s war log is private or has fewer than 5 wars, so CWL history can\u2019t be read through the API.'
+                      : 'Clan War Leagues use 1 attack per day. CWL history will show here once your clan participates.'}
               </Text>
             </Card>
           )
