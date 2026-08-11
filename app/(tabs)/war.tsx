@@ -443,6 +443,9 @@ export default function WarScreen() {
         api.getWarLog(clanTag),
         api.getCwlLeagueGroup(clanTag),
       ]);
+      console.log('[War] currentWar:', currentWarRes.status === 'fulfilled' ? `state=${currentWarRes.value.state}` : currentWarRes.reason);
+      console.log('[War] warLog:', warLogRes.status === 'fulfilled' ? `items=${warLogRes.value.items?.length ?? 0}` : warLogRes.reason);
+      console.log('[War] leagueGroup:', leagueGroupRes.status === 'fulfilled' ? `state=${leagueGroupRes.value?.state ?? 'none'}` : leagueGroupRes.reason);
 
       const leagueGroup = leagueGroupRes.status === 'fulfilled' ? leagueGroupRes.value : null;
       const lgState: string | undefined = leagueGroup?.state;
