@@ -137,6 +137,14 @@ export interface WarClanDetail {
   members: WarMember[];
 }
 
+export interface Clan {
+  tag: string;
+  name: string;
+  clanLevel: number;
+  badgeUrls: BadgeUrls;
+  isWarLogPublic: boolean;
+}
+
 export interface ClanWar {
   state: WarState;
   teamSize: number;
