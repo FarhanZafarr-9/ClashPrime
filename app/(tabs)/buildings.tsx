@@ -310,37 +310,64 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
     setBuildingCopies(lookupName, next, copies.maxLevel);
   };
 
-  const renderGrid = () => (
-    <View style={styles.levelGridBorder}>
-      <View style={styles.levelGrid}>
-      {displayLevels.map((levelData: any) => {
-        const lvl = levelData.Level;
-        const cellSource = getBuildingLevelImageSource(lookupName, lvl);
-        const isCurrent = lvl === currentLevel;
-        return (
-          <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
-            <View style={styles.levelGridImgWrap}>
-              {cellSource ? (
-                <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
-              ) : (
-                <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
-                  <Text style={styles.levelGridFallbackText}>
-                    {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              <View style={[styles.levelGridBadge, isCurrent && styles.levelGridBadgeCurrent]}>
-                <Text style={[styles.levelGridBadgeText]}>
-                  {lvl}
+  const hideMaxLevelCell = isFullyMaxed && currentLevel > 1;
+
+  const renderGrid = () => {
+    const gridLevels = hideMaxLevelCell
+      ? allLevels.slice(-3)
+      : displayLevels;
+    const cells = gridLevels.map((levelData: any) => {
+      const lvl = levelData.Level;
+      const cellSource = getBuildingLevelImageSource(lookupName, lvl);
+      const isCurrent = lvl === currentLevel;
+      return (
+        <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
+          <View style={styles.levelGridImgWrap}>
+            {cellSource ? (
+              <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
+            ) : (
+              <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
+                <Text style={styles.levelGridFallbackText}>
+                  {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                 </Text>
               </View>
+            )}
+            <View style={[styles.levelGridBadge, isCurrent && styles.levelGridBadgeCurrent]}>
+              <Text style={[styles.levelGridBadgeText]}>
+                {lvl}
+              </Text>
             </View>
           </View>
-        );
-      })}
+        </View>
+      );
+    });
+
+    if (hideMaxLevelCell) {
+      return (
+        <View style={styles.levelGridBorder}>
+          <View style={styles.levelGrid}>
+            {cells}
+            <PressableRipple
+              onPress={() => setCopyLevel(currentLevel - 1)}
+              style={styles.levelGridDowngrade}
+              accessibilityLabel={`Downgrade ${name} copy ${copyIndex + 1}`}
+              accessibilityRole="button"
+            >
+              <Ionicons name="arrow-back" size={16} color={Colors.bg} />
+            </PressableRipple>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.levelGridBorder}>
+        <View style={styles.levelGrid}>
+          {cells}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const toggleExpanded = () => {
     if (inSection) return;
@@ -444,7 +471,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
                       disabled={isFullyMaxed}
                       style={[styles.quickBtn, isFullyMaxed && styles.quickBtnDisabled]}
                       hitSlop={4}
-                      accessibilityLabel={`Upgrade ${name} copy ${copyIndex + 1}`}
+                      accessibilityLabel={`Upgrade ${name} copy ${copyIndex + 1}. Hold to max out`}
                       accessibilityRole="button"
                     >
                       <Ionicons name="chevron-up" size={14} color={isFullyMaxed ? Colors.textTertiary : Colors.textPrimary} />
@@ -568,15 +595,18 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
               <Text style={styles.expandTableText}>Show fewer</Text>
             </PressableRipple>
           )}
-          {hasRemaining && (
+          {(hasRemaining || (currentLevel > 1 && !isFullyMaxed)) && (
             <View style={styles.upgradeRow}>
-              <PressableRipple
-                style={styles.upgradeBtn}
-                onPress={() => setCopyLevel(currentLevel + 1)}
-              >
-                <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
-                <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-              </PressableRipple>
+              {hasRemaining && (
+                <PressableRipple
+                  style={styles.upgradeBtn}
+                  onPress={() => setCopyLevel(currentLevel + 1)}
+                  onLongPress={() => setCopyLevel(effectiveMax)}
+                >
+                  <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
+                  <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+                </PressableRipple>
+              )}
               {currentLevel > 1 && (
                 <PressableRipple
                   style={styles.downgradeBtn}
@@ -673,6 +703,10 @@ function BuildingCollapsibleSection({
   const lookupName = NAME_FIX[title] ?? title;
   const upgradeAllCopiesByOne = () => {
     const next = copies.levels.map((l) => (l <= 0 ? l : Math.min(l + 1, effectiveMax)));
+    setBuildingCopies(lookupName, next, copies.maxLevel);
+  };
+  const maxAllCopies = () => {
+    const next = copies.levels.map((l) => (l <= 0 ? l : effectiveMax));
     setBuildingCopies(lookupName, next, copies.maxLevel);
   };
   const downgradeAllCopiesByOne = () => {
@@ -832,6 +866,7 @@ function BuildingCollapsibleSection({
   const mergedDisplayLevels = showAllLevels
     ? allLevels
     : allLevels.filter((l: any) => l.Level >= spanMin && l.Level <= spanMax);
+  const mergedGridLevels = isSectionMaxed ? allLevels.slice(-3) : mergedDisplayLevels;
   const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
   return (
@@ -894,57 +929,58 @@ function BuildingCollapsibleSection({
           {buildingStats?.description ? (
             <Text style={styles.buildingSectionDescText} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
-          <View style={styles.buildingSectionRemainingRow}>
-            {hasRemaining && (
-              <View style={styles.buildingSectionRemaining}>
-                <View style={styles.remainingRow}>
-                  <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Remaining</Text>
-                  <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Cost</Text>
-                  <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Time</Text>
+          {(hasRemaining || !isSectionMaxed) && (
+            <View style={styles.buildingSectionRemainingRow}>
+              {hasRemaining && (
+                <View style={styles.buildingSectionRemaining}>
+                  <View style={styles.remainingRow}>
+                    <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Remaining</Text>
+                    <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Cost</Text>
+                    <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Time</Text>
+                  </View>
+                  <View style={styles.remainingTotalRow}>
+                    <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
+                    <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
+                      {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
+                    </Text>
+                    <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
+                      {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.remainingTotalRow}>
-                  <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
-                  <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
-                    {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
-                  </Text>
-                  <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
-                    {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
-                  </Text>
-                </View>
-              </View>
-            )}
-            {(!isSectionMaxed || canDowngrade) && (
-              <View style={styles.buildingSectionQuickBtns}>
-                {!isSectionMaxed && (
+              )}
+              {!isSectionMaxed && (
+                <View style={styles.buildingSectionQuickBtns}>
                   <PressableRipple
                     onPress={upgradeAllCopiesByOne}
+                    onLongPress={maxAllCopies}
                     style={styles.buildingSectionQuickBtn}
                     hitSlop={4}
-                    accessibilityLabel={`Upgrade all ${title} copies by one`}
+                    accessibilityLabel={`Upgrade all ${title} copies by one. Hold to max all out`}
                     accessibilityRole="button"
                   >
                     <Ionicons name="arrow-up-circle" size={20} color={Colors.textSecondary} />
                   </PressableRipple>
-                )}
-                {canDowngrade && (
-                  <PressableRipple
-                    onPress={downgradeAllCopiesByOne}
-                    style={styles.buildingSectionQuickBtn}
-                    hitSlop={4}
-                    accessibilityLabel={`Downgrade all ${title} copies by one`}
-                    accessibilityRole="button"
-                  >
-                    <Ionicons name="arrow-down-circle" size={20} color={Colors.textSecondary} />
-                  </PressableRipple>
-                )}
-              </View>
-            )}
-          </View>
+                  {canDowngrade && (
+                    <PressableRipple
+                      onPress={downgradeAllCopiesByOne}
+                      style={styles.buildingSectionQuickBtn}
+                      hitSlop={4}
+                      accessibilityLabel={`Downgrade all ${title} copies by one`}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="arrow-down-circle" size={20} color={Colors.textSecondary} />
+                    </PressableRipple>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
           {mergedDisplayLevels.length > 0 && (
             <View style={styles.buildingSectionMerged}>
               <View style={styles.levelGridBorder}>
                 <View style={styles.levelGrid}>
-                  {mergedDisplayLevels.map((levelData: any) => {
+                  {mergedGridLevels.map((levelData: any) => {
                     const lvl = levelData.Level;
                     const cellSource = getBuildingLevelImageSource(lookupName, lvl);
                     const isCurrent = copies.levels.includes(lvl);
@@ -967,6 +1003,16 @@ function BuildingCollapsibleSection({
                       </View>
                     );
                   })}
+                  {isSectionMaxed && (
+                    <PressableRipple
+                      onPress={downgradeAllCopiesByOne}
+                      style={styles.levelGridDowngrade}
+                      accessibilityLabel={`Downgrade all ${title} copies by one`}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="arrow-down-circle" size={20} color={Colors.bg} />
+                    </PressableRipple>
+                  )}
                 </View>
               </View>
               {buildingStats && (
@@ -1022,7 +1068,7 @@ function BuildingCollapsibleSection({
                   </View>
                 </ScrollView>
               )}
-              {showLevelSpan && (
+              {showLevelSpan && !isSectionMaxed && (
                 <PressableRipple style={styles.expandTableBtn} onPress={() => setShowAllLevels(!showAllLevels)}>
                   <Ionicons name={showAllLevels ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
                   <Text style={styles.expandTableText}>
@@ -1934,6 +1980,16 @@ const styles = StyleSheet.create({
     borderRightWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
+  },
+  levelGridDowngrade: {
+    width: 48,
+    height: 44,
+    marginLeft: 'auto',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.textPrimary,
+    borderRadius: Radius.md,
+    opacity: 0.85,
   },
   levelGridCellCurrent: {
     backgroundColor: Colors.accentGhost,
