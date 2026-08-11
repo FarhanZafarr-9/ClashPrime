@@ -426,9 +426,9 @@ export default function WarScreen() {
     try {
       if (!forceRefresh) {
         setError(null);
-        setFetchIssues([]);
         setCwlLeague(null);
       }
+      setFetchIssues([]);
       const token = await getApiToken();
       if (!token) {
         setError('API token not configured.');
@@ -451,7 +451,8 @@ export default function WarScreen() {
       const inCwlLeague = !!lgState && lgState !== 'notInWar';
       const warLogPublic = clanRes.status === 'fulfilled' ? clanRes.value.isWarLogPublic : true;
 
-      const addIssue = (issue: WarIssue) => setFetchIssues(prev => [...prev, issue]);
+      const addIssue = (issue: WarIssue) =>
+        setFetchIssues(prev => (prev.some(i => i.key === issue.key) ? prev : [...prev, issue]));
       const privacyBlocked = (reason: unknown) =>
         reason instanceof ClashAPIError && reason.status === 403 && !warLogPublic;
       const privacyIssue: WarIssue = {
