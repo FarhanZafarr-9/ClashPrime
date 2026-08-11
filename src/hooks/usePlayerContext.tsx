@@ -15,6 +15,7 @@ import {
 } from './usePlayer';
 import { ClashAPI } from '../api/clash';
 import { toJsonName, toStoreName } from '../utils/buildingCopies';
+import { seedBuildingLevelsForTH } from '../utils/seedBuildingLevels';
 
 interface PlayerContextValue {
   player: ClashPlayer | null;
@@ -30,6 +31,8 @@ interface PlayerContextValue {
   accounts: StoredAccount[];
   switchAccount: (tag: string) => Promise<void>;
   refreshAccounts: () => Promise<void>;
+  prefetchAccount: (tag: string, opts?: { token?: string; th?: number }) => Promise<void>;
+  syncingTag: string | null;
   needsLastMaxed: boolean;
 }
 
@@ -47,6 +50,8 @@ const PlayerContext = createContext<PlayerContextValue>({
   accounts: [],
   switchAccount: async () => {},
   refreshAccounts: async () => {},
+  prefetchAccount: async () => {},
+  syncingTag: null,
   needsLastMaxed: false,
 });
 
@@ -59,7 +64,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [activeAccount, setActiveAccountState] = useState<StoredAccount | null>(null);
   const [accounts, setAccounts] = useState<StoredAccount[]>([]);
   const [needsLastMaxed, setNeedsLastMaxed] = useState(false);
+  const [syncingTag, setSyncingTag] = useState<string | null>(null);
   const playerRef = useRef<ClashPlayer | null>(null);
+  const syncingTagRef = useRef<string | null>(null);
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(false);
 
   const refreshAccounts = useCallback(async () => {
@@ -110,7 +118,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         data.lastMaxedTH = cached.lastMaxedTH;
       } else {
         const prev = playerRef.current;
-        if (prev) {
+        if (prev && prev.tag === tag) {
           data.buildingLevels = prev.buildingLevels;
           data.buildings = prev.buildings ?? data.buildings;
           data.lastMaxedTH = prev.lastMaxedTH;
@@ -154,6 +162,58 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchPlayer, refreshAccounts]);
 
+  const prefetchAccount = useCallback(async (tag: string, opts: { token?: string; th?: number } = {}) => {
+    if (syncingTagRef.current === tag) return;
+    syncingTagRef.current = tag;
+    setSyncingTag(tag);
+    if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+
+    const finish = () => {
+      if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = null;
+      if (syncingTagRef.current === tag) {
+        syncingTagRef.current = null;
+        setSyncingTag(null);
+      }
+    };
+
+    prefetchTimerRef.current = setTimeout(() => {
+      finish();
+      (async () => {
+        const accts = await getAccounts();
+        if (accts.some((a) => a.tag === tag)) {
+          await switchAccount(tag).catch(() => {});
+        }
+      })();
+    }, 60000);
+
+    try {
+      const token = opts.token ?? (await getApiToken(tag));
+      if (!token) {
+        finish();
+        return;
+      }
+      const api = new ClashAPI(token);
+      const data = await api.getPlayer(tag);
+      const th = opts.th && opts.th > 0 ? opts.th : data.townHallLevel;
+      data.buildingLevels = seedBuildingLevelsForTH(data, th);
+      data.lastMaxedTH = th;
+      await cachePlayer(data, tag);
+      const accts = await getAccounts();
+      const acct = accts.find((a) => a.tag === tag);
+      if (acct) {
+        acct.name = data.name;
+        acct.townHallLevel = data.townHallLevel;
+        await saveAccount(acct);
+      }
+      await refreshAccounts();
+      finish();
+      await switchAccount(tag);
+    } catch {
+      // Fetch failed; the 60s timeout still switches so the account isn't locked forever.
+    }
+  }, [switchAccount, refreshAccounts]);
+
   useEffect(() => {
     if (mountedRef.current) return;
     mountedRef.current = true;
@@ -167,6 +227,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     playerRef.current = player;
   }, [player]);
+
+  useEffect(() => () => {
+    if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+  }, []);
 
   const refresh = useCallback(async () => {
     return await fetchPlayer(true);
@@ -229,6 +293,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     accounts,
     switchAccount,
     refreshAccounts,
+    prefetchAccount,
+    syncingTag,
     needsLastMaxed,
   };
 

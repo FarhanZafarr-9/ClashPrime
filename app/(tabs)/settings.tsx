@@ -208,7 +208,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.5.0'}`;
   const { bumpTagVersion } = usePlayerActions();
-  const { switchAccount, refreshAccounts, accounts, activeAccount } = usePlayer();
+  const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
@@ -409,9 +409,9 @@ export default function SettingsScreen() {
       showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
       return;
     }
-    await setPlayerTag(tag);
-    await setApiToken(token);
     const thLevel = parseInt(onboardingThLevel, 10);
+    await setPlayerTag(tag);
+    await setApiToken(token, tag);
     await saveAccount({
       tag,
       name: tag,
@@ -420,10 +420,10 @@ export default function SettingsScreen() {
       lastUsedAt: new Date().toISOString(),
     });
     await refreshAccounts();
-    await handleSwitchAccount(tag);
     setShowOnboarding(false);
     setOnboardingTag('');
     setOnboardingThLevel('');
+    await prefetchAccount(tag, { token, th: thLevel });
   };
 
   const openAbout = () => {
@@ -1169,12 +1169,13 @@ export default function SettingsScreen() {
 
             {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
+              const isSyncing = acct.tag === syncingTag;
               return (
                 <PressableRipple
                   key={acct.tag}
                   style={[styles.switchItem, isActive && styles.switchItemActive]}
                   onPress={async () => {
-                    if (isActive || switchingAccount) return;
+                    if (isActive || switchingAccount || isSyncing) return;
                     setSwitchModalVisible(false);
                     await handleSwitchAccount(acct.tag);
                   }}
@@ -1215,6 +1216,12 @@ export default function SettingsScreen() {
                       {isActive && (
                         <View style={styles.switchActiveChip}>
                           <Text style={styles.switchActiveChipText}>Active</Text>
+                        </View>
+                      )}
+                      {isSyncing && (
+                        <View style={styles.switchSyncingChip}>
+                          <ActivityIndicator size="small" color={Colors.textSecondary} style={styles.switchSyncingSpinner} />
+                          <Text style={styles.switchSyncingText}>Syncing…</Text>
                         </View>
                       )}
                     </View>
@@ -1437,6 +1444,26 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
     color: Colors.bg,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  switchSyncingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgCardHover,
+  },
+  switchSyncingSpinner: {
+    width: 9,
+    height: 9,
+  },
+  switchSyncingText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
