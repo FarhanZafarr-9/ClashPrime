@@ -239,7 +239,7 @@ export function HomeScreenSkeleton() {
                 </View>
               </View>
               {i === 0 && [0, 1].map((r) => (
-                <View key={r} style={[styles.homeItemRowSkeleton, { borderTopColor: colors.border }]}>
+                <View key={r} style={styles.homeItemRowSkeleton}>
                   <Skeleton width={36} height={36} borderRadius={Radius.md} />
                   <View style={{ flex: 1, gap: 3 }}>
                     <Skeleton width="50%" height={12} borderRadius={4} />
@@ -266,7 +266,7 @@ export function HomeScreenSkeleton() {
               <Skeleton width={36} height={32} borderRadius={Radius.sm} />
             </View>
             {[0, 1].map((r) => (
-              <View key={r} style={[styles.homeItemRowSkeleton, { borderTopColor: colors.border }]}>
+              <View key={r} style={styles.homeItemRowSkeleton}>
                 <Skeleton width={36} height={36} borderRadius={Radius.md} />
                 <View style={{ flex: 1, gap: 3 }}>
                   <Skeleton width="55%" height={12} borderRadius={4} />
@@ -305,7 +305,7 @@ export function HomeScreenSkeleton() {
                 <Skeleton width={36} height={32} borderRadius={Radius.sm} />
               </View>
               {[0, 1].map((r) => (
-                <View key={r} style={[styles.homeItemRowSkeleton, { borderTopColor: colors.border }]}>
+                <View key={r} style={styles.homeItemRowSkeleton}>
                   <Skeleton width={36} height={36} borderRadius={Radius.md} />
                   <View style={{ flex: 1, gap: 3 }}>
                     <Skeleton width="45%" height={12} borderRadius={4} />
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing.xs,
   },
   tabPills: {
     flexDirection: 'row',
