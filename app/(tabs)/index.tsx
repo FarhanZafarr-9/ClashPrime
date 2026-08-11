@@ -319,7 +319,8 @@ export default function HomeScreen() {
   const heroEquipment = player?.heroEquipment ?? [];
 
   // Prefetch hero-equipment details (full level list) so equipment rows show the
-  // item's full max level instead of the API's Blacksmith-capped maxLevel.
+  // item's correct max level for the Town Hall instead of the API's
+  // Blacksmith-capped maxLevel.
   const prefetchEquipDetails = useCallback(async () => {
     const names = heroEquipment.map((e) => e.name);
     if (names.length === 0) return;
@@ -337,16 +338,26 @@ export default function HomeScreen() {
     prefetchEquipDetails();
   }, [prefetchEquipDetails]);
 
-  const getEquipFullMax = (name: string, fallback: number): number => {
+  // Equipment level caps aren't tied to the Town Hall directly: each level row
+  // lists a "Blacksmith Level Required" gate, so the max reachable at a Town
+  // Hall is the highest level whose requirement is met by the Blacksmith level
+  // that Town Hall allows.
+  const getEquipMaxAtTh = (name: string, thLevel: number): number => {
     const detail = equipDetails[name];
-    if (detail && detail.levels.length > 0) {
-      let max = 0;
-      for (const lvl of detail.levels) {
-        if (lvl.level > max) max = lvl.level;
+    if (!detail || detail.levels.length === 0) return 0;
+    const blacksmithAtTh = getMaxLevelAtTH('Blacksmith', thLevel) ?? 0;
+    let max = 0;
+    for (const lvl of detail.levels) {
+      if (lvl.labLevel == null || lvl.labLevel <= blacksmithAtTh) {
+        max = Math.max(max, lvl.level);
       }
-      return max;
     }
-    return fallback;
+    return max;
+  };
+
+  const getEquipFullMax = (name: string, fallback: number): number => {
+    const thMax = getEquipMaxAtTh(name, th);
+    return thMax > 0 ? thMax : fallback;
   };
 
   const ownedNames = new Set([
@@ -372,8 +383,8 @@ export default function HomeScreen() {
       if (maxPrev !== null && s.level < maxPrev) rushedItems.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
     }
     for (const e of heroEquipment) {
-      const maxPrev = getMaxLevelAtTH(e.name, prevTh);
-      if (maxPrev !== null && e.level < maxPrev) rushedItems.push({ name: e.name, currentLevel: e.level, maxLevelAtPrevTH: maxPrev, type: 'equipment' });
+      const maxPrev = getEquipMaxAtTh(e.name, prevTh);
+      if (maxPrev > 0 && e.level < maxPrev) rushedItems.push({ name: e.name, currentLevel: e.level, maxLevelAtPrevTH: maxPrev, type: 'equipment' });
     }
   }
 
@@ -845,7 +856,6 @@ export default function HomeScreen() {
               icon="apps-outline"
               title="Progress Overview"
               compact
-              defaultOpen
               count={progressGroups.reduce((s, g) => s + g.rows.length, 0)}
               totalLevel={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
               totalMax={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
@@ -879,7 +889,7 @@ export default function HomeScreen() {
                       </View>
                     </View>
                   )}
-                  count={group.rows.length}
+                  count={displayRows.length}
                   totalLevel={totalLevel}
                   totalMax={totalMax}
                 >
@@ -909,7 +919,6 @@ export default function HomeScreen() {
                   icon="business-outline"
                   title="Buildings"
                   compact
-                  defaultOpen
                   count={countedGroups.reduce((s, g) => s + g.rows.length, 0)}
                   totalLevel={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
                   totalMax={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
@@ -971,7 +980,6 @@ export default function HomeScreen() {
                 icon="list-outline"
                 title="Backlog"
                 compact
-                defaultOpen
                 count={unlockableItems.length + rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
