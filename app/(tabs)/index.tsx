@@ -207,7 +207,6 @@ export default function HomeScreen() {
   const [equipDetails, setEquipDetails] = useState<Record<string, TroopDetail | null>>({});
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
   const [progressDetails, setProgressDetails] = useState<Record<string, TroopDetail | null>>({});
   const progressFetched = useRef<Set<string> | null>(null);
 
@@ -251,11 +250,9 @@ export default function HomeScreen() {
     if (tag === activeAccount?.tag || switchingHome || syncingTag === tag) return;
     setSwitcherVisible(false);
     setSwitchingHome(true);
-    Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     await switchAccount(tag);
-    Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
     setSwitchingHome(false);
-  }, [switchAccount, activeAccount, switchingHome, syncingTag, fadeAnim]);
+  }, [switchAccount, activeAccount, switchingHome, syncingTag]);
 
   const buildSnapshot = useCallback((p: ClashPlayer): ProgressSnapshot => {
     const th = p.townHallLevel ?? 0;
@@ -503,6 +500,10 @@ export default function HomeScreen() {
     return <HomeScreenSkeleton />;
   }
 
+  if (switchingHome) {
+    return <HomeScreenSkeleton />;
+  }
+
   if (error && !player) {
     return (
       <SafeAreaView style={styles.container}>
@@ -731,7 +732,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <View style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -1294,13 +1295,7 @@ export default function HomeScreen() {
 
           <View style={{ height: 100 }} />
         </ScrollView>
-      </Animated.View>
-
-      {switchingHome && (
-        <View style={styles.switchingOverlay}>
-          <ActivityIndicator size="large" color={Colors.textPrimary} />
-        </View>
-      )}
+      </View>
 
       <Dialog />
 
@@ -1640,13 +1635,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-  },
-  switchingOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
   },
   switcherOverlay: {
     flex: 1,
