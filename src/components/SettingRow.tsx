@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PressableRipple from './PressableRipple';
 import { Colors, useTheme, Radius, Spacing } from '../theme';
@@ -26,6 +26,7 @@ function getPillPos(pos: PillPosition, topOffset: number, rightOffset: number): 
 interface SettingRowProps {
   icon: string;
   iconUrl?: string;
+  iconSource?: ImageSourcePropType;
   title: string;
   desc?: React.ReactNode;
   onPress?: () => void;
@@ -47,6 +48,7 @@ interface SettingRowProps {
 export function SettingRow({
   icon,
   iconUrl,
+  iconSource,
   title,
   desc,
   onPress,
@@ -96,7 +98,9 @@ export function SettingRow({
             isFirst && styles.settingRowIconFirst,
             isLast && styles.settingRowIconLast,
           ]}>
-            {iconUrl ? (
+            {iconSource ? (
+              <Image source={iconSource} style={styles.settingRowImage} resizeMode="contain" />
+            ) : iconUrl ? (
               <Image source={{ uri: iconUrl }} style={styles.settingRowImage} resizeMode="contain" />
             ) : (
               <Ionicons
