@@ -172,6 +172,7 @@ export function EventsScreenSkeleton() {
 // ─── Home tab skeleton ────────────────────────────────────────────────────────
 export function HomeScreenSkeleton() {
   const { colors } = useTheme();
+  const rowRadius = Radius.xl * 1.25;
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={{ flex: 1, paddingBottom: 64 }}>
@@ -207,95 +208,49 @@ export function HomeScreenSkeleton() {
             </View>
             <Skeleton width={16} height={16} borderRadius={8} />
           </View>
-          {/* Stats grid */}
-          <View style={styles.homeStatsGridSkeleton}>
-            {[0, 1, 2, 3].map((i) => (
-              <View key={i} style={[styles.homeStatCellSkeleton, { backgroundColor: colors.bgCardHover, borderColor: colors.border }]}>
-                <Skeleton width={28} height={28} borderRadius={6} />
-                <View style={{ flex: 1, gap: 3 }}>
-                  <Skeleton width="70%" height={11} borderRadius={3} />
-                  <Skeleton width="50%" height={9} borderRadius={3} />
-                </View>
-              </View>
-            ))}
-          </View>
         </View>
-        {/* Section: Progress Overview */}
+        {/* Section: Progress Overview / Buildings / Backlog (collapsed rows) */}
         <View style={styles.sectionLabel}>
           <Skeleton width={140} height={14} borderRadius={4} />
         </View>
         <View style={styles.homeSectionsSkeleton}>
-          <View style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <View style={styles.homeSectionHeaderSkeleton}>
-              <Skeleton width={32} height={32} borderRadius={Radius.md} />
-              <View style={{ flex: 1, gap: 5 }}>
-                <Skeleton width="50%" height={13} borderRadius={4} />
-                <Skeleton width="70%" height={4} borderRadius={2} />
-              </View>
-              <View style={styles.homeSectionBadgesSkeleton}>
-                <Skeleton width={36} height={32} borderRadius={Radius.sm} />
-                <Skeleton width={40} height={32} borderRadius={Radius.sm} />
-              </View>
+          <View style={[
+            styles.homeSectionRowSkeleton,
+            { backgroundColor: colors.bgCard },
+            { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
+          ]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Skeleton width="50%" height={13} borderRadius={4} />
+              <Skeleton width="70%" height={4} borderRadius={2} />
             </View>
-            {[0, 1, 2, 3].map((r) => (
-              <View key={r} style={styles.homeCatRowSkeleton}>
-                <Skeleton width={28} height={28} borderRadius={Radius.sm} />
-                <View style={{ flex: 1, gap: 3 }}>
-                  <Skeleton width="45%" height={12} borderRadius={4} />
-                  <Skeleton width="60%" height={9} borderRadius={3} />
-                </View>
-                <Skeleton width={36} height={28} borderRadius={Radius.sm} />
-              </View>
-            ))}
-          </View>
-          <View style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <View style={styles.homeSectionHeaderSkeleton}>
-              <Skeleton width={32} height={32} borderRadius={Radius.md} />
-              <View style={{ flex: 1, gap: 5 }}>
-                <Skeleton width="40%" height={13} borderRadius={4} />
-                <Skeleton width="70%" height={4} borderRadius={2} />
-              </View>
-              <View style={styles.homeSectionBadgesSkeleton}>
-                <Skeleton width={36} height={32} borderRadius={Radius.sm} />
-                <Skeleton width={40} height={32} borderRadius={Radius.sm} />
-              </View>
-            </View>
-            {[0, 1, 2, 3, 4].map((r) => (
-              <View key={r} style={styles.homeCatRowSkeleton}>
-                <Skeleton width={28} height={28} borderRadius={Radius.sm} />
-                <View style={{ flex: 1, gap: 3 }}>
-                  <Skeleton width="45%" height={12} borderRadius={4} />
-                  <Skeleton width="60%" height={9} borderRadius={3} />
-                </View>
-                <Skeleton width={36} height={28} borderRadius={Radius.sm} />
-              </View>
-            ))}
-          </View>
-        </View>
-        {/* Section: Backlog */}
-        <View style={styles.sectionLabel}>
-          <Skeleton width={80} height={14} borderRadius={4} />
-        </View>
-        <View style={styles.homeSectionsSkeleton}>
-          <View style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <View style={styles.homeSectionHeaderSkeleton}>
-              <Skeleton width={32} height={32} borderRadius={Radius.md} />
-              <View style={{ flex: 1, gap: 5 }}>
-                <Skeleton width="45%" height={13} borderRadius={4} />
-                <Skeleton width="60%" height={10} borderRadius={3} />
-              </View>
+            <View style={styles.homeSectionBadgesSkeleton}>
               <Skeleton width={36} height={32} borderRadius={Radius.sm} />
+              <Skeleton width={40} height={32} borderRadius={Radius.sm} />
             </View>
-            {[0, 1].map((r) => (
-              <View key={r} style={styles.homeItemRowSkeleton}>
-                <Skeleton width={36} height={36} borderRadius={Radius.md} />
-                <View style={{ flex: 1, gap: 3 }}>
-                  <Skeleton width="55%" height={12} borderRadius={4} />
-                  <Skeleton width="30%" height={10} borderRadius={3} />
-                </View>
-                <Skeleton width={40} height={12} borderRadius={4} />
-              </View>
-            ))}
+          </View>
+          <View style={[styles.homeSectionRowSkeleton, { backgroundColor: colors.bgCard }]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Skeleton width="40%" height={13} borderRadius={4} />
+              <Skeleton width="70%" height={4} borderRadius={2} />
+            </View>
+            <View style={styles.homeSectionBadgesSkeleton}>
+              <Skeleton width={36} height={32} borderRadius={Radius.sm} />
+              <Skeleton width={40} height={32} borderRadius={Radius.sm} />
+            </View>
+          </View>
+          <View style={[
+            styles.homeSectionRowSkeleton,
+            { backgroundColor: colors.bgCard },
+            { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
+          ]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Skeleton width="45%" height={13} borderRadius={4} />
+              <Skeleton width="60%" height={10} borderRadius={3} />
+            </View>
+            <Skeleton width={36} height={32} borderRadius={Radius.sm} />
           </View>
         </View>
         {/* Section: Quick Actions */}
@@ -310,31 +265,24 @@ export function HomeScreenSkeleton() {
             </View>
           ))}
         </View>
-        {/* Section: Quick Stats */}
+        {/* Section: Quick Stats (collapsed rows) */}
         <View style={styles.sectionLabel}>
           <Skeleton width={90} height={14} borderRadius={4} />
         </View>
         <View style={styles.homeSectionsSkeleton}>
           {[0, 1, 2].map((i) => (
-            <View key={i} style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <View style={styles.homeSectionHeaderSkeleton}>
-                <Skeleton width={32} height={32} borderRadius={Radius.md} />
-                <View style={{ flex: 1, gap: 5 }}>
-                  <Skeleton width="40%" height={13} borderRadius={4} />
-                  <Skeleton width="55%" height={10} borderRadius={3} />
-                </View>
-                <Skeleton width={36} height={32} borderRadius={Radius.sm} />
+            <View key={i} style={[
+              styles.homeSectionRowSkeleton,
+              { backgroundColor: colors.bgCard },
+              i === 0 && { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
+              i === 2 && { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
+            ]}>
+              <Skeleton width={32} height={32} borderRadius={Radius.md} />
+              <View style={{ flex: 1, gap: 5 }}>
+                <Skeleton width="40%" height={13} borderRadius={4} />
+                <Skeleton width="55%" height={10} borderRadius={3} />
               </View>
-              {[0, 1].map((r) => (
-                <View key={r} style={styles.homeItemRowSkeleton}>
-                  <Skeleton width={36} height={36} borderRadius={Radius.md} />
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <Skeleton width="45%" height={12} borderRadius={4} />
-                    <Skeleton width="25%" height={10} borderRadius={3} />
-                  </View>
-                  <Skeleton width={40} height={12} borderRadius={4} />
-                </View>
-              ))}
+              <Skeleton width={36} height={32} borderRadius={Radius.sm} />
             </View>
           ))}
         </View>
@@ -577,63 +525,23 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingBottom: Spacing.xs,
   },
-  homeStatsGridSkeleton: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    paddingTop: Spacing.xs,
-  },
-  homeStatCellSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    width: '48%',
-    paddingVertical: Spacing.xs + 2,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.sm,
-    borderWidth: 0.75,
-  },
   homeSectionsSkeleton: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.md,
     gap: Spacing.xs,
   },
-  homeSectionSkeleton: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    overflow: 'hidden',
-  },
-  homeSectionHeaderSkeleton: {
+  homeSectionRowSkeleton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.base,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
+    borderRadius: Radius.sm,
   },
   homeSectionBadgesSkeleton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-  },
-  homeItemRowSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  homeCatRowSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    marginHorizontal: Spacing.sm,
-    marginBottom: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
   },
   tabPills: {
     flexDirection: 'row',
