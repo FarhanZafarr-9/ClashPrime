@@ -358,8 +358,11 @@ function getTableHeaders(tableHtml: string): string[] {
       if (ci >= cells.length) break;
       const cell = cells[ci++];
       const text = cell.text;
-      // Skip empty category-level names when a deeper row has sub-labels
-      const isCategory = /attributes|boosts|cost/i.test(text);
+      // A cell is only a spanning category label (skip it so deeper sub-labels
+      // win) when it actually spans multiple columns. Leaf headers like
+      // "Research Cost" have colspan=1 and must be kept even when the same
+      // table has a colspan with deeper labels elsewhere (e.g. Lava Hound).
+      const isCategory = /attributes|boosts|cost/i.test(text) && cell.colspan > 1;
       const hasDeeper = row < parsed.length - 1 && parsed.slice(row + 1).some((r) =>
         r.some((c) => c.text && !/attributes|boosts|cost/i.test(c.text))
       );
@@ -439,6 +442,15 @@ function findStatTable(tableHtmls: string[]): string | null {
 
       return { tableHtml, headers, bodyRows, bodyCellDensity, maxBodyCells };
     })
+    .map((candidate) => ({
+      ...candidate,
+      // Home Village stat tables use "Laboratory Level Required"; Builder Base
+      // uses "Star Laboratory Level Required". Prefer Home Village so pages
+      // with both (e.g. Baby Dragon) don't pick the Builder Base table.
+      isHome:
+        candidate.headers.some((h) => /laboratory level required/i.test(h)) &&
+        !candidate.headers.some((h) => /star laboratory level required/i.test(h)),
+    }))
     .filter(({ headers, bodyRows, maxBodyCells }) => {
       const hasLevelHeader = headers.some((header) => /^level$/i.test(header));
       const hasStatHeader = headers.some((header) =>
@@ -448,6 +460,7 @@ function findStatTable(tableHtmls: string[]): string | null {
       return hasLevelHeader && hasStatHeader && hasRealBody;
     })
     .sort((a, b) => {
+      if (a.isHome !== b.isHome) return b.isHome ? 1 : -1;
       if (b.headers.length !== a.headers.length) return b.headers.length - a.headers.length;
       if (b.maxBodyCells !== a.maxBodyCells) return b.maxBodyCells - a.maxBodyCells;
       if (b.bodyCellDensity !== a.bodyCellDensity) return b.bodyCellDensity - a.bodyCellDensity;
@@ -632,6 +645,34 @@ async function fetchTroopFromFandom(name: string): Promise<TroopDetail | null> {
   };
 }
 
+// In-flight fetches so concurrent callers for the same item share one request.
+const inFlight = new Map<string, Promise<TroopDetail | null>>();
+
+function fetchAndCache(name: string, slug: string, cacheKey: string): Promise<TroopDetail | null> {
+  const existing = inFlight.get(slug);
+  if (existing) return existing;
+
+  const task = (async () => {
+    try {
+      const fandomDetail = await fetchTroopFromFandom(name);
+      if (fandomDetail && fandomDetail.levels.length > 0) {
+        try {
+          await AsyncStorage.setItem(cacheKey, JSON.stringify({ data: fandomDetail, timestamp: Date.now() } as CacheEntry));
+        } catch (error) {
+          console.warn('[troopDetail] Cache write failed', { name, error });
+        }
+        return fandomDetail;
+      }
+      return null;
+    } finally {
+      inFlight.delete(slug);
+    }
+  })();
+
+  inFlight.set(slug, task);
+  return task;
+}
+
 export async function getTroopDetail(name: string, bypassCache: boolean = false): Promise<TroopDetail | null> {
   const slug = name.replace(/\s+/g, '-').toLowerCase();
   const cacheKey = `${CACHE_PREFIX}${slug}`;
@@ -641,7 +682,13 @@ export async function getTroopDetail(name: string, bypassCache: boolean = false)
       const raw = await AsyncStorage.getItem(cacheKey);
       if (raw) {
         const entry: CacheEntry = JSON.parse(raw as string);
-        if (entry.data?.imageUrl && (Date.now() - entry.timestamp < CACHE_TTL_MS)) {
+        if (entry.data?.imageUrl) {
+          if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
+            return entry.data;
+          }
+          // Stale but usable: serve it immediately and refresh the cache in the
+          // background so the UI never blocks on a wiki re-fetch.
+          fetchAndCache(name, slug, cacheKey).catch(() => {});
           return entry.data;
         }
       }
@@ -650,15 +697,5 @@ export async function getTroopDetail(name: string, bypassCache: boolean = false)
     }
   }
 
-  const fandomDetail = await fetchTroopFromFandom(name);
-  if (fandomDetail && fandomDetail.levels.length > 0) {
-    try {
-      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data: fandomDetail, timestamp: Date.now() } as CacheEntry));
-    } catch (error) {
-      console.warn('[troopDetail] Cache write failed', { name, error });
-    }
-    return fandomDetail;
-  }
-
-  return null;
+  return fetchAndCache(name, slug, cacheKey);
 }
