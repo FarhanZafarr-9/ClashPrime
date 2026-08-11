@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
+import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, type CostTime } from '../../src/utils/upgradeCosts';
 import thLevelsData from '../../src/data/th-levels.json';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
@@ -148,13 +149,14 @@ function CollapsibleSection({
             : badge
         ) : (
           <View style={styles.sectionBadges}>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>{count}</Text>
-            </View>
-            {totalMax > 0 && (
+            {totalMax > 0 ? (
               <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && !open && styles.sectionBadgeLast]}>
                 <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
                 <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+              </View>
+            ) : (
+              <View style={styles.sectionBadge}>
+                <Text style={styles.sectionBadgeText}>{count}</Text>
               </View>
             )}
           </View>
@@ -172,7 +174,7 @@ function CollapsibleSection({
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts } = usePlayer();
+  const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
   const { superTroopNames } = useGameData();
   const { reminders, addTimer, dismissTimer, hasPermission } = useTimers();
   const { show: showDialog, Dialog } = useDialog();
@@ -202,6 +204,15 @@ export default function HomeScreen() {
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [progressDetails, setProgressDetails] = useState<Record<string, TroopDetail | null>>({});
+  const progressFetched = useRef<Set<string> | null>(null);
+
+  // Wiki details for the progress-overview army items are cached globally and
+  // shared across accounts; reset the in-memory state per account.
+  useEffect(() => {
+    setProgressDetails({});
+    progressFetched.current = null;
+  }, [player?.tag]);
 
   React.useEffect(() => {
     if (error && player) {
@@ -233,14 +244,14 @@ export default function HomeScreen() {
   }, [accounts]);
 
   const handleHomeSwitch = useCallback(async (tag: string) => {
-    if (tag === activeAccount?.tag || switchingHome) return;
+    if (tag === activeAccount?.tag || switchingHome || syncingTag === tag) return;
     setSwitcherVisible(false);
     setSwitchingHome(true);
     Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     await switchAccount(tag);
     Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
     setSwitchingHome(false);
-  }, [switchAccount, activeAccount, switchingHome, fadeAnim]);
+  }, [switchAccount, activeAccount, switchingHome, syncingTag, fadeAnim]);
 
   const buildSnapshot = useCallback((p: ClashPlayer): ProgressSnapshot => {
     const th = p.townHallLevel ?? 0;
@@ -361,9 +372,9 @@ export default function HomeScreen() {
   };
 
   const ownedNames = new Set([
-    ...(player?.troops ?? []).map((t: { name: string }) => t.name.toLowerCase()),
-    ...(player?.spells ?? []).map((s: { name: string }) => s.name.toLowerCase()),
-    ...(player?.heroes ?? []).map((h: { name: string }) => h.name.toLowerCase()),
+    ...(player?.troops ?? []).filter((t: { village: string }) => t.village === 'home').map((t: { name: string }) => t.name.toLowerCase()),
+    ...(player?.spells ?? []).filter((s: { village?: string }) => s.village === 'home' || !s.village).map((s: { name: string }) => s.name.toLowerCase()),
+    ...(player?.heroes ?? []).filter((h: { village: string }) => h.village === 'home').map((h: { name: string }) => h.name.toLowerCase()),
   ]);
   const unlockableItems = th > 0 ? getUnlockableItems(th, ownedNames) : [];
 
@@ -388,25 +399,46 @@ export default function HomeScreen() {
     }
   }
 
-  // ── Cost helpers ──
-  const parseCost = (s: string): number => {
-    const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
-    if (!cleaned) return 0;
-    const num = parseFloat(cleaned);
-    if (isNaN(num)) return 0;
-    if (/b/i.test(cleaned)) return num * 1_000_000_000;
-    if (/m/i.test(cleaned)) return num * 1_000_000;
-    if (/k/i.test(cleaned)) return num * 1_000;
-    return num;
-  };
+  // Names of every troop/spell/hero/equipment the progress overview (and the
+  // Backlog's locked/rushed lists) can show at this Town Hall — the single
+  // source that drives the shared wiki-detail cache below.
+  const progressArmyNames = useMemo(() => {
+    if (!player || th <= 0) return [];
+    const names = new Set<string>();
+    for (const item of getAllItemsAtTH(th)) names.add(item.name);
+    for (const e of heroEquipment ?? []) names.add(e.name);
+    for (const i of unlockableItems) names.add(i.name);
+    for (const i of rushedItems) names.add(i.name);
+    return [...names];
+  }, [player, th, heroEquipment, unlockableItems, rushedItems]);
 
-  const parseTime = (s: string): number => {
-    if (!s || /[—\-]/.test(s)) return 0;
-    const d = s.match(/(\d+)\s*d/);
-    const h = s.match(/(\d+)\s*h/);
-    const m = s.match(/(\d+)\s*m/);
-    return (d ? parseInt(d[1]) * 86400 : 0) + (h ? parseInt(h[1]) * 3600 : 0) + (m ? parseInt(m[1]) * 60 : 0);
-  };
+  // Background prefetch of the missing wiki details, throttled (3 concurrent,
+  // 150ms apart) so a fresh install doesn't hammer Fandom with a burst. The
+  // Backlog reads from the same progressDetails cache, so it never fetches
+  // anything separately.
+  useEffect(() => {
+    if (!player || progressArmyNames.length === 0) return;
+    const pending = progressArmyNames.filter((n) => !progressFetched.current?.has(n));
+    if (pending.length === 0) return;
+    const fetchedSet = progressFetched.current ?? (progressFetched.current = new Set());
+    let cancelled = false;
+    (async () => {
+      const queue = [...pending];
+      const worker = async () => {
+        while (!cancelled && queue.length > 0) {
+          const name = queue.shift()!;
+          if (!fetchedSet.has(name)) {
+            const detail = await getTroopDetail(name).catch(() => null);
+            fetchedSet.add(name);
+            setProgressDetails((prev) => (prev[name] === undefined ? { ...prev, [name]: detail } : prev));
+          }
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(3, pending.length) }, () => worker()));
+    })();
+    return () => { cancelled = true; };
+  }, [player, progressArmyNames]);
 
   const fmtCost = (n: number): string => {
     if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B`;
@@ -424,77 +456,43 @@ export default function HomeScreen() {
     return `${Math.floor(s / 60)}m`;
   };
 
-  // ── State / refs / effects (must be before early returns) ──
-  const [upgradesOpen, setUpgradesOpen] = useState(false);
-  const [upgradeCosts, setUpgradeCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
-  const [loadingCosts, setLoadingCosts] = useState(false);
-  const upgradeFetchedKeyRef = useRef('');
+  // ── State / derived (must be before early returns) ──
 
-  const [rushedOpen, setRushedOpen] = useState(false);
-  const [rushedCosts, setRushedCosts] = useState<Record<string, { cost: number; timeSeconds: number }> | null>(null);
-  const [loadingRushedCosts, setLoadingRushedCosts] = useState(false);
-  const rushedFetchedKeyRef = useRef('');
+  // Backlog costs are derived from the shared wiki-detail cache (progressDetails),
+  // which the prefetch above already fills for every locked/rushed item name —
+  // the Backlog never issues its own requests.
+  const upgradeCosts = useMemo(() => {
+    const results: Record<string, { cost: number; timeSeconds: number }> = {};
+    for (const item of unlockableItems) {
+      const detail = progressDetails[item.name];
+      if (!detail || detail.levels.length === 0) continue;
+      const maxLvl = getMaxLevelAtTH(item.name, th);
+      if (!maxLvl) continue;
+      const ct = remainingArmyCosts(detail, 0, maxLvl);
+      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time };
+    }
+    return results;
+  }, [progressDetails, unlockableItems, th]);
 
-  useEffect(() => {
-    if (!upgradesOpen || unlockableItems.length === 0) return;
-    const key = unlockableItems.map((i) => i.name).join(',');
-    if (upgradeFetchedKeyRef.current === key) return;
-    upgradeFetchedKeyRef.current = key;
-    setLoadingCosts(true);
+  const rushedCosts = useMemo(() => {
+    const results: Record<string, { cost: number; timeSeconds: number }> = {};
+    for (const item of rushedItems) {
+      const detail = progressDetails[item.name];
+      if (!detail || detail.levels.length === 0) continue;
+      const ct = remainingArmyCosts(detail, item.currentLevel, item.maxLevelAtPrevTH);
+      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time };
+    }
+    return results;
+  }, [progressDetails, rushedItems]);
 
-    (async () => {
-      const results: Record<string, { cost: number; timeSeconds: number }> = {};
-      await Promise.all(unlockableItems.map(async (item) => {
-        const maxLvl = getMaxLevelAtTH(item.name, th);
-        if (!maxLvl) return;
-        const detail = await getTroopDetail(item.name);
-        if (!detail?.levels) return;
-        let cost = 0;
-        let timeSeconds = 0;
-        for (const lvl of detail.levels) {
-          if (lvl.level > maxLvl) break;
-          if (lvl.upgradeCost) cost += parseCost(lvl.upgradeCost);
-          if (lvl.upgradeTime) timeSeconds += parseTime(lvl.upgradeTime);
-        }
-        if (cost > 0 || timeSeconds > 0) results[item.name] = { cost, timeSeconds };
-      }));
-      setUpgradeCosts(results);
-      setLoadingCosts(false);
-    })();
-  }, [upgradesOpen, th, unlockableItems]);
-
-  useEffect(() => {
-    if (!rushedOpen || rushedItems.length === 0) return;
-    const key = rushedItems.map((i) => `${i.name}:${i.currentLevel}:${i.maxLevelAtPrevTH}`).join('|');
-    if (rushedFetchedKeyRef.current === key) return;
-    rushedFetchedKeyRef.current = key;
-    setLoadingRushedCosts(true);
-
-    (async () => {
-      const results: Record<string, { cost: number; timeSeconds: number }> = {};
-      await Promise.all(rushedItems.map(async (item) => {
-        const detail = await getTroopDetail(item.name);
-        if (!detail?.levels) return;
-        let cost = 0;
-        let timeSeconds = 0;
-        for (const lvl of detail.levels) {
-          if (lvl.level > item.maxLevelAtPrevTH) break;
-          if (lvl.level <= item.currentLevel) continue;
-          if (lvl.upgradeCost) cost += parseCost(lvl.upgradeCost);
-          if (lvl.upgradeTime) timeSeconds += parseTime(lvl.upgradeTime);
-        }
-        if (cost > 0 || timeSeconds > 0) results[item.name] = { cost, timeSeconds };
-      }));
-      setRushedCosts(results);
-      setLoadingRushedCosts(false);
-    })();
-  }, [rushedOpen, rushedItems]);
+  const lockedCostsPending = unlockableItems.some((i) => progressDetails[i.name] === undefined);
+  const rushedCostsPending = rushedItems.some((i) => progressDetails[i.name] === undefined);
 
   // ── Aggregates ──
-  const aggregateCost = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
-  const aggregateTime = upgradeCosts ? Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
-  const aggregateRushedCost = rushedCosts ? Object.values(rushedCosts).reduce((sum, v) => sum + v.cost, 0) : 0;
-  const aggregateRushedTime = rushedCosts ? Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0) : 0;
+  const aggregateCost = Object.values(upgradeCosts).reduce((sum, v) => sum + v.cost, 0);
+  const aggregateTime = Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
+  const aggregateRushedCost = Object.values(rushedCosts).reduce((sum, v) => sum + v.cost, 0);
+  const aggregateRushedTime = Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
 
   // ── Early returns (hooks must not follow) ──
   if (loading && !player) {
@@ -631,6 +629,8 @@ export default function HomeScreen() {
         name,
         level: totalLevel,
         maxLevel: totalMax,
+        copies: copies.levels,
+        effectiveMax,
         iconSource: getBuildingLevelImageSource(toJsonName(name), Math.max(copyLevel, 1)) || undefined,
       };
     });
@@ -646,6 +646,48 @@ export default function HomeScreen() {
       rows,
     };
   });
+
+  // ── Remaining upgrade cost/time per progress sub-category ──
+  const progressCosts: Record<string, CostTime> = {};
+  for (const g of progressGroups) {
+    progressCosts[g.key] = sumCosts(g.rows.map((r) => remainingArmyCosts(progressDetails[r.name], r.level, r.maxLevel)));
+  }
+  const overallProgressCost = sumCosts(progressGroups.map((g) => progressCosts[g.key]));
+  const buildingCosts: Record<string, CostTime> = {};
+  for (const g of buildingGroups) {
+    buildingCosts[g.key] = sumCosts(
+      g.rows.map((r) => remainingBuildingCosts(r.name, r.copies, r.effectiveMax)),
+    );
+  }
+  const overallBuildingCost = sumCosts(buildingGroups.map((g) => buildingCosts[g.key]));
+
+  const overallProgress = (() => {
+    const tl = progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
+    const tm = progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
+    return tm > 0 ? tl / tm : 0;
+  })();
+  const overallBuildingProgress = (() => {
+    const counted = buildingGroups.filter((g) => g.key !== 'Walls');
+    const tl = counted.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
+    const tm = counted.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
+    return tm > 0 ? tl / tm : 0;
+  })();
+
+  const renderProgressHeader = (progress: number, ct: CostTime) => {
+    // Categories/sub-categories show only remaining time; costs are shown per
+    // item instead, so gold/elixir/dark elixir are never merged into one sum.
+    const label = ct.hasData && ct.time > 0 ? formatTimeShort(ct.time) : '';
+    return (
+      <View style={styles.progressHeaderDesc}>
+        <View style={styles.progressHeaderRow}>
+          <View style={styles.progressHeaderBar}>
+            <View style={[styles.progressHeaderFill, { width: `${Math.min(progress, 1) * 100}%` }]} />
+          </View>
+          <Text style={styles.progressHeaderCost} numberOfLines={1}>{label}</Text>
+        </View>
+      </View>
+    );
+  };
 
   const homeStatGroups: HomeStatGroup[] = [
     {
@@ -859,13 +901,7 @@ export default function HomeScreen() {
               count={progressGroups.reduce((s, g) => s + g.rows.length, 0)}
               totalLevel={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
               totalMax={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
-              description={(
-                <View style={styles.progressHeaderDesc}>
-                  <View style={styles.progressHeaderBar}>
-                    <View style={[styles.progressHeaderFill, { width: `${Math.min(progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0) / Math.max(progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0), 1), 1) * 100}%` }]} />
-                  </View>
-                </View>
-              )}
+              description={renderProgressHeader(overallProgress, overallProgressCost)}
             >
             <View style={styles.progressInner}>
             {progressGroups.filter((g) => g.rows.some((r) => r.level < r.maxLevel)).map((group, gi, groups) => {
@@ -882,29 +918,28 @@ export default function HomeScreen() {
                   title={group.title}
                   compact
                   onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                  description={(
-                    <View style={styles.progressHeaderDesc}>
-                      <View style={styles.progressHeaderBar}>
-                        <View style={[styles.progressHeaderFill, { width: `${Math.min(group.progress, 1) * 100}%` }]} />
-                      </View>
-                    </View>
-                  )}
+                  description={renderProgressHeader(group.progress, progressCosts[group.key])}
                   count={displayRows.length}
                   totalLevel={totalLevel}
                   totalMax={totalMax}
                 >
-                  {displayRows.map((row, ri) => (
-                    <ItemCard
-                      key={`${group.key}-${ri}`}
-                      name={row.name}
-                      level={row.level}
-                      maxLevel={row.maxLevel}
-                      icon={row.icon}
-                      locked={row.level === 0}
-                      isLast={ri === displayRows.length - 1}
-                      onPress={() => router.push(group.pushTo)}
-                    />
-                  ))}
+                  {displayRows.map((row, ri) => {
+                    const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                    return (
+                      <ItemCard
+                        key={`${group.key}-${ri}`}
+                        name={row.name}
+                        level={row.level}
+                        maxLevel={row.maxLevel}
+                        icon={row.icon}
+                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? formatCost(rowCost.cost) : undefined}
+                        timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                        locked={row.level === 0}
+                        isLast={ri === displayRows.length - 1}
+                        onPress={() => router.push(group.pushTo)}
+                      />
+                    );
+                  })}
                 </CollapsibleSection>
               );
             })}
@@ -922,13 +957,7 @@ export default function HomeScreen() {
                   count={countedGroups.reduce((s, g) => s + g.rows.length, 0)}
                   totalLevel={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
                   totalMax={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
-                  description={(
-                    <View style={styles.progressHeaderDesc}>
-                      <View style={styles.progressHeaderBar}>
-                        <View style={[styles.progressHeaderFill, { width: `${Math.min(countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0) / Math.max(countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0), 1), 1) * 100}%` }]} />
-                      </View>
-                    </View>
-                  )}
+                  description={renderProgressHeader(overallBuildingProgress, overallBuildingCost)}
                 >
                 <View style={styles.progressInner}>
                 {buildingGroups.map((group, gi, groups) => {
@@ -943,29 +972,28 @@ export default function HomeScreen() {
                   compact
                   maxed={group.maxed}
                   onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                  description={(
-                    <View style={styles.progressHeaderDesc}>
-                      <View style={styles.progressHeaderBar}>
-                        <View style={[styles.progressHeaderFill, { width: `${Math.min(group.progress, 1) * 100}%` }]} />
-                      </View>
-                    </View>
-                  )}
+                  description={renderProgressHeader(group.progress, buildingCosts[group.key])}
                   count={displayRows.length}
                   totalLevel={group.rows.reduce((s, r) => s + r.level, 0)}
                   totalMax={group.rows.reduce((s, r) => s + r.maxLevel, 0)}
                 >
-                  {displayRows.map((row, ri) => (
-                    <ItemCard
-                      key={`${group.key}-${ri}`}
-                      name={row.name}
-                      level={row.level}
-                      maxLevel={row.maxLevel}
-                      iconSource={row.iconSource}
-                      locked={row.level === 0}
-                      isLast={ri === displayRows.length - 1}
-                      onPress={() => router.push(group.pushTo)}
-                    />
-                  ))}
+                  {displayRows.map((row, ri) => {
+                    const rowCost = remainingBuildingCosts(row.name, row.copies, row.effectiveMax);
+                    return (
+                      <ItemCard
+                        key={`${group.key}-${ri}`}
+                        name={row.name}
+                        level={row.level}
+                        maxLevel={row.maxLevel}
+                        iconSource={row.iconSource}
+                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? formatCost(rowCost.cost) : undefined}
+                        timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                        locked={row.level === 0}
+                        isLast={ri === displayRows.length - 1}
+                        onPress={() => router.push(group.pushTo)}
+                      />
+                    );
+                  })}
                 </CollapsibleSection>
               );
                 })}
@@ -993,8 +1021,7 @@ export default function HomeScreen() {
                 title={`${unlockableItems.length} locked`}
                 destructive
                 compact
-                onOpen={() => setUpgradesOpen(true)}
-                description={loadingCosts ? 'Calculating costs & time…' : (upgradeCosts && aggregateCost > 0 ? `${fmtCost(aggregateCost)}${aggregateTime > 0 ? ` · ${fmtTime(aggregateTime)}` : ''}` : 'Items locked at your Town Hall')}
+                description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateCost > 0 ? `${fmtCost(aggregateCost)}${aggregateTime > 0 ? ` · ${formatTimeShort(aggregateTime)}` : ''}` : 'Items locked at your Town Hall')}
                 count={unlockableItems.length}
                 totalLevel={0}
                 totalMax={0}
@@ -1012,7 +1039,7 @@ export default function HomeScreen() {
                     const thUrl = getTownHallImageUrl(item.unlockTh);
                     const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
                     const levelsAtTH = getMaxLevelAtTH(item.name, th);
-                    const itemCost = upgradeCosts?.[item.name];
+                    const itemCost = upgradeCosts[item.name];
                     return (
                       <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
                         <View style={styles.statRowIcon}>
@@ -1033,7 +1060,7 @@ export default function HomeScreen() {
                           <View style={styles.statRowRightBadge}>
                             {itemCost ? (
                               <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>
-                            ) : loadingCosts ? (
+                            ) : lockedCostsPending ? (
                               <Text style={styles.statRowValue}>…</Text>
                             ) : null}
                             {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
@@ -1058,8 +1085,7 @@ export default function HomeScreen() {
                 title={`${rushedItems.length} rushed`}
                 accentColor={RUSHED_ACCENT}
                 compact
-                onOpen={() => setRushedOpen(true)}
-                description={loadingRushedCosts ? 'Calculating costs & time…' : (rushedCosts && aggregateRushedCost > 0 ? `${fmtCost(aggregateRushedCost)}${aggregateRushedTime > 0 ? ` · ${fmtTime(aggregateRushedTime)}` : ''}` : 'Items below the previous Town Hall max')}
+                description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedCost > 0 ? `${fmtCost(aggregateRushedCost)}${aggregateRushedTime > 0 ? ` · ${formatTimeShort(aggregateRushedTime)}` : ''}` : 'Items below the previous Town Hall max')}
                 count={rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
@@ -1084,7 +1110,7 @@ export default function HomeScreen() {
                   const allItems = visible.flatMap((g) => g.items);
                   return allItems.map((item, i) => {
                     const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
-                    const costData = rushedCosts?.[item.name];
+                    const costData = rushedCosts[item.name];
                     return (
                       <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
                         <View style={styles.statRowIcon}>
@@ -1104,7 +1130,7 @@ export default function HomeScreen() {
                               <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>
                               {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
                             </>
-                          ) : loadingRushedCosts ? (
+                          ) : rushedCostsPending ? (
                             <Text style={styles.statRowValue}>…</Text>
                           ) : null}
                         </View>
@@ -1392,6 +1418,7 @@ export default function HomeScreen() {
             {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
             {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
+              const isSyncing = acct.tag === syncingTag;
               return (
                 <PressableRipple
                   key={acct.tag}
@@ -1411,6 +1438,12 @@ export default function HomeScreen() {
                       {isActive && (
                         <View style={styles.switcherActiveChip}>
                           <Text style={styles.switcherActiveChipText}>Active</Text>
+                        </View>
+                      )}
+                      {isSyncing && (
+                        <View style={styles.switcherSyncingChip}>
+                          <ActivityIndicator size="small" color={Colors.textSecondary} style={styles.switcherSyncingSpinner} />
+                          <Text style={styles.switcherSyncingText}>Syncing…</Text>
                         </View>
                       )}
                     </View>
@@ -1721,6 +1754,26 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  switcherSyncingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgCardHover,
+  },
+  switcherSyncingSpinner: {
+    width: 9,
+    height: 9,
+  },
+  switcherSyncingText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   switcherThBox: {
     width: 40,
     height: 40,
@@ -1956,11 +2009,23 @@ const styles = StyleSheet.create({
   progressHeaderDesc: {
     marginTop: 6,
   },
+  progressHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   progressHeaderBar: {
+    flex: 1,
     height: 4,
     backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
+  },
+  progressHeaderCost: {
+    color: Colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 14,
+    maxWidth: 118,
   },
   progressHeaderFill: {
     height: '100%',

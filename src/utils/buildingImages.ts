@@ -63,6 +63,7 @@ export function formatCost(n: number): string {
   return n.toString();
 }
 
+/** Full representation, e.g. "64d 5h 20m" (omits zero leading units). */
 export function formatTime(totalSec: number): string {
   if (totalSec <= 0) return '—';
   const parts: string[] = [];
@@ -73,6 +74,17 @@ export function formatTime(totalSec: number): string {
   const m = Math.floor((totalSec % 3600) / 60);
   if (m > 0) parts.push(`${m}m`);
   return parts.join(' ') || '<1m';
+}
+
+/** Concise representation: single largest unit, rounded up, e.g. "65d", "12h". */
+export function formatTimeShort(totalSec: number): string {
+  if (totalSec <= 0) return '—';
+  const days = Math.ceil(totalSec / 86400);
+  if (days >= 1) return `${days}d`;
+  const hours = Math.ceil(totalSec / 3600);
+  if (hours >= 1) return `${hours}h`;
+  const minutes = Math.ceil(totalSec / 60);
+  return minutes > 0 ? `${minutes}m` : '<1m';
 }
 
 export function getBuildingData(name: string) {

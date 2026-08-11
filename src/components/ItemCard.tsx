@@ -9,6 +9,8 @@ interface Props {
   maxLevel: number;
   thMaxLevel?: number | null;
   subtitle?: string;
+  costLabel?: string;
+  timeLabel?: string;
   icon?: string;
   iconSource?: ImageSourcePropType;
   onPress?: () => void;
@@ -17,7 +19,7 @@ interface Props {
   isLast?: Boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, iconSource, onPress, locked, isFirst, isLast }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabel, timeLabel, icon, iconSource, onPress, locked, isFirst, isLast }: Props) {
   const { colors } = useTheme();
   const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
   const progress = effectiveMax > 0 ? level / effectiveMax : 0;
@@ -54,6 +56,23 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, icon, ic
             <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
           ) : locked ? (
             <Text style={styles.lockedHint}>Not yet unlocked</Text>
+          ) : costLabel || timeLabel ? (
+            <View style={styles.progressRow}>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(progress, 1) * 100}%`,
+                      backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary,
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.timeLabel} numberOfLines={1}>
+                {[costLabel, timeLabel].filter(Boolean).join(' · ')}
+              </Text>
+            </View>
           ) : (
             <View style={styles.progressContainer}>
               <View style={styles.progressTrack}>
@@ -157,11 +176,25 @@ const styles = StyleSheet.create({
     marginTop: 12,
     width: '100%',
   },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: Spacing.sm,
+  },
   progressTrack: {
+    flex: 1,
     height: 4,
     backgroundColor: Colors.progressTrack,
     borderRadius: 2,
     overflow: 'hidden',
+  },
+  timeLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    lineHeight: 12,
+    fontVariant: ['tabular-nums'],
   },
   progressFill: {
     height: '100%',
