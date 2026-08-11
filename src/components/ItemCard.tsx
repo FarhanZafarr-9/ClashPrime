@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import PressableRipple from './PressableRipple';
+import { formatCompact } from '../utils/buildingImages';
 import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
 interface Props {
@@ -106,13 +107,13 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
                 styles.levelBadgeText,
                 isMaxed && styles.levelBadgeTextMaxed
               ]}>
-                {level}
+                {formatCompact(level)}
               </Text>
               <Text style={[
                 styles.levelBadgeLabel,
                 isMaxed && styles.levelBadgeTextMaxed
               ]}>
-                / {effectiveMax}
+                / {formatCompact(effectiveMax)}
               </Text>
             </View>
           )}
