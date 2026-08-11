@@ -16,6 +16,7 @@ import {
   Animated,
   BackHandler,
   Linking,
+  type ImageSourcePropType,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -31,7 +32,7 @@ import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
 import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
-import { getBuildingLevelImageSource, getBuildingEffectiveMax } from '../../src/utils/buildingImages';
+import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
 import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, type CostTime } from '../../src/utils/upgradeCosts';
 import thLevelsData from '../../src/data/th-levels.json';
@@ -66,6 +67,7 @@ function CollapsibleSection({
   title,
   icon,
   iconUrl,
+  iconSource,
   description,
   count,
   totalLevel,
@@ -85,6 +87,7 @@ function CollapsibleSection({
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconUrl?: string;
+  iconSource?: ImageSourcePropType;
   description: React.ReactNode;
   count: number;
   totalLevel: number;
@@ -118,6 +121,7 @@ function CollapsibleSection({
       <SettingRow
         icon={icon}
         iconUrl={iconUrl}
+        iconSource={iconSource}
         title={title}
         desc={description}
         isFirst={isFirst || open}
@@ -133,8 +137,8 @@ function CollapsibleSection({
               <Ionicons name="checkmark" size={18} color={Colors.bg} />
             </View>
             <View style={[styles.sectionBadge, styles.sectionBadgeMaxed, isLast && styles.sectionBadgeLast]}>
-              <Text style={[styles.sectionBadgeText, styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
-              <Text style={[styles.sectionBadgeLabel, styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+              <Text style={[styles.sectionBadgeText, styles.sectionBadgeTextMaxed]}>{formatCompact(totalLevel)}</Text>
+              <Text style={[styles.sectionBadgeLabel, styles.sectionBadgeTextMaxed]}>/ {formatCompact(totalMax)}</Text>
             </View>
           </View>
         ) : badge != null ? (
@@ -151,8 +155,8 @@ function CollapsibleSection({
           <View style={styles.sectionBadges}>
             {totalMax > 0 ? (
               <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && !open && styles.sectionBadgeLast]}>
-                <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
-                <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+                <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{formatCompact(totalLevel)}</Text>
+                <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {formatCompact(totalMax)}</Text>
               </View>
             ) : (
               <View style={styles.sectionBadge}>
@@ -610,6 +614,7 @@ export default function HomeScreen() {
     'Army': 'hammer-outline',
     'Walls': 'grid-outline',
   };
+  // Representative building shown as the category header image.
   const SHOW_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
   const buildingGroups = SHOW_BUILDING_CATS.map((cat) => {
@@ -640,6 +645,7 @@ export default function HomeScreen() {
       key: cat,
       title: cat,
       icon: BUILDING_CAT_ICONS[cat] ?? 'apps-outline',
+      iconSource: rows[0]?.iconSource ?? undefined,
       progress: totalMax > 0 ? totalLevel / totalMax : 0,
       maxed: rows.length > 0 && rows.every((r) => r.maxLevel > 0 && r.level >= r.maxLevel),
       pushTo: `/(tabs)/buildings?cat=${cat}`,
@@ -968,6 +974,7 @@ export default function HomeScreen() {
                   key={group.key}
                   isLast={gi === groups.length - 1}
                   icon={group.icon}
+                  iconSource={group.iconSource}
                   title={group.title}
                   compact
                   maxed={group.maxed}
