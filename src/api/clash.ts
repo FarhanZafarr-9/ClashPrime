@@ -59,12 +59,14 @@ export class ClashAPI {
     let res: Response;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    console.log(`[ClashAPI] GET ${path}`);
     try {
       res = await fetch(`${BASE_URL}${path}`, {
         headers: this.headers(),
         signal: controller.signal,
       });
     } catch (e: any) {
+      console.warn(`[ClashAPI] FAIL ${path}`, e?.message ?? e);
       if (e?.name === 'AbortError') {
         throw new ClashAPIError('Connection timed out. The Clash of Clans API may be temporarily unavailable. Try again shortly.', 0);
       }
@@ -87,8 +89,10 @@ export class ClashAPI {
       } catch {
         body = await res.text();
       }
+      console.warn(`[ClashAPI] ERROR ${path} -> ${res.status}${reason ? ` (${reason})` : ''}${body ? `: ${body}` : ''}`);
       throw new ClashAPIError(friendlyStatusMessage(res.status, reason, body), res.status, reason);
     }
+    console.log(`[ClashAPI] OK ${path} -> ${res.status}`);
     return res.json();
   }
 
