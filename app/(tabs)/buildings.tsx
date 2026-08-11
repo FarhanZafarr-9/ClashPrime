@@ -671,10 +671,15 @@ function BuildingCollapsibleSection({
     setOpen(!open);
   };
   const lookupName = NAME_FIX[title] ?? title;
-  const maxAllCopies = () => {
-    const next = copies.levels.map(() => effectiveMax);
+  const upgradeAllCopiesByOne = () => {
+    const next = copies.levels.map((l) => (l <= 0 ? l : Math.min(l + 1, effectiveMax)));
     setBuildingCopies(lookupName, next, copies.maxLevel);
   };
+  const downgradeAllCopiesByOne = () => {
+    const next = copies.levels.map((l) => (l <= 1 ? l : l - 1));
+    setBuildingCopies(lookupName, next, copies.maxLevel);
+  };
+  const canDowngrade = copies.levels.some((l) => l > 1);
 
   // Group copies by their current level so high-count buildings (e.g. Walls)
   // collapse into one row per distinct level instead of N individual cards.
@@ -889,37 +894,52 @@ function BuildingCollapsibleSection({
           {buildingStats?.description ? (
             <Text style={styles.buildingSectionDescText} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
-          {hasRemaining && (
-            <View style={styles.buildingSectionRemainingRow}>
+          <View style={styles.buildingSectionRemainingRow}>
+            {hasRemaining && (
               <View style={styles.buildingSectionRemaining}>
                 <View style={styles.remainingRow}>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
+                  <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Remaining</Text>
+                  <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Cost</Text>
+                  <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Time</Text>
                 </View>
                 <View style={styles.remainingTotalRow}>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                  <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
+                  <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
                     {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
                   </Text>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
+                  <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
                     {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
                   </Text>
                 </View>
               </View>
-              {!isSectionMaxed && (
-                <PressableRipple
-                  onPress={maxAllCopies}
-                  style={styles.buildingSectionMaxAllBtn}
-                  hitSlop={4}
-                  accessibilityLabel={`Max all ${title} copies`}
-                  accessibilityRole="button"
-                >
-                  <Ionicons name="arrow-up-circle" size={20} color={Colors.textSecondary} />
-                </PressableRipple>
-              )}
-            </View>
-          )}
+            )}
+            {(!isSectionMaxed || canDowngrade) && (
+              <View style={styles.buildingSectionQuickBtns}>
+                {!isSectionMaxed && (
+                  <PressableRipple
+                    onPress={upgradeAllCopiesByOne}
+                    style={styles.buildingSectionQuickBtn}
+                    hitSlop={4}
+                    accessibilityLabel={`Upgrade all ${title} copies by one`}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="arrow-up-circle" size={20} color={Colors.textSecondary} />
+                  </PressableRipple>
+                )}
+                {canDowngrade && (
+                  <PressableRipple
+                    onPress={downgradeAllCopiesByOne}
+                    style={styles.buildingSectionQuickBtn}
+                    hitSlop={4}
+                    accessibilityLabel={`Downgrade all ${title} copies by one`}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="arrow-down-circle" size={20} color={Colors.textSecondary} />
+                  </PressableRipple>
+                )}
+              </View>
+            )}
+          </View>
           {mergedDisplayLevels.length > 0 && (
             <View style={styles.buildingSectionMerged}>
               <View style={styles.levelGridBorder}>
@@ -1128,9 +1148,15 @@ export default function BuildingsScreen() {
         singles.push(section);
       }
     }
+    const isSectionMaxed = (s: Section) =>
+      s.copies.levels.length > 0 &&
+      s.effectiveMax > 0 &&
+      s.copies.levels.every((l) => l >= s.effectiveMax);
     sections.sort((a, b) => a.count - b.count || a.name.localeCompare(b.name));
     singles.sort((a, b) => a.name.localeCompare(b.name));
-    return [...singles, ...sections];
+    const nonMaxed = [...singles.filter((s) => !isSectionMaxed(s)), ...sections.filter((s) => !isSectionMaxed(s))];
+    const maxed = [...singles.filter(isSectionMaxed), ...sections.filter(isSectionMaxed)];
+    return [...nonMaxed, ...maxed];
   }, [entries, isBB, th, bh, player]);
 
   const maxOutAllBuildings = () => {
@@ -1793,7 +1819,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
   },
-  buildingSectionMaxAllBtn: {
+  buildingSectionQuickBtn: {
     width: 36,
     height: 36,
     borderRadius: Radius.md,
@@ -1849,7 +1875,7 @@ const styles = StyleSheet.create({
   buildingSectionRemainingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.base,
+    gap: Spacing.sm,
     marginHorizontal: Spacing.base,
     marginVertical: Spacing.sm,
   },
@@ -1859,6 +1885,30 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
+  },
+  sectionRemainingHead: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    textAlign: 'center',
+  },
+  sectionRemainingTotalCell: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    textAlign: 'center',
+    fontSize: 10,
+  },
+  buildingSectionQuickBtns: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
   },
   buildingSectionSeparator: {
     borderTopWidth: StyleSheet.hairlineWidth,

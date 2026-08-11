@@ -25,17 +25,61 @@ import {
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
 import { cachePlayer } from '../src/hooks/usePlayer';
-import { getMaxLevelAtTH } from '../src/utils/thMaxLevels';
 import { getTownHallImageUrl } from '../src/utils/thImages';
+import { seedBuildingLevelsForTH } from '../src/utils/seedBuildingLevels';
 import type { ClashPlayer } from '../src/types/clash';
-import { isSuperTroop } from '../src/types/clash';
-import buildingLevelsData from '../src/data/building-levels.json';
 
-const NAME_REV: Record<string, string> = {
-  "Builder's Hut": 'Builder Hut',
-  'Laboratory': 'Lab',
-  'Wall': 'Walls',
-};
+type IoniconName = keyof typeof Ionicons.glyphMap;
+
+interface StepItem {
+  text: string;
+  icon?: IoniconName;
+  emphasize?: boolean;
+}
+
+function StepCard({
+  icon,
+  title,
+  desc,
+  steps,
+}: {
+  icon: IoniconName;
+  title: string;
+  desc: string;
+  steps: StepItem[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <View style={styles.stepCard}>
+      <PressableRipple style={styles.stepHeader} onPress={() => setExpanded((e) => !e)}>
+        <View style={styles.stepIconWrap}>
+          <Ionicons name={icon} size={15} color={Colors.textPrimary} />
+        </View>
+        <View style={styles.stepTextBlock}>
+          <Text style={styles.stepTitle}>{title}</Text>
+          <Text style={styles.stepDesc} numberOfLines={1}>{desc}</Text>
+        </View>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
+      </PressableRipple>
+      {expanded && (
+        <View style={styles.stepList}>
+          {steps.map((step, i) => (
+            <View key={i} style={[styles.stepRow, step.emphasize && styles.stepRowEmph]}>
+              <View style={[styles.stepNum, step.emphasize && styles.stepNumEmph]}>
+                {step.icon ? (
+                  <Ionicons name={step.icon} size={11} color={Colors.bg} />
+                ) : (
+                  <Text style={styles.stepNumText}>{i + 1}</Text>
+                )}
+              </View>
+              <Text style={[styles.stepText, step.emphasize && styles.stepTextEmph]}>{step.text}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -103,101 +147,13 @@ export default function OnboardingScreen() {
   };
 
   const handleThPick = async (selectedTh: number) => {
-    const currentTh = mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16;
     if (mode !== 'reset' && !playerData) return;
     setLoading(true);
 
     const player = mode === 'reset' ? contextPlayer : playerData;
-    const currentBh = player?.builderHallLevel ?? 1;
+    const currentTh = mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16;
 
-    const levels: Record<string, number> = {};
-    const known = (buildingLevelsData as any[]) || [];
-
-    for (const b of known) {
-      if (b.village === 'builderBase') continue;
-      const storeName = NAME_REV[b.name] || b.name;
-      const unlockTh = b.levels?.[0]?.['Town Hall Level'] ?? 99;
-      const globalMax = b.maxLevel || (b.levels ? b.levels.length : 0);
-      const thMax = getMaxLevelAtTH(storeName, selectedTh);
-      const effectiveMax = thMax != null ? Math.min(globalMax, thMax) : globalMax;
-
-      if (unlockTh <= selectedTh) {
-        levels[storeName] = effectiveMax > 0 ? effectiveMax : 1;
-      } else if (unlockTh <= currentTh) {
-        levels[storeName] = 1;
-      } else {
-        levels[storeName] = 0;
-      }
-    }
-
-    if (player) {
-      const homeTroops = (player.troops || []).filter((t: any) => t.village === 'home' && !isSuperTroop(t.name));
-      const homeSpells = (player.spells || []).filter((s: any) => s.village === 'home');
-      const heroes = player.heroes || [];
-      const equipment = player.heroEquipment || [];
-
-      function inferLevel(buildingName: string, column: string, items: { name: string }[]): number {
-        const b = known.find((x: any) => x.name === buildingName);
-        if (!b) return 0;
-        let level = 0;
-        for (const lev of b.levels || []) {
-          const val: string = lev[column] || '';
-          if (!val) continue;
-          if (items.some((i) => val === i.name || val.includes(i.name) || i.name.includes(val))) {
-            level = Math.max(level, lev.Level);
-          }
-        }
-        return level;
-      }
-
-      const setIf = (jsonName: string, lvl: number) => { if (lvl > 0) levels[NAME_REV[jsonName] || jsonName] = lvl; };
-
-      setIf('Barracks', inferLevel('Barracks', 'Unlocked Unit', homeTroops));
-      setIf('Dark Barracks', inferLevel('Dark Barracks', 'Unlocked Unit', homeTroops));
-      setIf('Spell Factory', inferLevel('Spell Factory', 'Spell(s) Unlocked', homeSpells));
-      setIf('Dark Spell Factory', inferLevel('Dark Spell Factory', 'Spell(s) Unlocked', homeSpells));
-      setIf('Blacksmith', inferLevel('Blacksmith', 'Equipment Unlocked', equipment));
-      setIf('Hero Hall', inferLevel('Hero Hall', 'Unlocked Hero', heroes));
-    }
-
-    const bbKnown = known.filter((b: any) => b.village === 'builderBase');
-    for (const b of bbKnown) {
-      const storeName = NAME_REV[b.name] || b.name;
-      const unlockBh = b.levels?.[0]?.['Town Hall Level'] ?? 99;
-      const globalMax = b.maxLevel || (b.levels ? b.levels.length : 0);
-      const bhLevels = b.levels.filter((l: any) => (l['Town Hall Level'] ?? 99) <= currentBh);
-      const effectiveMax = bhLevels.length > 0 ? Math.max(...bhLevels.map((l: any) => l.Level)) : 0;
-
-      if (unlockBh <= currentBh) {
-        levels[storeName] = effectiveMax > 0 ? effectiveMax : 1;
-      } else {
-        levels[storeName] = 0;
-      }
-    }
-
-    const supplement: Record<string, Record<number, number>> = {
-      'Builder Hall':         { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
-      'BB Cannon':            { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
-      'Double Cannon':        { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
-      'Guard Post':           { 6: 1, 7: 2, 8: 3, 9: 4, 10: 5 },
-      "O.T.T.O's Outpost":    { 10: 3 },
-      'Mega Tesla':           { 9: 1, 10: 3 },
-      'Push Trap':            { 2: 1, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10 },
-      'Gem Mine':             { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 7, 10: 9 },
-      'Builder Barracks':     { 2: 2, 3: 4, 4: 6, 5: 7, 6: 8, 7: 9, 8: 10, 9: 11, 10: 12 },
-      'Star Laboratory':      { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7 },
-      'Battle Machine Altar': { 5: 1, 6: 5, 7: 10, 8: 15, 9: 20, 10: 25 },
-      'Reinforcement Camp':   { 8: 1, 9: 2, 10: 3 },
-      'Healing Hut':          { 8: 1, 9: 2, 10: 3 },
-      'Battle Copter Altar':  { 9: 1, 10: 10 },
-      'Clock Tower':          { 4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7 },
-      "B.O.T.O's Shack":      { 10: 1 },
-      'Elixir Cart':          { 1: 1 },
-    };
-    for (const [name, bhs] of Object.entries(supplement)) {
-      const maxInRange = Math.max(...Object.entries(bhs).filter(([bh]) => Number(bh) <= currentBh).map(([, lvl]) => lvl), 0);
-      if (maxInRange > 0) levels[name] = maxInRange;
-    }
+    const levels = seedBuildingLevelsForTH(player, selectedTh, { currentTh });
 
     await setBulkLevels(levels);
     await setLastMaxed(selectedTh);
@@ -220,7 +176,12 @@ export default function OnboardingScreen() {
         style={styles.keyboard}
       >
         {step === 'form' ? (
-          <View style={styles.content}>
+          <ScrollView
+            style={styles.formScroll}
+            contentContainerStyle={styles.formScrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.hero}>
               <Image source={require('../assets/icon.png')} style={styles.logo} />
               <Text style={styles.title}>ClashPrime</Text>
@@ -241,7 +202,16 @@ export default function OnboardingScreen() {
                   editable={!loading}
                 />
               </View>
-              <Text style={styles.hint}>Find it in-game under Profile → My Profile</Text>
+              <StepCard
+                icon="pricetag-outline"
+                title="Find your Player Tag"
+                desc="Tap the profile icon in the top-left corner"
+                steps={[
+                  { text: 'Open Clash of Clans on your device' },
+                  { text: 'Tap your profile in the top-left corner' },
+                  { text: 'Copy the tag starting with "#" — e.g. #PG8U2LR00', icon: 'copy-outline', emphasize: true },
+                ]}
+              />
 
               <Text style={styles.label}>API Token</Text>
               <View style={styles.inputRow}>
@@ -259,7 +229,18 @@ export default function OnboardingScreen() {
                   <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
                 </PressableRipple>
               </View>
-              <Text style={styles.hint}>Get it from developer.clashofclans.com → My Account → API Keys (whitelist IP 45.79.218.79 — the app uses a proxy)</Text>
+              <StepCard
+                icon="key-outline"
+                title="Create an API Token"
+                desc="developer.clashofclans.com → My Account → API Keys"
+                steps={[
+                  { text: 'Open developer.clashofclans.com and sign in with your Supercell account' },
+                  { text: 'Go to My Account → Create New Key' },
+                  { text: 'Name it anything (e.g. "ClashPrime") and create it' },
+                  { text: 'Copy the generated token — it starts with "eyJ"', icon: 'copy-outline', emphasize: true },
+                  { text: 'Add 45.79.218.79 to the IP whitelist — the app uses a proxy', icon: 'shield-checkmark-outline', emphasize: true },
+                ]}
+              />
 
               {error ? (
                 <View style={styles.errorBox}>
@@ -282,7 +263,7 @@ export default function OnboardingScreen() {
                 )}
               </PressableRipple>
             </View>
-          </View>
+          </ScrollView>
         ) : (
           <View style={styles.content}>
             {!loading && (
@@ -356,6 +337,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.xl,
   },
+  formScroll: {
+    flex: 1,
+  },
+  formScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+  },
   hero: {
     alignItems: 'center',
     marginBottom: Spacing.xxl,
@@ -408,6 +398,84 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     marginTop: -4,
+  },
+  stepCard: {
+    backgroundColor: Colors.bgCard,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+  },
+  stepIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepTextBlock: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  stepDesc: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+  },
+  stepList: {
+    borderTopWidth: 0.75,
+    borderTopColor: Colors.border,
+    paddingHorizontal: Spacing.xs,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
+    gap: 4,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 3,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+  },
+  stepRowEmph: {
+  },
+  stepNum: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: Colors.bgSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumEmph: {
+    backgroundColor: Colors.warning,
+    borderWidth: 0,
+  },
+  stepNumText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  stepText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    flex: 1,
+  },
+  stepTextEmph: {
+    color: Colors.textPrimary,
+    fontWeight: '600',
   },
   errorBox: {
     backgroundColor: Colors.bgSubtle,
