@@ -26,7 +26,7 @@ import { ClashAPI, ClashAPIError } from '../src/api/clash';
 import type { ClashPlayer, Hero, Pet, HeroEquipment, Achievement } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
 import { getTownHallImageUrl } from '../src/utils/thImages';
-import { getBuildingLevelImageSource } from '../src/utils/buildingImages';
+import { getBuildingLevelImageSource, formatCompact } from '../src/utils/buildingImages';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from '../src/utils/troopImages';
 import { entityRef } from '../src/data/entityReference';
 
@@ -100,8 +100,8 @@ function CollapsibleSection({
               <Text style={styles.sectionBadgeText}>{count}</Text>
             </View>
             <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && styles.sectionBadgeLast]}>
-              <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{totalLevel}</Text>
-              <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {totalMax}</Text>
+              <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{formatCompact(totalLevel)}</Text>
+              <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {formatCompact(totalMax)}</Text>
             </View>
           </View>
         )}
@@ -577,8 +577,8 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               >
                 <View style={styles.sectionBadges}>
                   <View style={[styles.sectionBadge, styles.sectionBadgeFirst, allAchievementsComplete && styles.sectionBadgeMaxed]}>
-                    <Text style={[styles.sectionBadgeText, allAchievementsComplete && styles.sectionBadgeTextMaxed]}>{starTotals.earned}</Text>
-                    <Text style={[styles.sectionBadgeLabel, allAchievementsComplete && styles.sectionBadgeTextMaxed]}>/ {starTotals.max}</Text>
+                    <Text style={[styles.sectionBadgeText, allAchievementsComplete && styles.sectionBadgeTextMaxed]}>{formatCompact(starTotals.earned)}</Text>
+                    <Text style={[styles.sectionBadgeLabel, allAchievementsComplete && styles.sectionBadgeTextMaxed]}>/ {formatCompact(starTotals.max)}</Text>
                   </View>
                 </View>
               </SettingRow>
