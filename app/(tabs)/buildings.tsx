@@ -21,6 +21,7 @@ import {
   parseTimeToSeconds,
   formatCost as fmtCost,
   formatTime as fmtTime,
+  formatCompact,
 } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, getCountAtBH } from '../../src/utils/buildingCopies';
 import type { BuildingCopies } from '../../src/utils/buildingCopies';
@@ -457,10 +458,10 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
                   isFullyMaxed && styles.levelBadgeMaxed,
                 ]}>
                   <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-                    {currentLevel}
+                    {formatCompact(currentLevel)}
                   </Text>
                   <Text style={[styles.levelBadgeLabel, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-                    / {effectiveMax}
+                    / {formatCompact(effectiveMax)}
                   </Text>
                 </View>
                 {count > 1 && (
@@ -796,8 +797,8 @@ function BuildingCollapsibleSection({
                     />
                   </View>
                   <View style={styles.levelBadgeContainer}>
-                    <Text style={styles.levelBadgeText}>{g.level}</Text>
-                    <Text style={styles.levelBadgeLabel}>/ {effectiveMax}</Text>
+                    <Text style={styles.levelBadgeText}>{formatCompact(g.level)}</Text>
+                    <Text style={styles.levelBadgeLabel}>/ {formatCompact(effectiveMax)}</Text>
                   </View>
                 </View>
               </View>
