@@ -143,6 +143,8 @@ interface AttackPlan {
   offense: number;
   mirror: AttackSuggestion | null;
   suggestions: AttackSuggestion[];
+  attacksLeft: number;
+  maxAttacks: number;
 }
 
 function computeOffensePower(player: ClashPlayer): number {
@@ -196,11 +198,16 @@ function buildAttackPlan(opts: {
   myPlayerTag?: string | null;
   clanStars: number;
   opponentStars: number;
+  maxAttacks: number;
 }): AttackPlan | null {
-  const { player, clan, opponent, myPlayerTag, clanStars, opponentStars } = opts;
+  const { player, clan, opponent, myPlayerTag, clanStars, opponentStars, maxAttacks } = opts;
   if (!player || !myPlayerTag) return null;
   const me = clan.members.find((m) => m.tag === myPlayerTag);
   if (!me) return null;
+  const myAttacks = me.attacks ?? [];
+  const attacksLeft = Math.max(0, maxAttacks - myAttacks.length);
+  if (attacksLeft === 0) return null;
+  const attackedByMe = new Set(myAttacks.map((a) => a.defenderTag));
   const myTH = player.townHallLevel;
   const offense = computeOffensePower(player);
 
@@ -214,6 +221,7 @@ function buildAttackPlan(opts: {
   const margin = clanStars - opponentStars;
   const suggestions: AttackSuggestion[] = [];
   for (const target of opponent.members) {
+    if (attackedByMe.has(target.tag)) continue;
     const takenStars = target.bestOpponentAttack?.stars ?? 0;
     const remaining = Math.max(0, 3 - takenStars);
     if (remaining === 0) continue;
@@ -253,6 +261,8 @@ function buildAttackPlan(opts: {
     offense,
     mirror: suggestions.find((s) => s.isMirror) ?? null,
     suggestions: top,
+    attacksLeft,
+    maxAttacks,
   };
 }
 
@@ -731,7 +741,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
   const oppStars = opponent.stars ?? 0;
 
   const plan = isInWar
-    ? buildAttackPlan({ player, clan, opponent, myPlayerTag, clanStars, opponentStars: oppStars })
+    ? buildAttackPlan({ player, clan, opponent, myPlayerTag, clanStars, opponentStars: oppStars, maxAttacks: isCwl ? 1 : 2 })
     : null;
 
   let countdown: { icon: keyof typeof Ionicons.glyphMap; text: string } | null = null;
@@ -847,7 +857,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
       )}
 
       {plan && (
-        <AttackPlanCard plan={plan} isCwl={isCwl} />
+        <AttackPlanCard plan={plan} />
       )}
 
       {!isPreparation && (
@@ -1190,7 +1200,7 @@ function LegendCard() {
   );
 }
 
-function AttackPlanCard({ plan, isCwl }: { plan: AttackPlan; isCwl: boolean }) {
+function AttackPlanCard({ plan }: { plan: AttackPlan }) {
   const [open, setOpen] = useState(true);
   const starsColor = (s: number) => (s >= 2.5 ? '#4CAF50' : s >= 1.5 ? '#FFB74D' : '#f44336');
   const deltaColor = (d: number) => (d > 0 ? '#f44336' : d < 0 ? '#4CAF50' : Colors.textMuted);
@@ -1212,7 +1222,7 @@ function AttackPlanCard({ plan, isCwl }: { plan: AttackPlan; isCwl: boolean }) {
         <View style={styles.planHeaderText}>
           <Text style={styles.planTitle}>Attack Plan</Text>
           <Text style={styles.planSubtitle}>
-            TH{plan.myTH} · Offense {Math.round(plan.offense * 100)}% · {isCwl ? '1 attack' : '2 attacks'}
+            TH{plan.myTH} · Offense {Math.round(plan.offense * 100)}% · {plan.attacksLeft}/{plan.maxAttacks} attack{plan.attacksLeft === 1 ? '' : 's'} left
           </Text>
         </View>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
