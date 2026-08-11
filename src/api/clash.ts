@@ -1,4 +1,4 @@
-import { ClashPlayer, ClanWar, WarLogEntry } from '../types/clash';
+import { ClashPlayer, Clan, ClanWar, WarLogEntry } from '../types/clash';
 
 const BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
 const FETCH_TIMEOUT_MS = 15_000;
@@ -102,6 +102,10 @@ export class ClashAPI {
 
   async searchClans(query: string): Promise<any> {
     return this.fetch(`/clans?name=${encodeURIComponent(query)}&limit=10`);
+  }
+
+  async getClan(clanTag: string): Promise<Clan> {
+    return this.fetch(`/clans/${encodeURIComponent(clanTag)}`);
   }
 
   async getCurrentWar(clanTag: string): Promise<ClanWar> {
