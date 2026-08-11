@@ -445,61 +445,50 @@ export default function WarScreen() {
         api.getCwlLeagueGroup(clanTag),
         api.getClan(clanTag),
       ]);
-      console.log('[War] currentWar:', currentWarRes.status === 'fulfilled' ? `state=${currentWarRes.value.state}` : currentWarRes.reason);
-      console.log('[War] warLog:', warLogRes.status === 'fulfilled' ? `items=${warLogRes.value.items?.length ?? 0}` : warLogRes.reason);
-      console.log('[War] leagueGroup:', leagueGroupRes.status === 'fulfilled' ? `state=${leagueGroupRes.value?.state ?? 'none'}` : leagueGroupRes.reason);
-      console.log('[War] clan:', clanRes.status === 'fulfilled' ? `isWarLogPublic=${clanRes.value.isWarLogPublic}` : clanRes.reason);
 
       const leagueGroup = leagueGroupRes.status === 'fulfilled' ? leagueGroupRes.value : null;
       const lgState: string | undefined = leagueGroup?.state;
       const inCwlLeague = !!lgState && lgState !== 'notInWar';
       const warLogPublic = clanRes.status === 'fulfilled' ? clanRes.value.isWarLogPublic : true;
 
-      const warLogBlockedByPrivacy = (reason: unknown) =>
+      const addIssue = (issue: WarIssue) => setFetchIssues(prev => [...prev, issue]);
+      const privacyBlocked = (reason: unknown) =>
         reason instanceof ClashAPIError && reason.status === 403 && !warLogPublic;
+      const privacyIssue: WarIssue = {
+        key: 'warLogPrivacy',
+        title: 'Clan war data is private',
+        message: 'This clan has Public War Log turned off, so the API hides its war data. A clan leader can enable it under Clan Settings \u2192 Public War Log, then pull to refresh.',
+        severity: 'warning',
+      };
 
       let currentWar: ClanWar | null = null;
       if (currentWarRes.status === 'fulfilled') {
         if (currentWarRes.value.state !== 'notInWar') currentWar = currentWarRes.value;
       }
-      if (currentWarRes.status === 'rejected' && !inCwlLeague) {
-        if (warLogBlockedByPrivacy(currentWarRes.reason)) {
-          setFetchIssues(prev => [...prev, {
-            key: 'warLogPrivacy',
-            title: 'Clan war data is private',
-            message: 'This clan has Public War Log turned off, so the API hides its war data. A clan leader can enable it under Clan Settings \u2192 Public War Log, then pull to refresh.',
-            severity: 'warning',
-          }]);
-        } else {
-          const desc = describeWarError(currentWarRes.reason, 'currentWar');
-          setFetchIssues(prev => [...prev, {
-            key: 'currentWar',
-            title: desc.title,
-            message: desc.message,
-            severity: currentWarRes.reason instanceof ClashAPIError && currentWarRes.reason.status >= 500 ? 'warning' : 'error',
-          }]);
-        }
+      if (currentWarRes.status === 'rejected' && !inCwlLeague && !privacyBlocked(currentWarRes.reason)) {
+        const desc = describeWarError(currentWarRes.reason, 'currentWar');
+        addIssue({
+          key: 'currentWar',
+          title: desc.title,
+          message: desc.message,
+          severity: currentWarRes.reason instanceof ClashAPIError && currentWarRes.reason.status >= 500 ? 'warning' : 'error',
+        });
       }
 
       let warLog: WarLogEntry[] = [];
       if (warLogRes.status === 'fulfilled') {
         warLog = warLogRes.value.items || [];
       } else if (!inCwlLeague) {
-        if (warLogBlockedByPrivacy(warLogRes.reason)) {
-          setFetchIssues(prev => [...prev, {
-            key: 'warLogPrivacy',
-            title: 'Clan war data is private',
-            message: 'This clan has Public War Log turned off, so the API hides its war data. A clan leader can enable it under Clan Settings \u2192 Public War Log, then pull to refresh.',
-            severity: 'warning',
-          }]);
+        if (privacyBlocked(warLogRes.reason)) {
+          addIssue(privacyIssue);
         } else {
           const desc = describeWarError(warLogRes.reason, 'warLog');
-          setFetchIssues(prev => [...prev, {
+          addIssue({
             key: 'warLog',
             title: desc.title,
             message: desc.message,
             severity: warLogRes.reason instanceof ClashAPIError && warLogRes.reason.status >= 500 ? 'warning' : 'error',
-          }]);
+          });
         }
       }
 
