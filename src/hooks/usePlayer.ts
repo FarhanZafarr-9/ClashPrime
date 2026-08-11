@@ -319,6 +319,11 @@ const CACHE_KEY_PREFIXES = [
   'bases_clashly_th_',
   'bases_clashly_bh_',
   'events_data_v1',
+  'news_data_v1',
+  'clasharmies_',
+  'siege_machine_names',
+  'pet_names',
+  'super_troop_names',
 ];
 
 export async function clearAppCache(accountTag?: string): Promise<void> {
