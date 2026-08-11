@@ -225,31 +225,52 @@ export function HomeScreenSkeleton() {
           <Skeleton width={140} height={14} borderRadius={4} />
         </View>
         <View style={styles.homeSectionsSkeleton}>
-          {[0, 1].map((i) => (
-            <View key={i} style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <View style={styles.homeSectionHeaderSkeleton}>
-                <Skeleton width={32} height={32} borderRadius={Radius.md} />
-                <View style={{ flex: 1, gap: 5 }}>
-                  <Skeleton width="45%" height={13} borderRadius={4} />
-                  <Skeleton width="70%" height={4} borderRadius={2} />
-                </View>
-                <View style={styles.homeSectionBadgesSkeleton}>
-                  <Skeleton width={36} height={32} borderRadius={Radius.sm} />
-                  <Skeleton width={40} height={32} borderRadius={Radius.sm} />
-                </View>
+          <View style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={styles.homeSectionHeaderSkeleton}>
+              <Skeleton width={32} height={32} borderRadius={Radius.md} />
+              <View style={{ flex: 1, gap: 5 }}>
+                <Skeleton width="50%" height={13} borderRadius={4} />
+                <Skeleton width="70%" height={4} borderRadius={2} />
               </View>
-              {i === 0 && [0, 1].map((r) => (
-                <View key={r} style={styles.homeItemRowSkeleton}>
-                  <Skeleton width={36} height={36} borderRadius={Radius.md} />
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <Skeleton width="50%" height={12} borderRadius={4} />
-                    <Skeleton width="35%" height={10} borderRadius={3} />
-                  </View>
-                  <Skeleton width={40} height={12} borderRadius={4} />
-                </View>
-              ))}
+              <View style={styles.homeSectionBadgesSkeleton}>
+                <Skeleton width={36} height={32} borderRadius={Radius.sm} />
+                <Skeleton width={40} height={32} borderRadius={Radius.sm} />
+              </View>
             </View>
-          ))}
+            {[0, 1, 2, 3].map((r) => (
+              <View key={r} style={styles.homeCatRowSkeleton}>
+                <Skeleton width={28} height={28} borderRadius={Radius.sm} />
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Skeleton width="45%" height={12} borderRadius={4} />
+                  <Skeleton width="60%" height={9} borderRadius={3} />
+                </View>
+                <Skeleton width={36} height={28} borderRadius={Radius.sm} />
+              </View>
+            ))}
+          </View>
+          <View style={[styles.homeSectionSkeleton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={styles.homeSectionHeaderSkeleton}>
+              <Skeleton width={32} height={32} borderRadius={Radius.md} />
+              <View style={{ flex: 1, gap: 5 }}>
+                <Skeleton width="40%" height={13} borderRadius={4} />
+                <Skeleton width="70%" height={4} borderRadius={2} />
+              </View>
+              <View style={styles.homeSectionBadgesSkeleton}>
+                <Skeleton width={36} height={32} borderRadius={Radius.sm} />
+                <Skeleton width={40} height={32} borderRadius={Radius.sm} />
+              </View>
+            </View>
+            {[0, 1, 2, 3, 4].map((r) => (
+              <View key={r} style={styles.homeCatRowSkeleton}>
+                <Skeleton width={28} height={28} borderRadius={Radius.sm} />
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Skeleton width="45%" height={12} borderRadius={4} />
+                  <Skeleton width="60%" height={9} borderRadius={3} />
+                </View>
+                <Skeleton width={36} height={28} borderRadius={Radius.sm} />
+              </View>
+            ))}
+          </View>
         </View>
         {/* Section: Backlog */}
         <View style={styles.sectionLabel}>
@@ -588,7 +609,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.base,
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
   homeSectionBadgesSkeleton: {
     flexDirection: 'row',
@@ -602,6 +623,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.xs,
+  },
+  homeCatRowSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginHorizontal: Spacing.sm,
+    marginBottom: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
   },
   tabPills: {
     flexDirection: 'row',
