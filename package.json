@@ -33,6 +33,7 @@
     "cheerio": "^1.2.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.1",
+    "sharp": "^0.35.3",
     "typescript": "~6.0.3"
   },
   "scripts": {

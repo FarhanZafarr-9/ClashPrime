@@ -2,6 +2,7 @@ import { home, builder } from 'clash-of-clans-data';
 import { writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const outPath = join(root, 'src', 'data', 'packageImages.ts');
@@ -13,15 +14,17 @@ if (!existsSync(localImagesDir)) {
 
 const pkgRoot = join(root, 'node_modules', 'clash-of-clans-data');
 
-async function convertToWebp(pkgRelPath) {
+async function ensureWebp(pkgRelPath) {
   const src = join(pkgRoot, pkgRelPath);
   const dstRel = pkgRelPath.replace(/\.png$/i, '.webp');
   const dst = join(localImagesDir, dstRel);
   const dstDir = dirname(dst);
   if (!existsSync(dstDir)) mkdirSync(dstDir, { recursive: true });
   if (!existsSync(dst)) {
-    // Copy as-is (already WebP) but with correct .webp extension
-    copyFileSync(src, dst);
+    // Source is already WebP with .png extension (verified). Copy as-is with correct extension.
+    // If upstream ever changes format, sharp will convert to WebP.
+    const buffer = await sharp(src).webp().toBuffer();
+    await sharp(buffer).webp().toFile(dst);
   }
   return `../../assets/package-images/${dstRel}`;
 }
@@ -125,7 +128,7 @@ collectBuilderBuilding(bb.builderHall().get());
 
 async function req(p) {
   if (!p) return '0';
-  const localPath = await convertToWebp(p);
+  const localPath = await ensureWebp(p);
   return `require('${localPath}')`;
 }
 
