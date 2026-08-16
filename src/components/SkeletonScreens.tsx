@@ -257,13 +257,31 @@ export function HomeScreenSkeleton() {
         <View style={styles.sectionLabel}>
           <Skeleton width={110} height={14} borderRadius={4} />
         </View>
-        <View style={styles.homeActionsRow}>
-          {[0, 1].map((i) => (
-            <View key={i} style={[styles.homeActionBtn, { backgroundColor: colors.bgCard }]}>
-              <Skeleton width={16} height={16} borderRadius={4} />
-              <Skeleton width={50} height={11} borderRadius={3} />
+        <View style={styles.homeSectionsSkeleton}>
+          <View style={[
+            styles.homeSectionRowSkeleton,
+            { backgroundColor: colors.bgCard },
+            { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
+          ]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Skeleton width="38%" height={13} borderRadius={4} />
+              <Skeleton width="62%" height={10} borderRadius={3} />
             </View>
-          ))}
+            <Skeleton width={16} height={16} borderRadius={8} />
+          </View>
+          <View style={[
+            styles.homeSectionRowSkeleton,
+            { backgroundColor: colors.bgCard },
+            { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
+          ]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Skeleton width="38%" height={13} borderRadius={4} />
+              <Skeleton width="60%" height={10} borderRadius={3} />
+            </View>
+            <Skeleton width={16} height={16} borderRadius={8} />
+          </View>
         </View>
         {/* Section: Quick Stats (collapsed rows) */}
         <View style={styles.sectionLabel}>
@@ -568,22 +586,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     marginTop: Spacing.xl,
     marginBottom: Spacing.sm,
-  },
-  homeActionsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.md,
-  },
-  homeActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.bgCard,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: Radius.sm,
   },
   homeTimersLabelSkeleton: {
     flexDirection: 'row',
