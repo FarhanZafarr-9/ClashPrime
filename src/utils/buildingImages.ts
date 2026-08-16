@@ -1,22 +1,26 @@
 import buildingImagesData from '../data/building-images.json';
-import buildingLevelsData from '../data/building-levels.json';
-import buildingAssets from '../data/buildingAssets';
-import { getMaxLevelAtTH } from './thMaxLevels';
+import {
+  getBuildingDetail,
+  getBuildingItemImage,
+  getBuildingMaxLevelAtBH,
+  getBuildingMaxLevelAtTH,
+  isBuilderName,
+} from './buildingData';
 
 const images = buildingImagesData.images;
 const nameToEntry = new Map(images.map((img) => [img.name.toLowerCase(), img]));
 
 export function getBuildingImageSource(name: string) {
-  const asset = buildingAssets[name];
-  if (asset?.main) return asset.main;
+  const pkg = getBuildingItemImage(name, null, isBuilderName(name));
+  if (pkg) return pkg;
   const entry = nameToEntry.get(name.toLowerCase());
   if (entry?.imageUrl) return { uri: entry.imageUrl };
-  return null;
+  return undefined;
 }
 
 export function getBuildingLevelImageSource(name: string, level: number) {
-  const asset = buildingAssets[name];
-  if (asset?.levels?.[level]) return asset.levels[level];
+  const pkg = getBuildingItemImage(name, level, isBuilderName(name));
+  if (pkg) return pkg;
   const entry = nameToEntry.get(name.toLowerCase());
   if (entry?.levels && entry.levels.length > 0) {
     const match = entry.levels.find((l) => l.level === level);
@@ -24,14 +28,13 @@ export function getBuildingLevelImageSource(name: string, level: number) {
     const highest = entry.levels.reduce((a, b) => (a.level > b.level ? a : b));
     if (level <= highest.level) return { uri: highest.imageUrl };
   }
-  if (asset?.main) return asset.main;
   if (entry?.imageUrl) return { uri: entry.imageUrl };
-  return null;
+  return undefined;
 }
 
 export function getBuildingAvailableLevels(name: string): number[] {
-  const asset = buildingAssets[name];
-  if (asset?.levels && Object.keys(asset.levels).length > 0) return Object.keys(asset.levels).map(Number).sort((a, b) => a - b);
+  const detail = getBuildingDetail(name, { builderBase: isBuilderName(name) });
+  if (detail?.levels?.length) return detail.levels.map((l) => l.Level);
   const entry = nameToEntry.get(name.toLowerCase());
   if (entry?.levels) return entry.levels.map((l) => l.level).sort((a, b) => a - b);
   return [];
@@ -94,20 +97,20 @@ export function formatTimeShort(totalSec: number): string {
   return minutes > 0 ? `${minutes}m` : '<1m';
 }
 
-export function getBuildingData(name: string) {
-  const key = name.toLowerCase();
-  return (buildingLevelsData as any[]).find(
-    (b: any) => b.name.toLowerCase() === key,
-  ) || null;
+/**
+ * Stats-table data for a building, sourced from the clash-of-clans-data package
+ * (shaped like the legacy building-levels.json entries the UI already renders).
+ */
+export function getBuildingData(name: string, opts?: { builderBase?: boolean }) {
+  return getBuildingDetail(name, opts);
 }
 
+/** Max level of a building reachable at the given TH (or BH for Builder Base). */
 export function getBuildingEffectiveMax(name: string, th: number): number {
-  const REV: Record<string, string> = { "Builder's Hut": 'Builder Hut', 'Laboratory': 'Lab', 'Wall': 'Walls' };
-  const thMax = getMaxLevelAtTH(REV[name] || name, th);
-  const data = getBuildingData(name);
-  if (!data) return thMax ?? 0;
-  const globalMax = data.maxLevel || data.levels.length;
-  return thMax != null ? Math.min(globalMax, thMax) : globalMax;
+  if (isBuilderName(name)) {
+    return getBuildingMaxLevelAtBH(name, th) ?? 0;
+  }
+  return getBuildingMaxLevelAtTH(name, th) ?? 0;
 }
 
 export function getBuildingCurrentLevel(name: string, buildingLevels: Record<string, number>): number {
