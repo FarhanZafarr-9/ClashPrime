@@ -1,5 +1,5 @@
-import buildingLevelsData from '../data/building-levels.json';
 import type { PlayerBuilding } from '../types/clash';
+import { getBuildingCountAtBH, getBuildingCountAtTH, isBuilderName } from './buildingData';
 
 // Store keys (th-levels.json / buildingLevels) → building-levels.json names.
 const STORE_TO_JSON: Record<string, string> = {
@@ -24,33 +24,14 @@ export function toStoreName(name: string): string {
   return JSON_TO_STORE[name] ?? name;
 }
 
-function buildingEntry(name: string): any {
-  const jsonName = toJsonName(name);
-  const key = jsonName.toLowerCase();
-  return (buildingLevelsData as any[]).find((b: any) => b.name.toLowerCase() === key) ?? null;
-}
-
-function countAt(counts: Record<string, number> | null | undefined, prefix: 'TH' | 'BH', level: number): number {
-  if (!counts) return 1;
-  let result = 0;
-  for (const [key, val] of Object.entries(counts)) {
-    if (!key.startsWith(prefix)) continue;
-    const n = parseInt(key.slice(2), 10);
-    if (n <= level && n > 0) result = val;
-  }
-  return result;
-}
-
 /** How many copies of a building exist at a given Town Hall level (1 if single-copy). */
 export function getCountAtTH(name: string, th: number): number {
-  const entry = buildingEntry(name);
-  return entry ? countAt(entry.counts, 'TH', th) : 1;
+  return isBuilderName(name) ? getBuildingCountAtBH(name, th) : getBuildingCountAtTH(name, th);
 }
 
 /** How many copies of a building exist at a given Builder Hall level (1 if single-copy). */
 export function getCountAtBH(name: string, bh: number): number {
-  const entry = buildingEntry(name);
-  return entry ? countAt(entry.counts, 'BH', bh) : 1;
+  return getBuildingCountAtBH(name, bh);
 }
 
 export interface BuildingCopies {
@@ -90,12 +71,10 @@ export function getBuildingCopies(
     .filter((l) => l > 0);
 
   const representative = buildingLevels?.[toStoreName(name)] ?? buildingLevels?.[name] ?? 0;
-  const entry = buildingEntry(name);
-  const entryCounts = entry?.counts ?? null;
   // How many copies were already available at the last fully maxed TH.
   const maxedCount =
     lastMaxedTH && th && lastMaxedTH < th
-      ? countAt(entryCounts, 'TH', lastMaxedTH)
+      ? getBuildingCountAtTH(name, lastMaxedTH)
       : count;
 
   const levels: number[] = [];
