@@ -66,8 +66,8 @@ const DATA_SOURCES: { name: string; use: string }[] = [
   { name: 'Clash of Clans API', use: 'Player stats & progress' },
   { name: 'ClashLy', use: 'Base layout library & ratings' },
   { name: 'ClashArmies', use: 'Community army compositions & sharing' },
-  { name: 'clash.ninja', use: 'TH max levels & in-game events' },
-  { name: 'Fandom Wiki', use: 'Building images, troop, hero & pet details' },
+  { name: 'clash-of-clans-data (npm)', use: 'Troop, hero, spell, pet, equipment, siege machine & building data (levels, costs, stats, images)' },
+  { name: 'clash.ninja', use: 'In-game events & TH max levels (fallback)' },
 ];
 
 const PRIVACY_SECTIONS: { title: string; body: string }[] = [
@@ -81,7 +81,7 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Third-Party Services',
-    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building images, troop details, events and community armies is fetched from public sources including ClashLy, ClashArmies, clash.ninja and the Fandom Wiki.',
+    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building/troop/hero/spell/pet/equipment data, events and community armies is fetched from public sources including ClashLy, ClashArmies, clash.ninja and the clash-of-clans-data npm package (canonical Supercell data).',
   },
   {
     title: 'Local Storage',

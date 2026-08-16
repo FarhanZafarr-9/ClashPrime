@@ -57,11 +57,11 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Player data | CoC API | REST fetch (Bearer token) |
 | Base layouts | ClashLy API | REST fetch (Parse server) |
 | Community armies | ClashArmies | Devalue-format REST fetch with 30-min cache |
-| TH max levels | clash.ninja | Runtime HTML scraper with section-hash caching |
-| Troop, hero, spell, pet & equipment details (levels, costs, stats) | clash-of-clans-data (npm) | Bundled package data (canonical) |
-| Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
-| Building levels / TH max (home & builder) | clash-of-clans-data (npm) | Bundled package data (canonical) |
+| Troop, hero, spell, pet, equipment & siege machine details (levels, costs, stats, images) | clash-of-clans-data (npm) | Bundled package data (canonical) |
+| Building images, levels, TH max, copy counts (Home & Builder Base) | clash-of-clans-data (npm) | Bundled package data (canonical) |
+| League loot/bonus/ore info | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Events | clash.ninja | Runtime HTML scraper |
+| TH max levels (fallback) | clash.ninja | Runtime HTML scraper with section-hash caching |
 
 ## Project Structure
 
@@ -70,6 +70,7 @@ ClashPrime/
 ├── app/                    # Screens (expo-router file-based)
 │   ├── _layout.tsx         # Root layout with auth gate
 │   ├── onboarding.tsx      # First-run token + tag input
+│   ├── import-export.tsx   # Bulk import building levels from CoC JSON export
 │   └── (tabs)/             # Tab screens
 │       ├── _layout.tsx     # Bottom tab navigator
 │       ├── index.tsx       # Home Dashboard
@@ -87,17 +88,16 @@ ClashPrime/
 │   │   ├── clash.ts        # CoC API client
 │   │   ├── baseScraper.ts  # ClashLy API base layout fetcher
 │   │   ├── clashArmies.ts  # ClashArmies popular armies fetcher with devalue parser
-│   │   ├── troopDetail.ts  # TroopDetail types (levels come from the package)
+│   │   ├── troopDetail.ts  # TroopDetail types (levels from package)
 │   │   └── eventsScraper.ts# Events scraper
 │   ├── components/         # Shared UI components
-│   ├── data/               # Static scraped data + building assets
+│   ├── data/               # Static data (packageImages.ts, cocBuildingIds.ts, entityReference.ts)
 │   ├── hooks/              # Player context and storage
 │   ├── theme/              # Design system (colors, spacing, typography)
 │   ├── types/              # TypeScript interfaces
-│   └── utils/              # TH max levels, troop/building image lookups
-├── assets/buildings/       # 75 folders of .webp building images (736 level images)
-├── scraper/                # CLI scrapers for generating static data
-└── images/                 # App icons and logos
+│   └── utils/              # armyData, buildingData, buildingImages, thMaxLevels, upgradeCosts, etc.
+├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs
+├── images/                 # App icons and logos
 ```
 
 ## Getting Started
@@ -122,27 +122,17 @@ npx expo start --ios
 4. Find your player tag in-game (e.g., `#YYYYY`)
 5. Enter both and tap **Connect**
 
-## Scraper Scripts
+## Generator Scripts
 
 ```bash
-# Scrape TH max levels from clash.ninja
-npx tsx scraper/run-th-levels.ts
+# Generate packageImages.ts (bundled images for troops, heroes, spells, pets, equipment, siege machines, buildings)
+npm run gen:images
 
-# Scrape building images from Fandom wiki
-npx tsx scraper/fandom-buildings.ts
-
-# Re-download building images + regenerate asset mapping
-npx tsx scraper/download-building-images.ts
-
-# Scrape building levels + per-TH copy counts from Fandom wiki (regenerates building-levels.json)
-npx tsx scraper/run-building-levels.ts
-
-# Verify/copy building counts into building-levels.json from Fandom wiki templates
-npx tsx scraper/run-building-counts.ts
-
-# Scrape siege machine names from Fandom wiki (dev verification only — app fetches dynamically)
-npx tsx scraper/siege-machines.ts
+# Generate cocBuildingIds.ts (building ID mapping for API)
+npm run gen:coc-ids
 ```
+
+> The old Fandom wiki scrapers in `scraper/` are deprecated — all building/troop data now comes from `clash-of-clans-data` npm package.
 
 ## Roadmap
 

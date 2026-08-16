@@ -93,21 +93,7 @@ export class ClashAPI {
   }
 
   async getPlayer(tag: string): Promise<ClashPlayer> {
-    const data = await this.fetch<ClashPlayer>(`/players/${encodeURIComponent(tag)}`);
-    const raw = data as any;
-    console.log('[clash] player league info:', JSON.stringify({
-      trophies: raw.trophies,
-      bestTrophies: raw.bestTrophies,
-      league: raw.league,
-      leagueTier: raw.leagueTier,
-      builderBaseTrophies: raw.builderBaseTrophies,
-      bestBuilderBaseTrophies: raw.bestBuilderBaseTrophies,
-      builderBaseLeague: raw.builderBaseLeague,
-      legendStatistics: raw.legendStatistics,
-      currentLeagueSeasonId: raw.currentLeagueSeasonId,
-      previousLeagueSeasonId: raw.previousLeagueSeasonId,
-    }, null, 2));
-    return data;
+    return this.fetch<ClashPlayer>(`/players/${encodeURIComponent(tag)}`);
   }
 
   async searchClans(query: string): Promise<any> {
