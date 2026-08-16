@@ -139,6 +139,13 @@ npm run gen:coc-ids
 - **Clan War Leagues** — Live CWL rounds are now tracked on the War tab. Remaining: medal tracking and promotion/ranking through a league season.
 - **Landing page** — A simple static HTML page for web presence, deployed via Vercel from the same repo.
 
+## Future Considerations
+
+- **Fork `clash-of-clans-data`** — Upstream is pre-1.0 and updates on Supercell's schedule. Consider forking as `@clashprime/clash-of-clans-data` with a sync script to apply custom mappings (display names, BB building fixes, image paths) and publish on our own cadence when new content drops.
+- **Offline-first sync** — Cache player data + reference data for full offline usage; background sync when online.
+- **Clan roster management** — Track member donations, war participation, and activity across seasons.
+- **Push notifications** — Event start/end, war attacks, builder completion, upgrade timers.
+
 ## License
 
 MIT
