@@ -11,11 +11,12 @@ import {
   getAccounts,
   setActiveAccountTag,
   migrateToMultiAccount,
-  saveAccount,
+  ensureAccountRegistered,
 } from './usePlayer';
 import { ClashAPI } from '../api/clash';
 import { toJsonName, toStoreName } from '../utils/buildingCopies';
 import { seedBuildingLevelsForTH } from '../utils/seedBuildingLevels';
+import { setBulkBuildingLevels, mergeBuildingCopies, BuildingCopiesPayload } from './usePlayer';
 
 interface PlayerContextValue {
   player: ClashPlayer | null;
@@ -25,13 +26,14 @@ interface PlayerContextValue {
   refresh: () => Promise<ClashPlayer | undefined>;
   tagVersion: number;
   setBuildingCopies: (name: string, levels: number[], maxLevel: number) => Promise<void>;
-  setBulkLevels: (levels: Record<string, number>) => Promise<void>;
+  setBulkLevels: (levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => Promise<void>;
+  applyLevelsToAccount: (tag: string, levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => Promise<void>;
   setLastMaxed: (th: number) => Promise<void>;
   activeAccount: StoredAccount | null;
   accounts: StoredAccount[];
   switchAccount: (tag: string) => Promise<void>;
   refreshAccounts: () => Promise<void>;
-  prefetchAccount: (tag: string, opts?: { token?: string; th?: number }) => Promise<void>;
+  prefetchAccount: (tag: string, opts?: { token?: string; th?: number; switch?: boolean }) => Promise<void>;
   syncingTag: string | null;
   needsLastMaxed: boolean;
 }
@@ -45,7 +47,7 @@ const PlayerContext = createContext<PlayerContextValue>({
   tagVersion: 0,
   setBuildingCopies: async () => {},
   setBulkLevels: async () => {},
-  setLastMaxed: async () => {},
+  applyLevelsToAccount: async () => {},  setLastMaxed: async () => {},
   activeAccount: null,
   accounts: [],
   switchAccount: async () => {},
@@ -71,7 +73,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const mountedRef = useRef(false);
 
   const refreshAccounts = useCallback(async () => {
-    const list = await getAccounts();
+    await migrateToMultiAccount();
+    let list = await getAccounts();
+    if (list.length === 0) {
+      const activeTag = await getActiveAccountTag();
+      if (activeTag) {
+        const cached = await getCachedPlayer(activeTag);
+        if (cached) {
+          await ensureAccountRegistered({ tag: activeTag, name: cached.name, townHallLevel: cached.townHallLevel });
+          list = await getAccounts();
+        }
+      }
+    }
     setAccounts(list);
     const active = await getActiveAccount();
     setActiveAccountState(active);
@@ -92,19 +105,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (!force) {
         const cached = await getCachedPlayer();
         if (cached) {
+          await ensureAccountRegistered({ tag, name: cached.name, townHallLevel: cached.townHallLevel });
           setPlayer(cached);
           setNeedsLastMaxed(!cached.lastMaxedTH);
           setLastSync(null);
           setLoading(false);
+          await refreshAccounts();
           return;
         }
         await new Promise((r) => setTimeout(r, 300));
         const retryCached = await getCachedPlayer();
         if (retryCached) {
+          await ensureAccountRegistered({ tag, name: retryCached.name, townHallLevel: retryCached.townHallLevel });
           setPlayer(retryCached);
           setNeedsLastMaxed(!retryCached.lastMaxedTH);
           setLastSync(null);
           setLoading(false);
+          await refreshAccounts();
           return;
         }
       }
@@ -128,14 +145,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setPlayer(data);
       setNeedsLastMaxed(!data.lastMaxedTH);
       await cachePlayer(data);
-      const existingAccts = await getAccounts();
-      const acct = existingAccts.find((a) => a.tag === tag);
-      if (acct) {
-        acct.name = data.name;
-        acct.townHallLevel = data.townHallLevel;
-        await saveAccount(acct);
-      }
+      await ensureAccountRegistered({ tag, name: data.name, townHallLevel: data.townHallLevel });
       setLastSync(new Date());
+      await refreshAccounts();
       return data;
     } catch (e: any) {
       setError(e.message || 'Failed to fetch player data');
@@ -144,7 +156,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshAccounts]);
 
   const switchAccount = useCallback(async (tag: string) => {
     await setActiveAccountTag(tag);
@@ -152,21 +164,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     playerRef.current = null;
     const cached = await getCachedPlayer();
     if (cached) {
+      await ensureAccountRegistered({ tag, name: cached.name, townHallLevel: cached.townHallLevel });
       setPlayer(cached);
       setNeedsLastMaxed(!cached.lastMaxedTH);
       setLoading(false);
       setError(null);
+      await refreshAccounts();
     } else {
       setPlayer(null);
       await fetchPlayer(true);
     }
   }, [fetchPlayer, refreshAccounts]);
 
-  const prefetchAccount = useCallback(async (tag: string, opts: { token?: string; th?: number } = {}) => {
+  const prefetchAccount = useCallback(async (tag: string, opts: { token?: string; th?: number; switch?: boolean } = {}) => {
     if (syncingTagRef.current === tag) return;
     syncingTagRef.current = tag;
     setSyncingTag(tag);
     if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+
+    const doSwitch = opts.switch !== false;
 
     const finish = () => {
       if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
@@ -177,15 +193,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    prefetchTimerRef.current = setTimeout(() => {
-      finish();
-      (async () => {
-        const accts = await getAccounts();
-        if (accts.some((a) => a.tag === tag)) {
-          await switchAccount(tag).catch(() => {});
-        }
-      })();
-    }, 60000);
+    if (doSwitch) {
+      prefetchTimerRef.current = setTimeout(() => {
+        finish();
+        (async () => {
+          const accts = await getAccounts();
+          if (accts.some((a) => a.tag === tag)) {
+            await switchAccount(tag).catch(() => {});
+          }
+        })();
+      }, 60000);
+    }
 
     try {
       const token = opts.token ?? (await getApiToken(tag));
@@ -199,16 +217,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       data.buildingLevels = seedBuildingLevelsForTH(data, th);
       data.lastMaxedTH = th;
       await cachePlayer(data, tag);
-      const accts = await getAccounts();
-      const acct = accts.find((a) => a.tag === tag);
-      if (acct) {
-        acct.name = data.name;
-        acct.townHallLevel = data.townHallLevel;
-        await saveAccount(acct);
-      }
+      await ensureAccountRegistered({ tag, name: data.name, townHallLevel: data.townHallLevel });
       await refreshAccounts();
       finish();
-      await switchAccount(tag);
+      if (doSwitch) await switchAccount(tag);
     } catch {
       // Fetch failed; the 60s timeout still switches so the account isn't locked forever.
     }
@@ -255,13 +267,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const setBulkLevels = useCallback(async (levels: Record<string, number>) => {
+  const setBulkLevels = useCallback(async (levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => {
     setPlayer((prev) => {
       const base = prev || {} as ClashPlayer;
       const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), ...levels } };
-      if (base.buildings?.length) {
+      if (buildingCopies?.length) {
+        updated.buildings = mergeBuildingCopies(base.buildings, buildingCopies);
+      } else if (base.buildings?.length) {
         updated.buildings = base.buildings.map((b) =>
-          levels[b.name] != null ? { ...b, level: levels[b.name] } : b,
+          levels[toStoreName(b.name)] != null ? { ...b, level: levels[toStoreName(b.name)] } : b,
         );
       }
       if (base.tag) cachePlayer(updated, base.tag);
@@ -278,6 +292,34 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Apply imported levels to a specific attached account (used when the import
+  // export's tag points at a non-active account). Persists to that account's
+  // cache; refreshes the live state too when it happens to be the active one.
+  const applyLevelsToAccount = useCallback(async (tag: string, levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => {
+    await setBulkBuildingLevels(levels, tag);
+    if (buildingCopies?.length) {
+      const cached = await getCachedPlayer(tag);
+      if (cached) {
+        await cachePlayer({ ...cached, buildings: mergeBuildingCopies(cached.buildings, buildingCopies) }, tag);
+      }
+    }
+    if (playerRef.current?.tag === tag) {
+      setPlayer((prev) => {
+        const base = prev || {} as ClashPlayer;
+        const updated = { ...base, buildingLevels: { ...(base.buildingLevels || {}), ...levels } };
+        if (buildingCopies?.length) {
+          updated.buildings = mergeBuildingCopies(base.buildings, buildingCopies);
+        } else if (base.buildings?.length) {
+          updated.buildings = base.buildings.map((b) => {
+            const key = toStoreName(b.name);
+            return levels[key] != null ? { ...b, level: levels[key] } : b;
+          });
+        }
+        return updated;
+      });
+    }
+  }, []);
+
   const value: PlayerContextValue & { bumpTagVersion: () => void } = {
     player,
     loading,
@@ -288,6 +330,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     bumpTagVersion,
     setBuildingCopies,
     setBulkLevels,
+    applyLevelsToAccount,
     setLastMaxed,
     activeAccount,
     accounts,

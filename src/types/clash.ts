@@ -248,6 +248,7 @@ export interface ClashPlayer {
   role?: PlayerRole;
   warPreference?: WarPreference;
   clan?: ClanSummary;
+  league?: LeagueTier;
   leagueTier?: LeagueTier;
   builderBaseLeague?: BuilderBaseLeague;
   legendStatistics?: LegendStatistics;

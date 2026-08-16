@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ClashPlayer, StoredAccount } from '../types/clash';
+import { ClashPlayer, StoredAccount, PlayerBuilding } from '../types/clash';
+import { toStoreName, toJsonName } from '../utils/buildingCopies';
 
 const PLAYER_TAG_KEY = 'clashprime_player_tag';
 const API_TOKEN_KEY = 'clashprime_api_token';
@@ -47,6 +48,37 @@ export async function saveAccount(account: StoredAccount): Promise<void> {
     accounts.push(account);
   }
   await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
+export async function ensureAccountRegistered(
+  account: { tag: string; name?: string; townHallLevel?: number }
+): Promise<StoredAccount | null> {
+  const accounts = await getAccounts();
+  const idx = accounts.findIndex((a) => a.tag === account.tag);
+  if (idx >= 0) {
+    const existing = accounts[idx];
+    const updated: StoredAccount = {
+      ...existing,
+      name: account.name && account.name !== existing.tag ? account.name : existing.name,
+      townHallLevel: account.townHallLevel && account.townHallLevel > 0 ? account.townHallLevel : existing.townHallLevel,
+      lastUsedAt: new Date().toISOString(),
+    };
+    if (updated.name !== existing.name || updated.townHallLevel !== existing.townHallLevel || updated.lastUsedAt !== existing.lastUsedAt) {
+      accounts[idx] = updated;
+      await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+    }
+    return accounts[idx];
+  }
+  const created: StoredAccount = {
+    tag: account.tag,
+    name: account.name || account.tag,
+    townHallLevel: account.townHallLevel && account.townHallLevel > 0 ? account.townHallLevel : 0,
+    addedAt: new Date().toISOString(),
+    lastUsedAt: new Date().toISOString(),
+  };
+  accounts.push(created);
+  await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  return created;
 }
 
 export async function removeAccount(tag: string): Promise<void> {
@@ -126,8 +158,7 @@ export async function getPlayerTag(accountTag?: string): Promise<string> {
   const tag = accountTag || await getActiveAccountTag();
   if (tag) {
     const namespaced = await AsyncStorage.getItem(acctKey(PLAYER_TAG_KEY, tag));
-    if (namespaced) return namespaced;
-    if (accountTag) return '';
+    return namespaced || '';
   }
   const legacy = await AsyncStorage.getItem(PLAYER_TAG_KEY);
   return legacy || '';
@@ -145,7 +176,6 @@ export async function getApiToken(accountTag?: string): Promise<string> {
   if (tag) {
     const namespaced = await AsyncStorage.getItem(acctKey(API_TOKEN_KEY, tag));
     if (namespaced) return namespaced;
-    if (accountTag) return '';
   }
   const legacy = await AsyncStorage.getItem(API_TOKEN_KEY);
   return legacy || '';
@@ -165,10 +195,8 @@ export async function getCachedPlayer(accountTag?: string): Promise<ClashPlayer 
   const tag = accountTag || await getActiveAccountTag();
   if (tag) {
     const raw = await AsyncStorage.getItem(acctKey(PLAYER_CACHE_KEY, tag));
-    if (raw) {
-      try { return JSON.parse(raw); } catch { return null; }
-    }
-    if (accountTag) return null;
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
   }
   const raw = await AsyncStorage.getItem(PLAYER_CACHE_KEY);
   if (!raw) return null;
@@ -194,7 +222,33 @@ export async function setBulkBuildingLevels(levels: Record<string, number>, acco
   const player = await getCachedPlayer(accountTag);
   if (!player) return;
   player.buildingLevels = { ...(player.buildingLevels || {}), ...levels };
+  if (player.buildings?.length) {
+    player.buildings = player.buildings.map((b) => {
+      const key = toStoreName(b.name);
+      return levels[key] != null ? { ...b, level: levels[key] } : b;
+    });
+  }
   await cachePlayer(player, accountTag);
+}
+
+export interface BuildingCopiesPayload {
+  name: string;
+  levels: number[];
+  maxLevel: number;
+}
+
+/** Replace the per-copy `buildings` entries for the given building types. */
+export function mergeBuildingCopies(
+  buildings: PlayerBuilding[] | undefined,
+  items: BuildingCopiesPayload[],
+): PlayerBuilding[] {
+  let next = buildings ?? [];
+  for (const item of items) {
+    const jsonName = toJsonName(item.name);
+    next = next.filter((b) => b.name.toLowerCase() !== jsonName.toLowerCase());
+    next = [...next, ...item.levels.map((level) => ({ name: jsonName, level, maxLevel: item.maxLevel }))];
+  }
+  return next;
 }
 
 // --- Last Maxed TH ---
@@ -216,7 +270,7 @@ export async function getLastMaxedTH(accountTag?: string): Promise<number | null
   if (tag) {
     const raw = await AsyncStorage.getItem(acctKey(LAST_MAXED_TH_KEY, tag));
     if (raw !== null) return parseInt(raw, 10);
-    if (accountTag) return null;
+    return null;
   }
   const raw = await AsyncStorage.getItem(LAST_MAXED_TH_KEY);
   return raw ? parseInt(raw, 10) : null;
@@ -231,7 +285,7 @@ export async function getSavedBases(accountTag?: string): Promise<SavedBase[]> {
     if (raw) {
       try { return JSON.parse(raw); } catch { return []; }
     }
-    if (accountTag) return [];
+    return [];
   }
   const raw = await AsyncStorage.getItem(SAVED_BASES_KEY);
   if (!raw) return [];
@@ -270,7 +324,7 @@ export async function getFavorites(accountTag?: string): Promise<string[]> {
     if (raw) {
       try { return JSON.parse(raw); } catch { return []; }
     }
-    if (accountTag) return [];
+    return [];
   }
   const raw = await AsyncStorage.getItem(FAVORITES_KEY);
   if (!raw) return [];
