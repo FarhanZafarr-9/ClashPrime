@@ -15,7 +15,6 @@ import {
   Platform,
   Animated,
   BackHandler,
-  Linking,
   type ImageSourcePropType,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -34,12 +33,14 @@ import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
-import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, type CostTime } from '../../src/utils/upgradeCosts';
-import thLevelsData from '../../src/data/th-levels.json';
+import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime } from '../../src/utils/upgradeCosts';
+import { getBuildingCategories, getBuildingMaxLevelAtTH } from '../../src/utils/buildingData';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
-import { getTroopDetail, type TroopDetail } from '../../src/api/troopDetail';
+import type { TroopDetail } from '../../src/api/troopDetail';
+import { getArmyTroopDetail } from '../../src/utils/armyData';
+import { getLeagueLootInfo } from '../../src/utils/leagueData';
 import { useDialog } from '../../src/components/AlertDialog';
 import {
   loadProgressSnapshot,
@@ -338,7 +339,7 @@ export default function HomeScreen() {
     if (names.length === 0) return;
     const pending = names.filter((n) => equipDetails[n] === undefined);
     if (pending.length === 0) return;
-    const fetched = await Promise.all(pending.map((name) => getTroopDetail(name).catch(() => null)));
+    const fetched = await Promise.all(pending.map((name) => getArmyTroopDetail(name).catch(() => null)));
     setEquipDetails((prev) => {
       const next = { ...prev };
       fetched.forEach((detail, i) => { next[pending[i]] = detail; });
@@ -357,7 +358,7 @@ export default function HomeScreen() {
   const getEquipMaxAtTh = (name: string, thLevel: number): number => {
     const detail = equipDetails[name];
     if (!detail || detail.levels.length === 0) return 0;
-    const blacksmithAtTh = getMaxLevelAtTH('Blacksmith', thLevel) ?? 0;
+    const blacksmithAtTh = getBuildingMaxLevelAtTH('Blacksmith', thLevel) ?? 0;
     let max = 0;
     for (const lvl of detail.levels) {
       if (lvl.labLevel == null || lvl.labLevel <= blacksmithAtTh) {
@@ -429,7 +430,7 @@ export default function HomeScreen() {
         while (!cancelled && queue.length > 0) {
           const name = queue.shift()!;
           if (!fetchedSet.has(name)) {
-            const detail = await getTroopDetail(name).catch(() => null);
+            const detail = await getArmyTroopDetail(name).catch(() => null);
             fetchedSet.add(name);
             setProgressDetails((prev) => (prev[name] === undefined ? { ...prev, [name]: detail } : prev));
           }
@@ -463,25 +464,25 @@ export default function HomeScreen() {
   // which the prefetch above already fills for every locked/rushed item name —
   // the Backlog never issues its own requests.
   const upgradeCosts = useMemo(() => {
-    const results: Record<string, { cost: number; timeSeconds: number }> = {};
+    const results: Record<string, { cost: number; timeSeconds: number; byResource?: Record<string, number> }> = {};
     for (const item of unlockableItems) {
       const detail = progressDetails[item.name];
       if (!detail || detail.levels.length === 0) continue;
       const maxLvl = getMaxLevelAtTH(item.name, th);
       if (!maxLvl) continue;
       const ct = remainingArmyCosts(detail, 0, maxLvl);
-      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time };
+      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time, byResource: ct.byResource };
     }
     return results;
   }, [progressDetails, unlockableItems, th]);
 
   const rushedCosts = useMemo(() => {
-    const results: Record<string, { cost: number; timeSeconds: number }> = {};
+    const results: Record<string, { cost: number; timeSeconds: number; byResource?: Record<string, number> }> = {};
     for (const item of rushedItems) {
       const detail = progressDetails[item.name];
       if (!detail || detail.levels.length === 0) continue;
       const ct = remainingArmyCosts(detail, item.currentLevel, item.maxLevelAtPrevTH);
-      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time };
+      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time, byResource: ct.byResource };
     }
     return results;
   }, [progressDetails, rushedItems]);
@@ -490,9 +491,7 @@ export default function HomeScreen() {
   const rushedCostsPending = rushedItems.some((i) => progressDetails[i.name] === undefined);
 
   // ── Aggregates ──
-  const aggregateCost = Object.values(upgradeCosts).reduce((sum, v) => sum + v.cost, 0);
   const aggregateTime = Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
-  const aggregateRushedCost = Object.values(rushedCosts).reduce((sum, v) => sum + v.cost, 0);
   const aggregateRushedTime = Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
 
   // ── Early returns (hooks must not follow) ──
@@ -619,7 +618,7 @@ export default function HomeScreen() {
   const SHOW_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
   const buildingGroups = SHOW_BUILDING_CATS.map((cat) => {
-    const items = (thLevelsData.categories as Record<string, Record<string, any>>)[cat] ?? {};
+    const items = getBuildingCategories(th)[cat] ?? {};
     const entries = Object.entries(items).filter(([, thData]) => {
       const thEntry = thData[String(th)];
       return thEntry != null && (thEntry.level ?? 0) > 0;
@@ -696,6 +695,19 @@ export default function HomeScreen() {
     );
   };
 
+  const playerLeague = player.league ?? player.leagueTier;
+  const leagueInfo = playerLeague?.name
+    ? getLeagueLootInfo(playerLeague.name, player.townHallLevel)
+    : null;
+
+  const fmtAmount = (amount: { gold: number | null; dark: number | null } | null): string | null => {
+    if (!amount) return null;
+    const parts: string[] = [];
+    if (amount.gold) parts.push(`${formatCost(amount.gold)} G/E`);
+    if (amount.dark) parts.push(`${formatCost(amount.dark)} DE`);
+    return parts.length ? parts.join(' · ') : null;
+  };
+
   const homeStatGroups: HomeStatGroup[] = [
     {
       title: 'PvP',
@@ -705,8 +717,37 @@ export default function HomeScreen() {
         { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
         { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
         { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
-        { label: 'Attack Wins', desc: 'Attacks won', value: player.attackWins, icon: 'flame-outline' },
-        { label: 'Defense Wins', desc: 'Defenses won', value: player.defenseWins, icon: 'shield-outline' },
+        ...(leagueInfo
+          ? [
+              {
+                label: 'League',
+                desc: leagueInfo.underfloor
+                  ? `Below your TH floor (${leagueInfo.floor})`
+                  : leagueInfo.floor
+                    ? `League floor: ${leagueInfo.floor}`
+                    : 'Ranked battles league',
+                value: leagueInfo.leagueName,
+                icon: 'ribbon-outline' as const,
+              },
+              { label: 'League Bonus', desc: 'Max bonus per win', value: fmtAmount(leagueInfo.bonus) ?? '—', icon: 'trophy-outline' as const },
+              { label: 'Per-Attack Loot', desc: 'Max stealable from a base', value: fmtAmount(leagueInfo.loot) ?? '—', icon: 'cash-outline' as const },
+              { label: 'Star Bonus', desc: 'Weekly · 8 stars', value: fmtAmount(leagueInfo.star) ?? '—', icon: 'star-outline' as const },
+              ...(leagueInfo.star && (leagueInfo.star.shiny || leagueInfo.star.glowy || leagueInfo.star.starry)
+                ? [{
+                    label: 'Star Bonus Ore',
+                    desc: 'Weekly reward',
+                    value: [leagueInfo.star.shiny ? `${formatCost(leagueInfo.star.shiny)} Shiny` : '', leagueInfo.star.glowy ? `${formatCost(leagueInfo.star.glowy)} Glowy` : '', leagueInfo.star.starry ? `${formatCost(leagueInfo.star.starry)} Starry` : ''].filter(Boolean).join(' · ') || '—',
+                    icon: 'layers-outline' as const,
+                  }]
+                : []),
+              ...(leagueInfo.attacksPerWeek
+                ? [{ label: 'Attacks/Week', desc: 'League tournament schedule', value: leagueInfo.attacksPerWeek, icon: 'flame-outline' as const }]
+                : []),
+              ...(leagueInfo.next
+                ? [{ label: 'Next League', desc: leagueInfo.next.star ? `Star bonus: ${fmtAmount(leagueInfo.next.star)}` : 'One step up', value: leagueInfo.next.name, icon: 'arrow-up-circle-outline' as const }]
+                : []),
+            ]
+          : []),
       ],
     },
     {
@@ -756,8 +797,8 @@ export default function HomeScreen() {
                 <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
                 </PressableRipple>
-                <PressableRipple style={styles.appBtn} onPress={() => Linking.openURL('https://link.clashofclans.com/en?action=OpenApp')} hitSlop={8} accessibilityLabel="Open Clash of Clans" accessibilityRole="button">
-                  <Image source={require('../../assets/icon.png')} style={styles.appIcon} resizeMode="contain" />
+                <PressableRipple style={styles.appBtn} onPress={() => router.push('/import-export')} hitSlop={8} accessibilityLabel="Import building levels from a Clash of Clans JSON export" accessibilityRole="button">
+                  <Ionicons name="cloud-upload-outline" size={20} color={Colors.textSecondary} />
                 </PressableRipple>
               </View>
             </View>
@@ -856,13 +897,13 @@ export default function HomeScreen() {
                   ) : (
                     <>
                       <View style={styles.statCell}>
-                        {player.leagueTier?.iconUrls?.small ? (
-                          <Image source={{ uri: player.leagueTier.iconUrls.small }} style={styles.statCellLeagueImage} resizeMode="contain" />
+                        {playerLeague?.iconUrls?.small ? (
+                          <Image source={{ uri: playerLeague.iconUrls.small }} style={styles.statCellLeagueImage} resizeMode="contain" />
                         ) : (
                           <Ionicons name="arrow-up-outline" size={20} color={Colors.textSecondary} />
                         )}
                         <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue} numberOfLines={1}>{player.leagueTier?.name?.split(' ')[0] || 'N/A'}</Text>
+                          <Text style={styles.statCellValue} numberOfLines={1}>{playerLeague?.name?.split(' ')[0] || 'N/A'}</Text>
                           <Text style={styles.statCellLabel}>League</Text>
                         </View>
                       </View>
@@ -939,7 +980,7 @@ export default function HomeScreen() {
                         level={row.level}
                         maxLevel={row.maxLevel}
                         icon={row.icon}
-                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? formatCost(rowCost.cost) : undefined}
+                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                         timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
                         locked={row.level === 0}
                         isLast={ri === displayRows.length - 1}
@@ -994,7 +1035,7 @@ export default function HomeScreen() {
                         level={row.level}
                         maxLevel={row.maxLevel}
                         iconSource={row.iconSource}
-                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? formatCost(rowCost.cost) : undefined}
+                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                         timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
                         locked={row.level === 0}
                         isLast={ri === displayRows.length - 1}
@@ -1029,7 +1070,7 @@ export default function HomeScreen() {
                 title={`${unlockableItems.length} locked`}
                 destructive
                 compact
-                description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateCost > 0 ? `${fmtCost(aggregateCost)}${aggregateTime > 0 ? ` · ${formatTimeShort(aggregateTime)}` : ''}` : 'Items locked at your Town Hall')}
+                description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateTime > 0 ? formatTimeShort(aggregateTime) : 'Items locked at your Town Hall')}
                 count={unlockableItems.length}
                 totalLevel={0}
                 totalMax={0}
@@ -1067,7 +1108,7 @@ export default function HomeScreen() {
                         <View style={styles.statRowRightRow}>
                           <View style={styles.statRowRightBadge}>
                             {itemCost ? (
-                              <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>
+                              <Text style={styles.statRowValue}>{formatCostBreakdown(itemCost.byResource) || fmtCost(itemCost.cost)}</Text>
                             ) : lockedCostsPending ? (
                               <Text style={styles.statRowValue}>…</Text>
                             ) : null}
@@ -1093,7 +1134,7 @@ export default function HomeScreen() {
                 title={`${rushedItems.length} rushed`}
                 accentColor={RUSHED_ACCENT}
                 compact
-                description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedCost > 0 ? `${fmtCost(aggregateRushedCost)}${aggregateRushedTime > 0 ? ` · ${formatTimeShort(aggregateRushedTime)}` : ''}` : 'Items below the previous Town Hall max')}
+                description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedTime > 0 ? formatTimeShort(aggregateRushedTime) : 'Items below the previous Town Hall max')}
                 count={rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
@@ -1135,7 +1176,7 @@ export default function HomeScreen() {
                         <View style={styles.statRowRight}>
                           {costData ? (
                             <>
-                              <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>
+                              <Text style={styles.statRowValue}>{formatCostBreakdown(costData.byResource) || fmtCost(costData.cost)}</Text>
                               {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
                             </>
                           ) : rushedCostsPending ? (
@@ -1442,15 +1483,14 @@ export default function HomeScreen() {
                           <Text style={styles.switcherActiveChipText}>Active</Text>
                         </View>
                       )}
-                      {isSyncing && (
-                        <View style={styles.switcherSyncingChip}>
-                          <ActivityIndicator size="small" color={Colors.textSecondary} style={styles.switcherSyncingSpinner} />
-                          <Text style={styles.switcherSyncingText}>Syncing…</Text>
-                        </View>
-                      )}
                     </View>
                     <Text style={styles.switcherItemTag}>{acct.tag}</Text>
                   </View>
+                  {isSyncing && (
+                    <View style={styles.switcherSyncingBadge}>
+                      <ActivityIndicator size="small" color={Colors.textSecondary} />
+                    </View>
+                  )}
                   {acct.townHallLevel > 0 && (
                     <View style={[styles.switcherThBox, isActive && styles.switcherThBoxActive]}>
                       <Text style={[styles.switcherThBoxLevel, isActive && styles.switcherThBoxLevelActive]}>{acct.townHallLevel}</Text>
@@ -1621,13 +1661,10 @@ const styles = StyleSheet.create({
   appBtn: {
     width: 36,
     height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  appIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
   },
   timestamp: {
     ...Typography.caption,
@@ -1749,25 +1786,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  switcherSyncingChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
+  switcherSyncingBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgCardHover,
-  },
-  switcherSyncingSpinner: {
-    width: 9,
-    height: 9,
-  },
-  switcherSyncingText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   switcherThBox: {
     width: 40,

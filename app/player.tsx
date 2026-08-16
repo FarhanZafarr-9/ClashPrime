@@ -21,7 +21,8 @@ import { ItemCard } from '../src/components/ItemCard';
 import { SettingRow } from '../src/components/SettingRow';
 import { AchievementCard } from '../src/components/AchievementCard';
 import { groupAchievementsByStars, getTotalStars, type StarGroup } from '../src/utils/achievements';
-import { getApiToken, getAccounts, saveAccount } from '../src/hooks/usePlayer';
+import { getApiToken, getAccounts, ensureAccountRegistered, cachePlayer, getActiveAccountTag, setPlayerTag, setActiveAccountTag } from '../src/hooks/usePlayer';
+import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../src/api/clash';
 import type { ClashPlayer, Hero, Pet, HeroEquipment, Achievement } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
@@ -117,6 +118,7 @@ function CollapsibleSection({
 }
 
 export default function PlayerInspectScreen() {  const router = useRouter();
+  const { refreshAccounts } = usePlayer();
   const params = useLocalSearchParams<{ tag?: string }>();
   const [query, setQuery] = useState(params.tag ?? '');
   const [player, setPlayer] = useState<ClashPlayer | null>(null);
@@ -161,20 +163,21 @@ export default function PlayerInspectScreen() {  const router = useRouter();
     if (!player) return;
     setAdding(true);
     try {
-      await saveAccount({
-        tag: player.tag,
-        name: player.name,
-        townHallLevel: player.townHallLevel ?? 0,
-        addedAt: new Date().toISOString(),
-        lastUsedAt: new Date().toISOString(),
-      });
+      await ensureAccountRegistered({ tag: player.tag, name: player.name, townHallLevel: player.townHallLevel ?? 0 });
+      await cachePlayer(player, player.tag);
+      const activeTag = await getActiveAccountTag();
+      if (!activeTag) {
+        await setPlayerTag(player.tag);
+        await setActiveAccountTag(player.tag);
+      }
+      await refreshAccounts();
       setSaved(true);
     } catch {
       setError('Could not save this account.');
     } finally {
       setAdding(false);
     }
-  }, [player]);
+  }, [player, refreshAccounts]);
 
   const copyTag = useCallback(() => {
     if (player) Clipboard.setStringAsync(player.tag);
@@ -376,14 +379,14 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               </View>
             )}
 
-            {player.leagueTier && (
+            {(player.league ?? player.leagueTier) && (
               <View style={styles.leagueRow}>
-                {player.leagueTier.iconUrls?.small ? (
-                  <Image source={{ uri: player.leagueTier.iconUrls.small }} style={styles.leagueIcon} resizeMode="contain" />
+                {(player.league?.iconUrls?.small ?? player.leagueTier?.iconUrls?.small) ? (
+                  <Image source={{ uri: player.league?.iconUrls?.small ?? player.leagueTier?.iconUrls?.small }} style={styles.leagueIcon} resizeMode="contain" />
                 ) : (
                   <Ionicons name="trophy-outline" size={14} color={Colors.warning} />
                 )}
-                <Text style={styles.leagueName} numberOfLines={1}>{player.leagueTier.name}</Text>
+                <Text style={styles.leagueName} numberOfLines={1}>{(player.league?.name ?? player.leagueTier?.name) || ''}</Text>
                 <Text style={styles.leagueTrophies}>{fmt(player.trophies)}</Text>
               </View>
             )}

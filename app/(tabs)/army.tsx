@@ -6,6 +6,7 @@ import {
   StyleSheet,
   RefreshControl,
   Image,
+  type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { useLocalSearchParams } from 'expo-router';
@@ -13,10 +14,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
-import { getMaxLevelAtTH, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
+import {
+  getMaxLevelAtTH,
+  getAllItemsAtTH,
+  getBuildingMaxLevelAtTH,
+  getBuilderTroopMaxLevel,
+  getArmyItemImage,
+  getArmyTroopDetail,
+  RESOURCE_META,
+  sumLevelCostsByResource,
+  type CostResource,
+} from '../../src/utils/armyData';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { entityRef } from '../../src/data/entityReference';
-import { getTroopDetail, TroopDetail } from '../../src/api/troopDetail';
+import type { TroopDetail } from '../../src/api/troopDetail';
 import { ItemCard } from '../../src/components/ItemCard';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
@@ -64,6 +75,10 @@ function parseUnlockRequirements(raw: string): { source: string; cost?: string; 
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
   const { siegeMachineNames, superTroopNames, petNames } = useGameData();
+  // Name sets come straight from the package (see useGameData); no fallbacks.
+  const siegeNames = siegeMachineNames;
+  const petNameList = petNames;
+  const superNameList = superTroopNames;
   const { isDark, colors } = useTheme();
   const { discounts } = useDiscounts();
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
@@ -147,7 +162,11 @@ export default function PlayerProfileScreen() {
     setExpandedName(name);
     // Fetch on first expansion (or if a previous fetch failed).
     if (details[name] === undefined) {
-      let detail = await getTroopDetail(name);
+      const isBB = player
+        ? player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
+          player.heroes.some((h) => h.name === name && h.village === 'builderBase')
+        : false;
+      let detail = await getArmyTroopDetail(name, { builderBase: isBB });
       if (detail) {
         const allItems = player
           ? [
@@ -208,7 +227,7 @@ export default function PlayerProfileScreen() {
     const names = player.heroEquipment.map((e) => e.name);
     if (names.every((n) => details[n] !== undefined)) return;
     const fetched = await Promise.all(
-      names.map((name) => getTroopDetail(name).catch(() => null))
+      names.map((name) => getArmyTroopDetail(name).catch(() => null))
     );
     const next: Record<string, TroopDetail | null> = {};
     fetched.forEach((detail, i) => {
@@ -252,7 +271,7 @@ export default function PlayerProfileScreen() {
         ...(player.pets ?? []),
       ];
       const fetched = await Promise.all(
-        allItems.map((item) => getTroopDetail(item.name, true).catch(() => null))
+        allItems.map((item) => getArmyTroopDetail(item.name).catch(() => null))
       );
       const nextDetails: Record<string, TroopDetail | null> = {};
       fetched.forEach((detail) => {
@@ -283,21 +302,19 @@ export default function PlayerProfileScreen() {
 
   const th = player.townHallLevel;
   const bhLevel = player.builderHallLevel ?? 1;
-  // Builder Base troops cap at 2× the Builder Hall level (e.g. BH10 → Lv20).
-  const getBuilderTroopMaxLevel = (): number => bhLevel * 2;
   const homeHeroes = player.heroes.filter((h) => h.village === 'home');
   const builderHeroes = th >= 6 ? player.heroes.filter((h) => h.village === 'builderBase') : [];
 
-  const SIEGE_MACHINE_NAMES = new Set(siegeMachineNames);
-  const SUPER_TROOP_NAMES = new Set(superTroopNames);
+  const SIEGE_MACHINE_NAMES = new Set(siegeNames);
+  const SUPER_TROOP_NAMES = new Set(superNameList);
   const isSiegeMachine = (name: string) => SIEGE_MACHINE_NAMES.has(name);
   const isSuperTroop = (name: string) =>
     SUPER_TROOP_NAMES.has(name) || name.startsWith('Super ') || name.startsWith('Sneaky ') || name.startsWith('Rocket ');
 
-  const homeTroops = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && !isSiegeMachine(t.name) && !petNames.includes(t.name));
+  const homeTroops = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && !isSiegeMachine(t.name) && !petNameList.includes(t.name));
   const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
   const siegeMachines = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && isSiegeMachine(t.name));
-  const homePets = player.troops.filter((t) => (t.village === 'home' || !t.village) && petNames.includes(t.name));
+  const homePets = player.troops.filter((t) => (t.village === 'home' || !t.village) && petNameList.includes(t.name));
   const homeSpells = player.spells.filter((s) => s.village === 'home' || !s.village);
 
   const allTroopsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'troop');
@@ -329,14 +346,28 @@ export default function PlayerProfileScreen() {
   const homeSpellsSplit = splitProgress(homeSpells);
   const homeHeroesSplit = splitProgress(homeHeroes);
   const homePetsSplit = splitProgress(homePets);
-  const builderTroopsSplit = splitProgress(builderTroops, () => getBuilderTroopMaxLevel());
+  const builderTroopsSplit = splitProgress(builderTroops, (t) => getBuilderTroopMaxLevel(t.name, bhLevel));
   const builderHeroesSplit = splitProgress(builderHeroes);
-  const laboratoryMaxLevel = getMaxLevelAtTH('Lab', player.townHallLevel) ?? 0;
-  const heroHallMaxLevel = getMaxLevelAtTH('Hero Hall', player.townHallLevel) ?? 0;
   // The real, player-owned Blacksmith building level (from their profile buildings).
   // Falls back to the max the Town Hall allows if the player hasn't tracked it.
-  const blacksmithLevel = player.buildingLevels?.['Blacksmith'] ?? getMaxLevelAtTH('Blacksmith', player.townHallLevel) ?? 0;
+  const blacksmithLevel = player.buildingLevels?.['Blacksmith'] ?? getBuildingMaxLevelAtTH('blacksmith', player.townHallLevel) ?? 0;
   const isEquipmentName = (name: string) => player.heroEquipment.some((e) => e.name === name);
+
+  // Prefer the bundled package icon for a card; fall back to the network
+  // image helpers when the package ships no asset for the item. Level sprites
+  // are reserved for the Level Appearance grid, not the cards.
+  const cardIconProps = (name: string, level?: number | null): { icon?: string; iconSource?: ImageSourcePropType } => {
+    const local = getArmyItemImage(name);
+    if (local) return { iconSource: local };
+    return {
+      icon:
+        getTroopImageUrl(name, level ?? undefined) ||
+        getHeroImageUrl(name) ||
+        getPetImageUrl(name) ||
+        getEquipmentImageUrl(name) ||
+        undefined,
+    };
+  };
 
   // Highest equipment level reachable at the player's Blacksmith level: each
   // equipment stat row lists a "Blacksmith Level Required" gate, so the cap is
@@ -373,35 +404,25 @@ export default function PlayerProfileScreen() {
   };
 
   // Returns the level rows to show for an expanded item, applying the right
-  // gating per village/hero. Builder Base units are never filtered by the Home Lab.
+  // gating per village. Home troops/spells/pets/heroes are capped by the max
+  // reachable at the player's Town Hall (via their gating building's max level
+  // at that TH — never the player's own building level); equipment by the
+  // player's Blacksmith; Builder Base units by their Star Lab at the BH.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
     const isHero = !!getHeroSlug(detail.name);
     const isBB = isBuilderBaseName(detail.name);
     if (isBB) {
-      // Builder Base troops cap at 2× the Builder Hall level; heroes follow their own rule.
       if (isHero) return detail.levels;
-      return detail.levels.filter((l) => l.level <= getBuilderTroopMaxLevel());
+      const bbCap = getBuilderTroopMaxLevel(detail.name, bhLevel) ?? bhLevel * 2;
+      return detail.levels.filter((l) => l.level <= bbCap);
     }
     // Hero equipment is gated by the player's Blacksmith level, not the troop lab.
     if (isEquipmentName(detail.name)) {
       return detail.levels.filter((l) => l.labLevel == null || l.labLevel <= blacksmithLevel);
     }
-    // Spells don't have DPS/HP so they aren't gated by the troop Lab, but cap
-    // them at the max level the current Town Hall allows (matches the card badge).
-    const hasTroopStats = detail.levels.some((l) => l.dps > 0 || l.hitpoints > 0);
-    if (!hasTroopStats) {
-      const maxAtTH = getMaxLevelAtTH(detail.name, player.townHallLevel);
-      if (maxAtTH !== null) return detail.levels.filter((l) => l.level <= maxAtTH);
-      return detail.levels;
-    }
-    const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : null;
-    return detail.levels.filter((l) => {
-      if (isHero) {
-        if (maxHeroLevel !== null) return l.level <= maxHeroLevel;
-        return l.labLevel == null || l.labLevel <= heroHallMaxLevel;
-      }
-      return l.labLevel == null || l.labLevel <= laboratoryMaxLevel;
-    });
+    const maxAtTH = getMaxLevelAtTH(detail.name, player.townHallLevel);
+    if (maxAtTH !== null) return detail.levels.filter((l) => l.level <= maxAtTH);
+    return detail.levels;
   };
 
   // Inline expansion panel rendered directly under a tapped card (replaces the
@@ -460,7 +481,7 @@ export default function PlayerProfileScreen() {
     const isHero = !!getHeroSlug(detail.name);
     const isBB = isBuilderBaseName(detail.name);
     const isEquip = isEquipmentName(detail.name);
-    const maxHeroLevel = isHero ? getMaxLevelAtTH(detail.name, player.townHallLevel) : (isEquip ? getEquipmentMaxLevel(detail.name) : null);
+    const maxReachable = isEquip ? getEquipmentMaxLevel(detail.name) || null : getMaxLevelAtTH(detail.name, player.townHallLevel);
     const visibleDetailLevels = getVisibleLevels(detail);
 
     const currentLevel = detail.currentLevel ?? 0;
@@ -511,8 +532,8 @@ export default function PlayerProfileScreen() {
 
         {pills.length > 0 && (
           <View style={styles.panelPillsRow}>
-            {pills.map((pill) => (
-              <View key={pill.value} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            {pills.map((pill, i) => (
+              <View key={`${pill.icon}-${pill.value}-${i}`} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
                 <Text style={[styles.panelPillText, { color: colors.textPrimary }]}>{pill.value}</Text>
               </View>
@@ -563,16 +584,6 @@ export default function PlayerProfileScreen() {
         ) : null}
 
         {visibleDetailLevels.length > 0 && (() => {
-          const parseCost = (s: string): number => {
-            const cleaned = s.replace(/[^0-9.KkMmBb]/g, '');
-            if (!cleaned) return 0;
-            const num = parseFloat(cleaned);
-            if (isNaN(num)) return 0;
-            if (/b/i.test(cleaned)) return num * 1_000_000_000;
-            if (/m/i.test(cleaned)) return num * 1_000_000;
-            if (/k/i.test(cleaned)) return num * 1_000;
-            return num;
-          };
           const parseTime = (s: string): number => {
             if (!s || /[—\-]/.test(s)) return 0;
             const d = s.match(/(\d+)\s*d/);
@@ -595,11 +606,11 @@ export default function PlayerProfileScreen() {
             return `${Math.floor(s / 60)}m`;
           };
 
-          const remainingLevels = visibleDetailLevels.filter((l) => l.level > currentLevel && (maxHeroLevel != null ? l.level <= maxHeroLevel : true));
-          let totalCost = 0;
+          const remainingLevels = visibleDetailLevels.filter((l) => l.level > currentLevel && (maxReachable != null ? l.level <= maxReachable : true));
+          const resourceSums = sumLevelCostsByResource(visibleDetailLevels, currentLevel, maxReachable);
+          const totalCost = resourceSums.reduce((s, r) => s + r.amount, 0);
           let totalTime = 0;
           for (const lvl of remainingLevels) {
-            if (lvl.upgradeCost) totalCost += parseCost(lvl.upgradeCost);
             if (lvl.upgradeTime) totalTime += parseTime(lvl.upgradeTime);
           }
           const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
@@ -619,11 +630,14 @@ export default function PlayerProfileScreen() {
                   <View style={styles.troopLevelGrid}>
                     {appearanceLevels.map((lvl) => {
                       const isCurrent = lvl === currentLevel;
-                      const img = getTroopImageUrl(detail.name, lvl);
+                      const localImg = getArmyItemImage(detail.name, lvl);
+                      const img = localImg ? null : getTroopImageUrl(detail.name, lvl);
                       return (
                         <View key={lvl} style={[styles.troopLevelCell, { borderColor: colors.border }, isCurrent && styles.troopLevelCellCurrent]}>
                           <View style={styles.troopLevelImgWrap}>
-                            {img ? (
+                            {localImg ? (
+                              <Image source={localImg} style={styles.troopLevelImg} resizeMode="contain" />
+                            ) : img ? (
                               <Image source={{ uri: img }} style={styles.troopLevelImg} resizeMode="contain" />
                             ) : (
                               <View style={[styles.troopLevelImg, styles.troopLevelImgFallback]}>
@@ -652,11 +666,26 @@ export default function PlayerProfileScreen() {
                 </View>
                 <View style={styles.panelTableRow}>
                   <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                    Lv{currentLevel} → Lv{maxHeroLevel != null ? maxHeroLevel : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                    Lv{currentLevel} → Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
                   </Text>
-                  <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
-                    {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts.army) : fmtCost(totalCost)}
-                  </Text>
+                  <View style={[styles.panelTableCell, { alignItems: 'center', gap: 2, justifyContent: 'center' }]}>
+                    {resourceSums.length > 0 ? (
+                      resourceSums.map((s) => (
+                        <Text
+                          key={s.resource}
+                          style={{
+                            color: showDiscounted ? colors.warning : RESOURCE_META[s.resource].color,
+                            fontWeight: '600',
+                            fontSize: 12,
+                          }}
+                        >
+                          {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)} {RESOURCE_META[s.resource].short}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>—</Text>
+                    )}
+                  </View>
                   <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
                     {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
                   </Text>
@@ -710,7 +739,21 @@ export default function PlayerProfileScreen() {
                           </Text>
                         ))
                       )}
-                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 56 }]}>{showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}</Text>
+                      <Text
+                        style={[
+                          styles.panelTableCell,
+                          {
+                            color: showDiscounted
+                              ? colors.warning
+                              : l.costResource
+                                ? RESOURCE_META[l.costResource as CostResource].color
+                                : colors.textSecondary,
+                            minWidth: 56,
+                          },
+                        ]}
+                      >
+                        {showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}
+                      </Text>
                       <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}</Text>
                       <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
                     </View>
@@ -733,13 +776,11 @@ export default function PlayerProfileScreen() {
               {isBB
                 ? isHero
                   ? `Showing all Builder Base levels for ${detail.name}`
-                  : `Showing all Builder Base levels reachable at BH ${bhLevel} (Max Lv${getBuilderTroopMaxLevel()})`
-                : isHero
-                  ? maxHeroLevel !== null
-                    ? `Showing all hero levels that are reachable at TH ${player.townHallLevel} (Max Lv${maxHeroLevel})`
-                    : `Showing all hero levels that are reachable with Hero Hall Lv${heroHallMaxLevel}`
-                  : isTroopLike
-                    ? `Showing all troop levels that are reachable with ${getLabBuilding(detail.name, activeTab)} Lv${laboratoryMaxLevel}`
+                  : `Showing all Builder Base levels reachable at BH ${bhLevel} (Max Lv${getBuilderTroopMaxLevel(detail.name, bhLevel) ?? bhLevel * 2})`
+                : isEquip
+                  ? `Showing all levels reachable with your Blacksmith at Lv${blacksmithLevel}`
+                  : maxReachable != null
+                    ? `Showing all levels reachable at TH ${player.townHallLevel} (Max Lv${maxReachable})`
                     : `Showing all levels for ${detail.name}`}
             </Text>
           </>
@@ -862,10 +903,10 @@ export default function PlayerProfileScreen() {
                         maxLevel={h.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(h.name, th)}
                         subtitle={h.equipment?.map((e) => e.name).join(', ')}
-                        icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                        {...cardIconProps(h.name)}
                         onPress={() => toggleDetail(h.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeHeroesSplit?.leveling?.length - 1}
+                        isFirst={i == 0 || expandedName === h.name}
+                        isLast={i == homeHeroesSplit?.leveling?.length - 1 && expandedName !== h.name}
                       />
                       {renderDetailPanel(h.name)}
                     </React.Fragment>
@@ -882,7 +923,7 @@ export default function PlayerProfileScreen() {
                       level={0}
                       maxLevel={h.maxLevel}
                       thMaxLevel={h.maxLevel}
-                      icon={getHeroImageUrl(h.name) || undefined}
+                        {...cardIconProps(h.name)}
                       locked
                       isFirst={i == 0}
                       isLast={i == lockedHeroes?.length - 1}
@@ -901,10 +942,10 @@ export default function PlayerProfileScreen() {
                         maxLevel={h.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(h.name, th)}
                         subtitle={h.equipment?.map((e) => e.name).join(', ')}
-                        icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                        {...cardIconProps(h.name)}
                         onPress={() => toggleDetail(h.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeHeroesSplit?.maxed?.length - 1}
+                        isFirst={i == 0 || expandedName === h.name}
+                        isLast={i == homeHeroesSplit?.maxed?.length - 1 && expandedName !== h.name}
                       />
                       {renderDetailPanel(h.name)}
                     </React.Fragment>
@@ -940,10 +981,10 @@ export default function PlayerProfileScreen() {
                             name={h.name}
                             level={h.level}
                             maxLevel={h.maxLevel}
-                            icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                            {...cardIconProps(h.name)}
                             onPress={() => toggleDetail(h.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderHeroesSplit?.leveling?.length - 1}
+                            isFirst={i == 0 || expandedName === h.name}
+                            isLast={i == builderHeroesSplit?.leveling?.length - 1 && expandedName !== h.name}
                           />
                           {renderDetailPanel(h.name)}
                         </React.Fragment>
@@ -959,10 +1000,10 @@ export default function PlayerProfileScreen() {
                             name={h.name}
                             level={h.level}
                             maxLevel={h.maxLevel}
-                            icon={getHeroImageUrl(h.name) || getTroopImageUrl(h.name) || undefined}
+                            {...cardIconProps(h.name)}
                             onPress={() => toggleDetail(h.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderHeroesSplit?.maxed?.length - 1}
+                            isFirst={i == 0 || expandedName === h.name}
+                            isLast={i == builderHeroesSplit?.maxed?.length - 1 && expandedName !== h.name}
                           />
                           {renderDetailPanel(h.name)}
                         </React.Fragment>
@@ -986,10 +1027,10 @@ export default function PlayerProfileScreen() {
                         level={t.level}
                         maxLevel={t.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(t.name, th)}
-                        icon={getTroopImageUrl(t.name, t.level) || undefined}
+                        {...cardIconProps(t.name, t.level)}
                         onPress={() => toggleDetail(t.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeTroopsSplit?.leveling?.length - 1}
+                        isFirst={i == 0 || expandedName === t.name}
+                        isLast={i == homeTroopsSplit?.leveling?.length - 1 && expandedName !== t.name}
                       />
                       {renderDetailPanel(t.name)}
                     </React.Fragment>
@@ -1006,7 +1047,7 @@ export default function PlayerProfileScreen() {
                       level={0}
                       maxLevel={t.maxLevel}
                       thMaxLevel={t.maxLevel}
-                      icon={getTroopImageUrl(t.name, 1) || undefined}
+                            {...cardIconProps(t.name, 1)}
                       locked
                       isFirst={i == 0}
                       isLast={i == lockedTroops.length - 1}
@@ -1024,10 +1065,10 @@ export default function PlayerProfileScreen() {
                         level={t.level}
                         maxLevel={t.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(t.name, th)}
-                        icon={getTroopImageUrl(t.name, t.level) || undefined}
+                        {...cardIconProps(t.name, t.level)}
                         onPress={() => toggleDetail(t.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeTroopsSplit?.maxed?.length - 1}
+                        isFirst={i == 0 || expandedName === t.name}
+                        isLast={i == homeTroopsSplit?.maxed?.length - 1 && expandedName !== t.name}
                       />
                       {renderDetailPanel(t.name)}
                     </React.Fragment>
@@ -1062,11 +1103,11 @@ export default function PlayerProfileScreen() {
                           <ItemCard
                             name={t.name}
                             level={t.level}
-                            maxLevel={getBuilderTroopMaxLevel()}
-                            icon={getTroopImageUrl(t.name, t.level) || undefined}
+                            maxLevel={getBuilderTroopMaxLevel(t.name, bhLevel) ?? t.maxLevel}
+                            {...cardIconProps(t.name, t.level)}
                             onPress={() => toggleDetail(t.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderTroopsSplit?.leveling?.length - 1}
+                            isFirst={i == 0 || expandedName === t.name}
+                            isLast={i == builderTroopsSplit?.leveling?.length - 1 && expandedName !== t.name}
                           />
                           {renderDetailPanel(t.name)}
                         </React.Fragment>
@@ -1081,11 +1122,11 @@ export default function PlayerProfileScreen() {
                           <ItemCard
                             name={t.name}
                             level={t.level}
-                            maxLevel={getBuilderTroopMaxLevel()}
-                            icon={getTroopImageUrl(t.name, t.level) || undefined}
+                            maxLevel={getBuilderTroopMaxLevel(t.name, bhLevel) ?? t.maxLevel}
+                            {...cardIconProps(t.name, t.level)}
                             onPress={() => toggleDetail(t.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderTroopsSplit?.maxed?.length - 1}
+                            isFirst={i == 0 || expandedName === t.name}
+                            isLast={i == builderTroopsSplit?.maxed?.length - 1 && expandedName !== t.name}
                           />
                           {renderDetailPanel(t.name)}
                         </React.Fragment>
@@ -1114,10 +1155,10 @@ export default function PlayerProfileScreen() {
                         level={s.level}
                         maxLevel={s.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                        icon={getTroopImageUrl(s.name, s.level) || undefined}
+                            {...cardIconProps(s.name, s.level)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0}
-                        isLast={i == siegeMachines.length - 1}
+                        isFirst={i == 0 || expandedName === s.name}
+                        isLast={i == siegeMachines.length - 1 && expandedName !== s.name}
                       />
                       {renderDetailPanel(s.name)}
                     </React.Fragment>
@@ -1139,10 +1180,10 @@ export default function PlayerProfileScreen() {
                         level={s.level}
                         maxLevel={s.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                        icon={getTroopImageUrl(s.name) || undefined}
+                        {...cardIconProps(s.name)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeSpellsSplit?.leveling?.length - 1}
+                        isFirst={i == 0 || expandedName === s.name}
+                        isLast={i == homeSpellsSplit?.leveling?.length - 1 && expandedName !== s.name}
                       />
                       {renderDetailPanel(s.name)}
                     </React.Fragment>
@@ -1159,7 +1200,7 @@ export default function PlayerProfileScreen() {
                       level={0}
                       maxLevel={s.maxLevel}
                       thMaxLevel={s.maxLevel}
-                      icon={getTroopImageUrl(s.name) || undefined}
+                      {...cardIconProps(s.name)}
                       locked
                       isFirst={i == 0}
                       isLast={i == lockedSpells.length - 1}
@@ -1177,10 +1218,10 @@ export default function PlayerProfileScreen() {
                         level={s.level}
                         maxLevel={s.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                        icon={getTroopImageUrl(s.name) || undefined}
+                        {...cardIconProps(s.name)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeSpellsSplit?.maxed?.length - 1}
+                        isFirst={i == 0 || expandedName === s.name}
+                        isLast={i == homeSpellsSplit?.maxed?.length - 1 && expandedName !== s.name}
                       />
                       {renderDetailPanel(s.name)}
                     </React.Fragment>
@@ -1217,10 +1258,10 @@ export default function PlayerProfileScreen() {
                             level={p.level}
                             maxLevel={p.maxLevel}
                             thMaxLevel={getMaxLevelAtTH(p.name, th)}
-                            icon={getTroopImageUrl(p.name) || getPetImageUrl(p.name) || undefined}
+                            {...cardIconProps(p.name)}
                             onPress={() => toggleDetail(p.name)}
-                            isFirst={i == 0}
-                            isLast={i == homePetsSplit?.leveling?.length - 1}
+                            isFirst={i == 0 || expandedName === p.name}
+                            isLast={i == homePetsSplit?.leveling?.length - 1 && expandedName !== p.name}
                           />
                           {renderDetailPanel(p.name)}
                         </React.Fragment>
@@ -1237,10 +1278,10 @@ export default function PlayerProfileScreen() {
                             level={p.level}
                             maxLevel={p.maxLevel}
                             thMaxLevel={getMaxLevelAtTH(p.name, th)}
-                            icon={getTroopImageUrl(p.name) || getPetImageUrl(p.name) || undefined}
+                            {...cardIconProps(p.name)}
                             onPress={() => toggleDetail(p.name)}
-                            isFirst={i == 0}
-                            isLast={i == homePetsSplit?.maxed?.length - 1}
+                            isFirst={i == 0 || expandedName === p.name}
+                            isLast={i == homePetsSplit?.maxed?.length - 1 && expandedName !== p.name}
                           />
                           {renderDetailPanel(p.name)}
                         </React.Fragment>
@@ -1274,10 +1315,10 @@ export default function PlayerProfileScreen() {
                         level={e.level}
                         maxLevel={e.maxLevel}
                         thMaxLevel={getEquipmentMaxLevel(e.name) || undefined}
-                        icon={getTroopImageUrl(e.name) || getEquipmentImageUrl(e.name) || undefined}
+                        {...cardIconProps(e.name)}
                         onPress={() => toggleDetail(e.name)}
-                        isFirst={i == 0}
-                        isLast={i == player.heroEquipment.length - 1}
+                        isFirst={i == 0 || expandedName === e.name}
+                        isLast={i == player.heroEquipment.length - 1 && expandedName !== e.name}
                       />
                       {renderDetailPanel(e.name)}
                     </React.Fragment>

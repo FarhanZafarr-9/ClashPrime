@@ -423,7 +423,8 @@ export default function SettingsScreen() {
     setShowOnboarding(false);
     setOnboardingTag('');
     setOnboardingThLevel('');
-    await prefetchAccount(tag, { token, th: thLevel });
+    // Don't yank the user to the new account unless it's the first one.
+    await prefetchAccount(tag, { token, th: thLevel, switch: accounts.length === 0 });
   };
 
   const openAbout = () => {
@@ -870,6 +871,13 @@ export default function SettingsScreen() {
             onPress={handleExportData}
           />
           <SettingRow
+            icon="cloud-upload-outline"
+            title="Import Building Levels"
+            desc="Paste a Clash of Clans JSON Export to bulk-set levels"
+            compact
+            onPress={() => router.push('/import-export')}
+          />
+          <SettingRow
             icon="refresh-outline"
             title="Refresh Game Data"
             desc="Re-fetch reference data from the wiki"
@@ -1218,15 +1226,14 @@ export default function SettingsScreen() {
                           <Text style={styles.switchActiveChipText}>Active</Text>
                         </View>
                       )}
-                      {isSyncing && (
-                        <View style={styles.switchSyncingChip}>
-                          <ActivityIndicator size="small" color={Colors.textSecondary} style={styles.switchSyncingSpinner} />
-                          <Text style={styles.switchSyncingText}>Syncing…</Text>
-                        </View>
-                      )}
                     </View>
                     <Text style={styles.switchItemTag}>{acct.tag}</Text>
                   </View>
+                  {isSyncing && (
+                    <View style={styles.switchSyncingBadge}>
+                      <ActivityIndicator size="small" color={Colors.textSecondary} />
+                    </View>
+                  )}
                   {acct.townHallLevel > 0 && (
                     <View style={[styles.switchThBox, isActive && styles.switchThBoxActive]}>
                       <Text style={[styles.switchThBoxLevel, isActive && styles.switchThBoxLevelActive]}>{acct.townHallLevel}</Text>
@@ -1447,25 +1454,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  switchSyncingChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
+  switchSyncingBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgCardHover,
-  },
-  switchSyncingSpinner: {
-    width: 9,
-    height: 9,
-  },
-  switchSyncingText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   switchThBox: {
     width: 40,
