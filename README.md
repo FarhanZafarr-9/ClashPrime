@@ -58,9 +58,9 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Base layouts | ClashLy API | REST fetch (Parse server) |
 | Community armies | ClashArmies | Devalue-format REST fetch with 30-min cache |
 | TH max levels | clash.ninja | Runtime HTML scraper with section-hash caching |
-| Troop & hero details (images, descriptions, stats) | Clash of Clans Fandom Wiki | On-demand MediaWiki API fetch with 7-day cache |
+| Troop, hero, spell, pet & equipment details (levels, costs, stats) | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Building images | Clash of Clans Fandom Wiki | CLI scraper → downloaded .webp assets |
-| Siege machine, super troop & pet names | Clash of Clans Fandom Wiki | On-demand MediaWiki category API with 7-day cache |
+| Building levels / TH max (home & builder) | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Events | clash.ninja | Runtime HTML scraper |
 
 ## Project Structure
@@ -87,7 +87,7 @@ ClashPrime/
 │   │   ├── clash.ts        # CoC API client
 │   │   ├── baseScraper.ts  # ClashLy API base layout fetcher
 │   │   ├── clashArmies.ts  # ClashArmies popular armies fetcher with devalue parser
-│   │   ├── troopDetail.ts  # On-demand troop detail fetcher (Fandom Wiki)
+│   │   ├── troopDetail.ts  # TroopDetail types (levels come from the package)
 │   │   └── eventsScraper.ts# Events scraper
 │   ├── components/         # Shared UI components
 │   ├── data/               # Static scraped data + building assets

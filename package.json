@@ -5,17 +5,18 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "expo": "~57.0.12",
+    "clash-of-clans-data": "^0.16.0",
+    "expo": "~57.0.13",
     "expo-clipboard": "~57.0.1",
     "expo-constants": "~57.0.6",
-    "expo-dev-client": "~57.0.11",
+    "expo-dev-client": "~57.0.12",
     "expo-font": "~57.0.1",
-    "expo-linking": "~57.0.5",
-    "expo-notifications": "~57.0.10",
-    "expo-router": "~57.0.12",
+    "expo-linking": "~57.0.6",
+    "expo-notifications": "~57.0.11",
+    "expo-router": "~57.0.13",
     "expo-splash-screen": "~57.0.6",
     "expo-status-bar": "~57.0.1",
-    "expo-updates": "~57.0.13",
+    "expo-updates": "~57.0.14",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-native": "0.86.2",
@@ -38,7 +39,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "gen:images": "node scripts/gen-package-images.mjs",
+    "gen:coc-ids": "node scripts/gen-coc-ids.mjs"
   },
   "private": true
 }
