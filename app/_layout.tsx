@@ -53,7 +53,6 @@ export default function RootLayout() {
   const handleBackPress = useCallback(() => {
     const navigation = navigationRef.current;
     if (!navigation) {
-      console.log('[BACK-DEBUG] no navigation ref');
       return false;
     }
     const rootState = navigation.getRootState();
@@ -61,26 +60,20 @@ export default function RootLayout() {
       | { key: string; index: number; routes: { name: string; state?: unknown }[] }
       | undefined;
     if (!appStack || !Array.isArray(appStack.routes)) {
-      console.log('[BACK-DEBUG] unexpected state', JSON.stringify(rootState));
       return false;
     }
-    console.log('[BACK-DEBUG] appRoutes=', JSON.stringify(appStack.routes.map((r) => r.name)), 'appIndex=', appStack.index);
     if (appStack.routes.length > 1 && appStack.index === appStack.routes.length - 1) {
       navigation.dispatch({ type: 'GO_BACK', target: appStack.key });
-      console.log('[BACK-DEBUG] popped app stack screen');
       return true;
     }
     const tabsRoute = appStack.routes.find((r) => r.name === '(tabs)');
     const tabState = tabsRoute?.state as
       | { key: string; history: { key: string }[] }
       | undefined;
-    console.log('[BACK-DEBUG] tab key=', tabState?.key, 'history=', JSON.stringify(tabState?.history));
     if (tabState && tabState.history && tabState.history.length > 1) {
       navigation.dispatch({ type: 'GO_BACK', target: tabState.key });
-      console.log('[BACK-DEBUG] dispatched GO_BACK to', tabState.key);
       return true;
     }
-    console.log('[BACK-DEBUG] nothing to go back -> return false (exit)');
     return false;
   }, [navigationRef]);
 
@@ -88,27 +81,6 @@ export default function RootLayout() {
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     return () => subscription.remove();
   }, [handleBackPress]);
-
-  useEffect(() => {
-    const nav = navigationRef.current;
-    if (!nav) return;
-    const sub = nav.addListener('state', () => {
-      const rootState = nav.getRootState();
-      const slot = rootState.routes[0] as any;
-      const appStack = slot?.state as any;
-      const tabsRoute = appStack?.routes?.find((r: any) => r.name === '(tabs)');
-      const tabsState = tabsRoute?.state as any;
-      console.log(
-        '[ROOT-STATE] rootRoutes=', JSON.stringify(rootState.routes.map((r: any) => r.name)),
-        'appRoutes=', JSON.stringify(appStack?.routes?.map((r: any) => r.name)),
-        'appIndex=', appStack?.index,
-        'tabIndex=', tabsState?.index,
-        'tabRoute=', tabsState?.routeNames?.[tabsState?.index],
-        'tabHistory=', JSON.stringify(tabsState?.history)
-      );
-    });
-    return () => sub();
-  }, [navigationRef]);
 
   if (!checked || !fontsReady) return null;
 

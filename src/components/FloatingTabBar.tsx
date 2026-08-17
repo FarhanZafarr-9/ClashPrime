@@ -39,10 +39,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const [showExtras, setShowExtras] = useState(false);
 
   useEffect(() => {
-    console.log('[TAB-BAR-DEBUG] index=', state.index, 'route=', state.routeNames[state.index], 'history=', JSON.stringify(state.history));
-  }, [state]);
-
-  useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       const parentState = navigation.getParent()?.getState();
       const pushedAboveTabs =
@@ -51,16 +47,13 @@ export default function FloatingTabBar({ state, navigation }: any) {
         parentState.routes.length > 1 &&
         parentState.index === parentState.routes.length - 1;
       if (pushedAboveTabs) {
-        console.log('[BACK-TAB-BAR] popping screen above tabs');
         navigation.getParent()?.goBack();
         return true;
       }
       if (state.history.length > 1) {
-        console.log('[BACK-TAB-BAR] popping tab, history=', JSON.stringify(state.history));
         navigation.goBack();
         return true;
       }
-      console.log('[BACK-TAB-BAR] nothing to pop, returning false');
       return false;
     });
     return () => sub.remove();
