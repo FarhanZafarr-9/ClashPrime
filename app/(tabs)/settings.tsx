@@ -101,6 +101,20 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '4.6.0',
+    date: 'August 17, 2026',
+    items: [
+      'Complete data migration to clash-of-clans-data npm package — all building images, troop/hero/spell/pet/equipment/siege machine data, levels, costs, stats, and TH/BH max levels now come from canonical Supercell data.',
+      'Removed ~1000 local .webp building images and 1200 lines of auto-generated asset mapping — app size reduced from 535 MB to ~40 MB archive.',
+      'Building stats, copy counts, max levels, upgrade costs now use package data via buildingData.ts/armyData.ts — no more Fandom scraping or local JSON fallbacks.',
+      'Troop/hero/spell/pet/equipment detail panels use package data (armyData.ts) — no more Fandom wiki scraping, instant load, per-resource cost breakdown.',
+      'New Import Building Levels screen (Settings → Import) — paste a Clash of Clans JSON export to bulk-set all building levels and copies.',
+      'Generator scripts: npm run gen:images (WebP images with correct extension), npm run gen:coc-ids (building ID mapping).',
+      'League loot/bonus/ore info from package (leagueData.ts).',
+      'Account management improvements: ensureAccountRegistered, cachePlayer, mergeBuildingCopies, applyLevelsToAccount.',
+    ],
+  },
+  {
     version: '4.5.0',
     date: 'August 11, 2026',
     items: [
