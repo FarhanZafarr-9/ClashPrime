@@ -111,9 +111,14 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     items: [
       'Complete data migration to clash-of-clans-data npm package — all building images, troop/hero/spell/pet/equipment/siege machine data, levels, costs, stats, and TH/BH max levels now come from canonical Supercell data.',
       'Removed ~1000 local .webp building images and 1200 lines of auto-generated asset mapping — app size reduced from 535 MB to ~40 MB archive.',
+      'New Time to Max screen — estimate remaining upgrade time for Laboratory, Builders, Pet House and Equipment pipelines, with per-resource cost breakdowns and adjustable builder counts.',
+      'Optional Clash display font with Off / Titles / All preference under Settings → Appearance.',
       'Building stats, copy counts, max levels, upgrade costs now use package data via buildingData.ts/armyData.ts — no more Fandom scraping or local JSON fallbacks.',
       'Troop/hero/spell/pet/equipment detail panels use package data (armyData.ts) — no more Fandom wiki scraping, instant load, per-resource cost breakdown.',
       'New Import Building Levels screen (Settings → Import) — paste a Clash of Clans JSON export to bulk-set all building levels and copies.',
+      'Tab bar rework: Time to Max promoted to main tabs, War moved to the More menu, and a refreshed floating bar.',
+      'Home tab timers: custom durations like 1d 2h 30m, an Add Timer row inside the active list, and focus-styled inputs in the New Timer modal.',
+      'Resource and ore icons now shipped in-app and shown on Home, Army, Buildings and Time to Max rows.',
       'Generator scripts: npm run gen:images (WebP images with correct extension), npm run gen:coc-ids (building ID mapping).',
       'League loot/bonus/ore info from package (leagueData.ts).',
       'Account management improvements: ensureAccountRegistered, cachePlayer, mergeBuildingCopies, applyLevelsToAccount.',
@@ -225,7 +230,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '4.5.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.0.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
@@ -646,20 +651,33 @@ export default function SettingsScreen() {
       'What\u2019s New',
       (
         <View>
-          {CHANGELOG.map((entry) => (
-            <View style={styles.changelogEntry} key={entry.version}>
-              <View style={styles.changelogVersionRow}>
-                <Text style={styles.changelogVersion}>v{entry.version}</Text>
-                <Text style={styles.changelogDate}>{entry.date}</Text>
-              </View>
-              {entry.items.map((item) => (
-                <View style={styles.changelogItem} key={item}>
-                  <View style={styles.changelogDot} />
-                  <Text style={styles.changelogItemText}>{item}</Text>
+          {CHANGELOG.map((entry, entryIndex) => {
+            const isLatest = entryIndex === 0;
+            return (
+              <View key={entry.version} style={[styles.changelogEntry, isLatest && styles.changelogEntryLatest]}>
+                <View style={styles.changelogVersionRow}>
+                  <View style={[styles.changelogVersionChip, isLatest && styles.changelogVersionChipLatest]}>
+                    <Text style={[styles.changelogVersion, isLatest && styles.changelogVersionLatest]}>v{entry.version}</Text>
+                  </View>
+                  {isLatest && (
+                    <View style={styles.changelogLatestBadge}>
+                      <Ionicons name="sparkles" size={11} color={Colors.warning} />
+                      <Text style={styles.changelogLatestText}>Latest</Text>
+                    </View>
+                  )}
                 </View>
-              ))}
-            </View>
-          ))}
+                <Text style={styles.changelogDate}>{entry.date}</Text>
+                <View style={styles.changelogItems}>
+                  {entry.items.map((item) => (
+                    <View style={styles.changelogItem} key={item}>
+                      <View style={[styles.changelogDot, isLatest && styles.changelogDotLatest]} />
+                      <Text style={styles.changelogItemText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            );
+          })}
         </View>
       ),
       [{ label: 'Close', primary: true }],
@@ -2314,28 +2332,66 @@ const styles = StyleSheet.create({
   },
   changelogEntry: {
     marginBottom: Spacing.lg,
+    paddingBottom: Spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  changelogEntryLatest: {
+    marginBottom: Spacing.lg,
+    borderBottomWidth: 0,
   },
   changelogVersionRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.xs,
   },
+  changelogVersionChip: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+  },
+  changelogVersionChipLatest: {
+    backgroundColor: `${Colors.warning}22`,
+  },
   changelogVersion: {
-    ...Typography.title3,
+    ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '700',
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
+  },
+  changelogVersionLatest: {
+    color: Colors.warning,
+  },
+  changelogLatestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    backgroundColor: `${Colors.warning}1f`,
+  },
+  changelogLatestText: {
+    ...Typography.caption,
+    color: Colors.warning,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   changelogDate: {
     ...Typography.caption,
     color: Colors.textMuted,
+    marginBottom: Spacing.sm,
+  },
+  changelogItems: {
+    gap: 6,
   },
   changelogItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
-    marginBottom: 6,
   },
   changelogDot: {
     width: 5,
@@ -2343,6 +2399,9 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
     backgroundColor: Colors.accent,
     marginTop: 9,
+  },
+  changelogDotLatest: {
+    backgroundColor: Colors.warning,
   },
   changelogItemText: {
     ...Typography.subhead,
