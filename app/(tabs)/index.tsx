@@ -17,7 +17,7 @@ import {
   BackHandler,
   type ImageSourcePropType,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,6 +38,7 @@ import { getBuildingCategories, getBuildingMaxLevelAtTH } from '../../src/utils/
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
+import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { getArmyTroopDetail } from '../../src/utils/armyData';
 import { getLeagueLootInfo } from '../../src/utils/leagueData';
@@ -179,6 +180,7 @@ function CollapsibleSection({
 
 export default function HomeScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
   const { superTroopNames } = useGameData();
   const { reminders, addTimer, dismissTimer, hasPermission } = useTimers();
@@ -227,6 +229,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (navigation.canGoBack()) return false;
         showDialog({
           title: 'Exit ClashPrime?',
           message: 'Are you sure you want to close the app?',
@@ -238,7 +241,7 @@ export default function HomeScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [showDialog])
+    }, [navigation, showDialog])
   );
 
   useEffect(() => {
@@ -791,14 +794,8 @@ export default function HomeScreen() {
             <View style={styles.headerTitleRow}>
               <Text style={styles.greeting}>ClashPrime</Text>
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-                <PressableRipple style={styles.searchBtn} onPress={() => router.push('/player')} hitSlop={8} accessibilityLabel="Inspect a player by tag" accessibilityRole="button">
-                  <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
-                </PressableRipple>
                 <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
-                </PressableRipple>
-                <PressableRipple style={styles.appBtn} onPress={() => router.push('/import-export')} hitSlop={8} accessibilityLabel="Import building levels from a Clash of Clans JSON export" accessibilityRole="button">
-                  <Ionicons name="cloud-upload-outline" size={20} color={Colors.textSecondary} />
                 </PressableRipple>
               </View>
             </View>
@@ -981,6 +978,7 @@ export default function HomeScreen() {
                         maxLevel={row.maxLevel}
                         icon={row.icon}
                         costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                        costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                         timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
                         locked={row.level === 0}
                         isLast={ri === displayRows.length - 1}
@@ -1036,6 +1034,7 @@ export default function HomeScreen() {
                         maxLevel={row.maxLevel}
                         iconSource={row.iconSource}
                         costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                        costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                         timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
                         locked={row.level === 0}
                         isLast={ri === displayRows.length - 1}
@@ -1108,7 +1107,10 @@ export default function HomeScreen() {
                         <View style={styles.statRowRightRow}>
                           <View style={styles.statRowRightBadge}>
                             {itemCost ? (
-                              <Text style={styles.statRowValue}>{formatCostBreakdown(itemCost.byResource) || fmtCost(itemCost.cost)}</Text>
+                              <>
+                                <ResourceCostChips byResource={itemCost.byResource ?? {}} compact />
+                                {formatCostBreakdown(itemCost.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>}
+                              </>
                             ) : lockedCostsPending ? (
                               <Text style={styles.statRowValue}>…</Text>
                             ) : null}
@@ -1176,7 +1178,8 @@ export default function HomeScreen() {
                         <View style={styles.statRowRight}>
                           {costData ? (
                             <>
-                              <Text style={styles.statRowValue}>{formatCostBreakdown(costData.byResource) || fmtCost(costData.cost)}</Text>
+                              <ResourceCostChips byResource={costData.byResource ?? {}} compact />
+                              {formatCostBreakdown(costData.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>}
                               {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
                             </>
                           ) : rushedCostsPending ? (
@@ -1206,6 +1209,33 @@ export default function HomeScreen() {
               title="Settings"
               desc="App preferences, accounts & data"
               onPress={() => router.push('/(tabs)/settings')}
+            >
+              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+            </SettingRow>
+            <SettingRow
+              compact
+              icon="search-outline"
+              title="Player Search"
+              desc="Inspect any player by tag"
+              onPress={() => router.push('/player')}
+            >
+              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+            </SettingRow>
+            <SettingRow
+              compact
+              icon="hourglass-outline"
+              title="Time to Max"
+              desc="Remaining upgrade time & resources for your Town Hall"
+              onPress={() => router.push('/(tabs)/maxtime')}
+            >
+              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+            </SettingRow>
+            <SettingRow
+              compact
+              icon="cloud-upload-outline"
+              title="Import"
+              desc="Import building levels from a Clash of Clans JSON export"
+              onPress={() => router.push('/import-export')}
             >
               <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
             </SettingRow>
@@ -1642,23 +1672,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   switchBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  appBtn: {
     width: 36,
     height: 36,
     borderRadius: Radius.md,
@@ -2568,7 +2581,7 @@ const styles = StyleSheet.create({
   },
   progressClose: {
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     marginTop: Spacing.xs,
     borderRadius: Radius.md,
     backgroundColor: Colors.textPrimary,

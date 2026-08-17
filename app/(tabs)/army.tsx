@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import PressableRipple from '../../src/components/PressableRipple';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme, clashFontFamily } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import {
   getMaxLevelAtTH,
@@ -27,6 +27,7 @@ import {
 } from '../../src/utils/armyData';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl, getHeroSlug } from '../../src/utils/troopImages';
 import { entityRef } from '../../src/data/entityReference';
+import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { ItemCard } from '../../src/components/ItemCard';
 import { useGameData } from '../../src/hooks/useGameData';
@@ -670,20 +671,29 @@ export default function PlayerProfileScreen() {
                   </Text>
                   <View style={[styles.panelTableCell, { alignItems: 'center', gap: 2, justifyContent: 'center' }]}>
                     {resourceSums.length > 0 ? (
-                      resourceSums.map((s) => (
-                        <Text
-                          key={s.resource}
-                          style={{
-                            color: showDiscounted ? colors.warning : RESOURCE_META[s.resource].color,
-                            fontWeight: '600',
-                            fontSize: 12,
-                          }}
-                        >
-                          {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)} {RESOURCE_META[s.resource].short}
-                        </Text>
-                      ))
+                      resourceSums.map((s) => {
+                        const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
+                        return (
+                          <View key={s.resource} style={styles.resourceSumRow}>
+                            {icon ? (
+                              <Image source={icon} style={styles.resourceSumIcon} resizeMode="contain" />
+                            ) : (
+                              <View style={[styles.resourceSumDot, { backgroundColor: RESOURCE_META[s.resource].color }]} />
+                            )}
+                            <Text
+                              style={{
+                                color: showDiscounted ? colors.warning : RESOURCE_META[s.resource].color,
+                                fontWeight: '600',
+                                fontSize: 12,
+                              }}
+                            >
+                              {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)}
+                            </Text>
+                          </View>
+                        );
+                      })
                     ) : (
-                      <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>—</Text>
+                      <Text style={{ color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }}>—</Text>
                     )}
                   </View>
                   <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
@@ -697,7 +707,7 @@ export default function PlayerProfileScreen() {
               <View style={{ marginBottom: Spacing.sm }}>
                 {legendEntries.map((e) => (
                   <Text key={e.acronym} style={[styles.panelLegend, { color: colors.textTertiary }]}>
-                    <Text style={{ fontWeight: '700' }}>{e.acronym}</Text> = {e.full}
+                    <Text style={{ fontWeight: '700', fontFamily: clashFontFamily(700) }}>{e.acronym}</Text> = {e.full}
                   </Text>
                 ))}
               </View>
@@ -808,6 +818,15 @@ export default function PlayerProfileScreen() {
   const hasPets = homePets.length > 0;
   const hasSiege = siegeMachines.length > 0;
   const hasEquipment = player.heroEquipment.length > 0;
+
+  // Maxed-out equipment goes last in the Gear tab so upgrades are easy to spot.
+  const sortedHeroEquipment = useMemo(() => {
+    return [...player.heroEquipment].sort((a, b) => {
+      const aMaxed = a.level >= a.maxLevel;
+      const bMaxed = b.level >= b.maxLevel;
+      return (aMaxed ? 1 : 0) - (bMaxed ? 1 : 0);
+    });
+  }, [player.heroEquipment]);
 
   const visibleTabs = TABS.filter((tab) => {
     if (tab.key === 'heroes') return hasHeroes;
@@ -1304,11 +1323,11 @@ export default function PlayerProfileScreen() {
               ) : (
                 <>
                   <View style={{ paddingHorizontal: Spacing.base, paddingBottom: Spacing.sm }}>
-                <Text style={{ fontSize: 12, color: Colors.textTertiary, fontStyle: 'italic' }}>
+                <Text style={{ fontSize: 12, color: Colors.textTertiary, fontStyle: 'italic', fontFamily: clashFontFamily(400, 12) }}>
                   Levels shown reflect your Blacksmith (Lv {blacksmithLevel}).
                 </Text>
               </View>
-                  {player.heroEquipment.map((e, i) => (
+                  {sortedHeroEquipment.map((e, i) => (
                     <React.Fragment key={e.name}>
                       <ItemCard
                         name={e.name}
@@ -1318,7 +1337,7 @@ export default function PlayerProfileScreen() {
                         {...cardIconProps(e.name)}
                         onPress={() => toggleDetail(e.name)}
                         isFirst={i == 0 || expandedName === e.name}
-                        isLast={i == player.heroEquipment.length - 1 && expandedName !== e.name}
+                        isLast={i == sortedHeroEquipment.length - 1 && expandedName !== e.name}
                       />
                       {renderDetailPanel(e.name)}
                     </React.Fragment>
@@ -1580,6 +1599,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+  },
+  resourceSumRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 1,
+  },
+  resourceSumIcon: {
+    width: 14,
+    height: 14,
+  },
+  resourceSumDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   panelTableCell: {
     flex: 1,

@@ -33,6 +33,7 @@ import {
   getBuildingMaxLevelAtBH,
 } from '../../src/utils/buildingData';
 import type { BuildingCostResource } from '../../src/utils/buildingData';
+import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { useDialog } from '../../src/components/AlertDialog';
@@ -148,6 +149,47 @@ const DEFAULT_COL_WIDTH = 56;
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
+// Per-resource cost rows (icon image + colored amount), shared by the per-building
+// and per-section "Remaining" tables. Resources without a package icon fall back
+// to a colored dot.
+function renderResourceRows(
+  byResource: Record<string, number>,
+  showDiscounted: boolean,
+  discount: ScopeDiscount,
+) {
+  const entries = (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
+    .filter(([r]) => r !== 'Unknown');
+  if (entries.length === 0) {
+    return <Text style={{ color: Colors.textSecondary, fontWeight: '600', fontSize: 11 }}>—</Text>;
+  }
+  return (
+    <>
+      {entries.map(([res, amt]) => {
+        const icon = PACKAGE_RESOURCE_IMAGES[res];
+        const meta = BUILDING_RESOURCE_META[res as BuildingCostResource];
+        return (
+          <View key={res} style={styles.resourceSumRow}>
+            {icon ? (
+              <Image source={icon} style={styles.resourceSumIcon} resizeMode="contain" />
+            ) : (
+              <View style={[styles.resourceSumDot, { backgroundColor: meta?.color ?? '#94A3B8' }]} />
+            )}
+            <Text
+              style={{
+                color: showDiscounted ? Colors.warning : (meta?.color ?? Colors.textSecondary),
+                fontWeight: '600',
+                fontSize: 11,
+              }}
+            >
+              {showDiscounted ? applyCostDiscount(fmtCost(amt), discount) : fmtCost(amt)}
+            </Text>
+          </View>
+        );
+      })}
+    </>
+  );
+}
+
 function buildBBCategories(builderHallLevel: number): Record<string, { level: number | null; isMaxLevel: boolean }> {
   const entries: Record<string, { level: number | null; isMaxLevel: boolean }> = {};
   for (const display of BB_BUILDINGS) {
@@ -228,8 +270,14 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   const remainingLevels = allLevels.filter((l: any) => l.Level > currentLevel && l.Level <= effectiveMax);
   let totalCost = 0;
   let totalTime = 0;
+  const remainingByResource: Record<string, number> = {};
   for (const lvl of remainingLevels) {
-    if (lvl['Build Cost']) totalCost += parseCost(String(lvl['Build Cost']));
+    if (lvl['Build Cost']) {
+      const amt = parseCost(String(lvl['Build Cost']));
+      totalCost += amt;
+      const res = lvl['Build Cost Resource'] ?? 'Unknown';
+      remainingByResource[res] = (remainingByResource[res] ?? 0) + amt;
+    }
     if (lvl['Build Time']) totalTime += parseTimeToSeconds(String(lvl['Build Time']));
   }
   const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
@@ -449,9 +497,9 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
                 </View>
                 <View style={styles.remainingTotalRow}>
                   <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{remainingLevels.length} levels</Text>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
-                    {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
-                  </Text>
+                  <View style={[styles.remainingTotalCell, { flex: 1 }]}>
+                    {renderResourceRows(remainingByResource, showDiscounted, discounts)}
+                  </View>
                   <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
                     {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
                   </Text>
@@ -500,6 +548,20 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
                               ? applyCostDiscount(formatted, discounts)
                               : applyTimeDiscount(String(val), discounts))
                             : formatted;
+                          if (col === 'Build Cost') {
+                            const res = (levelData['Build Cost Resource'] as BuildingCostResource) ?? 'Unknown';
+                            const icon = PACKAGE_RESOURCE_IMAGES[res];
+                            const color = isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary);
+                            return (
+                              <View
+                                key={col}
+                                style={[styles.buildingStatCell, styles.buildingStatCostCell, { minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                              >
+                                {icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
+                                <Text style={{ color, fontSize: 11 }} numberOfLines={1}>{displayVal}</Text>
+                              </View>
+                            );
+                          }
                           return (
                             <Text
                               key={col}
@@ -759,6 +821,7 @@ function BuildingCollapsibleSection({
     let remainingLevels = 0;
     let totalCost = 0;
     let totalTime = 0;
+    const byResource: Record<string, number> = {};
     const lookupName = NAME_FIX[title] ?? title;
     const availableLevels = getBuildingAvailableLevels(lookupName);
     const allLevels: any[] = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
@@ -768,11 +831,16 @@ function BuildingCollapsibleSection({
       const rem = allLevels.filter((l: any) => l.Level > lvl && l.Level <= effectiveMax);
       remainingLevels += rem.length;
       for (const l of rem) {
-        if (l['Build Cost']) totalCost += parseCost(String(l['Build Cost']));
+        if (l['Build Cost']) {
+          const amt = parseCost(String(l['Build Cost']));
+          totalCost += amt;
+          const res = l['Build Cost Resource'] ?? 'Unknown';
+          byResource[res] = (byResource[res] ?? 0) + amt;
+        }
         if (l['Build Time']) totalTime += parseTimeToSeconds(String(l['Build Time']));
       }
     }
-    return { remainingLevels, totalCost, totalTime };
+    return { remainingLevels, totalCost, totalTime, byResource };
   }, [title, copies, effectiveMax, buildingStats]);
 
   const hasRemaining = aggregate.remainingLevels > 0 && aggregate.totalCost > 0;
@@ -866,9 +934,9 @@ function BuildingCollapsibleSection({
                   </View>
                   <View style={styles.remainingTotalRow}>
                     <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
-                    <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
-                      {showDiscounted ? applyCostDiscount(fmtCost(aggregate.totalCost), discounts) : fmtCost(aggregate.totalCost)}
-                    </Text>
+                    <View style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
+                      {renderResourceRows(aggregate.byResource, showDiscounted, discounts)}
+                    </View>
                     <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
                       {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
                     </Text>
@@ -1676,6 +1744,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
   },
+  resourceSumRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 1,
+  },
+  resourceSumIcon: {
+    width: 14,
+    height: 14,
+  },
+  resourceSumDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
   upgradeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1994,6 +2078,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
+  },
+  buildingStatCostCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  buildingStatCostIcon: {
+    width: 14,
+    height: 14,
   },
   buildingStatHeader: {
     fontWeight: '600',
