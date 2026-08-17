@@ -15,7 +15,7 @@
       "adaptiveIcon": { "foregroundImage": "./images/icon.png", "backgroundColor": "#ffffff"
       },
       "package": "com.clashprime.app",
-      "predictiveBackGestureEnabled": true
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./images/favicon.png",

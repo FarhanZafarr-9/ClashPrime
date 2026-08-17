@@ -399,15 +399,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.lg,
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
   },
   headerText: {
     flex: 1,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   },
   applyBtn: {
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     marginTop: Spacing.xs,
     borderRadius: Radius.md,
     backgroundColor: Colors.textPrimary,

@@ -182,8 +182,6 @@ export function HomeScreenSkeleton() {
             <Skeleton width={130} height={20} borderRadius={6} />
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               <Skeleton width={36} height={36} borderRadius={Radius.md} />
-              <Skeleton width={36} height={36} borderRadius={Radius.md} />
-              <Skeleton width={36} height={36} borderRadius={Radius.md} />
             </View>
           </View>
           <Skeleton width={100} height={12} borderRadius={4} style={{ marginTop: 4 }} />
@@ -258,30 +256,21 @@ export function HomeScreenSkeleton() {
           <Skeleton width={110} height={14} borderRadius={4} />
         </View>
         <View style={styles.homeSectionsSkeleton}>
-          <View style={[
-            styles.homeSectionRowSkeleton,
-            { backgroundColor: colors.bgCard },
-            { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
-          ]}>
-            <Skeleton width={32} height={32} borderRadius={Radius.md} />
-            <View style={{ flex: 1, gap: 5 }}>
-              <Skeleton width="38%" height={13} borderRadius={4} />
-              <Skeleton width="62%" height={10} borderRadius={3} />
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={[
+              styles.homeSectionRowSkeleton,
+              { backgroundColor: colors.bgCard },
+              i === 0 && { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
+              i === 3 && { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
+            ]}>
+              <Skeleton width={32} height={32} borderRadius={Radius.md} />
+              <View style={{ flex: 1, gap: 5 }}>
+                <Skeleton width="38%" height={13} borderRadius={4} />
+                <Skeleton width="62%" height={10} borderRadius={3} />
+              </View>
+              <Skeleton width={16} height={16} borderRadius={8} />
             </View>
-            <Skeleton width={16} height={16} borderRadius={8} />
-          </View>
-          <View style={[
-            styles.homeSectionRowSkeleton,
-            { backgroundColor: colors.bgCard },
-            { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
-          ]}>
-            <Skeleton width={32} height={32} borderRadius={Radius.md} />
-            <View style={{ flex: 1, gap: 5 }}>
-              <Skeleton width="38%" height={13} borderRadius={4} />
-              <Skeleton width="60%" height={10} borderRadius={3} />
-            </View>
-            <Skeleton width={16} height={16} borderRadius={8} />
-          </View>
+          ))}
         </View>
         {/* Section: Quick Stats (collapsed rows) */}
         <View style={styles.sectionLabel}>

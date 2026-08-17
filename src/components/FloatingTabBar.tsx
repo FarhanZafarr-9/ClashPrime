@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, BackHandler } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius } from '../theme';
 import PressableRipple from './PressableRipple';
@@ -13,11 +13,11 @@ const MAIN_TABS: { key: string; icon: IconDef }[] = [
   { key: 'army', icon: { set: 'mc', name: 'sword-cross' } },
   { key: 'buildings', icon: { set: 'mc', name: 'castle' } },
   { key: 'bases', icon: { set: 'ion', name: 'grid' } },
-  { key: 'war', icon: { set: 'ion', name: 'flag-outline' } },
+  { key: 'maxtime', icon: { set: 'ion', name: 'hourglass-outline' } },
 ];
 
 const EXTRA_TABS: { key: string; icon: IconDef }[] = [
-  { key: 'settings', icon: { set: 'ion', name: 'settings-sharp' } },
+  { key: 'war', icon: { set: 'ion', name: 'flag-outline' } },
   { key: 'events', icon: { set: 'ion', name: 'calendar-outline' } },
   { key: 'armies', icon: { set: 'ion', name: 'shield-half-outline' } },
   { key: 'achievements', icon: { set: 'ion', name: 'trophy-outline' } },
@@ -37,6 +37,34 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const { player, loading } = usePlayer();
   const activeKey = state.routeNames[state.index];
   const [showExtras, setShowExtras] = useState(false);
+
+  useEffect(() => {
+    console.log('[TAB-BAR-DEBUG] index=', state.index, 'route=', state.routeNames[state.index], 'history=', JSON.stringify(state.history));
+  }, [state]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      const parentState = navigation.getParent()?.getState();
+      const pushedAboveTabs =
+        parentState &&
+        Array.isArray(parentState.routes) &&
+        parentState.routes.length > 1 &&
+        parentState.index === parentState.routes.length - 1;
+      if (pushedAboveTabs) {
+        console.log('[BACK-TAB-BAR] popping screen above tabs');
+        navigation.getParent()?.goBack();
+        return true;
+      }
+      if (state.history.length > 1) {
+        console.log('[BACK-TAB-BAR] popping tab, history=', JSON.stringify(state.history));
+        navigation.goBack();
+        return true;
+      }
+      console.log('[BACK-TAB-BAR] nothing to pop, returning false');
+      return false;
+    });
+    return () => sub.remove();
+  }, [state, navigation]);
 
   // The home tab's data is still loading; show skeleton placeholders instead of
   // a real nav bar so it doesn't look half-broken while the screen shimmers.

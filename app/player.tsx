@@ -91,7 +91,7 @@ function CollapsibleSection({
         title={title}
         desc={description}
         isFirst={isFirst || open}
-        isLast={isLast}
+        isLast={isLast && !open}
         compact={compact}
         onPress={() => setOpen((o) => !o)}
       >
@@ -236,8 +236,6 @@ export default function PlayerInspectScreen() {  const router = useRouter();
         { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
         { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
         { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
-        { label: 'Attack Wins', desc: 'Attacks won', value: player.attackWins, icon: 'flame-outline' },
-        { label: 'Defense Wins', desc: 'Defenses won', value: player.defenseWins, icon: 'shield-outline' },
       ],
     },
     {
@@ -260,19 +258,6 @@ export default function PlayerInspectScreen() {  const router = useRouter();
         ...(player.bestBuilderBaseTrophies != null ? [{ label: 'Best Builder', desc: 'All-time best', value: player.bestBuilderBaseTrophies, icon: 'trophy' as const, accentColor: Colors.warning }] : []),
       ],
     },
-    ...(player.legendStatistics
-      ? [{
-          title: 'Legend League',
-          icon: 'shield-outline' as const,
-          desc: 'Legend season history',
-          rows: [
-            { label: 'Legend Trophies', desc: 'Current score', value: player.legendStatistics.legendTrophies, icon: 'star-outline' as const },
-            ...(player.legendStatistics.currentSeason ? [{ label: 'This Season', desc: 'Season trophies', value: player.legendStatistics.currentSeason.trophies, icon: 'calendar-outline' as const }] : []),
-            ...(player.legendStatistics.bestSeason ? [{ label: 'Best Season', desc: 'Best season result', value: `#${player.legendStatistics.bestSeason.rank} · ${player.legendStatistics.bestSeason.trophies}`, icon: 'trophy' as const, accentColor: Colors.warning }] : []),
-            ...(player.legendStatistics.previousSeason ? [{ label: 'Last Season', desc: 'Last season result', value: `#${player.legendStatistics.previousSeason.rank} · ${player.legendStatistics.previousSeason.trophies}`, icon: 'time-outline' as const }] : []),
-          ],
-        }]
-      : []),
   ];
 
   return (
@@ -397,7 +382,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
                   <ActivityIndicator size="small" color={saved ? Colors.textPrimary : Colors.bg} />
                 ) : (
                   <>
-                    <Ionicons name={saved ? 'checkmark' : 'person-add-outline'} size={14} color={saved ? Colors.textPrimary : Colors.bg} />
+                    <Ionicons name={saved ? 'checkmark' : 'person-add-outline'} size={14} color={!saved ? Colors.textPrimary : Colors.bg} />
                     <Text style={[styles.actionBtnText, saved && styles.actionBtnTextSaved]}>{saved ? 'Added' : 'Add account'}</Text>
                   </>
                 )}
@@ -420,7 +405,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               <CollapsibleSection
                 key={group.title}
                 isFirst={gi === 0}
-                isLast={gi === groups.length - 1}
+                isLast={gi === groups.length - 1  } //&& last section isnt open
                 icon={group.icon}
                 title={group.title}
                 description={group.desc}
@@ -643,6 +628,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -660,9 +647,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
+    marginTop: Spacing.md
   },
   searchInput: {
     flex: 1,
@@ -673,7 +661,7 @@ const styles = StyleSheet.create({
   searchBtn: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.textPrimary,
     alignItems: 'center',
   },
@@ -686,8 +674,6 @@ const styles = StyleSheet.create({
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.bgSubtle,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -747,13 +733,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.xs,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.textPrimary,
   },
-  actionBtnSaved: { backgroundColor: Colors.accentGhost },
+  actionBtnSaved: { backgroundColor: Colors.textPrimary },
   actionBtnText: { ...Typography.subhead, color: Colors.bg, fontWeight: '700' },
-  actionBtnTextSaved: { color: Colors.textPrimary },
-  actionBtnGhost: { backgroundColor: Colors.bgSubtle },
+  actionBtnTextSaved: { color: Colors.bg },
+  actionBtnGhost: { backgroundColor: Colors.bgCardHover },
   actionBtnTextGhost: { color: Colors.textPrimary },
   openGameBtn: {
     flexDirection: 'row',
@@ -763,7 +749,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
   },
   openGameBtnText: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
   errorRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },

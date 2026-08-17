@@ -275,11 +275,14 @@ export default function OnboardingScreen() {
                 style={styles.profileScroll}
                 contentContainerStyle={styles.profileScrollContent}
                 showsVerticalScrollIndicator={false}
-              >
-                <View style={styles.profileHero}>
-                  <Image source={require('../assets/icon.png')} style={styles.profileLogo} />
-                  <Text style={styles.profileConfirmText}>Does this look right?</Text>
-                </View>
+                >
+                  <View style={styles.hero}>
+                    <Image source={require('../assets/icon.png')} style={styles.logo} />
+                    <Text style={styles.title}>ClashPrime</Text>
+                    <Text style={styles.subtitle}>Your Clash of Clans companion</Text>
+                  </View>
+
+                  <Text style={styles.profileConfirmText}>Does this profile information look right? You can go back and change the tag if needed.</Text>
 
                 <View style={styles.profileCard}>
                   <View style={styles.profileCardRow}>
@@ -680,13 +683,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   profileConfirmText: {
-    ...Typography.body,
+    ...Typography.caption,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: Spacing.md,
+    marginBottom: Spacing.xl
   },
   profileCard: {
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
