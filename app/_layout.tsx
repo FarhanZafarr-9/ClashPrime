@@ -1,7 +1,8 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { BackHandler } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
 import { PlayerProvider } from '../src/hooks/usePlayerContext';
 import { GameDataProvider } from '../src/hooks/useGameData';
 import { TimerProvider } from '../src/hooks/useTimerContext';
@@ -31,6 +32,21 @@ export default function RootLayout() {
     })();
   }, []);
 
+  const handleBackPress = useCallback(() => {
+    // Let expo-router handle back navigation within tabs
+    // Return true to indicate we've handled it (prevents app exit)
+    if (segments.length > 1) {
+      router.back();
+      return true;
+    }
+    return false;
+  }, [router, segments.length]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => subscription.remove();
+  }, [handleBackPress]);
+
   if (!checked) return null;
 
   return (
@@ -45,6 +61,7 @@ export default function RootLayout() {
                 headerShown: false,
                 contentStyle: { backgroundColor: colors.bg },
                 animation: 'slide_from_right',
+                gestureEnabled: true,
               }}
             />
           </TimerProvider>
