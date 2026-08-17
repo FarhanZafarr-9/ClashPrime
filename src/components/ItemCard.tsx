@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import PressableRipple from './PressableRipple';
+import { ResourceCostChips } from './ResourceCostChips';
 import { formatCompact } from '../utils/buildingImages';
 import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
@@ -11,6 +12,7 @@ interface Props {
   thMaxLevel?: number | null;
   subtitle?: string;
   costLabel?: string;
+  costResources?: Record<string, number>;
   timeLabel?: string;
   icon?: string;
   iconSource?: ImageSourcePropType;
@@ -20,7 +22,7 @@ interface Props {
   isLast?: Boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabel, timeLabel, icon, iconSource, onPress, locked, isFirst, isLast }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabel, costResources, timeLabel, icon, iconSource, onPress, locked, isFirst, isLast }: Props) {
   const { colors } = useTheme();
   const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
   const progress = effectiveMax > 0 ? level / effectiveMax : 0;
@@ -57,6 +59,26 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
             <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
           ) : locked ? (
             <Text style={styles.lockedHint}>Not yet unlocked</Text>
+          ) : costResources ? (
+            <View>
+              <ResourceCostChips byResource={costResources} compact />
+              <View style={[styles.progressRow, {marginTop: 6}]}>
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${Math.min(progress, 1) * 100}%`,
+                        backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary,
+                      },
+                    ]}
+                  />
+                </View>
+                {timeLabel ? (
+                  <Text style={styles.timeLabel} numberOfLines={1}>{timeLabel}</Text>
+                ) : null}
+              </View>
+            </View>
           ) : costLabel || timeLabel ? (
             <View style={styles.progressRow}>
               <View style={styles.progressTrack}>
