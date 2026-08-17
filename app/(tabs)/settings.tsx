@@ -22,7 +22,10 @@ import { openURL } from 'expo-linking';
 import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 const heartImg = require('../../images/heart.png') as any;
+import type { ClashPlayer } from '../../src/types/clash';
+import { ClashAPI } from '../../src/api/clash';
 import {
   getPlayerTag,
   setPlayerTag,
@@ -33,6 +36,7 @@ import {
   saveAccount,
   removeAccount,
   getAccounts,
+  cachePlayer,
 } from '../../src/hooks/usePlayer';
 import { usePlayer, usePlayerActions } from '../../src/hooks/usePlayerContext';
 import { useGameData } from '../../src/hooks/useGameData';
@@ -242,8 +246,10 @@ export default function SettingsScreen() {
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<'tag' | 'profile' | 'thPicker'>('tag');
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
+  const [onboardingPlayer, setOnboardingPlayer] = useState<ClashPlayer | null>(null);
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
@@ -401,45 +407,82 @@ export default function SettingsScreen() {
   };
 
   const handleOnboardingSave = async () => {
-    const tag = onboardingTag;
-    if (!tag || !tag.startsWith('#')) return;
-    const existing = accounts.find((a) => a.tag === tag);
-    if (existing) {
-      showDialog({
-        title: 'Account Already Added',
-        message: `${tag} is already in your account list. Switch to it instead.`,
-        actions: [
-          { label: 'Cancel', onPress: () => {} },
-          { label: 'Switch', primary: true, onPress: async () => {
-            await handleSwitchAccount(existing.tag);
-            setShowOnboarding(false);
-          }},
-        ],
+    if (onboardingStep === 'tag') {
+      const tag = onboardingTag;
+      if (!tag || !tag.startsWith('#')) return;
+      const existing = accounts.find((a) => a.tag === tag);
+      if (existing) {
+        showDialog({
+          title: 'Account Already Added',
+          message: `${tag} is already in your account list. Switch to it instead.`,
+          actions: [
+            { label: 'Cancel', onPress: () => {} },
+            { label: 'Switch', primary: true, onPress: async () => {
+              await handleSwitchAccount(existing.tag);
+              setShowOnboarding(false);
+              setOnboardingStep('tag');
+            }},
+          ],
+        });
+        return;
+      }
+      const token = await getApiToken();
+      if (!token) {
+        showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+        return;
+      }
+      try {
+        const api = new ClashAPI(token);
+        const data = await api.getPlayer(tag);
+        setOnboardingPlayer(data);
+        setOnboardingStep('profile');
+      } catch (e: any) {
+        showDialog({ title: 'Failed to Fetch Profile', message: e.message || 'Check your API token and player tag.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+      }
+      return;
+    }
+
+    if (onboardingStep === 'profile') {
+      // User confirmed profile, go to TH picker
+      setOnboardingStep('thPicker');
+      return;
+    }
+
+    if (onboardingStep === 'thPicker') {
+      const tag = onboardingTag;
+      const player = onboardingPlayer;
+      if (!tag || !player) return;
+
+      const token = await getApiToken();
+      if (!token) return;
+
+      const thLevel = parseInt(onboardingThLevel, 10);
+      const currentTh = player.townHallLevel || 16;
+      const levels = seedBuildingLevelsForTH(player, Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh, { currentTh });
+
+      await setPlayerTag(tag);
+      await setApiToken(token, tag);
+      await saveAccount({
+        tag,
+        name: player.name,
+        townHallLevel: player.townHallLevel,
+        addedAt: new Date().toISOString(),
+        lastUsedAt: new Date().toISOString(),
       });
-      return;
+      const updatedPlayer = { ...player, buildingLevels: levels, lastMaxedTH: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh };
+      await cachePlayer(updatedPlayer, tag);
+      await refreshAccounts();
+
+      setShowOnboarding(false);
+      setOnboardingTag('');
+      setOnboardingThLevel('');
+      setOnboardingPlayer(null);
+      setOnboardingStep('tag');
+
+      // Don't yank the user to the new account unless it's the first one.
+      const storedAccounts = await getAccounts();
+      await prefetchAccount(tag, { token, th: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh, switch: storedAccounts.length === 0 });
     }
-    const token = await getApiToken();
-    if (!token) {
-      showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
-      return;
-    }
-    const thLevel = parseInt(onboardingThLevel, 10);
-    await setPlayerTag(tag);
-    await setApiToken(token, tag);
-    await saveAccount({
-      tag,
-      name: tag,
-      townHallLevel: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : 0,
-      addedAt: new Date().toISOString(),
-      lastUsedAt: new Date().toISOString(),
-    });
-    await refreshAccounts();
-    setShowOnboarding(false);
-    setOnboardingTag('');
-    setOnboardingThLevel('');
-    // Don't yank the user to the new account unless it's the first one.
-    const storedAccounts = await getAccounts();
-    await prefetchAccount(tag, { token, th: thLevel, switch: storedAccounts.length === 0 });
   };
 
   const openAbout = () => {
@@ -1156,60 +1199,142 @@ export default function SettingsScreen() {
         visible={showOnboarding}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowOnboarding(false)}
+        onRequestClose={() => { setShowOnboarding(false); setOnboardingStep('tag'); setOnboardingPlayer(null); }}
         statusBarTranslucent
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.onboardingOverlay}
         >
-          <View style={styles.onboardingCard}>
-            <View style={styles.onboardingIcon}>
-              <Ionicons name="person-add-outline" size={24} color={Colors.textPrimary} />
+          {onboardingStep === 'tag' && (
+            <View style={styles.onboardingCard}>
+              <View style={styles.onboardingIcon}>
+                <Ionicons name="person-add-outline" size={24} color={Colors.textPrimary} />
+              </View>
+              <Text style={styles.onboardingTitle}>Add Account</Text>
+              <Text style={styles.onboardingDesc}>
+                Enter your player tag. We'll fetch your profile and let you confirm before connecting.
+              </Text>
+              <View style={styles.onboardingInputGroup}>
+                <Text style={styles.onboardingFieldLabel}>Player Tag</Text>
+                <TextInput
+                  style={styles.onboardingInput}
+                  value={onboardingTag}
+                  onChangeText={(t) => setOnboardingTag(t)}
+                  placeholder="#PG8U2LR00"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                />
+              </View>
+              <View style={styles.onboardingActions}>
+                <PressableRipple
+                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
+                  onPress={() => { setShowOnboarding(false); setOnboardingStep('tag'); }}
+                >
+                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Cancel</Text>
+                </PressableRipple>
+                <PressableRipple
+                  style={styles.onboardingBtn}
+                  onPress={handleOnboardingSave}
+                >
+                  <Text style={styles.onboardingBtnText}>Next</Text>
+                </PressableRipple>
+              </View>
             </View>
-            <Text style={styles.onboardingTitle}>Add Account</Text>
-            <Text style={styles.onboardingDesc}>
-              Enter your player tag. We'll fetch your profile and let you confirm before connecting.
-            </Text>
-            <View style={styles.onboardingInputGroup}>
-              <Text style={styles.onboardingFieldLabel}>Player Tag</Text>
-              <TextInput
-                style={styles.onboardingInput}
-                value={onboardingTag}
-                onChangeText={(t) => setOnboardingTag(t)}
-                placeholder="#PG8U2LR00"
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="characters"
-                autoCorrect={false}
-              />
+          )}
+
+          {onboardingStep === 'profile' && onboardingPlayer && (
+            <View style={styles.onboardingCard}>
+              <View style={styles.onboardingIcon}>
+                <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />
+              </View>
+              <Text style={styles.onboardingTitle}>Confirm Profile</Text>
+              <Text style={styles.onboardingDesc}>
+                Does this look like your account?
+              </Text>
+              <View style={styles.onboardingProfileCard}>
+                {onboardingPlayer.clan?.badgeUrls?.small ? (
+                  <Image source={{ uri: onboardingPlayer.clan.badgeUrls.small! }} style={styles.onboardingProfileClanBadge} resizeMode="contain" />
+                ) : null}
+                <Text style={styles.onboardingProfileName}>{onboardingPlayer.name}</Text>
+                <Text style={styles.onboardingProfileTag}>{onboardingPlayer.tag}</Text>
+                {onboardingPlayer.clan && (
+                  <Text style={styles.onboardingProfileClan}>{onboardingPlayer.clan.name}</Text>
+                )}
+                <View style={styles.onboardingProfileStats}>
+                  <View style={styles.onboardingProfileStat}>
+                    <Text style={styles.onboardingProfileStatValue}>TH{onboardingPlayer.townHallLevel}</Text>
+                    <Text style={styles.onboardingProfileStatLabel}>Town Hall</Text>
+                  </View>
+                  {onboardingPlayer.builderHallLevel && (
+                    <View style={styles.onboardingProfileStat}>
+                      <Text style={styles.onboardingProfileStatValue}>BH{onboardingPlayer.builderHallLevel}</Text>
+                      <Text style={styles.onboardingProfileStatLabel}>Builder Hall</Text>
+                    </View>
+                  )}
+                  <View style={styles.onboardingProfileStat}>
+                    <Text style={styles.onboardingProfileStatValue}>{onboardingPlayer.trophies?.toLocaleString()}</Text>
+                    <Text style={styles.onboardingProfileStatLabel}>Trophies</Text>
+                  </View>
+                  <View style={styles.onboardingProfileStat}>
+                    <Text style={styles.onboardingProfileStatValue}>{onboardingPlayer.warStars?.toLocaleString()}</Text>
+                    <Text style={styles.onboardingProfileStatLabel}>War Stars</Text>
+                  </View>
+                </View>
+                <Text style={styles.onboardingConfirmText}>Does this look right?</Text>
+              </View>
+              <View style={styles.onboardingActions}>
+                <PressableRipple
+                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
+                  onPress={() => setOnboardingStep('tag')}
+                >
+                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Back</Text>
+                </PressableRipple>
+                <PressableRipple
+                  style={styles.onboardingBtn}
+                  onPress={handleOnboardingSave}
+                >
+                  <Text style={styles.onboardingBtnText}>Confirm & Continue</Text>
+                </PressableRipple>
+              </View>
             </View>
-            <View style={styles.onboardingInputGroup}>
-              <Text style={styles.onboardingFieldLabel}>Last Maxed TH (optional)</Text>
-              <TextInput
-                style={styles.onboardingInput}
-                value={onboardingThLevel}
-                onChangeText={(t) => setOnboardingThLevel(t.replace(/[^0-9]/g, ''))}
-                placeholder="e.g. 12"
-                placeholderTextColor={Colors.textMuted}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
+          )}
+
+          {onboardingStep === 'thPicker' && onboardingPlayer && (
+            <View style={styles.onboardingCard}>
+              <View style={styles.onboardingIcon}>
+                <Ionicons name="hammer-outline" size={24} color={Colors.textPrimary} />
+              </View>
+              <Text style={styles.onboardingTitle}>Last Maxed Town Hall</Text>
+              <Text style={styles.onboardingDesc}>
+                Pick the last Town Hall you've fully maxed. This sets your starting building levels.
+              </Text>
+              <View style={styles.onboardingThGrid}>
+                {Array.from({ length: (onboardingPlayer.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
+                  <PressableRipple
+                    key={th}
+                    style={styles.onboardingThCell}
+                    onPress={() => { setOnboardingThLevel(String(th)); handleOnboardingSave(); }}
+                  >
+                    <Image source={{ uri: getTownHallImageUrl(th)! }} style={styles.onboardingThImg} resizeMode="contain" />
+                    <Text style={styles.onboardingThText}>TH{th}</Text>
+                  </PressableRipple>
+                ))}
+              </View>
+              <Text style={styles.onboardingThHint}>
+                You're on TH{onboardingPlayer.townHallLevel}. Pick the last Town Hall you've fully maxed.
+              </Text>
+              <View style={styles.onboardingActions}>
+                <PressableRipple
+                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
+                  onPress={() => setOnboardingStep('profile')}
+                >
+                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Back</Text>
+                </PressableRipple>
+              </View>
             </View>
-            <View style={styles.onboardingActions}>
-              <PressableRipple
-                style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
-                onPress={() => setShowOnboarding(false)}
-              >
-                <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Cancel</Text>
-              </PressableRipple>
-              <PressableRipple
-                style={styles.onboardingBtn}
-                onPress={handleOnboardingSave}
-              >
-                <Text style={styles.onboardingBtnText}>Next</Text>
-              </PressableRipple>
-            </View>
-          </View>
+          )}
         </KeyboardAvoidingView>
       </Modal>
 
@@ -2042,6 +2167,91 @@ const styles = StyleSheet.create({
   },
   onboardingBtnTextGhost: {
     color: Colors.textSecondary,
+  },
+  onboardingProfileCard: {
+    width: '100%',
+    backgroundColor: Colors.bgSubtle,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  onboardingProfileClanBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginBottom: Spacing.xs,
+  },
+  onboardingProfileName: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  onboardingProfileTag: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+  },
+  onboardingProfileClan: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  onboardingProfileStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+  },
+  onboardingProfileStat: {
+    alignItems: 'center',
+    minWidth: 70,
+  },
+  onboardingProfileStatValue: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  onboardingProfileStatLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  onboardingConfirmText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+  },
+  onboardingThGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  onboardingThCell: {
+    width: 60,
+    alignItems: 'center',
+  },
+  onboardingThImg: {
+    width: 40,
+    height: 40,
+    marginBottom: 4,
+  },
+  onboardingThText: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  onboardingThHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
   changelogEntry: {
     marginBottom: Spacing.lg,
