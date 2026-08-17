@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: Colors.bgElevated,
+    backgroundColor: Colors.bgCardHover,
     borderRadius: Radius.md,
     padding: 4,
     width: '100%',
