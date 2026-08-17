@@ -531,9 +531,9 @@ export interface BuildingResourceMeta {
 export const BUILDING_RESOURCE_META: Record<BuildingCostResource, BuildingResourceMeta> = {
   Gold: { label: 'Gold', short: 'Gold', color: '#E8B339' },
   Elixir: { label: 'Elixir', short: 'Elixir', color: '#E84A9D' },
-  'Dark Elixir': { label: 'Dark Elixir', short: 'DE', color: '#8B5CF6' },
+  'Dark Elixir': { label: 'Dark Elixir', short: 'DE', color: '#7C3AED' },
   'Builder Gold': { label: 'Builder Gold', short: 'B.Gold', color: '#E8B339' },
-  'Builder Elixir': { label: 'Builder Elixir', short: 'B.Elixir', color: '#2DD4BF' },
+  'Builder Elixir': { label: 'Builder Elixir', short: 'B.Elixir', color: '#A855F7' },
   'Gold or Elixir': { label: 'Gold or Elixir', short: 'Gold/Elixir', color: '#F1C40F' },
   'Builder Gold or Builder Elixir': { label: 'Builder Gold or Builder Elixir', short: 'B.G/E', color: '#F1C40F' },
   Unknown: { label: 'Unknown', short: '?', color: '#94A3B8' },

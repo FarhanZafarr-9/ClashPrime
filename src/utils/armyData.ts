@@ -28,12 +28,12 @@ export interface ResourceMeta {
 
 export const RESOURCE_META: Record<CostResource, ResourceMeta> = {
   Elixir: { label: 'Elixir', short: 'Elixir', color: '#E84A9D', icon: '🧪' },
-  'Dark Elixir': { label: 'Dark Elixir', short: 'DE', color: '#8B5CF6', icon: '🌑' },
-  'Builder Elixir': { label: 'Builder Elixir', short: 'B. Elixir', color: '#2DD4BF', icon: '🔧' },
+  'Dark Elixir': { label: 'Dark Elixir', short: 'DE', color: '#7C3AED', icon: '🌑' },
+  'Builder Elixir': { label: 'Builder Elixir', short: 'B. Elixir', color: '#A855F7', icon: '🔧' },
   Gold: { label: 'Gold', short: 'Gold', color: '#E8B339', icon: '🪙' },
-  'Shiny Ore': { label: 'Shiny Ore', short: 'Shiny', color: '#FCD34D', icon: '✨' },
+  'Shiny Ore': { label: 'Shiny Ore', short: 'Shiny', color: '#60A5FA', icon: '✨' },
   'Glowing Ore': { label: 'Glowing Ore', short: 'Glowy', color: '#A78BFA', icon: '💎' },
-  'Starry Ore': { label: 'Starry Ore', short: 'Starry', color: '#E9D5FF', icon: '⭐' },
+  'Starry Ore': { label: 'Starry Ore', short: 'Starry', color: '#FBBF24', icon: '⭐' },
   Unknown: { label: 'Unknown', short: '?', color: '#94A3B8', icon: '❓' },
 };
 
@@ -402,14 +402,21 @@ function buildDetailFromPackage(item: PackageItem): TroopDetail {
 
     if (isEquipment) {
       const shiny = lvl.upgradeShinyOre ?? 0;
+      const glowing = lvl.upgradeGlowingOre ?? 0;
+      const starry = lvl.upgradeStarryOre ?? 0;
       common.upgradeCost = shiny > 0 ? formatCost(shiny) : '—';
       common.costResource = 'Shiny Ore';
       common.costAmount = shiny;
-      if ((lvl.upgradeGlowingOre ?? 0) > 0) {
-        extra.push({ label: 'Glowing Ore', value: formatCost(lvl.upgradeGlowingOre!) });
+      const costs: { resource: string; amount: number }[] = [];
+      if (shiny > 0) costs.push({ resource: 'Shiny Ore', amount: shiny });
+      if (glowing > 0) costs.push({ resource: 'Glowing Ore', amount: glowing });
+      if (starry > 0) costs.push({ resource: 'Starry Ore', amount: starry });
+      common.costs = costs.length > 0 ? costs : undefined;
+      if (glowing > 0) {
+        extra.push({ label: 'Glowing Ore', value: formatCost(glowing) });
       }
-      if ((lvl.upgradeStarryOre ?? 0) > 0) {
-        extra.push({ label: 'Starry Ore', value: formatCost(lvl.upgradeStarryOre!) });
+      if (starry > 0) {
+        extra.push({ label: 'Starry Ore', value: formatCost(starry) });
       }
       if ((lvl.hpRecoveryIncrease ?? 0) > 0) {
         extra.push({ label: 'HP Recovery', value: String(lvl.hpRecoveryIncrease) });
@@ -554,6 +561,14 @@ export function sumLevelCostsByResource(
   for (const l of levels) {
     if (l.level <= currentLevel) continue;
     if (maxLevel != null && l.level > maxLevel) continue;
+    if (l.costs && l.costs.length > 0) {
+      for (const c of l.costs) {
+        if (c.amount <= 0) continue;
+        const res = c.resource as CostResource;
+        byRes.set(res, (byRes.get(res) ?? 0) + c.amount);
+      }
+      continue;
+    }
     const amount = l.costAmount ?? 0;
     if (amount <= 0) continue;
     const res = (l.costResource as CostResource) ?? 'Unknown';

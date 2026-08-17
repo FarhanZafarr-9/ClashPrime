@@ -36,11 +36,20 @@ export function remainingArmyCosts(
   let time = 0;
   for (const l of detail.levels) {
     if (l.level > currentLevel && l.level <= maxLevel) {
-      const amount = l.costAmount ?? (l.upgradeCost ? parseCost(l.upgradeCost) : 0);
-      if (amount > 0) {
-        cost += amount;
-        const res = l.costResource ?? 'Unknown';
-        byResource[res] = (byResource[res] ?? 0) + amount;
+      if (l.costs && l.costs.length > 0) {
+        for (const c of l.costs) {
+          if (c.amount > 0) {
+            cost += c.amount;
+            byResource[c.resource] = (byResource[c.resource] ?? 0) + c.amount;
+          }
+        }
+      } else {
+        const amount = l.costAmount ?? (l.upgradeCost ? parseCost(l.upgradeCost) : 0);
+        if (amount > 0) {
+          cost += amount;
+          const res = l.costResource ?? 'Unknown';
+          byResource[res] = (byResource[res] ?? 0) + amount;
+        }
       }
       if (l.upgradeTime) time += parseTimeToSeconds(l.upgradeTime);
     }

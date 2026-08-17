@@ -16,6 +16,8 @@ export interface TroopDetailLevel {
   costResource?: string;
   /** Full numeric cost of this level, unformatted. */
   costAmount?: number;
+  /** All resources this level costs (e.g. equipment levels that require Shiny + Glowing + Starry ore). */
+  costs?: { resource: string; amount: number }[];
 }
 
 export interface TroopDetail {
