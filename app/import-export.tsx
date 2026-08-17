@@ -16,13 +16,26 @@ import * as Clipboard from 'expo-clipboard';
 import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
 import { usePlayer } from '../src/hooks/usePlayerContext';
+import { useBuilderCount } from '../src/hooks/useBuilderCount';
 import { parseCocExport, cocExportToBuildingLevels, normalizeTag, CocImportResult } from '../src/utils/cocExport';
-import { getBuildingCategories } from '../src/utils/buildingData';
 import { getBuildingEffectiveMax, getBuildingLevelImageSource } from '../src/utils/buildingImages';
 import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildingCopies';
-import { Colors, Typography, Spacing, Radius } from '../src/theme';
+import { buildingUpgradeCosts, buildingUpgradeChainTimes, scheduleChains, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../src/utils/upgradeCosts';
+import { PACKAGE_RESOURCE_IMAGES } from '../src/data/packageImages';
+import { BUILDING_RESOURCE_META, type BuildingCostResource } from '../src/utils/buildingData';
+import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
+
+const RESOURCE_ORDER: BuildingCostResource[] = [
+  'Gold',
+  'Elixir',
+  'Dark Elixir',
+  'Builder Gold',
+  'Builder Elixir',
+  'Gold or Elixir',
+  'Builder Gold or Builder Elixir',
+];
 
 function BuildingRowIcon({ storeName, level }: { storeName: string; level: number }) {
   const src = getBuildingLevelImageSource(toJsonName(storeName), level);
@@ -39,6 +52,8 @@ export default function ImportExportScreen() {
   const router = useRouter();
   const { player, accounts, setBulkLevels, applyLevelsToAccount } = usePlayer();
   const { show, Dialog } = useDialog();
+  const { colors } = useTheme();
+  const { count: builderCount } = useBuilderCount();
 
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -72,9 +87,6 @@ export default function ImportExportScreen() {
     }
   };
 
-  const applyCount = result?.resolved.length ?? 0;
-  const canApply = applyCount > 0 && !!player;
-
   // Which attached account the export's tag points at (null when the tag is
   // absent or doesn't match an attached account — falls back to the active one).
   const targetAccount = exportTag
@@ -83,65 +95,92 @@ export default function ImportExportScreen() {
   const targetIsActive = targetAccount?.tag === player?.tag;
   const tagUnattached = exportTag !== null && targetAccount === null;
 
-  // Building categories and their header icons (matches the home tab).
-  const BUILDING_CAT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-    Defenses: 'shield-half-outline',
-    Resources: 'cash-outline',
-    Traps: 'warning-outline',
-    Army: 'hammer-outline',
-    Walls: 'grid-outline',
-  };
-
-  // Projected progress per building category after the import, compared with the
-  // current levels — shown as "before % → after %" rows like the home dialog.
-  const progressImpact = useMemo(() => {
+  // Actual upgrades the import would perform: only buildings whose imported
+  // level is higher than their current per-copy level. Each copy is upgraded
+  // independently, and time/cost come straight from the package data.
+  const upgradeRows = useMemo(() => {
     if (!player || !result) return [];
     const th = player.townHallLevel ?? 0;
-    const merged = { ...(player.buildingLevels || {}), ...result.levels };
-    const rows: { key: string; icon: keyof typeof Ionicons.glyphMap; before: number; after: number }[] = [];
-    for (const cat of ['Defenses', 'Resources', 'Army', 'Traps', 'Walls']) {
-      const items = getBuildingCategories(th)[cat] ?? {};
-      const entries = Object.entries(items).filter(([, thData]) => {
-        const thEntry = thData[String(th)];
-        return thEntry != null && (thEntry.level ?? 0) > 0;
+    const rows: {
+      storeName: string;
+      displayName: string;
+      currentLevel: number;
+      targetLevel: number;
+      copies: number;
+      levels: number[];
+      timeSec: number;
+      cost: number;
+      byResource: Record<string, number>;
+    }[] = [];
+    for (const item of result.resolved) {
+      const effectiveMax = getBuildingEffectiveMax(item.storeName, th);
+      if (effectiveMax <= 0) continue;
+      const count = getCountAtTH(item.storeName, th);
+      const targetLevel = Math.min(item.level, effectiveMax);
+      const copies = getBuildingCopies(
+        item.storeName,
+        player.buildingLevels,
+        player.buildings,
+        effectiveMax,
+        count,
+        player.lastMaxedTH,
+        th,
+      );
+      const highestCurrent = copies.levels.length > 0 ? Math.max(...copies.levels) : 0;
+      if (targetLevel <= highestCurrent) continue;
+      const ct = buildingUpgradeCosts(item.storeName, copies.levels, targetLevel);
+      if (ct.time <= 0 && ct.cost <= 0) continue;
+      rows.push({
+        storeName: item.storeName,
+        displayName: item.displayName,
+        currentLevel: highestCurrent,
+        targetLevel,
+        copies: count,
+        levels: copies.levels,
+        timeSec: ct.time,
+        cost: ct.cost,
+        byResource: ct.byResource ?? {},
       });
-      if (entries.length === 0) continue;
-      const calc = (levels: Record<string, number>) => {
-        let totalLevel = 0;
-        let totalMax = 0;
-        for (const [name] of entries) {
-          const effectiveMax = getBuildingEffectiveMax(name, th);
-          const count = getCountAtTH(name, th);
-          const copies = getBuildingCopies(name, levels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
-          totalLevel += copies.levels.reduce((s, l) => s + l, 0);
-          totalMax += count * effectiveMax;
-        }
-        return totalMax > 0 ? totalLevel / totalMax : 0;
-      };
-      const before = calc(player.buildingLevels || {});
-      const after = calc(merged);
-      if (Math.abs(after - before) > 0.0001) {
-        rows.push({ key: cat, icon: BUILDING_CAT_ICONS[cat] ?? 'apps-outline', before, after });
-      }
     }
-    return rows;
+    return rows.sort((a, b) => b.timeSec - a.timeSec);
   }, [player, result]);
+
+  // Builders pipeline for the upgrades: chain-scheduled time + per-resource costs.
+  const upgradePipeline = useMemo(() => {
+    if (upgradeRows.length === 0) return null;
+    const ct = sumCosts(
+      upgradeRows.map((r) => ({ cost: r.cost, time: r.timeSec, hasData: true, byResource: r.byResource })),
+    );
+    const chains = upgradeRows.flatMap((r) =>
+      buildingUpgradeChainTimes(r.storeName, r.levels, r.targetLevel),
+    );
+    return {
+      timeSec: scheduleChains(chains, builderCount),
+      cost: ct.cost,
+      byResource: ct.byResource ?? {},
+    };
+  }, [upgradeRows, builderCount]);
+
+  const applyCount = upgradeRows.length;
+  const canApply = applyCount > 0 && !!player;
 
   const doApply = (tag: string) => {
     if (!result || !player) return;
     const th = player.townHallLevel ?? 12;
-    const perBuilding = result.resolved.map((item) => ({
-      name: item.storeName,
-      levels: new Array(Math.max(item.copies, 1)).fill(item.level),
-      maxLevel: getBuildingEffectiveMax(item.storeName, th),
+    const perBuilding = upgradeRows.map((row) => ({
+      name: row.storeName,
+      levels: new Array(Math.max(row.copies, 1)).fill(row.targetLevel),
+      maxLevel: getBuildingEffectiveMax(row.storeName, th),
     }));
+    const levels: Record<string, number> = {};
+    for (const row of upgradeRows) levels[row.storeName] = row.targetLevel;
     if (tag === player.tag) {
-      setBulkLevels(result.levels, perBuilding);
+      setBulkLevels(levels, perBuilding);
       router.back();
       return;
     }
     const target = accounts.find((a) => a.tag === tag);
-    applyLevelsToAccount(tag, result.levels, perBuilding);
+    applyLevelsToAccount(tag, levels, perBuilding);
     show({
       title: 'Levels applied',
       message: `Building levels were saved to ${target?.name || tag}. Switch to that account to see them.`,
@@ -263,7 +302,7 @@ export default function ImportExportScreen() {
                           : `${player?.name ?? 'active account'} (active)`,
                       warning: tagUnattached,
                     },
-                    { key: 'matched', icon: 'checkmark-done-outline' as const, label: 'Buildings matched', value: String(result.resolved.length) },
+                    { key: 'matched', icon: 'checkmark-done-outline' as const, label: 'Buildings to upgrade', value: String(upgradeRows.length) },
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
                     { key: 'unknown', icon: 'help-circle-outline' as const, label: 'Unknown IDs', value: String(result.unresolved.length), warning: result.unresolved.length > 0 },
                   ];
@@ -287,27 +326,86 @@ export default function ImportExportScreen() {
                 })()}
               </View>
 
-              {progressImpact.length > 0 ? (
+              {upgradePipeline ? (
                 <>
-                  <Text style={styles.sectionTitle}>Progress Impact</Text>
-                  <View style={styles.rows}>
-                    {progressImpact.map((c, i) => (
+                  <Text style={styles.sectionTitle}>Builders pipeline</Text>
+                  <View style={[styles.pipelineCard, { backgroundColor: colors.bgCard }]}>
+                    <View style={styles.pipelineHeader}>
+                      <View style={styles.pipelineIcon}>
+                        <Ionicons name="hammer-outline" size={16} color={Colors.textPrimary} />
+                      </View>
+                      <View style={styles.pipelineText}>
+                        <Text style={styles.pipelineTitle}>Builders</Text>
+                        <Text style={styles.pipelineDesc}>Buildings upgraded by this import</Text>
+                      </View>
+                      <View style={styles.pipelineBadge}>
+                        <Text style={styles.pipelineBadgeText}>{formatTime(upgradePipeline.timeSec)}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.summaryCard}>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Time with {builderCount} builders</Text>
+                        <Text style={styles.summaryValue}>{formatTime(upgradePipeline.timeSec)}</Text>
+                      </View>
+                      <View style={styles.summaryDivider} />
+                      {(() => {
+                        const entries = (Object.entries(upgradePipeline.byResource).filter(([, v]) => v > 0) as [string, number][])
+                          .filter(([r]) => r !== 'Unknown')
+                          .sort((a, b) => {
+                            const ia = RESOURCE_ORDER.indexOf(a[0] as BuildingCostResource);
+                            const ib = RESOURCE_ORDER.indexOf(b[0] as BuildingCostResource);
+                            return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+                          });
+                        if (entries.length === 0) {
+                          return (
+                            <View style={styles.summaryRow}>
+                              <Text style={styles.summaryLabel}>Cost</Text>
+                              <Text style={styles.summaryValue}>{formatCost(upgradePipeline.cost)}</Text>
+                            </View>
+                          );
+                        }
+                        return entries.map(([r, v]) => (
+                          <View key={r} style={styles.oreRow}>
+                            <Image
+                              source={PACKAGE_RESOURCE_IMAGES[r]}
+                              style={styles.oreIcon}
+                              resizeMode="contain"
+                            />
+                            <Text style={[styles.oreLabel, { color: BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8' }]}>
+                              {BUILDING_RESOURCE_META[r as BuildingCostResource]?.label ?? r}
+                            </Text>
+                            <Text style={styles.oreValue}>{formatCost(v)}</Text>
+                          </View>
+                        ));
+                      })()}
+                    </View>
+                  </View>
+
+                  <Text style={styles.sectionTitle}>Upgrades</Text>
+                  <View style={styles.upgradeList}>
+                    {upgradeRows.map((u, i) => (
                       <View
-                        key={c.key}
+                        key={u.storeName}
                         style={[
-                          styles.row,
-                          i === 0 && styles.rowFirst,
-                          i === progressImpact.length - 1 && styles.rowLast,
-                          i < progressImpact.length - 1 && styles.rowBorder,
+                          styles.upgradeRow,
+                          { backgroundColor: colors.bgCard },
+                          i === 0 && styles.upgradeRowFirst,
+                          i === upgradeRows.length - 1 && styles.upgradeRowLast,
                         ]}
                       >
-                        <Ionicons name={c.icon} size={15} color={Colors.textSecondary} />
-                        <Text style={styles.rowLabel}>{c.key}</Text>
-                        <Text style={styles.rowValue}>
-                          <Text style={styles.rowBefore}>{Math.round(c.before * 100)}%</Text>
-                          {'  →  '}
-                          <Text style={styles.rowAfter}>{Math.round(c.after * 100)}%</Text>
-                        </Text>
+                        <BuildingRowIcon storeName={u.storeName} level={u.targetLevel} />
+                        <View style={styles.upgradeText}>
+                          <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
+                          <Text style={styles.upgradeSub}>
+                            Lv {u.currentLevel} → Lv {u.targetLevel} · ×{u.copies}
+                          </Text>
+                        </View>
+                        <View style={styles.upgradeRight}>
+                          <Text style={styles.upgradeTime}>{formatTimeShort(u.timeSec)}</Text>
+                          <Text style={styles.upgradeCost} numberOfLines={1}>
+                            {formatCostBreakdown(u.byResource) || formatCost(u.cost)}
+                          </Text>
+                        </View>
                       </View>
                     ))}
                   </View>
@@ -342,21 +440,6 @@ export default function ImportExportScreen() {
                     : 'Waiting for account…'}
                 </Text>
               </PressableRipple>
-
-              {result.resolved.length > 0 ? (
-                <>
-                  <Text style={styles.sectionTitle}>Buildings to update</Text>
-                  <View style={styles.list}>
-                    {result.resolved.map((item, i) => (
-                      <View key={item.storeName} style={[styles.levelRow, i < result.resolved.length - 1 && styles.levelRowBorder]}>
-                        <BuildingRowIcon storeName={item.storeName} level={item.level} />
-                        <Text style={styles.levelName} numberOfLines={1}>{item.displayName}</Text>
-                        <Text style={styles.levelValue}>Lv {item.level} · ×{item.copies}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </>
-              ) : null}
 
               {result.skipped.length > 0 ? (
                 <>
@@ -581,6 +664,149 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.success,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  pipelineCard: {
+    borderRadius: Radius.xl,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  pipelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.base,
+  },
+  pipelineIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pipelineText: {
+    flex: 1,
+  },
+  pipelineTitle: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  pipelineDesc: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  pipelineBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pipelineBadgeText: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  summaryCard: {
+    backgroundColor: Colors.bgSubtle,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    paddingHorizontal: Spacing.base,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+  },
+  summaryDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+  },
+  summaryLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryValue: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'right',
+    marginLeft: Spacing.md,
+    fontVariant: ['tabular-nums'],
+  },
+  oreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  oreIcon: {
+    width: 18,
+    height: 18,
+  },
+  oreLabel: {
+    ...Typography.footnote,
+    flex: 1,
+    fontWeight: '600',
+  },
+  oreValue: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  upgradeText: {
+    flex: 1,
+  },
+  upgradeList: {
+    gap: Spacing.xs + 2,
+  },
+  upgradeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.base,
+    borderRadius: Radius.sm,
+  },
+  upgradeRowFirst: {
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
+  },
+  upgradeRowLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
+  },
+  upgradeSub: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  upgradeRight: {
+    alignItems: 'flex-end',
+    gap: 2,
+    maxWidth: 130,
+  },
+  upgradeTime: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  upgradeCost: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
     fontVariant: ['tabular-nums'],
   },
   list: {

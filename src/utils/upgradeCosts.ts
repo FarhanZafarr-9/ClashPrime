@@ -95,6 +95,88 @@ export function remainingBuildingCosts(
 }
 
 /**
+ * Upgrade cost/time for a building across every copy from its current level to
+ * a specific target level (not the max). Each copy is upgraded independently.
+ * `copies` is the per-copy current level array and `targetLevel` the per-copy goal.
+ */
+export function buildingUpgradeCosts(
+  name: string,
+  copies: number[],
+  targetLevel: number,
+): CostTime {
+  if (copies.length === 0 || targetLevel <= 0) return EMPTY;
+  const detail = getBuildingDetail(name, { builderBase: isBuilderName(name) });
+  if (!detail || detail.levels.length === 0) return EMPTY;
+  const byResource: Record<string, number> = {};
+  let cost = 0;
+  let time = 0;
+  for (const lvl of copies) {
+    if (lvl <= 0) continue;
+    for (const l of detail.levels) {
+      if (l.Level <= lvl || l.Level > targetLevel) continue;
+      const rowCost =
+        typeof l['Build Cost'] === 'number'
+          ? (l['Build Cost'] as number)
+          : parseCost(String(l['Build Cost'] ?? ''));
+      if (rowCost > 0) {
+        cost += rowCost;
+        const res: string = l['Build Cost Resource'] ?? 'Unknown';
+        byResource[res] = (byResource[res] ?? 0) + rowCost;
+      }
+      const bt = l['Build Time'];
+      if (bt) time += parseTimeToSeconds(String(bt));
+    }
+  }
+  return { cost, time, hasData: true, byResource };
+}
+
+/** Serial upgrade time per copy for a building, from each copy's current level
+ * up to `targetLevel`. One entry per copy that still has upgrades left. */
+export function buildingUpgradeChainTimes(
+  name: string,
+  copies: number[],
+  targetLevel: number,
+): number[] {
+  if (copies.length === 0 || targetLevel <= 0) return [];
+  const detail = getBuildingDetail(name, { builderBase: isBuilderName(name) });
+  if (!detail || detail.levels.length === 0) return [];
+  const times: number[] = [];
+  for (const lvl of copies) {
+    if (lvl <= 0) continue;
+    let t = 0;
+    for (const l of detail.levels) {
+      if (l.Level <= lvl || l.Level > targetLevel) continue;
+      const bt = l['Build Time'];
+      if (bt) t += parseTimeToSeconds(String(bt));
+    }
+    if (t > 0) times.push(t);
+  }
+  return times;
+}
+
+/**
+ * Schedule a set of serial upgrade chains across `builderCount` builders using
+ * greedy longest-processing-time bin packing. Returns the makespan — the wall
+ * clock time until the last chain finishes. This is correct where a naive
+ * total/builderCount is not: a single long chain (e.g. a 21-day hero) can't be
+ * split across builders, so it always bounds the result.
+ */
+export function scheduleChains(chainTimes: number[], builderCount: number): number {
+  if (chainTimes.length === 0) return 0;
+  if (builderCount <= 1) return chainTimes.reduce((a, b) => a + b, 0);
+  const sorted = [...chainTimes].sort((a, b) => b - a);
+  const loads = new Array<number>(builderCount).fill(0);
+  for (const t of sorted) {
+    let minIdx = 0;
+    for (let i = 1; i < builderCount; i++) {
+      if (loads[i] < loads[minIdx]) minIdx = i;
+    }
+    loads[minIdx] += t;
+  }
+  return Math.max(...loads);
+}
+
+/**
  * Merge a list of CostTime into one aggregate. Rows without data (e.g. a troop
  * whose wiki page hasn't loaded yet) contribute 0 and only hide the label if
  * *no* row has data, so a single missing entry can't blank the whole category.
