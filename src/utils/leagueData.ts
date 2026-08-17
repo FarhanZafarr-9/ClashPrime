@@ -34,7 +34,7 @@ export interface LeagueLootInfo {
   floor: string | null;
 }
 
-const norm = (s: string) => s.toLowerCase().replace(/\s*league$/, '').trim();
+const norm = (s: string) => s.toLowerCase().replace(/\s*league\s*/g, ' ').replace(/\s+/g, ' ').trim();
 
 export function getLeagueLootInfo(
   leagueName: string | null | undefined,

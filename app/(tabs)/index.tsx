@@ -41,7 +41,8 @@ import { ItemCard } from '../../src/components/ItemCard';
 import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { getArmyTroopDetail } from '../../src/utils/armyData';
-import { getLeagueLootInfo } from '../../src/utils/leagueData';
+import { getLeagueLootInfo, type LeagueLootInfo } from '../../src/utils/leagueData';
+import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { useDialog } from '../../src/components/AlertDialog';
 import {
   loadProgressSnapshot,
@@ -78,8 +79,68 @@ function parseCustomDuration(input: string): number | null {
   return total > 0 ? total : null;
 }
 
-type HomeStatRow = { label: string; desc?: string; value: number | string; icon: keyof typeof Ionicons.glyphMap; accentColor?: string };
-type HomeStatGroup = { title: string; icon: keyof typeof Ionicons.glyphMap; desc: string; rows: HomeStatRow[] };
+type HomeStatRow = {
+  label: string;
+  desc?: string;
+  value: number | string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconUrl?: string;
+  iconSource?: ImageSourcePropType;
+  valueNode?: React.ReactNode;
+  accentColor?: string;
+};
+type HomeStatGroup = {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconUrl?: string;
+  desc: string;
+  rows: HomeStatRow[];
+};
+
+const RES_AMOUNT_STYLE = { flexDirection: 'row', alignItems: 'center', gap: 2 } as const;
+
+function ResourceAmountIcon({ resource, amount }: { resource: string; amount: number }) {
+  const src = PACKAGE_RESOURCE_IMAGES[resource];
+  return (
+    <View style={RES_AMOUNT_STYLE}>
+      {src ? <Image source={src} style={{ width: 14, height: 14 }} resizeMode="contain" /> : null}
+      <Text style={styles.statRowValue}>{formatCost(amount)}</Text>
+    </View>
+  );
+}
+
+function LeagueAmountValue({ amount }: { amount: { gold: number | null; dark: number | null } | null }) {
+  if (!amount) return <Text style={styles.statRowValue}>—</Text>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {amount.gold ? (
+        <>
+          <ResourceAmountIcon resource="Gold" amount={amount.gold} />
+          <ResourceAmountIcon resource="Elixir" amount={amount.gold} />
+        </>
+      ) : null}
+      {amount.dark ? <ResourceAmountIcon resource="Dark Elixir" amount={amount.dark} /> : null}
+    </View>
+  );
+}
+
+function StarBonusValue({ star }: { star: { gold: number | null; dark: number | null; shiny: number | null; glowy: number | null; starry: number | null } | null }) {
+  if (!star) return <Text style={styles.statRowValue}>—</Text>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {star.gold ? (
+        <>
+          <ResourceAmountIcon resource="Gold" amount={star.gold} />
+          <ResourceAmountIcon resource="Elixir" amount={star.gold} />
+        </>
+      ) : null}
+      {star.dark ? <ResourceAmountIcon resource="Dark Elixir" amount={star.dark} /> : null}
+      {star.shiny ? <ResourceAmountIcon resource="Shiny Ore" amount={star.shiny} /> : null}
+      {star.glowy ? <ResourceAmountIcon resource="Glowing Ore" amount={star.glowy} /> : null}
+      {star.starry ? <ResourceAmountIcon resource="Starry Ore" amount={star.starry} /> : null}
+    </View>
+  );
+}
 
 function CollapsibleSection({
   title,
@@ -743,39 +804,38 @@ export default function HomeScreen() {
         { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
         { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
         { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
-        ...(leagueInfo
-          ? [
-              {
-                label: 'League',
-                desc: leagueInfo.underfloor
-                  ? `Below your TH floor (${leagueInfo.floor})`
-                  : leagueInfo.floor
-                    ? `League floor: ${leagueInfo.floor}`
-                    : 'Ranked battles league',
-                value: leagueInfo.leagueName,
-                icon: 'ribbon-outline' as const,
-              },
-              { label: 'League Bonus', desc: 'Max bonus per win', value: fmtAmount(leagueInfo.bonus) ?? '—', icon: 'trophy-outline' as const },
-              { label: 'Per-Attack Loot', desc: 'Max stealable from a base', value: fmtAmount(leagueInfo.loot) ?? '—', icon: 'cash-outline' as const },
-              { label: 'Star Bonus', desc: 'Weekly · 8 stars', value: fmtAmount(leagueInfo.star) ?? '—', icon: 'star-outline' as const },
-              ...(leagueInfo.star && (leagueInfo.star.shiny || leagueInfo.star.glowy || leagueInfo.star.starry)
-                ? [{
-                    label: 'Star Bonus Ore',
-                    desc: 'Weekly reward',
-                    value: [leagueInfo.star.shiny ? `${formatCost(leagueInfo.star.shiny)} Shiny` : '', leagueInfo.star.glowy ? `${formatCost(leagueInfo.star.glowy)} Glowy` : '', leagueInfo.star.starry ? `${formatCost(leagueInfo.star.starry)} Starry` : ''].filter(Boolean).join(' · ') || '—',
-                    icon: 'layers-outline' as const,
-                  }]
-                : []),
-              ...(leagueInfo.attacksPerWeek
-                ? [{ label: 'Attacks/Week', desc: 'League tournament schedule', value: leagueInfo.attacksPerWeek, icon: 'flame-outline' as const }]
-                : []),
-              ...(leagueInfo.next
-                ? [{ label: 'Next League', desc: leagueInfo.next.star ? `Star bonus: ${fmtAmount(leagueInfo.next.star)}` : 'One step up', value: leagueInfo.next.name, icon: 'arrow-up-circle-outline' as const }]
-                : []),
-            ]
-          : []),
       ],
     },
+    ...(leagueInfo
+      ? [{
+          title: 'League',
+          icon: 'ribbon-outline' as const,
+          iconUrl: playerLeague?.iconUrls?.small,
+          desc: 'Ranked battles league details',
+          rows: [
+            {
+              label: 'League',
+              desc: leagueInfo.underfloor
+                ? `Below your TH floor (${leagueInfo.floor})`
+                : leagueInfo.floor
+                  ? `League floor: ${leagueInfo.floor}`
+                  : 'Ranked battles league',
+              value: leagueInfo.leagueName,
+              icon: 'ribbon-outline' as const,
+              iconUrl: playerLeague?.iconUrls?.small,
+            },
+            { label: 'League Bonus', desc: 'Max bonus per win', value: '—', icon: 'trophy-outline' as const, valueNode: <LeagueAmountValue amount={leagueInfo.bonus} /> },
+            { label: 'Per-Attack Loot', desc: 'Max stealable from a base', value: '—', icon: 'cash-outline' as const, valueNode: <LeagueAmountValue amount={leagueInfo.loot} /> },
+            { label: 'Star Bonus', desc: 'Weekly · 8 stars', value: '—', icon: 'star-outline' as const, valueNode: <StarBonusValue star={leagueInfo.star} /> },
+            ...(leagueInfo.attacksPerWeek
+              ? [{ label: 'Attacks/Week', desc: 'League tournament schedule', value: leagueInfo.attacksPerWeek, icon: 'flame-outline' as const }]
+              : []),
+            ...(leagueInfo.next
+              ? [{ label: 'Next League', desc: leagueInfo.next.star ? `Star bonus: ${fmtAmount(leagueInfo.next.star)}` : 'One step up', value: leagueInfo.next.name, icon: 'arrow-up-circle-outline' as const }]
+              : []),
+          ],
+        }]
+      : []),
     {
       title: 'Clan',
       icon: 'people-outline',
@@ -1285,6 +1345,7 @@ export default function HomeScreen() {
                 isFirst={gi === 0}
                 isLast={gi === groups.length - 1}
                 icon={group.icon}
+                iconUrl={group.iconUrl}
                 title={group.title}
                 description={group.desc}
                 compact
@@ -1300,15 +1361,23 @@ export default function HomeScreen() {
                 {group.rows.map((row, ri) => (
                   <View key={`${group.title}-${ri}`} style={[styles.statRow, ri === group.rows.length - 1 && styles.statRowLast]}>
                     <View style={styles.statRowIcon}>
-                      <Ionicons name={row.icon} size={16} color={Colors.textPrimary} />
+                      {row.iconUrl ? (
+                        <Image source={{ uri: row.iconUrl }} style={styles.statRowIconImage} resizeMode="contain" />
+                      ) : row.iconSource ? (
+                        <Image source={row.iconSource} style={styles.statRowIconImage} resizeMode="contain" />
+                      ) : (
+                        <Ionicons name={row.icon} size={16} color={Colors.textPrimary} />
+                      )}
                     </View>
                     <View style={styles.statRowText}>
                       <Text style={styles.statRowLabel}>{row.label}</Text>
                       {row.desc ? <Text style={styles.statRowSub}>{row.desc}</Text> : null}
                     </View>
-                    <Text style={[styles.statRowValue, row.accentColor ? { color: row.accentColor } : null]}>
-                      {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
-                    </Text>
+                    {row.valueNode ?? (
+                      <Text style={[styles.statRowValue, row.accentColor ? { color: row.accentColor } : null]}>
+                        {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
+                      </Text>
+                    )}
                   </View>
                 ))}
               </CollapsibleSection>
