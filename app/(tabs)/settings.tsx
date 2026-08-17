@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  Switch,
   Modal,
   Linking,
   Share,
@@ -43,6 +42,7 @@ import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import DiscountModal from '../../src/components/DiscountModal';
 import Constants from 'expo-constants';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
+import {Switch} from 'react-native-paper'
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return <Text style={styles.sectionHeader}>{children}</Text>;
@@ -813,6 +813,7 @@ export default function SettingsScreen() {
             title="Add Account (Full Setup)"
             desc="Walk through the full setup for a new account"
             compact
+            isLast
             onPress={() => router.push('/onboarding?mode=add')}
           />
         </SettingCard>
@@ -832,6 +833,8 @@ export default function SettingsScreen() {
                 thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
               />
             }
+            isFirst
+            isLast
           />
         </SettingCard>
 
@@ -849,6 +852,7 @@ export default function SettingsScreen() {
                 <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
               </View>
             }
+            isFirst
           />
           <SettingRow
             icon="shield-half-outline"
@@ -862,6 +866,7 @@ export default function SettingsScreen() {
                 <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
               </View>
             }
+            isLast
           />
         </SettingCard>
 
@@ -877,14 +882,9 @@ export default function SettingsScreen() {
             pillTopOffset={18}
             pillRightOffset={-4}
             onPress={handleClearCache}
+            isFirst
           />
-          <SettingRow
-            icon="download-outline"
-            title="Export Data"
-            desc="Share your data as a JSON backup"
-            compact
-            onPress={handleExportData}
-          />
+
           <SettingRow
             icon="cloud-upload-outline"
             title="Import Building Levels"
@@ -907,6 +907,7 @@ export default function SettingsScreen() {
                 ],
               });
             }}
+            isLast
           />
         </SettingCard>
 
@@ -919,6 +920,7 @@ export default function SettingsScreen() {
             compact
             onPress={handleCheckUpdates}
             children={checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
+            isFirst
           />
           <SettingRow
             icon="information-circle-outline"
@@ -963,6 +965,7 @@ export default function SettingsScreen() {
             desc="Report a bug or share an idea"
             compact
             onPress={openFeedback}
+            isLast
           />
         </SettingCard>
 
@@ -977,6 +980,7 @@ export default function SettingsScreen() {
             children={
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
             }
+            isFirst
           />
           <SettingRow
             icon="code-slash-outline"
@@ -987,6 +991,7 @@ export default function SettingsScreen() {
             children={
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
             }
+            isLast
           />
         </SettingCard>
 
@@ -1024,11 +1029,39 @@ export default function SettingsScreen() {
               />
             </View>
             <Text style={styles.modalTitle}>{modalTitle}</Text>
-            <Text style={styles.modalHint}>
-              {modalType === 'tag'
-                ? 'Your unique player identifier starting with #. Find it in-game under Settings → More → Show Tag.'
-                : 'A long alphanumeric string that grants read-only access to your profile. Generate one at developer.clashofclans.com → My Account → API Keys. Important: whitelist IP 45.79.218.79 in your API key — the app uses a proxy to support dynamic IPs.'}
-            </Text>
+            <View style={styles.modalHint}>
+              {modalType === 'tag' ? (
+                <Text style={styles.modalHintText}>
+                  Your unique player identifier starting with #. Find it in-game under Settings → More → Show Tag.
+                </Text>
+              ) : (
+                <>
+                  <Text style={styles.modalHintText}>
+                    A long alphanumeric string (starts with <Text style={styles.modalCode}>eyJ</Text>) that grants read-only access to your profile.
+                  </Text>
+                  <View style={styles.modalSteps}>
+                    <View style={styles.modalStep}>
+                      <Text style={styles.modalStepNum}>1</Text>
+                      <Text style={styles.modalStepText}>
+                        Open <Text style={styles.modalLink}>developer.clashofclans.com</Text> and sign in with your Supercell ID
+                      </Text>
+                    </View>
+                    <View style={styles.modalStep}>
+                      <Text style={styles.modalStepNum}>2</Text>
+                      <Text style={styles.modalStepText}>
+                        Go to <Text style={styles.modalLink}>My Account → Create New Key</Text>, name it "ClashPrime"
+                      </Text>
+                    </View>
+                    <View style={styles.modalStep}>
+                      <Text style={styles.modalStepNum}>3</Text>
+                      <Text style={styles.modalStepText}>
+                        Copy the token, then <Text style={styles.modalImportant}>add IP 45.79.218.79 to the whitelist</Text> (app uses a proxy)
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+            </View>
             <View style={styles.modalInputRow}>
               <TextInput
                 ref={modalInputRef}
@@ -1646,6 +1679,52 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: Spacing.xs,
   },
+  modalHintText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    lineHeight: 18,
+  },
+  modalCode: {
+    fontFamily: 'monospace',
+    fontSize: 11,
+    color: Colors.accent,
+  },
+  modalSteps: {
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  modalStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    paddingVertical: 2,
+  },
+  modalStepNum: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.accent,
+    color: Colors.bg,
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    marginTop: 1,
+  },
+  modalStepText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    flex: 1,
+  },
+  modalLink: {
+    color: Colors.accent,
+    fontWeight: '600',
+  },
+  modalImportant: {
+    color: Colors.warning,
+    fontWeight: '600',
+  },
   modalInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1897,7 +1976,7 @@ const styles = StyleSheet.create({
   onboardingIcon: {
     width: 48,
     height: 48,
-    borderRadius: Radius.full,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',
