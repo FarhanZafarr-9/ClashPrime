@@ -50,9 +50,14 @@ function StepCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <View style={styles.stepCard}>
+    <View style={[styles.stepCard, expanded && { borderTopLeftRadius: Radius.xl * 1.25, borderTopRightRadius: Radius.xl * 1.25 }]}>
       <PressableRipple style={styles.stepHeader} onPress={() => setExpanded((e) => !e)}>
-        <View style={styles.stepIconWrap}>
+        <View style={[
+          styles.stepIconWrap,
+          expanded && { borderTopLeftRadius: Radius.lg },
+          !expanded && { borderBottomLeftRadius: Radius.lg },
+
+        ]}>
           <Ionicons name={icon} size={15} color={Colors.textPrimary} />
         </View>
         <View style={styles.stepTextBlock}>
@@ -237,7 +242,6 @@ export default function OnboardingScreen() {
                   { text: 'Open developer.clashofclans.com and sign in with your Supercell account' },
                   { text: 'Go to My Account → Create New Key' },
                   { text: 'Name it anything (e.g. "ClashPrime") and create it' },
-                  { text: 'Copy the generated token — it starts with "eyJ"', icon: 'copy-outline', emphasize: true },
                   { text: 'Add 45.79.218.79 to the IP whitelist — the app uses a proxy', icon: 'shield-checkmark-outline', emphasize: true },
                 ]}
               />
@@ -273,36 +277,40 @@ export default function OnboardingScreen() {
                 showsVerticalScrollIndicator={false}
               >
                 <View style={styles.profileHero}>
-                  {playerData.clan?.badgeUrls?.small && (
-                    <Image source={{ uri: playerData.clan.badgeUrls.small }} style={styles.profileClanBadge} resizeMode="contain" />
-                  )}
                   <Image source={require('../assets/icon.png')} style={styles.profileLogo} />
-                  <Text style={styles.profileName}>{playerData.name}</Text>
-                  <Text style={styles.profileTag}>{playerData.tag}</Text>
-                  {playerData.clan && (
-                    <Text style={styles.profileClan}>{playerData.clan.name}</Text>
-                  )}
-                  <View style={styles.profileStats}>
-                    <View style={styles.profileStat}>
-                      <Text style={styles.profileStatValue}>TH{playerData.townHallLevel}</Text>
-                      <Text style={styles.profileStatLabel}>Town Hall</Text>
+                  <Text style={styles.profileConfirmText}>Does this look right?</Text>
+                </View>
+
+                <View style={styles.profileCard}>
+                  <View style={styles.profileCardRow}>
+                    <View style={styles.profileCardIconWrap}>
+                      <Image source={{ uri: getTownHallImageUrl(playerData.townHallLevel)! }} style={styles.profileCardIconImage} resizeMode="contain" />
                     </View>
-                    {playerData.builderHallLevel && (
-                      <View style={styles.profileStat}>
-                        <Text style={styles.profileStatValue}>BH{playerData.builderHallLevel}</Text>
-                        <Text style={styles.profileStatLabel}>Builder Hall</Text>
+                    <View style={styles.profileCardMiddle}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={styles.profileCardName} numberOfLines={1}>{playerData.name}</Text>
+                        {playerData.clan && (
+                          <Text style={styles.profileCardSubtitle} numberOfLines={1}>{playerData.clan.name}</Text>
+                        )}
                       </View>
-                    )}
-                    <View style={styles.profileStat}>
-                      <Text style={styles.profileStatValue}>{playerData.trophies?.toLocaleString()}</Text>
-                      <Text style={styles.profileStatLabel}>Trophies</Text>
-                    </View>
-                    <View style={styles.profileStat}>
-                      <Text style={styles.profileStatValue}>{playerData.warStars?.toLocaleString()}</Text>
-                      <Text style={styles.profileStatLabel}>War Stars</Text>
+                      <View style={styles.profileCardProgressRow}>
+                        <View style={styles.profileCardProgressTrack}>
+                          <View
+                            style={[
+                              styles.profileCardProgressFill,
+                              {
+                                width: `${Math.min((playerData.townHallLevel || 1) / 18, 1) * 100}%`,
+                                backgroundColor: Colors.textSecondary,
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.profileCardTimeLabel} numberOfLines={1}>
+                          TH{playerData.townHallLevel} · {playerData.trophies?.toLocaleString()} trophies
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                  <Text style={styles.profileConfirmText}>Does this look right?</Text>
                 </View>
 
                 <View style={styles.profileActions}>
@@ -349,40 +357,38 @@ export default function OnboardingScreen() {
             ) : (
               <>
                 <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
-                <ScrollView style={styles.thGrid} contentContainerStyle={styles.thGridInner}>
-                  {thOptions.map((th) => {
+                <View style={styles.thGrid}>
+                  {thOptions.map((th, index, arr) => {
                     const thImg = getTownHallImageUrl(th);
-                    const isCurrent = th === currentTh;
                     return (
-                      <View key={th} style={styles.thCell}>
-                        {isCurrent && (
-                          <View style={styles.thCellPill}>
-                            <View style={styles.thCellPillBadge}>
-                              <Ionicons name="sparkles" size={9} color={Colors.bg} />
-                              <Text style={styles.thCellPillText}>Current</Text>
-                            </View>
-                          </View>
-                        )}
-                        <PressableRipple
-                          style={[styles.thCellPress, isCurrent && styles.thCellPressCurrent]}
-                          onPress={() => handleThPick(th)}
-                        >
-                          {thImg ? (
-                            <Image source={{ uri: thImg }} style={styles.thCellImg} resizeMode="contain" />
-                          ) : (
-                            <View style={styles.thCellImgFallback}>
-                              <Text style={styles.thCellImgFallbackText}>{th}</Text>
-                            </View>
-                          )}
-                          <Text style={styles.thCellText}>TH{th}</Text>
-                        </PressableRipple>
-                      </View>
+                      <PressableRipple
+                        key={th}
+                        style={[
+                          styles.thCell,
+                          index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                          index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                          index === arr.length - 2 && index % 2 === 0 && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                          index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+                        ]}
+                        onPress={() => handleThPick(th)}
+                      >
+                        <Image source={{ uri: thImg! }} style={styles.thImg} resizeMode="contain" />
+                        <Text style={styles.thText}>TH{th}</Text>
+                      </PressableRipple>
                     );
                   })}
-                </ScrollView>
+                </View>
                 <Text style={styles.thHint}>
                   You're on TH{currentTh}. Pick the last Town Hall you've fully maxed.
                 </Text>
+                <View style={styles.thPickerActions}>
+                  <PressableRipple
+                    style={[styles.profileBtn, styles.profileBtnGhost]}
+                    onPress={() => setStep('profile')}
+                  >
+                    <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
+                  </PressableRipple>
+                </View>
               </>
             )}
           </View>
@@ -434,29 +440,30 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   form: {
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   label: {
     ...Typography.footnote,
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
   },
   inputFlex: {
     ...Typography.body,
     color: Colors.textPrimary,
     flex: 1,
     paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.md + 1,
   },
   inputIcon: {
     paddingHorizontal: Spacing.md,
@@ -468,10 +475,10 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   stepCard: {
-    backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -480,12 +487,13 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.lg,
+
   },
   stepIconWrap: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -523,13 +531,14 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 4,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepNumEmph: {
     backgroundColor: Colors.warning,
     borderWidth: 0,
+    borderBottomLeftRadius: Radius.sm * 1.25,
   },
   stepNumText: {
     fontSize: 11,
@@ -562,7 +571,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.textPrimary,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     marginTop: Spacing.lg,
     minHeight: 48,
@@ -588,14 +597,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
   },
   thGrid: {
-    maxHeight: 400,
-  },
-  thGridInner: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+    justifyContent: 'space-between',
   },
   loadingState: {
     flex: 1,
@@ -608,6 +615,11 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.sm,
+  },
+  thPickerActions: {
+    flexDirection: 'column',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
   },
   profileScroll: {
     flex: 1,
@@ -671,20 +683,86 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
+  },
+  profileCard: {
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  profileCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileCardIconWrap: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+    overflow: 'hidden',
+  },
+  profileCardIconImage: {
+    width: 34,
+    height: 34,
+  },
+  profileCardIconText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '600',
+  },
+  profileCardMiddle: {
+    flex: 1,
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  profileCardName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    marginBottom: Spacing.xs / 1.25,
+  },
+  profileCardSubtitle: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  profileCardProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: Spacing.sm,
+  },
+  profileCardProgressTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: Colors.progressTrack,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  profileCardProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  profileCardTimeLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    lineHeight: 12,
+    fontVariant: ['tabular-nums'],
   },
   profileActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-    marginTop: Spacing.xl,
-    paddingHorizontal: Spacing.xl,
+    flexDirection: 'column',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg * 2,
   },
   profileBtn: {
-    flex: 1,
+    backgroundColor: Colors.textPrimary,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     alignItems: 'center',
+    width: '100%',
   },
   profileBtnGhost: {
     backgroundColor: 'transparent',
@@ -705,69 +783,22 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   thCell: {
-    width: 92,
-    position: 'relative',
-  },
-  thCellPill: {
-    position: 'absolute',
-    top: -9,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    zIndex: 3,
-    pointerEvents: 'none',
-  },
-  thCellPillBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: Colors.accent,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-  },
-  thCellPillText: {
-    color: Colors.bg,
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  thCellPress: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    minWidth: '48%',
+    flex: 1,
   },
-  thCellPressCurrent: {
-    borderColor: Colors.accent,
-    borderWidth: 1.25,
-    backgroundColor: Colors.accentGhost,
+  thImg: {
+    width: 32,
+    height: 32,
+    marginRight: Spacing.lg,
   },
-  thCellImg: {
-    width: 52,
-    height: 52,
-  },
-  thCellImgFallback: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.bgSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thCellImgFallbackText: {
-    ...Typography.headline,
-    color: Colors.textSecondary,
-  },
-  thCellText: {
-    ...Typography.caption,
+  thText: {
+    ...Typography.body,
     color: Colors.textPrimary,
     fontWeight: '600',
   },

@@ -46,7 +46,7 @@ import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import DiscountModal from '../../src/components/DiscountModal';
 import Constants from 'expo-constants';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
-import {Switch} from 'react-native-paper'
+import { Switch } from 'react-native-paper'
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return <Text style={styles.sectionHeader}>{children}</Text>;
@@ -345,7 +345,7 @@ export default function SettingsScreen() {
       showDialog({
         title: 'Development Build',
         message: 'Over-the-air updates only apply to release builds. You are running a development build, so updates arrive by installing a new build (EAS or `expo run`) — not through the update channel.',
-        actions: [{ label: 'Got It', primary: true, onPress: () => {} }],
+        actions: [{ label: 'Got It', primary: true, onPress: () => { } }],
       });
       return;
     }
@@ -357,7 +357,7 @@ export default function SettingsScreen() {
         showDialog({
           title: 'No Internet Connection',
           message: 'Could not reach the update server. Check your Wi-Fi or mobile data, then try again.',
-          actions: [{ label: 'OK', primary: true, onPress: () => {} }],
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
         return;
       }
@@ -369,18 +369,18 @@ export default function SettingsScreen() {
             title: 'Update Available',
             message: 'A new update is ready for this channel. Tap Install to download and apply it now — you will return to the app once it is applied.',
             actions: [
-              { label: 'Later', onPress: () => {} },
+              { label: 'Later', onPress: () => { } },
               { label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } },
             ],
           });
         } else {
-          showDialog({ title: "You're Up to Date", message: 'ClashPrime is running the latest available update for this channel.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+          showDialog({ title: "You're Up to Date", message: 'ClashPrime is running the latest available update for this channel.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
         }
       } catch {
         showDialog({
           title: 'Update Check Failed',
           message: 'The update server was reachable but the check could not complete. This can happen if the update channel is misconfigured or the Expo servers are busy. Please try again in a moment.',
-          actions: [{ label: 'OK', primary: true, onPress: () => {} }],
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
       }
     } finally {
@@ -416,19 +416,21 @@ export default function SettingsScreen() {
           title: 'Account Already Added',
           message: `${tag} is already in your account list. Switch to it instead.`,
           actions: [
-            { label: 'Cancel', onPress: () => {} },
-            { label: 'Switch', primary: true, onPress: async () => {
-              await handleSwitchAccount(existing.tag);
-              setShowOnboarding(false);
-              setOnboardingStep('tag');
-            }},
+            { label: 'Cancel', onPress: () => { } },
+            {
+              label: 'Switch', primary: true, onPress: async () => {
+                await handleSwitchAccount(existing.tag);
+                setShowOnboarding(false);
+                setOnboardingStep('tag');
+              }
+            },
           ],
         });
         return;
       }
       const token = await getApiToken();
       if (!token) {
-        showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+        showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
         return;
       }
       try {
@@ -437,7 +439,7 @@ export default function SettingsScreen() {
         setOnboardingPlayer(data);
         setOnboardingStep('profile');
       } catch (e: any) {
-        showDialog({ title: 'Failed to Fetch Profile', message: e.message || 'Check your API token and player tag.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+        showDialog({ title: 'Failed to Fetch Profile', message: e.message || 'Check your API token and player tag.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
       }
       return;
     }
@@ -845,7 +847,7 @@ export default function SettingsScreen() {
                 title: 'Sync Now',
                 message: 'Triggers an immediate sync of your player data from the Clash of Clans API. Use this if your stats seem outdated or after switching accounts.',
                 actions: [
-                  { label: 'Cancel', onPress: () => {} },
+                  { label: 'Cancel', onPress: () => { } },
                   { label: 'Sync', primary: true, onPress: () => { bumpTagVersion(); } },
                 ],
               });
@@ -945,7 +947,7 @@ export default function SettingsScreen() {
                 title: 'Refresh Game Data',
                 message: 'Re-fetches all game reference data (siege machines, pets, super troops, max levels) from the wiki and clash.ninja. This ensures you have the latest unit names and balance changes. Data is cached for 7 days.',
                 actions: [
-                  { label: 'Cancel', onPress: () => {} },
+                  { label: 'Cancel', onPress: () => { } },
                   { label: 'Refresh', primary: true, onPress: async () => { await refreshGameData(); } },
                 ],
               });
@@ -1256,24 +1258,22 @@ export default function SettingsScreen() {
               <View style={styles.onboardingProfileCard}>
                 <View style={styles.profileCardRow}>
                   <View style={styles.profileCardIconWrap}>
-                    {onboardingPlayer.clan?.badgeUrls?.small ? (
-                      <Image source={{ uri: onboardingPlayer.clan.badgeUrls.small! }} style={styles.profileCardIconImage} resizeMode="contain" />
-                    ) : (
-                      <Text style={styles.profileCardIconText}>{onboardingPlayer.name.charAt(0)}</Text>
-                    )}
+                    <Image source={{ uri: getTownHallImageUrl(onboardingPlayer.townHallLevel)! }} style={styles.profileCardIconImage} resizeMode="contain" />
                   </View>
                   <View style={styles.profileCardMiddle}>
-                    <Text style={styles.profileCardName} numberOfLines={1}>{onboardingPlayer.name}</Text>
-                    {onboardingPlayer.clan && (
-                      <Text style={styles.profileCardSubtitle} numberOfLines={1}>{onboardingPlayer.clan.name}</Text>
-                    )}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={styles.profileCardName} numberOfLines={1}>{onboardingPlayer.name}</Text>
+                      {onboardingPlayer.clan && (
+                        <Text style={styles.profileCardSubtitle} numberOfLines={1}>{onboardingPlayer.clan.name}</Text>
+                      )}
+                    </View>
                     <View style={styles.profileCardProgressRow}>
                       <View style={styles.profileCardProgressTrack}>
                         <View
                           style={[
                             styles.profileCardProgressFill,
                             {
-                              width: `${Math.min((onboardingPlayer.townHallLevel || 1) / 16, 1) * 100}%`,
+                              width: `${Math.min((onboardingPlayer.townHallLevel || 1) / 18, 1) * 100}%`,
                               backgroundColor: Colors.textSecondary,
                             },
                           ]}
@@ -1285,7 +1285,7 @@ export default function SettingsScreen() {
                     </View>
                   </View>
                 </View>
-                <Text style={styles.onboardingConfirmText}>Does this look right?</Text>
+
               </View>
               <View style={styles.onboardingActions}>
                 <PressableRipple
@@ -1314,16 +1314,27 @@ export default function SettingsScreen() {
                 Pick the last Town Hall you've fully maxed. This sets your starting building levels.
               </Text>
               <View style={styles.onboardingThGrid}>
-                {Array.from({ length: (onboardingPlayer.townHallLevel || 16) - 1 }, (_, i) => i + 2).map((th) => (
-                  <PressableRipple
-                    key={th}
-                    style={styles.onboardingThCell}
-                    onPress={() => { setOnboardingThLevel(String(th)); handleOnboardingSave(); }}
-                  >
-                    <Image source={{ uri: getTownHallImageUrl(th)! }} style={styles.onboardingThImg} resizeMode="contain" />
-                    <Text style={styles.onboardingThText}>TH{th}</Text>
-                  </PressableRipple>
-                ))}
+                {Array.from({ length: (onboardingPlayer.townHallLevel || 18) - 1 }, (_, i) => i + 2).map((th, index, arr) => {
+                  const isFirst = index < 2;
+                  const isLast = index >= arr.length - 2;
+
+                  return (
+                    <PressableRipple
+                      key={th}
+                      style={[
+                        styles.onboardingThCell,
+                        index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                        index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                        index === arr.length - 2 && index % 2 === 0 && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                        index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+                      ]}
+                      onPress={() => { setOnboardingThLevel(String(th)); handleOnboardingSave(); }}
+                    >
+                      <Image source={{ uri: getTownHallImageUrl(th)! }} style={styles.onboardingThImg} resizeMode="contain" />
+                      <Text style={styles.onboardingThText}>TH{th}</Text>
+                    </PressableRipple>
+                  );
+                })}
               </View>
               <Text style={styles.onboardingThHint}>
                 You're on TH{onboardingPlayer.townHallLevel}. Pick the last Town Hall you've fully maxed.
@@ -1370,24 +1381,26 @@ export default function SettingsScreen() {
                   }}
                   onLongPress={() => {
                     if (accounts.length <= 1) {
-                      showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+                      showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
                       return;
                     }
                     showDialog({
                       title: 'Remove Account',
                       message: `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
                       actions: [
-                        { label: 'Cancel', onPress: () => {} },
-                        { label: 'Remove', primary: true, destructive: true, onPress: async () => {
-                          await removeAccount(acct.tag);
-                          await refreshAccounts();
-                          if (isActive) {
-                            const remaining = await getAccounts();
-                            if (remaining.length > 0) {
-                              await handleSwitchAccount(remaining[0].tag);
+                        { label: 'Cancel', onPress: () => { } },
+                        {
+                          label: 'Remove', primary: true, destructive: true, onPress: async () => {
+                            await removeAccount(acct.tag);
+                            await refreshAccounts();
+                            if (isActive) {
+                              const remaining = await getAccounts();
+                              if (remaining.length > 0) {
+                                await handleSwitchAccount(remaining[0].tag);
+                              }
                             }
                           }
-                        }},
+                        },
                       ],
                     });
                   }}
@@ -1494,7 +1507,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.base,
     gap: Spacing.xs,
     borderRadius: Radius.xl * 1.25,
-    overflow:'hidden'
+    overflow: 'hidden'
   },
   settingValue: {
     ...Typography.footnote,
@@ -1830,7 +1843,7 @@ const styles = StyleSheet.create({
   modalStepNum: {
     width: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: 4.5,
     backgroundColor: Colors.accent,
     color: Colors.bg,
     fontSize: 10,
@@ -2123,9 +2136,7 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textPrimary,
     backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
     width: '100%',
@@ -2143,18 +2154,16 @@ const styles = StyleSheet.create({
   },
   onboardingActions: {
     width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     gap: Spacing.sm,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.md,
   },
   onboardingBtn: {
     backgroundColor: Colors.textPrimary,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     alignItems: 'center',
-    flex: 1,
-    marginLeft: Spacing.sm,
+    width: '100%',
   },
   onboardingBtnGhost: {
     backgroundColor: 'transparent',
@@ -2177,8 +2186,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   onboardingProfileCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderRadius: Radius.md,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
   },
@@ -2189,8 +2198,6 @@ const styles = StyleSheet.create({
   profileCardIconWrap: {
     width: 40,
     height: 40,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
@@ -2224,7 +2231,7 @@ const styles = StyleSheet.create({
   profileCardProgressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 10,
     gap: Spacing.sm,
   },
   profileCardProgressTrack: {
@@ -2246,24 +2253,27 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   onboardingThGrid: {
-    gap: Spacing.sm,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
     marginTop: Spacing.md,
     marginBottom: Spacing.md,
+    justifyContent:'space-between'
   },
   onboardingThCell: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.md,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    minWidth: '48%',
+    flex:1
   },
   onboardingThImg: {
     width: 32,
     height: 32,
-    marginRight: Spacing.md,
+    marginRight: Spacing.lg,
   },
   onboardingThText: {
     ...Typography.body,
