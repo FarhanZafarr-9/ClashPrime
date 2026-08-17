@@ -87,7 +87,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
     setAccounts(list);
     const active = await getActiveAccount();
-    setActiveAccountState(active);
+    // Fallback: if no active account but accounts exist, pick most recently used
+    if (!active && list.length > 0) {
+      const fallback = list.reduce((latest, a) =>
+        new Date(a.lastUsedAt) > new Date(latest.lastUsedAt) ? a : latest
+      );
+      setActiveAccountState(fallback);
+      // Persist the fallback as active
+      await setActiveAccountTag(fallback.tag);
+    } else {
+      setActiveAccountState(active);
+    }
   }, []);
 
   const fetchPlayer = useCallback(async (force = false) => {

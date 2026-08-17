@@ -438,7 +438,8 @@ export default function SettingsScreen() {
     setOnboardingTag('');
     setOnboardingThLevel('');
     // Don't yank the user to the new account unless it's the first one.
-    await prefetchAccount(tag, { token, th: thLevel, switch: accounts.length === 0 });
+    const storedAccounts = await getAccounts();
+    await prefetchAccount(tag, { token, th: thLevel, switch: storedAccounts.length === 0 });
   };
 
   const openAbout = () => {
