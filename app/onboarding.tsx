@@ -85,7 +85,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
   const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
-  const [step, setStep] = useState<'form' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
+  const [step, setStep] = useState<'form' | 'profile' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
   const [tag, setTag] = useState('');
@@ -138,7 +138,7 @@ export default function OnboardingScreen() {
         });
       }
       setPlayerData(data);
-      setStep('thPicker');
+      setStep('profile');
       setLoading(false);
     } catch (e: any) {
       setError(e.message || 'Failed to connect. Check your token and tag.');
@@ -264,6 +264,74 @@ export default function OnboardingScreen() {
               </PressableRipple>
             </View>
           </ScrollView>
+        ) : step === 'profile' ? (
+          <View style={styles.content}>
+            {!loading && playerData && (
+              <ScrollView
+                style={styles.profileScroll}
+                contentContainerStyle={styles.profileScrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.profileHero}>
+                  {playerData.clan?.badgeUrls?.small && (
+                    <Image source={{ uri: playerData.clan.badgeUrls.small }} style={styles.profileClanBadge} resizeMode="contain" />
+                  )}
+                  <Image source={require('../assets/icon.png')} style={styles.profileLogo} />
+                  <Text style={styles.profileName}>{playerData.name}</Text>
+                  <Text style={styles.profileTag}>{playerData.tag}</Text>
+                  {playerData.clan && (
+                    <Text style={styles.profileClan}>{playerData.clan.name}</Text>
+                  )}
+                  <View style={styles.profileStats}>
+                    <View style={styles.profileStat}>
+                      <Text style={styles.profileStatValue}>TH{playerData.townHallLevel}</Text>
+                      <Text style={styles.profileStatLabel}>Town Hall</Text>
+                    </View>
+                    {playerData.builderHallLevel && (
+                      <View style={styles.profileStat}>
+                        <Text style={styles.profileStatValue}>BH{playerData.builderHallLevel}</Text>
+                        <Text style={styles.profileStatLabel}>Builder Hall</Text>
+                      </View>
+                    )}
+                    <View style={styles.profileStat}>
+                      <Text style={styles.profileStatValue}>{playerData.trophies?.toLocaleString()}</Text>
+                      <Text style={styles.profileStatLabel}>Trophies</Text>
+                    </View>
+                    <View style={styles.profileStat}>
+                      <Text style={styles.profileStatValue}>{playerData.warStars?.toLocaleString()}</Text>
+                      <Text style={styles.profileStatLabel}>War Stars</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.profileConfirmText}>Does this look right?</Text>
+                </View>
+
+                <View style={styles.profileActions}>
+                  <PressableRipple
+                    style={[styles.profileBtn, styles.profileBtnGhost]}
+                    onPress={() => {
+                      setStep('form');
+                      setPlayerData(null);
+                      setError(null);
+                    }}
+                  >
+                    <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
+                  </PressableRipple>
+                  <PressableRipple
+                    style={styles.profileBtn}
+                    onPress={() => setStep('thPicker')}
+                  >
+                    <Text style={styles.profileBtnText}>Confirm & Continue</Text>
+                  </PressableRipple>
+                </View>
+              </ScrollView>
+            )}
+            {loading && (
+              <View style={styles.loadingState}>
+                <ActivityIndicator size="small" color={Colors.textPrimary} />
+                <Text style={styles.loadingStateText}>Fetching profile…</Text>
+              </View>
+            )}
+          </View>
         ) : (
           <View style={styles.content}>
             {!loading && (
@@ -535,6 +603,103 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
   },
+  thHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
+  },
+  profileScroll: {
+    flex: 1,
+  },
+  profileScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+  },
+  profileHero: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
+  profileClanBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  profileLogo: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
+  },
+  profileName: {
+    ...Typography.largeTitle,
+    color: Colors.textPrimary,
+  },
+  profileTag: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+  },
+  profileClan: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+  },
+  profileStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.lg,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.base,
+  },
+  profileStat: {
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  profileStatValue: {
+    ...Typography.title2,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  profileStatLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  profileConfirmText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+  },
+  profileActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+  },
+  profileBtn: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+  },
+  profileBtnGhost: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  profileBtnText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  profileBtnTextGhost: {
+    color: Colors.textSecondary,
+  },
   loadingStateText: {
     ...Typography.subhead,
     color: Colors.textSecondary,
@@ -605,11 +770,5 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '600',
-  },
-  thHint: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    marginTop: Spacing.sm,
   },
 });
