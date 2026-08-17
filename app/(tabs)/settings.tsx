@@ -23,6 +23,7 @@ import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref } from '../../src/theme';
 import { Chip } from '../../src/components/Chip';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getMaxTownHall } from '../../src/utils/buildingData';
 import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 const heartImg = require('../../images/heart.png') as any;
 import type { ClashPlayer } from '../../src/types/clash';
@@ -471,7 +472,7 @@ export default function SettingsScreen() {
       if (!token) return;
 
       const thLevel = parseInt(onboardingThLevel, 10);
-      const currentTh = player.townHallLevel || 16;
+      const currentTh = player.townHallLevel || getMaxTownHall();
       const levels = seedBuildingLevelsForTH(player, Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh, { currentTh });
 
       await setPlayerTag(tag);
@@ -1311,7 +1312,7 @@ export default function SettingsScreen() {
                           style={[
                             styles.profileCardProgressFill,
                             {
-                              width: `${Math.min((onboardingPlayer.townHallLevel || 1) / 18, 1) * 100}%`,
+                              width: `${Math.min((onboardingPlayer.townHallLevel || 1) / getMaxTownHall(), 1) * 100}%`,
                               backgroundColor: Colors.textSecondary,
                             },
                           ]}
@@ -1352,9 +1353,7 @@ export default function SettingsScreen() {
                 Pick the last Town Hall you've fully maxed. This sets your starting building levels.
               </Text>
               <View style={styles.onboardingThGrid}>
-                {Array.from({ length: (onboardingPlayer.townHallLevel || 18) - 1 }, (_, i) => i + 2).map((th, index, arr) => {
-                  const isFirst = index < 2;
-                  const isLast = index >= arr.length - 2;
+                {Array.from({ length: (onboardingPlayer.townHallLevel || getMaxTownHall()) - 1 }, (_, i) => i + 2).map((th, index, arr) => {
 
                   return (
                     <PressableRipple

@@ -227,6 +227,25 @@ function normalLevels(levels: PackageLevel[]): PackageLevel[] {
   return levels.filter((l) => !l.supercharge);
 }
 
+let maxTownHallCache = -1;
+
+/** Highest Town Hall the package data carries any building level for.
+ * Derived from the data rather than hardcoded so a new TH release (e.g. TH19)
+ * is picked up automatically once the package ships its buildings. */
+export function getMaxTownHall(): number {
+  if (maxTownHallCache > 0) return maxTownHallCache;
+  load();
+  let max = 0;
+  for (const item of homeBuildings) {
+    for (const lvl of normalLevels(item.levels)) {
+      const req = lvl.townHallRequired;
+      if (req != null && req > max) max = req;
+    }
+  }
+  maxTownHallCache = max > 0 ? max : 18;
+  return maxTownHallCache;
+}
+
 function maxLevelUnderCap(levels: PackageLevel[], capKey: 'townHallRequired' | 'builderHallRequired', cap: number): number {
   let max = 0;
   for (const lvl of normalLevels(levels)) {

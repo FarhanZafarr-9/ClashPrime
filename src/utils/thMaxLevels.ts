@@ -6,6 +6,7 @@ import {
   getAllItemsAtTH as getAllArmyItemsAtTH,
   getArmyItem,
 } from './armyData';
+import { getMaxTownHall } from './buildingData';
 
 export type UnlockableType = 'troop' | 'spell' | 'hero' | 'equipment';
 
@@ -58,7 +59,8 @@ function getUnlockTh(name: string): number {
   const cached = unlockThCache.get(name);
   if (cached !== undefined) return cached;
   let unlockTh = 0;
-  for (let th = 1; th <= 18; th++) {
+  const maxTh = getMaxTownHall();
+  for (let th = 1; th <= maxTh; th++) {
     if (getMaxLevelAtTH(name, th) != null) {
       unlockTh = th;
       break;
@@ -73,7 +75,7 @@ export function getUnlockableItems(
   ownedNames: Set<string>,
 ): { name: string; type: UnlockableType; unlockTh: number }[] {
   const result: { name: string; type: UnlockableType; unlockTh: number }[] = [];
-  for (const item of getAllArmyItemsAtTH(18)) {
+  for (const item of getAllArmyItemsAtTH(getMaxTownHall())) {
     const unlockTh = getUnlockTh(item.name);
     if (unlockTh > 0 && unlockTh <= th && !ownedNames.has(item.name.toLowerCase())) {
       result.push({ name: item.name, type: item.type, unlockTh });

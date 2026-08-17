@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getStringAsync } from 'expo-clipboard';
+import { getMaxTownHall } from '../src/utils/buildingData';
 import { Colors, Typography, Spacing, Radius } from '../src/theme';
 import {
   setPlayerTag,
@@ -97,7 +98,7 @@ export default function OnboardingScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const currentTh = mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16;
+  const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
 
   const handleContinue = async () => {
@@ -156,7 +157,7 @@ export default function OnboardingScreen() {
     setLoading(true);
 
     const player = mode === 'reset' ? contextPlayer : playerData;
-    const currentTh = mode === 'reset' ? Number(thParam) || 16 : playerData?.townHallLevel || 16;
+const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
 
     const levels = seedBuildingLevelsForTH(player, selectedTh, { currentTh });
 
@@ -302,7 +303,7 @@ export default function OnboardingScreen() {
                             style={[
                               styles.profileCardProgressFill,
                               {
-                                width: `${Math.min((playerData.townHallLevel || 1) / 18, 1) * 100}%`,
+                                width: `${Math.min((playerData.townHallLevel || 1) / getMaxTownHall(), 1) * 100}%`,
                                 backgroundColor: Colors.textSecondary,
                               },
                             ]}

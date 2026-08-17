@@ -17,6 +17,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
 import { getPopularArmies } from '../../src/api/clashArmies';
+import { getMaxTownHall } from '../../src/utils/buildingData';
 import { buildCopyArmyLink } from '../../src/utils/armyLinks';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -90,7 +91,7 @@ export default function ArmiesScreen() {
   const PAGE_SIZE = 20;
   const [selectedTag, setSelectedTag] = useState('All');
 
-  const thLevel = player?.townHallLevel || 16;
+  const thLevel = player?.townHallLevel || getMaxTownHall();
 
   const fetchArmies = useCallback(async (bypass?: boolean) => {
     try {

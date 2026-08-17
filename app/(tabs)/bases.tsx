@@ -17,6 +17,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
 import { scrapeBasesForTH, scrapeBasesForBH } from '../../src/api/baseScraper';
+import { getMaxTownHall } from '../../src/utils/buildingData';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import {
   getSavedBases,
@@ -66,7 +67,7 @@ export default function BaseLibraryScreen() {
   const PAGE_SIZE = 20;
 
   const hallLevel = selectedVillage === 'home'
-    ? player?.townHallLevel || 16
+    ? player?.townHallLevel || getMaxTownHall()
     : player?.builderHallLevel || 10;
 
   const fetchBases = useCallback(async () => {
