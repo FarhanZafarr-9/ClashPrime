@@ -19,6 +19,7 @@ export default function TabLayout() {
       <Tabs.Screen name="bases" />
       <Tabs.Screen name="armies" />
       <Tabs.Screen name="saved" options={{ href: null }} />
+      <Tabs.Screen name="maxtime" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="achievements" />
     </Tabs>
