@@ -1254,32 +1254,35 @@ export default function SettingsScreen() {
                 Does this look like your account?
               </Text>
               <View style={styles.onboardingProfileCard}>
-                {onboardingPlayer.clan?.badgeUrls?.small ? (
-                  <Image source={{ uri: onboardingPlayer.clan.badgeUrls.small! }} style={styles.onboardingProfileClanBadge} resizeMode="contain" />
-                ) : null}
-                <Text style={styles.onboardingProfileName}>{onboardingPlayer.name}</Text>
-                <Text style={styles.onboardingProfileTag}>{onboardingPlayer.tag}</Text>
-                {onboardingPlayer.clan && (
-                  <Text style={styles.onboardingProfileClan}>{onboardingPlayer.clan.name}</Text>
-                )}
-                <View style={styles.onboardingProfileStats}>
-                  <View style={styles.onboardingProfileStat}>
-                    <Text style={styles.onboardingProfileStatValue}>TH{onboardingPlayer.townHallLevel}</Text>
-                    <Text style={styles.onboardingProfileStatLabel}>Town Hall</Text>
+                <View style={styles.profileCardRow}>
+                  <View style={styles.profileCardIconWrap}>
+                    {onboardingPlayer.clan?.badgeUrls?.small ? (
+                      <Image source={{ uri: onboardingPlayer.clan.badgeUrls.small! }} style={styles.profileCardIconImage} resizeMode="contain" />
+                    ) : (
+                      <Text style={styles.profileCardIconText}>{onboardingPlayer.name.charAt(0)}</Text>
+                    )}
                   </View>
-                  {onboardingPlayer.builderHallLevel && (
-                    <View style={styles.onboardingProfileStat}>
-                      <Text style={styles.onboardingProfileStatValue}>BH{onboardingPlayer.builderHallLevel}</Text>
-                      <Text style={styles.onboardingProfileStatLabel}>Builder Hall</Text>
+                  <View style={styles.profileCardMiddle}>
+                    <Text style={styles.profileCardName} numberOfLines={1}>{onboardingPlayer.name}</Text>
+                    {onboardingPlayer.clan && (
+                      <Text style={styles.profileCardSubtitle} numberOfLines={1}>{onboardingPlayer.clan.name}</Text>
+                    )}
+                    <View style={styles.profileCardProgressRow}>
+                      <View style={styles.profileCardProgressTrack}>
+                        <View
+                          style={[
+                            styles.profileCardProgressFill,
+                            {
+                              width: `${Math.min((onboardingPlayer.townHallLevel || 1) / 16, 1) * 100}%`,
+                              backgroundColor: Colors.textSecondary,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.profileCardTimeLabel} numberOfLines={1}>
+                        TH{onboardingPlayer.townHallLevel} · {onboardingPlayer.trophies?.toLocaleString()} trophies
+                      </Text>
                     </View>
-                  )}
-                  <View style={styles.onboardingProfileStat}>
-                    <Text style={styles.onboardingProfileStatValue}>{onboardingPlayer.trophies?.toLocaleString()}</Text>
-                    <Text style={styles.onboardingProfileStatLabel}>Trophies</Text>
-                  </View>
-                  <View style={styles.onboardingProfileStat}>
-                    <Text style={styles.onboardingProfileStatValue}>{onboardingPlayer.warStars?.toLocaleString()}</Text>
-                    <Text style={styles.onboardingProfileStatLabel}>War Stars</Text>
                   </View>
                 </View>
                 <Text style={styles.onboardingConfirmText}>Does this look right?</Text>
@@ -2095,27 +2098,26 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.xl,
-    alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   onboardingIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.sm,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.lg,
     backgroundColor: Colors.accentGhost,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: Spacing.xs,
   },
   onboardingTitle: {
     ...Typography.title3,
     color: Colors.textPrimary,
-    textAlign: 'center',
   },
   onboardingDesc: {
-    ...Typography.subhead,
+    ...Typography.caption,
     color: Colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
+    marginBottom: Spacing.xs,
   },
   onboardingInput: {
     ...Typography.body,
@@ -2168,82 +2170,103 @@ const styles = StyleSheet.create({
   onboardingBtnTextGhost: {
     color: Colors.textSecondary,
   },
-  onboardingProfileCard: {
-    width: '100%',
-    backgroundColor: Colors.bgSubtle,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  onboardingProfileClanBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginBottom: Spacing.xs,
-  },
-  onboardingProfileName: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  onboardingProfileTag: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-  },
-  onboardingProfileClan: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-  },
-  onboardingProfileStats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-  },
-  onboardingProfileStat: {
-    alignItems: 'center',
-    minWidth: 70,
-  },
-  onboardingProfileStatValue: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  onboardingProfileStatLabel: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 1,
-  },
   onboardingConfirmText: {
     ...Typography.body,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: Spacing.md,
   },
-  onboardingThGrid: {
+  onboardingProfileCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  profileCardRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  profileCardIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
+    overflow: 'hidden',
+  },
+  profileCardIconImage: {
+    width: 34,
+    height: 34,
+  },
+  profileCardIconText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '600',
+  },
+  profileCardMiddle: {
+    flex: 1,
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  profileCardName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    marginBottom: Spacing.xs / 1.25,
+  },
+  profileCardSubtitle: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  profileCardProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: Spacing.sm,
+  },
+  profileCardProgressTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: Colors.progressTrack,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  profileCardProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  profileCardTimeLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    lineHeight: 12,
+    fontVariant: ['tabular-nums'],
+  },
+  onboardingThGrid: {
     gap: Spacing.sm,
     marginTop: Spacing.md,
     marginBottom: Spacing.md,
   },
   onboardingThCell: {
-    width: 60,
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.bgSubtle,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
   },
   onboardingThImg: {
-    width: 40,
-    height: 40,
-    marginBottom: 4,
+    width: 32,
+    height: 32,
+    marginRight: Spacing.md,
   },
   onboardingThText: {
-    ...Typography.caption,
+    ...Typography.body,
     color: Colors.textPrimary,
     fontWeight: '600',
   },
