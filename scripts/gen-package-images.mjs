@@ -126,6 +126,18 @@ collectBuilderBuilding(bb.traps().get());
 collectBuilderBuilding(bb.walls().get());
 collectBuilderBuilding(bb.builderHall().get());
 
+// Resource icons live outside the item APIs (images/other/*.png and images/other/ore/*.png).
+const resourceFiles = [
+  ['Gold', 'gold'],
+  ['Elixir', 'elixir'],
+  ['Dark Elixir', 'dark-elixir'],
+  ['Builder Gold', 'gold-b'],
+  ['Builder Elixir', 'elixir-b'],
+  ['Shiny Ore', 'ore/shiny-ore'],
+  ['Glowing Ore', 'ore/glowy-ore'],
+  ['Starry Ore', 'ore/starry-ore'],
+];
+
 async function req(p) {
   if (!p) return '0';
   const localPath = await ensureWebp(p);
@@ -160,6 +172,13 @@ async function generate() {
     lines.push('};');
     lines.push('');
   }
+
+  lines.push('export const PACKAGE_RESOURCE_IMAGES: Record<string, number> = {');
+  for (const [name, file] of resourceFiles) {
+    lines.push(`  ${JSON.stringify(name)}: ${await req(`images/other/${file}.png`)},`);
+  }
+  lines.push('};');
+  lines.push('');
 
   writeFileSync(outPath, lines.join('\n'));
   console.log(`Wrote ${outPath} (${homeEntries.length} home + ${builderEntries.length} builder items)`);
