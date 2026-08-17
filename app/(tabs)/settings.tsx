@@ -1132,45 +1132,50 @@ export default function SettingsScreen() {
         >
           <View style={styles.onboardingCard}>
             <View style={styles.onboardingIcon}>
-              <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />
+              <Ionicons name="person-add-outline" size={24} color={Colors.textPrimary} />
             </View>
-            <Text style={styles.onboardingTitle}>Enter Player Tag</Text>
+            <Text style={styles.onboardingTitle}>Add Account</Text>
             <Text style={styles.onboardingDesc}>
-              Find your tag in-game under Profile → My Profile. The API token from your existing account will be reused.
+              Enter your player tag. We'll fetch your profile and let you confirm before connecting.
             </Text>
-            <TextInput
-              style={styles.onboardingInput}
-              value={onboardingTag}
-              onChangeText={(t) => setOnboardingTag(t)}
-              placeholder="#PG8U2LR00"
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="characters"
-              autoCorrect={false}
-            />
-            <Text style={styles.onboardingFieldLabel}>Last Maxed Town Hall</Text>
-            <TextInput
-              style={styles.onboardingInput}
-              value={onboardingThLevel}
-              onChangeText={(t) => setOnboardingThLevel(t.replace(/[^0-9]/g, ''))}
-              placeholder="e.g. 12"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="number-pad"
-              maxLength={2}
-            />
+            <View style={styles.onboardingInputGroup}>
+              <Text style={styles.onboardingFieldLabel}>Player Tag</Text>
+              <TextInput
+                style={styles.onboardingInput}
+                value={onboardingTag}
+                onChangeText={(t) => setOnboardingTag(t)}
+                placeholder="#PG8U2LR00"
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={styles.onboardingInputGroup}>
+              <Text style={styles.onboardingFieldLabel}>Last Maxed TH (optional)</Text>
+              <TextInput
+                style={styles.onboardingInput}
+                value={onboardingThLevel}
+                onChangeText={(t) => setOnboardingThLevel(t.replace(/[^0-9]/g, ''))}
+                placeholder="e.g. 12"
+                placeholderTextColor={Colors.textMuted}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
             <View style={styles.onboardingActions}>
+              <PressableRipple
+                style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
+                onPress={() => setShowOnboarding(false)}
+              >
+                <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Cancel</Text>
+              </PressableRipple>
               <PressableRipple
                 style={styles.onboardingBtn}
                 onPress={handleOnboardingSave}
               >
-                <Text style={styles.onboardingBtnText}>Connect</Text>
+                <Text style={styles.onboardingBtnText}>Next</Text>
               </PressableRipple>
             </View>
-            <PressableRipple
-              style={styles.onboardingSkip}
-              onPress={() => setShowOnboarding(false)}
-            >
-              <Text style={styles.onboardingSkipText}>Cancel</Text>
-            </PressableRipple>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1919,6 +1924,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     width: '100%',
   },
+  onboardingInputGroup: {
+    width: '100%',
+    gap: Spacing.xs,
+  },
   onboardingFieldLabel: {
     ...Typography.caption,
     color: Colors.textSecondary,
@@ -1928,25 +1937,32 @@ const styles = StyleSheet.create({
   },
   onboardingActions: {
     width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   onboardingBtn: {
     backgroundColor: Colors.textPrimary,
     paddingVertical: Spacing.md,
     borderRadius: Radius.lg,
     alignItems: 'center',
+    flex: 1,
+    marginLeft: Spacing.sm,
   },
-  onboardingSkip: {
-    marginTop: Spacing.sm,
-  },
-  onboardingSkipText: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
-    textDecorationLine: 'underline',
+  onboardingBtnGhost: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   onboardingBtnText: {
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  onboardingBtnTextGhost: {
+    color: Colors.textSecondary,
   },
   changelogEntry: {
     marginBottom: Spacing.lg,
