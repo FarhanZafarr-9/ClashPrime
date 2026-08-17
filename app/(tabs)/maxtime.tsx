@@ -20,7 +20,7 @@ import type { TroopDetail } from '../../src/api/troopDetail';
 
 const PIPELINE_META: Record<PipelineKey, { title: string; icon: keyof typeof Ionicons.glyphMap; desc: string }> = {
   lab: { title: 'Laboratory', icon: 'flask-outline', desc: 'Troops, spells & sieges — one research at a time' },
-  builders: { title: 'Builders', icon: 'hammer-outline', desc: 'Buildings & heroes — divided across your builders' },
+  builders: { title: 'Builders', icon: 'hammer-outline', desc: 'Buildings & heroes — scheduled across your builders' },
   pets: { title: 'Pet House', icon: 'paw-outline', desc: 'Pets — one upgrade at a time' },
   equipment: { title: 'Equipment', icon: 'diamond-outline', desc: 'Blacksmith — instant, ores only' },
 };

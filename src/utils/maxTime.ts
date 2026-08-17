@@ -4,7 +4,14 @@ import { getMaxLevelAtTH, getSuperTroopNames, getArmyItem, getBuildingMaxLevelAt
 import { getBuildingEffectiveMax } from './buildingImages';
 import { getBuildingCopies, getCountAtTH } from './buildingCopies';
 import { getBuildingCategories } from './buildingData';
-import { remainingArmyCosts, remainingBuildingCosts, sumCosts, type CostTime } from './upgradeCosts';
+import {
+  remainingArmyCosts,
+  remainingBuildingCosts,
+  sumCosts,
+  buildingUpgradeChainTimes,
+  scheduleChains,
+  type CostTime,
+} from './upgradeCosts';
 
 export type PipelineKey = 'lab' | 'builders' | 'pets' | 'equipment';
 
@@ -21,7 +28,7 @@ export interface PipelineItemRow {
 
 export interface PipelineResult {
   key: PipelineKey;
-  /** Wall-clock seconds for this pipeline (builders already divided by count). */
+  /** Wall-clock seconds for this pipeline (builders uses chain scheduling). */
   timeSec: number;
   cost: number;
   byResource: Record<string, number>;
@@ -93,7 +100,11 @@ function buildSerialPipeline(
   return aggregate(key, rows);
 }
 
-/** Buildings + heroes compete for the same builder pool, so divide the total by the builder count. */
+/** Buildings + heroes compete for the same builder pool. Each hero and each
+ * building copy is a serial chain of upgrades, so chains are bin-packed onto
+ * the available builders (LPT) and the makespan is the real "time to max".
+ * A naive total/builderCount would undercount when a single long chain (e.g. a
+ * 21-day hero) can't be split across builders. */
 function buildBuildersPipeline(
   player: ClashPlayer,
   th: number,
@@ -101,6 +112,7 @@ function buildBuildersPipeline(
   armyDetails: Record<string, TroopDetail | null>,
 ): PipelineResult {
   const rows: PipelineItemRow[] = [];
+  const chains: number[] = [];
 
   const cats = getBuildingCategories(th);
   for (const items of Object.values(cats)) {
@@ -124,6 +136,7 @@ function buildBuildersPipeline(
       const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
       const copyLevel = copies.levels.length > 0 ? Math.max(...copies.levels) : 1;
       rows.push({ ...toRow(name, totalLevel, count * effectiveMax, ct), iconLevel: copyLevel });
+      chains.push(...buildingUpgradeChainTimes(name, copies.levels, effectiveMax));
     }
   }
 
@@ -134,10 +147,11 @@ function buildBuildersPipeline(
     const ct = remainingArmyCosts(armyDetails[hero.name], hero.level, maxLevel);
     if (ct.time <= 0 && ct.cost <= 0) continue;
     rows.push(toRow(hero.name, hero.level, maxLevel, ct));
+    if (ct.time > 0) chains.push(ct.time);
   }
 
   const total = aggregate('builders', rows);
-  return { ...total, timeSec: builderCount > 0 ? Math.ceil(total.timeSec / builderCount) : total.timeSec };
+  return { ...total, timeSec: scheduleChains(chains, builderCount) };
 }
 
 /** Equipment upgrades are instant — they only consume Shiny/Glowing/Starry ore at the Blacksmith. */
