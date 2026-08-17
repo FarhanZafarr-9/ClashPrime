@@ -314,6 +314,86 @@ export function HomeScreenSkeleton() {
   );
 }
 
+// ─── Time to Max tab skeleton ────────────────────────────────────────────────
+export function MaxTimeScreenSkeleton() {
+  const { colors } = useTheme();
+  const rowRadius = Radius.xl * 1.25;
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={{ flex: 1, paddingBottom: 150 }}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Skeleton width={150} height={26} borderRadius={6} />
+          <Skeleton width={220} height={13} borderRadius={4} style={{ marginTop: 6 }} />
+        </View>
+        {/* Hero card */}
+        <View style={[styles.maxTimeHeroCard, { backgroundColor: colors.bgCard }]}>
+          <Skeleton width={160} height={11} borderRadius={3} />
+          <Skeleton width={180} height={48} borderRadius={8} style={{ marginTop: Spacing.sm }} />
+          <Skeleton width="100%" height={12} borderRadius={4} style={{ marginTop: Spacing.sm }} />
+          {/* Resource grid */}
+          <View style={styles.maxTimeResourceGrid}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <View key={i} style={[styles.maxTimeResourceCell, { backgroundColor: colors.bgCardHover }]}>
+                <Skeleton width={32} height={32} borderRadius={Radius.md} />
+                <Skeleton width={60} height={13} borderRadius={4} />
+              </View>
+            ))}
+          </View>
+        </View>
+        {/* Builders card */}
+        <View style={styles.sectionLabel}>
+          <Skeleton width={70} height={13} borderRadius={4} />
+        </View>
+        <View style={[styles.maxTimeBuilderCard, { backgroundColor: colors.bgCard }]}>
+          <View style={{ flex: 1, gap: 5 }}>
+            <Skeleton width={70} height={16} borderRadius={5} />
+            <Skeleton width={170} height={11} borderRadius={4} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} width={32} height={30} borderRadius={15} />
+            ))}
+          </View>
+        </View>
+        {/* Pipelines */}
+        <View style={styles.sectionLabel}>
+          <Skeleton width={80} height={13} borderRadius={4} />
+        </View>
+        <View style={styles.maxTimePipelineSections}>
+          {[0, 1, 2, 3].map((i) => (
+            <View
+              key={i}
+              style={[
+                styles.maxTimePipelineRow,
+                { backgroundColor: colors.bgCard },
+                i === 0 && { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
+                i === 3 && { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
+              ]}
+            >
+              <Skeleton
+                width={32}
+                height={32}
+                borderRadius={Radius.md}
+                style={{
+                  ...(i === 0 ? styles.maxTimePipelineRowIconFirst : {}),
+                  ...(i === 3 ? styles.maxTimePipelineRowIconLast : {}),
+                }}
+              />
+              <View style={{ flex: 1, gap: 5 }}>
+                <Skeleton width={90} height={13} borderRadius={4} />
+                <Skeleton width="85%" height={10} borderRadius={3} />
+              </View>
+              <Skeleton width={56} height={26} borderRadius={Radius.sm} />
+            </View>
+          ))}
+        </View>
+        <View style={{ height: 40 }} />
+      </View>
+    </SafeAreaView>
+  );
+}
+
 // ─── Profile tab skeleton ─────────────────────────────────────────────────────
 export function ProfileScreenSkeleton() {
   const { colors } = useTheme();
@@ -611,6 +691,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: Spacing.base,
+  },
+  maxTimeHeroCard: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: Radius.xxl,
+  },
+  maxTimeResourceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginTop: Spacing.md,
+    justifyContent: 'space-between',
+  },
+  maxTimeResourceCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.sm,
+    minWidth: '48%',
+    flex: 1,
+  },
+  maxTimeBuilderCard: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.xl,
+    padding: Spacing.md,
+    borderRadius: Radius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  maxTimePipelineSections: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs + 2,
+    borderRadius: Radius.xl * 1.25,
+    overflow: 'hidden',
+  },
+  maxTimePipelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.sm,
+  },
+  maxTimePipelineRowIconFirst: {
+    borderTopLeftRadius: Radius.lg,
+  },
+  maxTimePipelineRowIconLast: {
+    borderBottomLeftRadius: Radius.lg,
   },
   countBarSkeleton: {
     flexDirection: 'row',

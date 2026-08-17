@@ -7,6 +7,7 @@ import { Chip } from '../../src/components/Chip';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
+import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
@@ -112,13 +113,9 @@ export default function MaxTimeScreen() {
     };
   }, [result, discounts]);
 
-  if (loading || !player) {
+  if (loading || !player || !builderLoaded || !result || !discounted) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </SafeAreaView>
+      <MaxTimeScreenSkeleton />
     );
   }
 
@@ -285,49 +282,35 @@ export default function MaxTimeScreen() {
           )}
         </View>
 
-        {!builderLoaded ? (
-          <View style={styles.center}>
-            <Text style={styles.loadingText}>Loading...</Text>
+        <View style={styles.sectionHeaderWrap}>
+          <SectionHeader title="Builders" />
+        </View>
+        <View style={styles.builderCard}>
+          <View style={styles.builderTextBlock}>
+            <Text style={styles.builderTitle}>Builders</Text>
+            <Text style={styles.builderDesc}>Building & hero time is divided across these</Text>
           </View>
-        ) : (
-          <>
-            <View style={styles.sectionHeaderWrap}>
-              <SectionHeader title="Builders" />
-            </View>
-            <View style={styles.builderCard}>
-              <View style={styles.builderTextBlock}>
-                <Text style={styles.builderTitle}>Builders</Text>
-                <Text style={styles.builderDesc}>Building & hero time is divided across these</Text>
-              </View>
-              <View style={styles.builderChips}>
-                {BUILDER_PILLS.map((n) => (
-                  <Chip
-                    key={n}
-                    label={String(n)}
-                    selected={builderCount === n}
-                    onPress={() => setBuilderCount(n)}
-                  />
-                ))}
-              </View>
-            </View>
-          </>
-        )}
+          <View style={styles.builderChips}>
+            {BUILDER_PILLS.map((n) => (
+              <Chip
+                key={n}
+                label={String(n)}
+                selected={builderCount === n}
+                onPress={() => setBuilderCount(n)}
+              />
+            ))}
+          </View>
+        </View>
 
         <View style={styles.sectionHeaderWrap}>
           <SectionHeader title="Pipelines" />
         </View>
-        {result && discounted ? (
-          <View style={styles.pipelineSections}>
-            {renderPipeline(result.lab, discounts.army, false)}
-            {renderPipeline(result.builders, discounts.buildings, false)}
-            {renderPipeline(result.pets, discounts.army, false)}
-            {renderPipeline(result.equipment, discounts.army, true)}
-          </View>
-        ) : (
-          <View style={styles.center}>
-            <Text style={styles.loadingText}>Crunching numbers...</Text>
-          </View>
-        )}
+        <View style={styles.pipelineSections}>
+          {renderPipeline(result.lab, discounts.army, false)}
+          {renderPipeline(result.builders, discounts.buildings, false)}
+          {renderPipeline(result.pets, discounts.army, false)}
+          {renderPipeline(result.equipment, discounts.army, true)}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -340,16 +323,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: 150,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxl,
-  },
-  loadingText: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
   },
   header: {
     paddingHorizontal: Spacing.base,
