@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, clashFontFamily } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../../src/api/clash';
 import { getApiToken } from '../../src/hooks/usePlayer';
@@ -1339,11 +1339,11 @@ function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: b
           <Text style={styles.logDetail}>{formatTime(entry.endTime)}</Text>
         </View>
         <Text style={styles.logStars}>
-          <Text style={{ color: (entry.clan.stars || 0) > (entry.opponent.stars || 0) ? '#4CAF50' : Colors.textSecondary }}>
+          <Text style={{ color: (entry.clan.stars || 0) > (entry.opponent.stars || 0) ? '#4CAF50' : Colors.textSecondary, fontFamily: clashFontFamily() }}>
             {entry.clan.stars ?? '—'}
           </Text>
-          <Text style={{ color: Colors.textMuted }}> - </Text>
-          <Text style={{ color: (entry.opponent.stars || 0) > (entry.clan.stars || 0) ? '#f44336' : Colors.textSecondary }}>
+          <Text style={{ color: Colors.textMuted, fontFamily: clashFontFamily() }}> - </Text>
+          <Text style={{ color: (entry.opponent.stars || 0) > (entry.clan.stars || 0) ? '#f44336' : Colors.textSecondary, fontFamily: clashFontFamily() }}>
             {entry.opponent.stars ?? '—'}
           </Text>
         </Text>

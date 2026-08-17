@@ -20,7 +20,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
 import { getStringAsync, setStringAsync } from 'expo-clipboard';
-import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref } from '../../src/theme';
+import { Chip } from '../../src/components/Chip';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 const heartImg = require('../../images/heart.png') as any;
@@ -231,6 +232,12 @@ export default function SettingsScreen() {
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
   const { isDark, colors, setThemeMode } = useTheme();
+  const { pref: fontPref, setClashFontPref } = useClashFontPref();
+  const clashFontDesc = fontPref === 'off'
+    ? 'Use the system font'
+    : fontPref === 'titles'
+      ? 'Clash font for headings'
+      : 'Clash font everywhere';
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'tag' | 'token'>('tag');
   const [modalTitle, setModalTitle] = useState('');
@@ -879,7 +886,20 @@ export default function SettingsScreen() {
               />
             }
             isFirst
+          />
+          <SettingRow
+            icon="text-outline"
+            title="Clash Font"
+            desc={clashFontDesc}
+            compact
             isLast
+            children={
+              <View style={styles.fontChipRow}>
+                <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
+                <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
+                <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
+              </View>
+            }
           />
         </SettingCard>
 
@@ -1525,6 +1545,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+  },
+  fontChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    flexShrink: 1,
   },
   discountDot: {
     width: 10,

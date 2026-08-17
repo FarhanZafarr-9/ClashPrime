@@ -103,6 +103,85 @@ export function useTheme() {
   };
 }
 
+// Optional Clash font: 'off' | 'titles' | 'all'
+export type FontPref = 'off' | 'titles' | 'all';
+
+// Properties that mark a style as text so "all" mode can target every label.
+const FONT_TEXT_PROPS = ['fontSize', 'fontWeight', 'fontVariant', 'lineHeight', 'letterSpacing', 'textAlign', 'textTransform', 'fontStyle'] as const;
+
+// Clash glyphs render large, so scale sizes down when the font is active.
+const CLASH_FONT_SCALE = 0.85;
+
+let clashFontPref: FontPref = 'off';
+let clashFontLoaded = false;
+
+export function isClashFontLoaded() {
+  return clashFontLoaded;
+}
+
+export function setClashFontLoaded(loaded: boolean) {
+  if (clashFontLoaded === loaded) return;
+  clashFontLoaded = loaded;
+  notify();
+}
+
+export function getClashFontPref() {
+  return clashFontPref;
+}
+
+export async function loadClashFontPref() {
+  try {
+    const val = await AsyncStorage.getItem('clashprime_clashfont');
+    if (val === 'off' || val === 'titles' || val === 'all') {
+      clashFontPref = val;
+      notify();
+    }
+  } catch (e) {
+    console.warn('Failed to load font preference', e);
+  }
+}
+
+export async function setClashFontPref(pref: FontPref) {
+  clashFontPref = pref;
+  try {
+    await AsyncStorage.setItem('clashprime_clashfont', pref);
+  } catch (e) {
+    console.warn('Failed to save font preference', e);
+  }
+  notify();
+}
+
+// Resolve the Clash font family for inline styles (not routed through StyleSheet).
+// Returns undefined when the font is off or the style is below 'titles' size.
+export function clashFontFamily(weight: number | string = 400, fontSize?: number): string | undefined {
+  if (!clashFontLoaded || clashFontPref === 'off') return undefined;
+  if (clashFontPref === 'titles' && (!fontSize || fontSize < 20)) return undefined;
+  let w = typeof weight === 'number' ? weight : parseInt(String(weight), 10);
+  if (String(weight) === 'bold') w = 700;
+  return w >= 600 ? 'Clash-Bold' : 'Clash-Regular';
+}
+
+// React Hook for the Clash font preference
+export function useClashFontPref() {
+  const [pref, setPref] = useState<FontPref>(clashFontPref);
+
+  useEffect(() => {
+    const l = () => setPref(clashFontPref);
+    listeners.add(l);
+    // Sync initial state
+    setPref(clashFontPref);
+    return () => {
+      listeners.delete(l);
+    };
+  }, []);
+
+  return {
+    pref,
+    loaded: clashFontLoaded,
+    setClashFontPref,
+  };
+}
+
 // Proxy for the Colors object to dynamically return values based on current theme state
 export const Colors = new Proxy({}, {
   get(target, prop) {
@@ -138,6 +217,28 @@ StyleSheet.create = function <T extends StyleSheet.NamedStyles<T> | StyleSheet.N
           resolved[k] = colorKey ? currentColors[colorKey] : v;
         } else {
           resolved[k] = v;
+        }
+      }
+
+      // Apply the Clash font when enabled: 'titles' only touches large styles,
+      // 'all' applies to every text style. Clash glyphs run big, so sizes are
+      // scaled down at the same time.
+      if (clashFontLoaded && clashFontPref !== 'off' && !rawStyle.fontFamily) {
+        const isTextStyle = FONT_TEXT_PROPS.some((p) => rawStyle[p] != null);
+        const fontSize = typeof rawStyle.fontSize === 'number' ? rawStyle.fontSize : 0;
+        if (isTextStyle && (clashFontPref === 'all' || fontSize >= 20)) {
+          let weight = typeof rawStyle.fontWeight === 'number'
+            ? rawStyle.fontWeight
+            : parseInt(String(rawStyle.fontWeight), 10);
+          if (String(rawStyle.fontWeight) === 'bold') weight = 700;
+          resolved.fontFamily = weight >= 600 ? 'Clash-Bold' : 'Clash-Regular';
+          delete resolved.fontWeight;
+          if (typeof rawStyle.fontSize === 'number') {
+            resolved.fontSize = Math.max(9, Math.round(rawStyle.fontSize * CLASH_FONT_SCALE));
+            if (typeof rawStyle.lineHeight === 'number') {
+              resolved.lineHeight = Math.round(rawStyle.lineHeight * CLASH_FONT_SCALE);
+            }
+          }
         }
       }
       return resolved;

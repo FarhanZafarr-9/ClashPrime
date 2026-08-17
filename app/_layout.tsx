@@ -1,12 +1,13 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BackHandler } from 'react-native';
 import { useEffect, useState, useCallback } from 'react';
+import { useFonts } from 'expo-font';
 import { PlayerProvider } from '../src/hooks/usePlayerContext';
 import { GameDataProvider } from '../src/hooks/useGameData';
 import { TimerProvider } from '../src/hooks/useTimerContext';
-import { useTheme, loadTheme } from '../src/theme';
+import { useTheme, loadTheme, loadClashFontPref, setClashFontLoaded, useClashFontPref } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
 import { loadDiscounts } from '../src/hooks/useDiscounts';
 import * as SplashScreen from 'expo-splash-screen';
@@ -15,39 +16,101 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const router = useRouter();
-  const segments = useSegments();
+  const navigationRef = useNavigationContainerRef();
   const [checked, setChecked] = useState(false);
   const { isDark, colors } = useTheme();
+  const { pref: fontPref } = useClashFontPref();
+
+  const [fontsLoaded, fontError] = useFonts({
+    'Clash-Regular': require('../assets/fonts/Clash-Regular.ttf'),
+    'Clash-Bold': require('../assets/fonts/Clash-Bold.ttf'),
+  });
+  const fontsReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
     (async () => {
       await loadTheme();
+      await loadClashFontPref();
       await loadDiscounts();
       const token = await getApiToken();
       if (!token) {
         router.replace('/onboarding');
       }
       setChecked(true);
-      SplashScreen.hideAsync().catch(() => {});
     })();
   }, []);
 
+  useEffect(() => {
+    setClashFontLoaded(fontsLoaded);
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    if (checked && fontsReady) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [checked, fontsReady]);
+
   const handleBackPress = useCallback(() => {
-    // Let expo-router handle back navigation within tabs
-    // Return true to indicate we've handled it (prevents app exit)
-    if (segments.length > 1) {
-      router.back();
+    const navigation = navigationRef.current;
+    if (!navigation) {
+      console.log('[BACK-DEBUG] no navigation ref');
+      return false;
+    }
+    const rootState = navigation.getRootState();
+    const appStack = rootState.routes[0]?.state as
+      | { key: string; index: number; routes: { name: string; state?: unknown }[] }
+      | undefined;
+    if (!appStack || !Array.isArray(appStack.routes)) {
+      console.log('[BACK-DEBUG] unexpected state', JSON.stringify(rootState));
+      return false;
+    }
+    console.log('[BACK-DEBUG] appRoutes=', JSON.stringify(appStack.routes.map((r) => r.name)), 'appIndex=', appStack.index);
+    if (appStack.routes.length > 1 && appStack.index === appStack.routes.length - 1) {
+      navigation.dispatch({ type: 'GO_BACK', target: appStack.key });
+      console.log('[BACK-DEBUG] popped app stack screen');
       return true;
     }
+    const tabsRoute = appStack.routes.find((r) => r.name === '(tabs)');
+    const tabState = tabsRoute?.state as
+      | { key: string; history: { key: string }[] }
+      | undefined;
+    console.log('[BACK-DEBUG] tab key=', tabState?.key, 'history=', JSON.stringify(tabState?.history));
+    if (tabState && tabState.history && tabState.history.length > 1) {
+      navigation.dispatch({ type: 'GO_BACK', target: tabState.key });
+      console.log('[BACK-DEBUG] dispatched GO_BACK to', tabState.key);
+      return true;
+    }
+    console.log('[BACK-DEBUG] nothing to go back -> return false (exit)');
     return false;
-  }, [router, segments.length]);
+  }, [navigationRef]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     return () => subscription.remove();
   }, [handleBackPress]);
 
-  if (!checked) return null;
+  useEffect(() => {
+    const nav = navigationRef.current;
+    if (!nav) return;
+    const sub = nav.addListener('state', () => {
+      const rootState = nav.getRootState();
+      const slot = rootState.routes[0] as any;
+      const appStack = slot?.state as any;
+      const tabsRoute = appStack?.routes?.find((r: any) => r.name === '(tabs)');
+      const tabsState = tabsRoute?.state as any;
+      console.log(
+        '[ROOT-STATE] rootRoutes=', JSON.stringify(rootState.routes.map((r: any) => r.name)),
+        'appRoutes=', JSON.stringify(appStack?.routes?.map((r: any) => r.name)),
+        'appIndex=', appStack?.index,
+        'tabIndex=', tabsState?.index,
+        'tabRoute=', tabsState?.routeNames?.[tabsState?.index],
+        'tabHistory=', JSON.stringify(tabsState?.history)
+      );
+    });
+    return () => sub();
+  }, [navigationRef]);
+
+  if (!checked || !fontsReady) return null;
 
   return (
     <SafeAreaProvider>
@@ -56,7 +119,7 @@ export default function RootLayout() {
           <TimerProvider>
             <StatusBar style={isDark ? 'light' : 'dark'} hidden />
             <Stack
-              key={isDark ? 'dark' : 'light'}
+              key={`${isDark ? 'dark' : 'light'}-${fontPref}`}
               screenOptions={{
                 headerShown: false,
                 contentStyle: { backgroundColor: colors.bg },
