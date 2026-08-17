@@ -62,6 +62,22 @@ const CATEGORY_META: Record<ProgressCategory, { label: string; icon: { set: 'ion
 
 const RUSHED_ACCENT = '#F6C453';
 
+// Strict duration parsing for custom timer input: any of d/h/m may appear, in
+// that order, each optional. Examples: "1h 32m", "1d 2h 3m", "45m", "2d".
+const CUSTOM_DURATION_RE = /^(?:(\d+)\s*d)?\s*(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?$/i;
+
+function parseCustomDuration(input: string): number | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const match = CUSTOM_DURATION_RE.exec(trimmed);
+  if (!match || (match[1] == null && match[2] == null && match[3] == null)) return null;
+  const days = match[1] ? parseInt(match[1], 10) : 0;
+  const hours = match[2] ? parseInt(match[2], 10) : 0;
+  const mins = match[3] ? parseInt(match[3], 10) : 0;
+  const total = days * 1440 + hours * 60 + mins;
+  return total > 0 ? total : null;
+}
+
 type HomeStatRow = { label: string; desc?: string; value: number | string; icon: keyof typeof Ionicons.glyphMap; accentColor?: string };
 type HomeStatGroup = { title: string; icon: keyof typeof Ionicons.glyphMap; desc: string; rows: HomeStatRow[] };
 
@@ -190,9 +206,16 @@ export default function HomeScreen() {
   const [addTimerVisible, setAddTimerVisible] = useState(false);
   const [timerLabel, setTimerLabel] = useState('');
   const [timerMinutes, setTimerMinutes] = useState(30);
+  const [timerCustom, setTimerCustom] = useState('');
+  const [timerCustomFocused, setTimerCustomFocused] = useState(false);
   const [addingTimer, setAddingTimer] = useState(false);
   const [timerInputFocused, setTimerInputFocused] = useState(false);
   const timerCardAnim = useRef(new Animated.Value(0)).current;
+
+  // Custom input takes priority when valid; otherwise fall back to the presets.
+  const customMinutes = parseCustomDuration(timerCustom);
+  const effectiveMinutes = customMinutes != null ? customMinutes : timerMinutes;
+  const hasValidDuration = effectiveMinutes > 0;
 
   useEffect(() => {
     if (addTimerVisible) {
@@ -1294,13 +1317,7 @@ export default function HomeScreen() {
 
           {/* ── Active Timers ── */}
           <View style={styles.sectionLabel}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={styles.sectionTitle}>Active Timers</Text>
-              <PressableRipple style={styles.addTimerBtn} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
-                <Ionicons name="alarm-outline" size={14} color={Colors.textPrimary} />
-                <Text style={styles.addTimerBtnText}>Add</Text>
-              </PressableRipple>
-            </View>
+            <Text style={styles.sectionTitle}>Active Timers</Text>
           </View>
           {reminders.length > 0 ? (
             <View style={styles.progressSections}>
@@ -1321,7 +1338,7 @@ export default function HomeScreen() {
                   </View>
                 )}
               >
-                {reminders.map((r, i) => {
+                {reminders.map((r) => {
                   const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
                   const expired = r.status === 'expired' || remaining <= 0;
                   const days = Math.floor(remaining / 86400000);
@@ -1333,7 +1350,7 @@ export default function HomeScreen() {
                     ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
                     : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
                   return (
-                    <View key={r.id} style={[styles.statRow, i === reminders.length - 1 && styles.statRowLast]}>
+                    <View key={r.id} style={styles.statRow}>
                       <View style={styles.statRowIcon}>
                         <Ionicons name="time-outline" size={16} color={Colors.textPrimary} />
                       </View>
@@ -1347,10 +1364,20 @@ export default function HomeScreen() {
                     </View>
                   );
                 })}
+                <PressableRipple style={[styles.statRow, styles.statRowLast, styles.addTimerRow]} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
+                  <View style={[styles.statRowIcon, styles.addTimerRowIcon]}>
+                    <Ionicons name="alarm-outline" size={16} color={Colors.textPrimary} />
+                  </View>
+                  <View style={styles.statRowText}>
+                    <Text style={styles.statRowLabel}>Add timer</Text>
+                    <Text style={styles.statRowSub}>Set a countdown for an upgrade</Text>
+                  </View>
+                  <Ionicons name="add" size={20} color={Colors.textSecondary} />
+                </PressableRipple>
               </CollapsibleSection>
             </View>
           ) : (
-            <PressableRipple style={styles.timersEmpty} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setAddTimerVisible(true); }}>
+            <PressableRipple style={styles.timersEmpty} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
               <View style={styles.timersEmptyIcon}>
                 <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
               </View>
@@ -1409,7 +1436,6 @@ export default function HomeScreen() {
                     onChangeText={setTimerLabel}
                     onFocus={() => setTimerInputFocused(true)}
                     onBlur={() => setTimerInputFocused(false)}
-                    autoFocus
                     maxLength={40}
                     returnKeyType="done"
                   />
@@ -1423,21 +1449,41 @@ export default function HomeScreen() {
                       return (
                         <PressableRipple
                           key={m}
-                          style={[styles.durationPill, timerMinutes === m && styles.durationPillActive]}
-                          onPress={() => setTimerMinutes(m)}
+                          style={[styles.durationPill, customMinutes == null && timerMinutes === m && styles.durationPillActive]}
+                          onPress={() => { setTimerMinutes(m); setTimerCustom(''); }}
                         >
-                          <Text style={[styles.durationPillText, timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
+                          <Text style={[styles.durationPillText, customMinutes == null && timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
                         </PressableRipple>
                       );
                     })}
                   </View>
+                  <TextInput
+                    style={[styles.modalInput, styles.modalCustomInput, timerCustomFocused && styles.modalInputFocused]}
+                    placeholder="Custom — e.g. 1d 2h 30m"
+                    placeholderTextColor={Colors.textMuted}
+                    value={timerCustom}
+                    onChangeText={setTimerCustom}
+                    onFocus={() => setTimerCustomFocused(true)}
+                    onBlur={() => setTimerCustomFocused(false)}
+                    keyboardType="numbers-and-punctuation"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    maxLength={24}
+                    returnKeyType="done"
+                  />
                   <View style={styles.durationSummary}>
                     <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
                     <Text style={styles.durationSummaryText}>
-                      Ends at{' '}
-                      <Text style={styles.durationSummaryTime}>
-                        {new Date(Date.now() + timerMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                      </Text>
+                      {customMinutes == null && timerCustom.trim() !== '' ? (
+                        <Text style={styles.durationSummaryError}>Use formats like 1d 2h 30m, 1h 32m or 45m</Text>
+                      ) : (
+                        <>
+                          Ends at{' '}
+                          <Text style={styles.durationSummaryTime}>
+                            {new Date(Date.now() + effectiveMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                          </Text>
+                        </>
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -1454,11 +1500,11 @@ export default function HomeScreen() {
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </PressableRipple>
                   <PressableRipple
-                    style={[styles.modalConfirmBtn, (!timerLabel.trim() || addingTimer) && { opacity: 0.4 }]}
-                    disabled={!timerLabel.trim() || addingTimer}
+                    style={[styles.modalConfirmBtn, (!timerLabel.trim() || !hasValidDuration || addingTimer) && { opacity: 0.4 }]}
+                    disabled={!timerLabel.trim() || !hasValidDuration || addingTimer}
                     onPress={async () => {
                       setAddingTimer(true);
-                      await addTimer(timerLabel.trim(), timerMinutes);
+                      await addTimer(timerLabel.trim(), effectiveMinutes);
                       setAddingTimer(false);
                       setAddTimerVisible(false);
                     }}
@@ -2241,26 +2287,21 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginLeft: 24,
   },
-  addTimerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.accentGhost,
-  },
-  addTimerBtnText: {
-    ...Typography.caption,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
   timerExpired: {
     color: Colors.success,
     fontWeight: '700',
   },
   timerDismiss: {
     padding: 4,
+  },
+  addTimerRow: {
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  addTimerRowIcon: {
+    borderBottomLeftRadius: Radius.xl,
   },
   timersEmpty: {
     flexDirection: 'row',
@@ -2366,13 +2407,16 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'transparent',
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
   },
   modalInputFocused: {
-    borderColor: Colors.textPrimary,
+    borderColor: Colors.border,
+  },
+  modalCustomInput: {
+    marginTop: Spacing.sm,
   },
   durationPresets: {
     flexDirection: 'row',
@@ -2414,6 +2458,10 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  durationSummaryError: {
+    color: Colors.warning,
+    fontWeight: '600',
   },
   notifHint: {
     flexDirection: 'row',
