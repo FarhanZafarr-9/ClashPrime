@@ -12,10 +12,17 @@ export interface CategoryReadiness {
   weight: number;
 }
 
+export interface PipelineReadiness {
+  key: 'lab' | 'builders' | 'pets';
+  pct: number;
+  children: CategoryReadiness[];
+}
+
 export interface ThReadiness {
   th: number;
   nextTh: number;
   categories: CategoryReadiness[];
+  pipelines: PipelineReadiness[];
   score: number;
   verdict: 'ready' | 'almost' | 'not-ready';
   verdictLabel: string;
@@ -26,16 +33,28 @@ export interface ThReadiness {
 
 const BUILDING_WEIGHTS: Record<string, number> = {
   Defenses: 1.0,
-  Resources: 0.6,
-  Army: 1.2,
-  Traps: 0.6,
-  Walls: 0.4,
+  Army: 0.7,
+  Storages: 0.6,
+  Collectors: 0.3,
+  Traps: 0.4,
+  Walls: 0.3,
 };
 
 const ARMY_WEIGHTS = {
   Heroes: 1.5,
-  Laboratory: 1.3,
-  Pets: 0.8,
+  Laboratory: 1.4,
+  Pets: 0.7,
+};
+
+const RESOURCE_CATS: { key: string; names: string[] }[] = [
+  { key: 'Storages', names: ['Gold Storage', 'Elixir Storage', 'Dark Elixir Storage'] },
+  { key: 'Collectors', names: ['Gold Mine', 'Elixir Collector', 'Dark Elixir Drill', 'Helper Hut'] },
+];
+
+const PIPELINE_GROUPS: Record<PipelineReadiness['key'], string[]> = {
+  lab: ['Laboratory'],
+  builders: ['Heroes', 'Defenses', 'Army', 'Storages', 'Collectors', 'Traps', 'Walls'],
+  pets: ['Pets'],
 };
 
 function pctOf(done: number, total: number): number {
@@ -101,6 +120,22 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
 
   const categories = getBuildingCategories(th);
   for (const [key, names] of Object.entries(HOME_CATEGORIES)) {
+    if (key === 'Resources') {
+      for (const rc of RESOURCE_CATS) {
+        const namesAtTh = rc.names.filter((n) => categories[key]?.[n]?.[String(th)]?.level != null);
+        const { done, total } = buildingCategory(key, namesAtTh, th, player);
+        if (total <= 0) continue;
+        cats.push({
+          key: rc.key,
+          label: rc.key,
+          pct: pctOf(done, total),
+          done,
+          total,
+          weight: BUILDING_WEIGHTS[rc.key] ?? 1,
+        });
+      }
+      continue;
+    }
     const namesAtTh = names.filter((n) => categories[key]?.[n]?.[String(th)]?.level != null);
     const { done, total } = buildingCategory(key, namesAtTh, th, player);
     if (total <= 0) continue;
@@ -143,6 +178,18 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     cats.push({ key, label: key, pct: pctOf(agg.done, agg.total), ...agg, weight });
   }
 
+  cats.sort((a, b) => b.weight - a.weight || a.pct - b.pct);
+
+  const pipelines: PipelineReadiness[] = (Object.keys(PIPELINE_GROUPS) as PipelineReadiness['key'][])
+    .map((key) => {
+      const children = cats.filter((c) => PIPELINE_GROUPS[key].includes(c.key));
+      if (children.length === 0) return null;
+      const weightSum = children.reduce((s, c) => s + c.weight, 0);
+      const pct = weightSum > 0 ? children.reduce((s, c) => s + c.pct * c.weight, 0) / weightSum : 100;
+      return { key, pct, children };
+    })
+    .filter((p): p is PipelineReadiness => p != null);
+
   let weighted = 0;
   let weightSum = 0;
   for (const c of cats) {
@@ -151,8 +198,11 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
   }
   const score = weightSum > 0 ? weighted / weightSum : 100;
 
-  const weakest = [...cats].sort((a, b) => a.pct - b.pct)[0];
-  const weakestLabel = weakest ? `${weakest.label} (${Math.round(weakest.pct)}%)` : 'nothing';
+  const gaps = cats
+    .map((c) => ({ label: c.label, pct: c.pct, gap: c.weight * (100 - c.pct) }))
+    .sort((a, b) => b.gap - a.gap);
+  const weakestLabel =
+    gaps.length > 0 ? `${gaps[0].label} (${Math.round(gaps[0].pct)}%)` : 'nothing';
 
   const verdict: ThReadiness['verdict'] = score >= 85 ? 'ready' : score >= 60 ? 'almost' : 'not-ready';
   const verdictLabel = verdict === 'ready' ? 'Safe to upgrade' : verdict === 'almost' ? 'Nearly there' : 'Not yet';
@@ -188,12 +238,16 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
   const note =
     verdict === 'ready'
       ? 'Strong progress — remaining debt is light enough to carry into the next TH.'
-      : `Your biggest gap: ${weakestLabel}. Consider finishing it before upgrading.`;
+      : `Biggest gaps: ${gaps
+          .slice(0, 2)
+          .map((g) => `${g.label} (${Math.round(g.pct)}%)`)
+          .join(' · ')}. A few more levels there would pay off most before you move up.`;
 
   return {
     th,
     nextTh,
     categories: cats,
+    pipelines,
     score,
     verdict,
     verdictLabel,
