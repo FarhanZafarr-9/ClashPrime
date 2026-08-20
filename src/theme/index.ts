@@ -198,6 +198,11 @@ StyleSheet.create = function <T extends StyleSheet.NamedStyles<T> | StyleSheet.N
   styles: T | StyleSheet.NamedStyles<T>
 ): T {
   const rawStyles = styles as Record<string, Record<string, any>>;
+  // Palette that was active when the style was defined. Colors captured from
+  // `Colors.*` are values from this palette; reversing against any other
+  // palette would mis-map shared values (e.g. #FFFFFF is `accent` in dark but
+  // `bgCard`/`bgElevated` in light) and leave cards dark in light mode.
+  const capturePalette = isDarkTheme ? DarkColors : LightColors;
   // Still call original so RN's internal registry is populated (needed for web / some platforms)
   originalCreate(styles);
 
@@ -211,8 +216,8 @@ StyleSheet.create = function <T extends StyleSheet.NamedStyles<T> | StyleSheet.N
       const resolved: Record<string, any> = {};
       for (const [k, v] of Object.entries(rawStyle)) {
         if (typeof v === 'string') {
-          const colorKey = (Object.keys(DarkColors) as (keyof typeof DarkColors)[]).find(
-            (ck) => DarkColors[ck] === v
+          const colorKey = (Object.keys(capturePalette) as (keyof typeof DarkColors)[]).find(
+            (ck) => capturePalette[ck] === v
           );
           resolved[k] = colorKey ? currentColors[colorKey] : v;
         } else {
