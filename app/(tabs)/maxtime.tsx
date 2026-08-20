@@ -11,10 +11,11 @@ import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
-import { getArmyTroopDetail, getArmyItemImage, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
+import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
 import { getBuildingItemImage, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
+import { computeThReadiness } from '../../src/utils/thReadiness';
 import { formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../../src/utils/upgradeCosts';
 import type { TroopDetail } from '../../src/api/troopDetail';
 
@@ -57,6 +58,7 @@ export default function MaxTimeScreen() {
   const { discounts } = useDiscounts();
   const [details, setDetails] = useState<Record<string, TroopDetail | null> | null>(null);
   const [expanded, setExpanded] = useState<Record<PipelineKey, boolean>>({ lab: false, builders: false, pets: false, equipment: false });
+  const [readinessOpen, setReadinessOpen] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
 
@@ -66,8 +68,10 @@ export default function MaxTimeScreen() {
     [...(player.troops ?? []), ...(player.spells ?? []), ...(player.heroes ?? []), ...(player.pets ?? [])]
       .filter((i) => i.village !== 'builderBase')
       .forEach((i) => names.add(i.name));
+    // Include not-yet-unlocked items so their details are available too.
+    for (const item of getAllItemsAtTH(th)) names.add(item.name);
     return [...names];
-  }, [player]);
+  }, [player, th]);
 
   const heroNames = useMemo(() => new Set((player?.heroes ?? []).map((h) => h.name)), [player]);
 
@@ -92,6 +96,11 @@ export default function MaxTimeScreen() {
     if (!player || !details) return null;
     return computeMaxTime({ player, th, builderCount, armyDetails: details });
   }, [player, th, builderCount, details]);
+
+  const readiness = useMemo(() => {
+    if (!player) return null;
+    return computeThReadiness(player, th);
+  }, [player, th]);
 
   const discounted = useMemo(() => {
     if (!result) return null;
@@ -121,32 +130,43 @@ export default function MaxTimeScreen() {
 
   const summaryTime = discounted ? formatTime(discounted.headlineTime) : '…';
 
+  const rowTimeSec = (row: PipelineItemRow, key: PipelineKey, scope: ScopeDiscount) => {
+    const itemScope = key === 'builders' ? rowScope(row, heroNames, discounts) : scope;
+    return Math.max(0, Math.round(row.timeSec * (1 - itemScope.timePercent / 100)));
+  };
+
   const renderItems = (items: PipelineItemRow[], key: PipelineKey, scope: ScopeDiscount) =>
-    items.map((row, i) => {
-      const itemScope = key === 'builders' ? rowScope(row, heroNames, discounts) : scope;
-      const timeSec = Math.max(0, Math.round(row.timeSec * (1 - itemScope.timePercent / 100)));
-      const cost = Math.max(0, Math.round(row.cost * (1 - itemScope.costPercent / 100)));
-      const byResource: Record<string, number> = {};
-      for (const [r, v] of Object.entries(row.byResource)) byResource[r] = Math.max(0, Math.round(v * (1 - itemScope.costPercent / 100)));
-      const isBuilding = key === 'builders' && !heroNames.has(row.name);
-      const iconSource = isBuilding
-        ? getBuildingItemImage(row.name, row.iconLevel)
-        : getArmyItemImage(row.name);
-      return (
-        <ItemCard
-          key={row.name}
-          name={row.name}
-          level={row.currentLevel}
-          maxLevel={row.maxLevel}
-          thMaxLevel={row.maxLevel}
-          iconSource={iconSource ?? undefined}
-          costLabel={formatCostBreakdown(byResource) || formatCost(cost)}
-          costResources={Object.keys(byResource).length > 0 ? byResource : undefined}
-          timeLabel={timeSec > 0 ? formatTimeShort(timeSec) : ''}
-          isLast={i === items.length - 1}
-        />
-      );
-    });
+    [...items]
+      .sort((a, b) => {
+        const ta = rowTimeSec(a, key, scope);
+        const tb = rowTimeSec(b, key, scope);
+        return ta - tb;
+      })
+      .map((row, i) => {
+        const itemScope = key === 'builders' ? rowScope(row, heroNames, discounts) : scope;
+        const timeSec = rowTimeSec(row, key, scope);
+        const cost = Math.max(0, Math.round(row.cost * (1 - itemScope.costPercent / 100)));
+        const byResource: Record<string, number> = {};
+        for (const [r, v] of Object.entries(row.byResource)) byResource[r] = Math.max(0, Math.round(v * (1 - itemScope.costPercent / 100)));
+        const isBuilding = key === 'builders' && !heroNames.has(row.name);
+        const iconSource = isBuilding
+          ? getBuildingItemImage(row.name, row.iconLevel)
+          : getArmyItemImage(row.name);
+        return (
+          <ItemCard
+            key={row.name}
+            name={row.name}
+            level={row.currentLevel}
+            maxLevel={row.maxLevel}
+            thMaxLevel={row.maxLevel}
+            iconSource={iconSource ?? undefined}
+            costLabel={formatCostBreakdown(byResource) || formatCost(cost)}
+            costResources={Object.keys(byResource).length > 0 ? byResource : undefined}
+            timeLabel={timeSec > 0 ? formatTimeShort(timeSec) : ''}
+            isLast={i === items.length - 1}
+          />
+        );
+      });
 
   const renderResourceRows = (byResource: Record<string, number>) => {
     const entries = (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
@@ -184,6 +204,10 @@ export default function MaxTimeScreen() {
     const isOpen = expanded[p.key];
     const d = discounted ? discounted[p.key] : null;
     const isEquipment = p.key === 'equipment';
+    const buildingSplitSec = (sec: number, isHero = false) => {
+      const pct = isHero ? discounts.army.timePercent : discounts.buildings.timePercent;
+      return Math.max(0, Math.round(sec * (1 - pct / 100)));
+    };
     const headerIconSource = p.key === 'lab'
       ? getBuildingItemImage('Lab')
       : p.key === 'builders'
@@ -218,6 +242,32 @@ export default function MaxTimeScreen() {
                     <Text style={styles.summaryValue}>{isEquipment ? 'Instant' : formatTime(d ? d.timeSec : p.timeSec)}</Text>
                   </View>
                   <View style={styles.summaryDivider} />
+                  {p.split && (
+                    <>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Buildings only</Text>
+                        <Text style={styles.summaryValue}>
+                          {formatTime(buildingSplitSec(p.split.buildingsOnlySec))}
+                        </Text>
+                      </View>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Heroes only</Text>
+                        <Text style={styles.summaryValue}>
+                          {formatTime(buildingSplitSec(p.split.heroesOnlySec, true))}
+                        </Text>
+                      </View>
+                      {p.split.optimalHeroBuilders >= 0 && (
+                        <View style={styles.summaryRow}>
+                          <Text style={styles.summaryLabel}>Optimal split</Text>
+                          <Text style={styles.summaryValue}>
+                            {p.split.optimalHeroBuilders}H / {p.split.optimalBuildingBuilders}B →{' '}
+                            {formatTime(buildingSplitSec(p.split.optimalSec))}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={styles.summaryDivider} />
+                    </>
+                  )}
                   {renderResourceRows(d ? d.byResource : p.byResource)}
                 </View>
                 {renderItems(p.items, p.key, scope)}
@@ -311,6 +361,62 @@ export default function MaxTimeScreen() {
           {renderPipeline(result.pets, discounts.army, false)}
           {renderPipeline(result.equipment, discounts.army, true)}
         </View>
+
+        <View style={styles.sectionHeaderWrap}>
+          <SectionHeader title="TH Upgrade Readiness" />
+        </View>
+        <View style={styles.readinessSection}>
+          <SettingRow
+            icon="trending-up-outline"
+            title={readiness ? `Ready for TH${readiness.nextTh}?` : 'TH Upgrade Readiness'}
+            desc={readiness ? readiness.verdictLabel : ''}
+            compact
+            isFirst
+            isLast={!readinessOpen}
+            onPress={() => setReadinessOpen((o) => !o)}
+            children={
+              readiness && (
+                <View style={styles.pipelineBadge}>
+                  <Text style={styles.pipelineTime}>{Math.round(readiness.score)}%</Text>
+                </View>
+              )
+            }
+          />
+          {readinessOpen && readiness && (
+            <View style={styles.readinessBody}>
+              <View style={styles.readinessTop}>
+                <Text
+                  style={[
+                    styles.readinessVerdict,
+                    { color: readiness.verdict === 'ready' ? Colors.success : readiness.verdict === 'almost' ? Colors.warning : Colors.destructive },
+                  ]}
+                >
+                  {readiness.verdictLabel}
+                </Text>
+                <Text style={styles.readinessScore}>{Math.round(readiness.score)}%</Text>
+              </View>
+              <View style={styles.readinessTrack}>
+                <View style={[styles.readinessFill, { width: `${Math.max(2, readiness.score)}%` }]} />
+              </View>
+              <Text style={styles.readinessNote}>{readiness.note}</Text>
+              <View style={styles.readinessDivider} />
+              {readiness.categories.map((c) => (
+                <View key={c.key} style={styles.readinessCatRow}>
+                  <Text style={styles.readinessCatLabel}>{c.label}</Text>
+                  <View style={styles.readinessCatTrack}>
+                    <View style={[styles.readinessCatFill, { width: `${Math.max(2, c.pct)}%` }]} />
+                  </View>
+                  <Text style={styles.readinessCatPct}>{Math.round(c.pct)}%</Text>
+                </View>
+              ))}
+              {readiness.nextUnlocks.length > 0 && (
+                <Text style={styles.readinessNext}>
+                  Unlocks at TH{readiness.nextTh}: {readiness.nextUnlocks.map((u) => u.value).join(' · ')}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -397,6 +503,111 @@ const styles = StyleSheet.create({
     ...Typography.body,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  readinessSection: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
+    borderRadius: Radius.xl * 1.25,
+    overflow: 'hidden',
+  },
+  readinessBody: {
+    backgroundColor: Colors.bgCard,
+    borderTopLeftRadius: Radius.md,
+    borderTopRightRadius: Radius.md,
+    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+  },
+  readinessTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  readinessText: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  readinessLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  readinessVerdict: {
+    ...Typography.headline,
+    fontWeight: '700',
+  },
+  readinessScore: {
+    ...Typography.largeTitle,
+    color: Colors.textPrimary,
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  readinessTrack: {
+    height: 8,
+    borderRadius: 6,
+    backgroundColor: Colors.progressTrack,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+  },
+  readinessFill: {
+    height: '100%',
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 6,
+  },
+  readinessNote: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    lineHeight: 18,
+    marginBottom: Spacing.sm,
+  },
+  readinessDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    marginBottom: Spacing.sm,
+  },
+  readinessCatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 3,
+  },
+  readinessCatLabel: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    width: 86,
+    fontWeight: '600',
+  },
+  readinessCatTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 5,
+    backgroundColor: Colors.progressTrack,
+    overflow: 'hidden',
+  },
+  readinessCatFill: {
+    height: '100%',
+    backgroundColor: Colors.textSecondary,
+    borderRadius: 6,
+  },
+  readinessCatPct: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    width: 34,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  readinessNext: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: Spacing.sm,
+    lineHeight: 16,
   },
   builderCard: {
     marginHorizontal: Spacing.base,
