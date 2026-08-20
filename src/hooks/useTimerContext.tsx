@@ -8,6 +8,8 @@ import {
   migrateLegacyReminders,
   requestPermission,
   ensureChannel,
+  ensureOngoingChannel,
+  syncOngoingTimerNotification,
 } from './useReminders';
 import { usePlayer } from './usePlayerContext';
 
@@ -42,11 +44,13 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const reload = useCallback(async (accountTag: string) => {
     const updated = await markExpiredReminders(accountTag);
     setReminders(updated);
+    return updated;
   }, []);
 
   useEffect(() => {
     (async () => {
       await ensureChannel();
+      await ensureOngoingChannel();
       const perm = await requestPermission();
       setHasPermission(perm);
     })();
@@ -63,12 +67,15 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     tickRef.current = setInterval(async () => {
-      await reload(tagRef.current);
+      const updated = await reload(tagRef.current);
+      if (hasPermission) {
+        await syncOngoingTimerNotification(updated);
+      }
     }, 1000);
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
     };
-  }, [reload]);
+  }, [reload, hasPermission]);
 
   const addTimer = useCallback(async (label: string, durationMinutes: number) => {
     await createReminder(tagRef.current, label, durationMinutes);
