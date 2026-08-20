@@ -134,6 +134,7 @@ export async function syncOngoingTimerNotification(reminders: TimerReminder[]): 
       data: { type: 'timer-ongoing', reminderId: next.id },
       android: {
         channelId: ONGOING_CHANNEL_ID,
+        smallIcon: 'notification_icon',
         category: AndroidCategory.PROGRESS,
         ongoing: true,
         autoCancel: false,
