@@ -1,6 +1,6 @@
 import type { ClashPlayer } from '../types/clash';
 import type { TroopDetail } from '../api/troopDetail';
-import { getMaxLevelAtTH, getSuperTroopNames, getArmyItem, getBuildingMaxLevelAtTH } from './armyData';
+import { getMaxLevelAtTH, getSuperTroopNames, getArmyItem, getBuildingMaxLevelAtTH, getAllItemsAtTH } from './armyData';
 import { getBuildingEffectiveMax } from './buildingImages';
 import { getBuildingCopies, getCountAtTH } from './buildingCopies';
 import { getBuildingCategories } from './buildingData';
@@ -26,6 +26,24 @@ export interface PipelineItemRow {
   iconLevel?: number;
 }
 
+/** Buildings vs heroes split stats for the builders pipeline. */
+export interface BuilderSplit {
+  buildingChains: number;
+  heroChains: number;
+  /** Makespan if every builder is dedicated to buildings only. */
+  buildingsOnlySec: number;
+  /** Makespan if every builder is dedicated to heroes only. */
+  heroesOnlySec: number;
+  /** Sum of building chain times on a single builder (serial). */
+  buildingsSerialSec: number;
+  /** Sum of hero chain times on a single builder (serial). */
+  heroesSerialSec: number;
+  /** Best hero-builder count in the minimal makespan split (or -1 when no split applies). */
+  optimalHeroBuilders: number;
+  optimalBuildingBuilders: number;
+  optimalSec: number;
+}
+
 export interface PipelineResult {
   key: PipelineKey;
   /** Wall-clock seconds for this pipeline (builders uses chain scheduling). */
@@ -33,6 +51,8 @@ export interface PipelineResult {
   cost: number;
   byResource: Record<string, number>;
   items: PipelineItemRow[];
+  /** Only present on the builders pipeline. */
+  split?: BuilderSplit;
 }
 
 export interface MaxTimeInput {
@@ -79,6 +99,49 @@ interface LeveledItem {
   village?: string;
 }
 
+/** Items the player has not unlocked yet at this Town Hall, starting from level 0. */
+function lockedItemsAtTH(th: number, types: string[]): LeveledItem[] {
+  return getAllItemsAtTH(th)
+    .filter((i) => types.includes(i.type))
+    .map((i) => ({ name: i.name, level: 0 }));
+}
+
+/** Merge player-owned items (real level) over the locked set (level 0), deduped by name. */
+function mergeLeveled(playerItems: LeveledItem[], locked: LeveledItem[]): LeveledItem[] {
+  const byName = new Map<string, LeveledItem>();
+  for (const it of locked) byName.set(it.name, it);
+  for (const it of playerItems) {
+    if (it.village === 'builderBase') continue;
+    byName.set(it.name, { name: it.name, level: it.level });
+  }
+  return [...byName.values()];
+}
+
+/** Best partition of `builderCount` builders between heroes and buildings. */
+function optimalBuilderSplit(
+  buildingChains: number[],
+  heroChains: number[],
+  builderCount: number,
+): { optimalHeroBuilders: number; optimalBuildingBuilders: number; optimalSec: number } {
+  let optimalHeroBuilders = -1;
+  let optimalSec = Infinity;
+  if (builderCount >= 2) {
+    for (let h = 1; h < builderCount; h++) {
+      const b = builderCount - h;
+      const sec = Math.max(scheduleChains(heroChains, h), scheduleChains(buildingChains, b));
+      if (sec < optimalSec) {
+        optimalSec = sec;
+        optimalHeroBuilders = h;
+      }
+    }
+  }
+  return {
+    optimalHeroBuilders,
+    optimalBuildingBuilders: optimalHeroBuilders >= 0 ? builderCount - optimalHeroBuilders : -1,
+    optimalSec: optimalHeroBuilders >= 0 ? optimalSec : 0,
+  };
+}
+
 /** Lab-style items (troops/dark troops/sieges, spells/dark spells, pets) share one serial research building each. */
 function buildSerialPipeline(
   key: PipelineKey,
@@ -107,12 +170,14 @@ function buildSerialPipeline(
  * 21-day hero) can't be split across builders. */
 function buildBuildersPipeline(
   player: ClashPlayer,
+  heroItems: LeveledItem[],
   th: number,
   builderCount: number,
   armyDetails: Record<string, TroopDetail | null>,
 ): PipelineResult {
   const rows: PipelineItemRow[] = [];
-  const chains: number[] = [];
+  const buildingChains: number[] = [];
+  const heroChains: number[] = [];
 
   const cats = getBuildingCategories(th);
   for (const items of Object.values(cats)) {
@@ -136,22 +201,33 @@ function buildBuildersPipeline(
       const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
       const copyLevel = copies.levels.length > 0 ? Math.max(...copies.levels) : 1;
       rows.push({ ...toRow(name, totalLevel, count * effectiveMax, ct), iconLevel: copyLevel });
-      chains.push(...buildingUpgradeChainTimes(name, copies.levels, effectiveMax));
+      buildingChains.push(...buildingUpgradeChainTimes(name, copies.levels, effectiveMax));
     }
   }
 
-  for (const hero of player.heroes ?? []) {
+  for (const hero of heroItems) {
     if (hero.village === 'builderBase') continue;
     const maxLevel = getMaxLevelAtTH(hero.name, th) ?? 0;
     if (maxLevel <= 0) continue;
     const ct = remainingArmyCosts(armyDetails[hero.name], hero.level, maxLevel);
     if (ct.time <= 0 && ct.cost <= 0) continue;
     rows.push(toRow(hero.name, hero.level, maxLevel, ct));
-    if (ct.time > 0) chains.push(ct.time);
+    if (ct.time > 0) heroChains.push(ct.time);
   }
 
+  const chains = [...buildingChains, ...heroChains];
   const total = aggregate('builders', rows);
-  return { ...total, timeSec: scheduleChains(chains, builderCount) };
+  const optimal = optimalBuilderSplit(buildingChains, heroChains, builderCount);
+  const split: BuilderSplit = {
+    buildingChains: buildingChains.length,
+    heroChains: heroChains.length,
+    buildingsOnlySec: scheduleChains(buildingChains, builderCount),
+    heroesOnlySec: scheduleChains(heroChains, builderCount),
+    buildingsSerialSec: buildingChains.reduce((a, b) => a + b, 0),
+    heroesSerialSec: heroChains.reduce((a, b) => a + b, 0),
+    ...optimal,
+  };
+  return { ...total, timeSec: scheduleChains(chains, builderCount), split };
 }
 
 /** Equipment upgrades are instant — they only consume Shiny/Glowing/Starry ore at the Blacksmith. */
@@ -188,14 +264,16 @@ function buildEquipmentPipeline(player: ClashPlayer, th: number): PipelineResult
 
 export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
   const { player, th, builderCount, armyDetails } = input;
-  const lab = buildSerialPipeline(
-    'lab',
+  // Locked (not yet unlocked) troops/spells/heroes still count toward max: the
+  // player must research and upgrade them too, so they start from level 0.
+  const labItems = mergeLeveled(
     [...(player.troops ?? []), ...(player.spells ?? [])],
-    th,
-    armyDetails,
+    lockedItemsAtTH(th, ['troop', 'spell']),
   );
+  const heroItems = mergeLeveled(player.heroes ?? [], lockedItemsAtTH(th, ['hero']));
+  const lab = buildSerialPipeline('lab', labItems, th, armyDetails);
   const pets = buildSerialPipeline('pets', player.pets ?? [], th, armyDetails);
-  const builders = buildBuildersPipeline(player, th, builderCount, armyDetails);
+  const builders = buildBuildersPipeline(player, heroItems, th, builderCount, armyDetails);
   const equipment = buildEquipmentPipeline(player, th);
 
   const totalTimeSec = Math.max(lab.timeSec, builders.timeSec, pets.timeSec, equipment.timeSec);
