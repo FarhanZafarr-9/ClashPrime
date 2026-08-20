@@ -1,9 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
+import notifee, { AndroidCategory, AndroidImportance, AuthorizationStatus } from 'react-native-notify-kit';
 import { TimerReminder } from '../types/clash';
 
 const LEGACY_KEY = 'clashprime_reminders';
 const CHANNEL_ID = 'timer-expiry';
+
+let notifeeLinked = false;
+try {
+  notifeeLinked = !!(
+    NativeModules?.NotifeeApiModule ||
+    TurboModuleRegistry?.get?.('NotifeeApiModule')
+  );
+} catch {}
 
 function remindersKey(accountTag: string): string {
   if (!accountTag) return LEGACY_KEY;
@@ -43,28 +52,27 @@ export async function ensureChannel(): Promise<void> {
 
 // ── Ongoing pinned timer notification ─────────────────────────────────────────
 // A sticky (non-dismissible) Android notification showing live countdown
-// progress for the next active timer. It re-presents itself on a throttle
-// window so the progress bar and remaining time stay fresh while the app runs.
+// progress for the next active timer. It is backed by Notifee so it can render
+// a real Android progress bar and update in place by re-presenting the same id.
 
 const ONGOING_CHANNEL_ID = 'timer-ongoing';
 const ONGOING_NOTIFICATION_ID = 'clashprime-ongoing-timer';
 const ONGOING_REFRESH_MS = 30_000;
 
 let ongoingChannelReady = false;
-let ongoingNotificationId: string | null = null;
 let lastOngoingSync = 0;
 let lastOngoingSignature = '';
 
 export async function ensureOngoingChannel(): Promise<void> {
-  if (!Notifications || Platform.OS !== 'android') return;
+  if (!notifeeLinked || Platform.OS !== 'android') return;
   try {
-    await Notifications.setNotificationChannelAsync(ONGOING_CHANNEL_ID, {
+    await notifee.createChannel({
+      id: ONGOING_CHANNEL_ID,
       name: 'Active Timers',
-      importance: Notifications.AndroidImportance.LOW,
-      vibrationPattern: [],
-      sound: null,
+      importance: AndroidImportance.LOW,
+      vibration: false,
       lights: false,
-      showBadge: false,
+      badge: false,
       bypassDnd: false,
     });
     ongoingChannelReady = true;
@@ -79,17 +87,15 @@ function formatCountdownLabel(ms: number): string {
 }
 
 export async function stopOngoingTimerNotification(): Promise<void> {
-  if (!Notifications || Platform.OS !== 'android') return;
-  if (!ongoingNotificationId) return;
+  if (!notifeeLinked || Platform.OS !== 'android') return;
   try {
-    await Notifications.dismissNotificationAsync(ongoingNotificationId);
+    await notifee.cancelNotification(ONGOING_NOTIFICATION_ID);
   } catch {}
-  ongoingNotificationId = null;
   lastOngoingSignature = '';
 }
 
 export async function syncOngoingTimerNotification(reminders: TimerReminder[]): Promise<void> {
-  if (!Notifications || Platform.OS !== 'android') return;
+  if (!notifeeLinked || Platform.OS !== 'android') return;
 
   const now = Date.now();
   const active = reminders
@@ -118,37 +124,38 @@ export async function syncOngoingTimerNotification(reminders: TimerReminder[]): 
   if (!ongoingChannelReady) await ensureOngoingChannel();
 
   const next = active[0];
-  const barWidth = 12;
-  const filled = Math.min(barWidth, Math.round((next.pct / 100) * barWidth));
-  const bar = '█'.repeat(filled) + '░'.repeat(barWidth - filled);
   const remainingLabel = next.remaining > 0 ? formatCountdownLabel(next.remaining) : 'done';
 
-  const content: any = {
-    title: `Active timer · ${next.label}`,
-    body: `${bar} ${next.pct}% — ${remainingLabel}`,
-    sound: false,
-    sticky: true,
-    autoDismiss: false,
-    channelId: ONGOING_CHANNEL_ID,
-    data: { type: 'timer-ongoing', reminderId: next.id },
-  };
-
-  if (ongoingNotificationId) {
-    try {
-      await Notifications.dismissNotificationAsync(ongoingNotificationId);
-    } catch {}
-    ongoingNotificationId = null;
-  }
   try {
-    ongoingNotificationId = await Notifications.scheduleNotificationAsync({
-      identifier: ONGOING_NOTIFICATION_ID,
-      content,
-      trigger: null,
+    await notifee.displayNotification({
+      id: ONGOING_NOTIFICATION_ID,
+      title: `Active timer · ${next.label}`,
+      body: `${next.pct}% — ${remainingLabel}`,
+      data: { type: 'timer-ongoing', reminderId: next.id },
+      android: {
+        channelId: ONGOING_CHANNEL_ID,
+        category: AndroidCategory.PROGRESS,
+        ongoing: true,
+        autoCancel: false,
+        onlyAlertOnce: true,
+        localOnly: true,
+        progress: { current: next.pct, max: 100 },
+      },
     });
   } catch {}
 }
 
 export async function requestPermission(): Promise<boolean> {
+  if (notifeeLinked) {
+    try {
+      const settings = await notifee.requestPermission();
+      return (
+        settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+        settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
+      );
+    } catch {}
+    return false;
+  }
   if (!Notifications) return false;
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
