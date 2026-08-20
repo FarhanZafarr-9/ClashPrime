@@ -26,6 +26,12 @@ const PIPELINE_META: Record<PipelineKey, { title: string; icon: keyof typeof Ion
   equipment: { title: 'Equipment', icon: 'diamond-outline', desc: 'Blacksmith — instant, ores only' },
 };
 
+const READINESS_PIPELINE_DESC: Record<string, string> = {
+  lab: 'troops · spells · sieges',
+  builders: 'buildings · heroes · walls',
+  pets: 'pets',
+};
+
 const RESOURCE_ORDER: (CostResource | BuildingCostResource)[] = [
   'Gold',
   'Elixir',
@@ -51,6 +57,10 @@ function rowScope(row: PipelineItemRow, heroNames: Set<string>, discounts: Disco
   return heroNames.has(row.name) ? discounts.army : discounts.buildings;
 }
 
+function fmtDelta(sec: number): string {
+  return sec > 0 ? `+${formatTimeShort(sec)}` : '—';
+}
+
 export default function MaxTimeScreen() {
   const { player, loading } = usePlayer();
   const { colors } = useTheme();
@@ -59,6 +69,7 @@ export default function MaxTimeScreen() {
   const [details, setDetails] = useState<Record<string, TroopDetail | null> | null>(null);
   const [expanded, setExpanded] = useState<Record<PipelineKey, boolean>>({ lab: false, builders: false, pets: false, equipment: false });
   const [readinessOpen, setReadinessOpen] = useState(false);
+  const [buildersExpanded, setBuildersExpanded] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
 
@@ -69,7 +80,7 @@ export default function MaxTimeScreen() {
       .filter((i) => i.village !== 'builderBase')
       .forEach((i) => names.add(i.name));
     // Include not-yet-unlocked items so their details are available too.
-    for (const item of getAllItemsAtTH(th)) names.add(item.name);
+    for (const item of getAllItemsAtTH(th + 1)) names.add(item.name);
     return [...names];
   }, [player, th]);
 
@@ -121,6 +132,26 @@ export default function MaxTimeScreen() {
       totalByResource,
     };
   }, [result, discounts]);
+
+  const nextResult = useMemo(() => {
+    if (!player || !details) return null;
+    return computeMaxTime({ player, th: th + 1, builderCount, armyDetails: details });
+  }, [player, th, builderCount, details]);
+
+  const nextDiscounted = useMemo(() => {
+    if (!nextResult) return null;
+    const lab = applyScope(nextResult.lab.timeSec, nextResult.lab.cost, nextResult.lab.byResource, discounts.army);
+    const pets = applyScope(nextResult.pets.timeSec, nextResult.pets.cost, nextResult.pets.byResource, discounts.army);
+    const equipment = applyScope(nextResult.equipment.timeSec, nextResult.equipment.cost, nextResult.equipment.byResource, discounts.army);
+    const builders = applyScope(nextResult.builders.timeSec, nextResult.builders.cost, nextResult.builders.byResource, discounts.buildings);
+    return {
+      lab,
+      builders,
+      pets,
+      equipment,
+      headlineTime: Math.max(lab.timeSec, builders.timeSec, pets.timeSec, equipment.timeSec),
+    };
+  }, [nextResult, discounts]);
 
   if (loading || !player || !builderLoaded || !result || !discounted) {
     return (
@@ -399,22 +430,86 @@ export default function MaxTimeScreen() {
                 <View style={[styles.readinessFill, { width: `${Math.max(2, readiness.score)}%` }]} />
               </View>
               <Text style={styles.readinessNote}>{readiness.note}</Text>
-              <View style={styles.readinessDivider} />
-              {readiness.categories.map((c) => (
-                <View key={c.key} style={styles.readinessCatRow}>
-                  <Text style={styles.readinessCatLabel}>{c.label}</Text>
-                  <View style={styles.readinessCatTrack}>
-                    <View style={[styles.readinessCatFill, { width: `${Math.max(2, c.pct)}%` }]} />
-                  </View>
-                  <Text style={styles.readinessCatPct}>{Math.round(c.pct)}%</Text>
-                </View>
-              ))}
               {readiness.nextUnlocks.length > 0 && (
                 <Text style={styles.readinessNext}>
                   Unlocks at TH{readiness.nextTh}: {readiness.nextUnlocks.map((u) => u.value).join(' · ')}
                 </Text>
               )}
             </View>
+          )}
+          {readinessOpen && readiness && (
+            <React.Fragment>
+              {readiness.pipelines.map((p, i) => {
+                const isBuilders = p.key === 'builders';
+                const isOpen = buildersExpanded;
+                return (
+                  <React.Fragment key={p.key}>
+                    <SettingRow
+                      icon={PIPELINE_META[p.key].icon}
+                      title={PIPELINE_META[p.key].title}
+                      desc={READINESS_PIPELINE_DESC[p.key]}
+                      compact
+                      isLast={isBuilders ? !isOpen : i === readiness.pipelines.length - 1}
+                      onPress={isBuilders ? () => setBuildersExpanded((o) => !o) : undefined}
+                      children={
+                        <View style={styles.readinessChildren}>
+                          <View style={styles.pipelineBadge}>
+                            <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
+                          </View>
+                          {isBuilders && (
+                            <Ionicons
+                              name="chevron-down"
+                              size={16}
+                              color={colors.textTertiary}
+                              style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+                            />
+                          )}
+                        </View>
+                      }
+                    />
+                    {isBuilders && isOpen && (
+                      <View style={styles.pipelineExpandBody}>
+                        {p.children.map((c) => (
+                          <View key={c.key} style={styles.readinessCatRow}>
+                            <Text style={styles.readinessCatLabel}>{c.label}</Text>
+                            <View style={styles.readinessCatTrack}>
+                              <View style={[styles.readinessCatFill, { width: `${Math.max(2, c.pct)}%` }]} />
+                            </View>
+                            <Text style={styles.readinessCatPct}>{Math.round(c.pct)}%</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </React.Fragment>
+          )}
+          {readinessOpen && readiness && discounted && nextDiscounted && (
+            <React.Fragment>
+              <SettingRow
+                icon="trending-up-outline"
+                title={`Rush to TH${readiness.nextTh}`}
+                desc={
+                  nextDiscounted.headlineTime > discounted.headlineTime
+                    ? `with current levels · ${fmtDelta(nextDiscounted.headlineTime - discounted.headlineTime)} extra`
+                    : 'with current levels · no extra time'
+                }
+                compact
+                isFirst
+                isLast
+                children={
+                  <View style={styles.pipelineBadge}>
+                    <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
+                  </View>
+                }
+              />
+              <Text style={[styles.readinessNext, styles.readinessFooter]}>
+                TH{readiness.nextTh} adds → Lab {fmtDelta(Math.max(0, nextDiscounted.lab.timeSec - discounted.lab.timeSec))} · Builders{' '}
+                {fmtDelta(Math.max(0, nextDiscounted.builders.timeSec - discounted.builders.timeSec))} · Pets{' '}
+                {fmtDelta(Math.max(0, nextDiscounted.pets.timeSec - discounted.pets.timeSec))} · Equipment Instant
+              </Text>
+            </React.Fragment>
           )}
         </View>
       </ScrollView>
@@ -515,6 +610,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard,
     borderTopLeftRadius: Radius.md,
     borderTopRightRadius: Radius.md,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
     paddingTop: Spacing.md,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
@@ -567,10 +664,30 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: Spacing.sm,
   },
-  readinessDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    marginBottom: Spacing.sm,
+  readinessNext: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: Spacing.sm,
+    lineHeight: 16,
+  },
+  readinessFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  readinessChildren: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  pipelineExpandBody: {
+    backgroundColor: Colors.bgCard,
+    borderTopLeftRadius: Radius.md,
+    borderTopRightRadius: Radius.md,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
   },
   readinessCatRow: {
     flexDirection: 'row',
@@ -602,12 +719,6 @@ const styles = StyleSheet.create({
     width: 34,
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
-  },
-  readinessNext: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    marginTop: Spacing.sm,
-    lineHeight: 16,
   },
   builderCard: {
     marginHorizontal: Spacing.base,
