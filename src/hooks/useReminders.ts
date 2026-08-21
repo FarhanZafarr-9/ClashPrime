@@ -113,8 +113,6 @@ export async function stopOngoingTimerNotification(): Promise<void> {
 
 async function displayOngoingFor(next: ActiveTimer, moreCount: number): Promise<void> {
   if (!ongoingChannelReady) await ensureOngoingChannel();
-  const elapsed = Math.max(0, next.totalMs - (next.target - Date.now()));
-  const pct = Math.min(100, Math.max(0, Math.round((elapsed / next.totalMs) * 100)));
   await notifee.displayNotification({
     id: ONGOING_NOTIFICATION_ID,
     title: `${next.label}`,
@@ -131,7 +129,6 @@ async function displayOngoingFor(next: ActiveTimer, moreCount: number): Promise<
       timestamp: next.target,
       showChronometer: true,
       chronometerDirection: 'down',
-      progress: { current: pct, max: 100, indeterminate: false },
     },
   });
 }
@@ -162,9 +159,6 @@ export async function syncOngoingTimerNotification(reminders: TimerReminder[]): 
     // Schedule a native swap at the moment this timer ends: promote the next
     // timer into the pinned slot, or fire a sounding "finished" alert.
     const followUp = rest[0];
-    const followUpPct = followUp
-      ? Math.min(100, Math.max(0, Math.round(((followUp.target - next.target) / followUp.totalMs) * 100)))
-      : 0;
     await notifee.createTriggerNotification(
       followUp
         ? {
@@ -183,7 +177,6 @@ export async function syncOngoingTimerNotification(reminders: TimerReminder[]): 
               timestamp: followUp.target,
               showChronometer: true,
               chronometerDirection: 'down',
-              progress: { current: Math.max(0, followUpPct), max: 100, indeterminate: false },
             },
           }
         : {
