@@ -2,6 +2,7 @@ import type { ClashPlayer } from '../types/clash';
 import { getBuildingCategories, HOME_CATEGORIES } from './buildingData';
 import { getBuildingCopies, getCountAtTH } from './buildingCopies';
 import { getAllItemsAtTH, getPetNames, getMaxLevelAtTH, getSuperTroopNames } from './armyData';
+import { computeMaxTime, type MaxTimeInput } from './maxTime';
 
 export interface CategoryReadiness {
   key: string;
@@ -34,6 +35,9 @@ export interface ThReadiness {
     names?: string[];
     details?: { name: string; count: number; levels: number; nextMax: number }[];
   }[];
+  criticalPipeline: 'lab' | 'builders' | 'pets';
+  criticalPipelinePct: number;
+  criticalPipelineTimeSec: number;
 }
 
 const BUILDING_WEIGHTS: Record<string, number> = {
@@ -205,13 +209,71 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     })
     .filter((p): p is PipelineReadiness => p != null);
 
-  let weighted = 0;
-  let weightSum = 0;
-  for (const c of cats) {
-    weighted += c.pct * c.weight;
-    weightSum += c.weight;
+  // Overall readiness = critical path pipeline's readiness (the bottleneck).
+  let criticalReadiness = 100;
+  let criticalPipelineKey: 'lab' | 'builders' | 'pets' = 'lab';
+  let criticalPipelineTimeSec = 0;
+  try {
+    // Use max builder count for from-scratch (best case), current builder count for current
+    const maxBuilderCount = 5; // max possible
+    const currentBuilderCount = Math.min(5, Math.max(2, 2)); // fallback
+
+    // From-scratch: all items at level 0, max builders
+    const fromScratchPlayer = {
+      ...player,
+      troops: getAllItemsAtTH(th).filter(i => i.type === 'troop').map(i => ({ name: i.name, level: 0, village: 'home' })),
+      spells: getAllItemsAtTH(th).filter(i => i.type === 'spell').map(i => ({ name: i.name, level: 0, village: 'home' })),
+      heroes: getAllItemsAtTH(th).filter(i => i.type === 'hero').map(i => ({ name: i.name, level: 0, village: 'home' })),
+      pets: getAllItemsAtTH(th).filter(i => (i as any).type === 'pet').map(i => ({ name: i.name, level: 0, village: 'home' })),
+      buildingLevels: [],
+      buildings: [],
+      lastMaxedTH: 0,
+      builderCount: maxBuilderCount,
+    } as any;
+    const fromScratchInput: MaxTimeInput = {
+      player: fromScratchPlayer,
+      th,
+      builderCount: maxBuilderCount,
+      armyDetails: {},
+    };
+    const fromScratch = computeMaxTime(fromScratchInput);
+
+    // Current: actual levels, actual builders
+    const currentInput: MaxTimeInput = {
+      player: { ...player, builderCount: currentBuilderCount } as any,
+      th,
+      builderCount: currentBuilderCount,
+      armyDetails: {},
+    };
+    const current = computeMaxTime(currentInput);
+
+    // Per-pipeline readiness
+    const labReady = fromScratch.lab.timeSec > 0 ? Math.max(0, 100 - (current.lab.timeSec / fromScratch.lab.timeSec) * 100) : 100;
+    const buildersReady = fromScratch.builders.timeSec > 0 ? Math.max(0, 100 - (current.builders.timeSec / fromScratch.builders.timeSec) * 100) : 100;
+    const petsReady = fromScratch.pets.timeSec > 0 ? Math.max(0, 100 - (current.pets.timeSec / fromScratch.pets.timeSec) * 100) : 100;
+
+    // Critical path = longest pipeline (lowest readiness)
+    const pipelineReadiness = [
+      { key: 'lab' as const, pct: labReady, timeSec: current.lab.timeSec },
+      { key: 'builders' as const, pct: buildersReady, timeSec: current.builders.timeSec },
+      { key: 'pets' as const, pct: petsReady, timeSec: current.pets.timeSec },
+    ].sort((a, b) => a.pct - b.pct);
+
+    criticalPipelineKey = pipelineReadiness[0].key;
+    criticalReadiness = pipelineReadiness[0].pct;
+    criticalPipelineTimeSec = pipelineReadiness[0].timeSec;
+  } catch {
+    // Fallback to weighted average if computeMaxTime fails
+    let weighted = 0;
+    let weightSum = 0;
+    for (const c of cats) {
+      weighted += c.pct * c.weight;
+      weightSum += c.weight;
+    }
+    criticalReadiness = weightSum > 0 ? weighted / weightSum : 100;
   }
-  const score = weightSum > 0 ? weighted / weightSum : 100;
+
+  const score = criticalReadiness;
 
   const gaps = cats
     .map((c) => ({ label: c.label, pct: c.pct, gap: c.weight * (100 - c.pct) }))
@@ -298,5 +360,8 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     note,
     weakestLabel,
     nextUnlocks,
+    criticalPipeline: criticalPipelineKey,
+    criticalPipelinePct: Math.round(criticalReadiness),
+    criticalPipelineTimeSec,
   };
 }
