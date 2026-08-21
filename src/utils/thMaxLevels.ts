@@ -8,7 +8,7 @@ import {
 } from './armyData';
 import { getMaxTownHall } from './buildingData';
 
-export type UnlockableType = 'troop' | 'spell' | 'hero' | 'equipment';
+export type UnlockableType = 'troop' | 'spell' | 'hero' | 'equipment' | 'siege';
 
 export function getMaxLevelAtTH(itemName: string, thLevel: number): number | null {
   return getArmyMaxLevelAtTH(itemName, thLevel);

@@ -52,7 +52,7 @@ const RESOURCE_CATS: { key: string; names: string[] }[] = [
 ];
 
 const PIPELINE_GROUPS: Record<PipelineReadiness['key'], string[]> = {
-  lab: ['Laboratory'],
+  lab: ['Troops', 'Spells', 'Sieges'],
   builders: ['Heroes', 'Defenses', 'Army', 'Storages', 'Collectors', 'Traps', 'Walls'],
   pets: ['Pets'],
 };
@@ -151,9 +151,13 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
 
   const superTroops = new Set(getSuperTroopNames());
   const heroItems = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
-  const labItems = getAllItemsAtTH(th).filter(
-    (i) => (i.type === 'troop' || i.type === 'spell') && !superTroops.has(i.name),
+  const troopItems = getAllItemsAtTH(th).filter(
+    (i) => i.type === 'troop' && !superTroops.has(i.name),
   );
+  const spellItems = getAllItemsAtTH(th).filter(
+    (i) => i.type === 'spell' && !superTroops.has(i.name),
+  );
+  const siegeItems = getAllItemsAtTH(th).filter((i) => i.type === 'siege');
   const petItems = getPetNames()
     .map((name) => {
       const maxLevel = getMaxLevelAtTH(name, th) ?? 0;
@@ -163,14 +167,20 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
 
   const heroOwned: Record<string, number> = {};
   for (const h of player.heroes ?? []) heroOwned[h.name] = h.level;
-  const labOwned: Record<string, number> = {};
-  for (const t of [...(player.troops ?? []), ...(player.spells ?? [])]) labOwned[t.name] = t.level;
+  const troopOwned: Record<string, number> = {};
+  for (const t of player.troops ?? []) troopOwned[t.name] = t.level;
+  const spellOwned: Record<string, number> = {};
+  for (const s of player.spells ?? []) spellOwned[s.name] = s.level;
+  const siegeOwned: Record<string, number> = {};
+  for (const t of player.troops ?? []) if (getAllItemsAtTH(th).find((i) => i.name === t.name && i.type === 'siege')) siegeOwned[t.name] = t.level;
   const petOwned: Record<string, number> = {};
   for (const p of player.pets ?? []) petOwned[p.name] = p.level;
 
   const groups: [string, { done: number; total: number }, number][] = [
     ['Heroes', armyCategory(heroItems, heroOwned), ARMY_WEIGHTS.Heroes],
-    ['Laboratory', armyCategory(labItems, labOwned), ARMY_WEIGHTS.Laboratory],
+    ['Troops', armyCategory(troopItems, troopOwned), ARMY_WEIGHTS.Laboratory],
+    ['Spells', armyCategory(spellItems, spellOwned), ARMY_WEIGHTS.Laboratory],
+    ['Sieges', armyCategory(siegeItems, siegeOwned), ARMY_WEIGHTS.Laboratory],
     ['Pets', armyCategory(petItems, petOwned), ARMY_WEIGHTS.Pets],
   ];
   for (const [key, agg, weight] of groups) {

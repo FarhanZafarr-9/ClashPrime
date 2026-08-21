@@ -452,7 +452,8 @@ export default function MaxTimeScreen() {
                       title={PIPELINE_META[p.key].title}
                       desc={READINESS_PIPELINE_DESC[p.key]}
                       compact
-                      isLast={isExpandable ? !isOpen : i === readiness.pipelines.length - 1}
+                      isFirst={i === 0}
+                      isLast={isOpen ? false : i === readiness.pipelines.length - 1}
                       onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
                       children={
                         <View style={styles.readinessChildren}>

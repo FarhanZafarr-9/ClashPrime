@@ -285,6 +285,7 @@ export function getAllItemsAtTH(th: number): { name: string; type: UnlockableTyp
   for (const item of homeTroops) addItem(item, 'troop');
   for (const item of homeSpells) addItem(item, 'spell');
   for (const item of homeHeroes) addItem(item, 'hero');
+  for (const item of homeSiege) addItem(item, 'siege');
   return result;
 }
 
