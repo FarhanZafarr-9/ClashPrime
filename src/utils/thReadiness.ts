@@ -28,7 +28,12 @@ export interface ThReadiness {
   verdictLabel: string;
   note: string;
   weakestLabel: string;
-  nextUnlocks: { label: string; value: string }[];
+  nextUnlocks: {
+    label: string;
+    value: string;
+    names?: string[];
+    details?: { name: string; count: number; levels: number }[];
+  }[];
 }
 
 const BUILDING_WEIGHTS: Record<string, number> = {
@@ -221,29 +226,58 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
   const currentItems = getAllItemsAtTH(th);
   const nextItems = getAllItemsAtTH(nextTh);
   const newItems = nextItems.filter((n) => !currentItems.some((c) => c.name === n.name && c.type === n.type));
-  const nextUnlocks: { label: string; value: string }[] = [];
-  const newTroops = newItems.filter((i) => i.type === 'troop').length;
-  const newSpells = newItems.filter((i) => i.type === 'spell').length;
-  const newHeroes = newItems.filter((i) => i.type === 'hero').length;
-  if (newTroops + newSpells > 0) nextUnlocks.push({ label: 'lab', value: `+${newTroops + newSpells} troop/spell` });
-  if (newHeroes > 0) nextUnlocks.push({ label: 'heroes', value: `+${newHeroes} hero` });
+  const nextUnlocks: {
+    label: string;
+    value: string;
+    names?: string[];
+    details?: { name: string; count: number; levels: number }[];
+  }[] = [];
+  const newTroops = newItems.filter((i) => i.type === 'troop');
+  const newSpells = newItems.filter((i) => i.type === 'spell');
+  const newHeroes = newItems.filter((i) => i.type === 'hero');
+  if (newTroops.length + newSpells.length > 0) {
+    nextUnlocks.push({
+      label: 'lab',
+      value: `+${newTroops.length + newSpells.length} troop/spell`,
+      names: [...newTroops, ...newSpells].map((i) => i.name),
+    });
+  }
+  if (newHeroes.length > 0) {
+    nextUnlocks.push({
+      label: 'heroes',
+      value: `+${newHeroes.length} hero`,
+      names: newHeroes.map((i) => i.name),
+    });
+  }
 
   const catsNext = getBuildingCategories(nextTh);
   const catsNow = getBuildingCategories(th);
   let newBuildings = 0;
   let extraLevels = 0;
+  const newBuildingNames: string[] = [];
+  const extraLevelDetails: { name: string; count: number; levels: number }[] = [];
   for (const [cat, buildings] of Object.entries(catsNext)) {
     for (const [name, thData] of Object.entries(buildings)) {
       const nextMax = thData[String(nextTh)]?.level ?? 0;
       const curMax = catsNow[cat]?.[name]?.[String(th)]?.level ?? 0;
       const count = getCountAtTH(name, nextTh);
       if (nextMax <= 0) continue;
-      if (curMax <= 0) newBuildings += count;
-      else if (nextMax > curMax) extraLevels += count * (nextMax - curMax);
+      if (curMax <= 0) {
+        newBuildings += count;
+        if (count > 0) newBuildingNames.push(name);
+      } else if (nextMax > curMax) {
+        const levelDelta = nextMax - curMax;
+        if (name.toLowerCase().includes('wall')) {
+          extraLevels += levelDelta;
+        } else {
+          extraLevels += count * levelDelta;
+          extraLevelDetails.push({ name, count, levels: levelDelta });
+        }
+      }
     }
   }
-  if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building` });
-  if (extraLevels > 0) nextUnlocks.push({ label: 'levels', value: `+${extraLevels} building level` });
+  if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, names: newBuildingNames });
+  if (extraLevels > 0) nextUnlocks.push({ label: 'levels', value: `+${extraLevels} building level`, details: extraLevelDetails });
 
   const note =
     verdict === 'ready'

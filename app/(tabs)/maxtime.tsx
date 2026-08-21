@@ -539,7 +539,38 @@ export default function MaxTimeScreen() {
                     <>
                       {readiness.nextUnlocks.map((u, i) => (
                         <View key={`${u.label}-${i}`} style={styles.rushNewItemRow}>
-                          <Text style={styles.rushNewItemLabel}>{u.value}</Text>
+                          {(u.names || u.details) ? (
+                            <View style={styles.rushNewItemGrid}>
+                              {(u.names || []).map((name, ni) => (
+                                <View key={name} style={styles.rushNewItemCell}>
+                                  <Image
+                                    source={
+                                      (u.label === 'lab' || u.label === 'heroes'
+                                        ? getArmyItemImage(name)
+                                        : getBuildingItemImage(name)) ?? undefined
+                                    }
+                                    style={styles.rushNewItemIcon}
+                                    resizeMode="contain"
+                                  />
+                                  <Text style={styles.rushNewItemName} numberOfLines={1}>{name}</Text>
+                                </View>
+                              ))}
+                              {(u.details || []).map((d, di) => (
+                                <View key={`${d.name}-${di}`} style={styles.rushNewItemCell}>
+                                  <Image
+                                    source={getBuildingItemImage(d.name) ?? undefined}
+                                    style={styles.rushNewItemIcon}
+                                    resizeMode="contain"
+                                  />
+                                  <Text style={styles.rushNewItemName} numberOfLines={1}>
+                                    {d.name} {d.count > 1 ? `×${d.count}` : ''} +{d.levels}L
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
+                          ) : (
+                            <Text style={styles.rushNewItemLabel}>{u.value}</Text>
+                          )}
                         </View>
                       ))}
                     </>
@@ -949,5 +980,33 @@ const styles = StyleSheet.create({
     ...Typography.footnote,
     color: Colors.textSecondary,
     fontWeight: '500',
+  },
+  rushNewItemGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  rushNewItemCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+  },
+  rushNewItemIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bg,
+  },
+  rushNewItemName: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    maxWidth: 100,
   },
 });
