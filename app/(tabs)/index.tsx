@@ -1727,6 +1727,16 @@ export default function HomeScreen() {
                 </PressableRipple>
               );
             })}
+            <PressableRipple
+              style={styles.switcherAdd}
+              onPress={() => {
+                setSwitcherVisible(false);
+                router.push('/onboarding?mode=add');
+              }}
+            >
+              <Ionicons name="person-add-outline" size={16} color={Colors.textPrimary} />
+              <Text style={styles.switcherAddText}>Add Account</Text>
+            </PressableRipple>
             <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
               <Text style={styles.switcherCloseText}>Close</Text>
             </PressableRipple>
@@ -2067,6 +2077,23 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textSecondary,
     fontWeight: '500',
+  },
+  switcherAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    backgroundColor: Colors.accentGhost,
+  },
+  switcherAddText: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
   },
   playerCard: {
     marginHorizontal: Spacing.base,
