@@ -29,7 +29,7 @@ import { useTimers } from '../../src/hooks/useTimerContext';
 import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
-import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl } from '../../src/utils/troopImages';
+import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl, getPetImageUrl } from '../../src/utils/troopImages';
 import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
@@ -262,7 +262,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
-  const { superTroopNames } = useGameData();
+  const { superTroopNames, petNames } = useGameData();
   const { reminders, addTimer, dismissTimer, hasPermission } = useTimers();
   const { show: showDialog, Dialog } = useDialog();
   const [refreshing, setRefreshing] = useState(false);
@@ -700,6 +700,12 @@ export default function HomeScreen() {
     ? heroEquipment.reduce((s, e) => s + (getEquipFullMax(e.name, e.maxLevel) > 0 ? e.level / getEquipFullMax(e.name, e.maxLevel) : 0), 0) / heroEquipment.length
     : 0;
 
+  const homePetList = (player.troops ?? []).filter((t: any) => (t.village === 'home' || !t.village) && petNames.includes(t.name));
+  const petMaxAt = (name: string) => getMaxLevelAtTH(name, th) ?? homePetList.find((p: any) => p.name === name)?.maxLevel ?? 0;
+  const petsProgress = homePetList.length > 0
+    ? homePetList.reduce((s, p: any) => s + (petMaxAt(p.name) > 0 ? p.level / petMaxAt(p.name) : 0), 0) / homePetList.length
+    : 0;
+
   const progressGroups: {
     key: string;
     title: string;
@@ -745,6 +751,18 @@ export default function HomeScreen() {
         const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
         const level = owned?.level ?? 0;
         return { name: s.name, level, maxLevel: s.maxLevel, icon: getTroopImageUrl(s.name, level) || undefined };
+      }),
+    },
+    {
+      key: 'pets',
+      title: 'Pets',
+      icon: 'paw',
+      iconUrl: getPetImageUrl('L.A.S.S.I') || undefined,
+      progress: petsProgress,
+      pushTo: '/(tabs)/army?tab=pets',
+      rows: homePetList.map((p) => {
+        const maxLevel = petMaxAt(p.name);
+        return { name: p.name, level: p.level, maxLevel, icon: getPetImageUrl(p.name) || undefined };
       }),
     },
     {
@@ -1101,74 +1119,97 @@ export default function HomeScreen() {
             </View>
           </Card>
 
-          <View style={styles.progressSections}>
-            <CollapsibleSection
-              isFirst
-              isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
-              icon="apps-outline"
-              title="Progress Overview"
-              compact
-              count={progressGroups.reduce((s, g) => s + g.rows.length, 0)}
-              totalLevel={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
-              totalMax={progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
-              description={renderProgressHeader(overallProgress, overallProgressCost)}
-            >
-            <View style={styles.progressInner}>
-            {progressGroups.filter((g) => g.rows.some((r) => r.level < r.maxLevel)).map((group, gi, groups) => {
-              const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-              const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
-              const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-              const navigateInstead = displayRows.length >= 10;
-              return (
-                <CollapsibleSection
-                  key={group.key}
-                  isLast={gi === groups.length - 1}
-                  icon={group.icon}
-                  iconUrl={group.iconUrl}
-                  title={group.title}
-                  compact
-                  onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                  description={renderProgressHeader(group.progress, progressCosts[group.key])}
-                  count={displayRows.length}
-                  totalLevel={totalLevel}
-                  totalMax={totalMax}
-                >
-                  {displayRows.map((row, ri) => {
-                    const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
-                    return (
-                      <ItemCard
-                        key={`${group.key}-${ri}`}
-                        name={row.name}
-                        level={row.level}
-                        maxLevel={row.maxLevel}
-                        icon={row.icon}
-                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                        costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                        timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                        locked={row.level === 0}
-                        isLast={ri === displayRows.length - 1}
-                        onPress={() => router.push(group.pushTo)}
-                      />
-                    );
-                  })}
-                </CollapsibleSection>
-              );
-            })}
-            </View>
-            </CollapsibleSection>
+<View style={styles.progressSections}>
+             {/* ── Lab ── */}
+             <CollapsibleSection
+               isFirst
+               isLast={false}
+               icon="flask-outline"
+               title="Laboratory"
+               compact
+               count={['heroes','troops','spells'].reduce((s, k) => {
+                 const g = progressGroups.find(x => x.key === k);
+                 return s + (g ? g.rows.length : 0);
+               }, 0)}
+               totalLevel={['heroes','troops','spells'].reduce((s, k) => {
+                 const g = progressGroups.find(x => x.key === k);
+                 return s + (g ? g.rows.reduce((s2, r) => s2 + r.level, 0) : 0);
+               }, 0)}
+               totalMax={['heroes','troops','spells'].reduce((s, k) => {
+                 const g = progressGroups.find(x => x.key === k);
+                 return s + (g ? g.rows.reduce((s2, r) => s2 + r.maxLevel, 0) : 0);
+               }, 0)}
+               description={renderProgressHeader(
+                 ['heroes','troops','spells'].reduce((s, k) => {
+                   const g = progressGroups.find(x => x.key === k);
+                   if (!g) return s;
+                   return s + g.rows.reduce((s2, r) => s2 + r.level, 0);
+                 }, 0) / ['heroes','troops','spells'].reduce((s, k) => {
+                   const g = progressGroups.find(x => x.key === k);
+                   return s + (g ? g.rows.reduce((s2, r) => s2 + r.maxLevel, 0) : 0);
+                 }, 0) || 1,
+                 sumCosts(['heroes','troops','spells'].map(k => progressCosts[k]).filter(Boolean))
+               )}
+             >
+               <View style={styles.progressInner}>
+               {progressGroups
+                 .filter((g) => ['heroes','troops','spells'].includes(g.key) && g.rows.some((r) => r.level < r.maxLevel))
+                 .map((group, gi, groups) => {
+                   const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+                   const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
+                   const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
+                   const navigateInstead = displayRows.length >= 10;
+                   return (
+                     <CollapsibleSection
+                       key={group.key}
+                       isLast={gi === groups.length - 1}
+                       icon={group.icon}
+                       iconUrl={group.iconUrl}
+                       title={group.title}
+                       compact
+                       onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
+                       description={renderProgressHeader(group.progress, progressCosts[group.key])}
+                       count={displayRows.length}
+                       totalLevel={totalLevel}
+                       totalMax={totalMax}
+                     >
+                       {displayRows.map((row, ri) => {
+                         const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                         return (
+                           <ItemCard
+                             key={`${group.key}-${ri}`}
+                             name={row.name}
+                             level={row.level}
+                             maxLevel={row.maxLevel}
+                             icon={row.icon}
+                             costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                             costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                             timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                             locked={row.level === 0}
+                             isLast={ri === displayRows.length - 1}
+                             onPress={() => router.push(group.pushTo)}
+                           />
+                         );
+                       })}
+                     </CollapsibleSection>
+                   );
+                 })}
+               </View>
+             </CollapsibleSection>
 
-            {(() => {
-              const countedGroups = buildingGroups.filter((g) => g.key !== 'Walls');
-              return (
-                <CollapsibleSection
-                  isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
-                  icon="business-outline"
-                  title="Buildings"
-                  compact
-                  count={countedGroups.reduce((s, g) => s + g.rows.length, 0)}
-                  totalLevel={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
-                  totalMax={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
-                  description={renderProgressHeader(overallBuildingProgress, overallBuildingCost)}
+             {/* ── Builders ── */}
+             {(() => {
+               const countedGroups = buildingGroups.filter((g) => g.key !== 'Walls');
+               return (
+                 <CollapsibleSection
+                   isLast={false}
+                   icon="business-outline"
+                   title="Builders"
+                   compact
+                   count={countedGroups.reduce((s, g) => s + g.rows.length, 0)}
+                   totalLevel={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0)}
+                   totalMax={countedGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0)}
+                   description={renderProgressHeader(overallBuildingProgress, overallBuildingCost)}
                 >
                 <View style={styles.progressInner}>
                 {buildingGroups.map((group, gi, groups) => {
@@ -1213,9 +1254,123 @@ export default function HomeScreen() {
                 </View>
                 </CollapsibleSection>
               );
-            })()}
+})()}
 
-            {(unlockableItems.length > 0 || rushedItems.length > 0) && (
+             {/* ── Pets ── */}
+             <CollapsibleSection
+               isLast={false}
+               icon="paw"
+               title="Pets"
+               compact
+               count={progressGroups.find(g => g.key === 'pets')?.rows.length ?? 0}
+               totalLevel={progressGroups.find(g => g.key === 'pets')?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
+               totalMax={progressGroups.find(g => g.key === 'pets')?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
+               description={renderProgressHeader(progressGroups.find(g => g.key === 'pets')?.progress ?? 0, progressCosts.pets)}
+             >
+               <View style={styles.progressInner}>
+               {(() => {
+                 const group = progressGroups.find(g => g.key === 'pets');
+                 if (!group) return null;
+                 const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+                 const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
+                 const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
+                 const navigateInstead = displayRows.length >= 10;
+                 return (
+                   <CollapsibleSection
+                     key={group.key}
+                     isLast
+                     icon={group.icon}
+                     iconUrl={group.iconUrl}
+                     title={group.title}
+                     compact
+                     onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
+                     description={renderProgressHeader(group.progress, progressCosts[group.key])}
+                     count={displayRows.length}
+                     totalLevel={totalLevel}
+                     totalMax={totalMax}
+                   >
+                     {displayRows.map((row, ri) => {
+                       const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                       return (
+                         <ItemCard
+                           key={`${group.key}-${ri}`}
+                           name={row.name}
+                           level={row.level}
+                           maxLevel={row.maxLevel}
+                           icon={row.icon}
+                           costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                           costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                           timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                           locked={row.level === 0}
+                           isLast={ri === displayRows.length - 1}
+                           onPress={() => router.push(group.pushTo)}
+                         />
+                       );
+                     })}
+                   </CollapsibleSection>
+                 );
+               })()}
+               </View>
+             </CollapsibleSection>
+
+             {/* ── Equipment ── */}
+             <CollapsibleSection
+               isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
+               icon="hammer-outline"
+               title="Equipment"
+               compact
+               count={progressGroups.find(g => g.key === 'equipment')?.rows.length ?? 0}
+               totalLevel={progressGroups.find(g => g.key === 'equipment')?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
+               totalMax={progressGroups.find(g => g.key === 'equipment')?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
+               description={renderProgressHeader(progressGroups.find(g => g.key === 'equipment')?.progress ?? 0, progressCosts.equipment)}
+             >
+               <View style={styles.progressInner}>
+               {(() => {
+                 const group = progressGroups.find(g => g.key === 'equipment');
+                 if (!group) return null;
+                 const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+                 const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
+                 const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
+                 const navigateInstead = displayRows.length >= 10;
+                 return (
+                   <CollapsibleSection
+                     key={group.key}
+                     isLast
+                     icon={group.icon}
+                     iconUrl={group.iconUrl}
+                     title={group.title}
+                     compact
+                     onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
+                     description={renderProgressHeader(group.progress, progressCosts[group.key])}
+                     count={displayRows.length}
+                     totalLevel={totalLevel}
+                     totalMax={totalMax}
+                   >
+                     {displayRows.map((row, ri) => {
+                       const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                       return (
+                         <ItemCard
+                           key={`${group.key}-${ri}`}
+                           name={row.name}
+                           level={row.level}
+                           maxLevel={row.maxLevel}
+                           icon={row.icon}
+                           costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                           costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                           timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                           locked={row.level === 0}
+                           isLast={ri === displayRows.length - 1}
+                           onPress={() => router.push(group.pushTo)}
+                         />
+                       );
+                     })}
+                   </CollapsibleSection>
+                 );
+               })()}
+               </View>
+             </CollapsibleSection>
+
+             {(unlockableItems.length > 0 || rushedItems.length > 0) && (
               <CollapsibleSection
                 isLast
                 icon="list-outline"
