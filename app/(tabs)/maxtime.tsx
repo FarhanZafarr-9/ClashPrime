@@ -12,7 +12,7 @@ import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
 import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getMaxLevelAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
-import { getBuildingItemImage, getMaxTownHall, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getBuildingItemImage, getBuildingMaxLevelAtTH, getMaxTownHall, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
 import { computeThReadiness } from '../../src/utils/thReadiness';
@@ -243,13 +243,16 @@ export default function MaxTimeScreen() {
       const pct = isHero ? discounts.army.timePercent : discounts.buildings.timePercent;
       return Math.max(0, Math.round(sec * (1 - pct / 100)));
     };
+    // Highest-level sprite available at this TH; falls back to base icon when the building is locked here.
+    const pipelineHeaderImage = (name: string) =>
+      getBuildingItemImage(name, getBuildingMaxLevelAtTH(name, th) ?? 1) ?? undefined;
     const headerIconSource = p.key === 'lab'
-      ? getBuildingItemImage('Lab')
+      ? pipelineHeaderImage('Lab')
       : p.key === 'builders'
-        ? getBuildingItemImage('Builder Hut')
+        ? pipelineHeaderImage('Builder Hut')
         : isEquipment
-          ? (player?.heroEquipment?.[0] ? getArmyItemImage(player.heroEquipment[0].name) : undefined)
-          : getBuildingItemImage('Pet House');
+          ? pipelineHeaderImage('Blacksmith')
+          : pipelineHeaderImage('Pet House');
     return (
       <React.Fragment key={p.key}>
         <SettingRow

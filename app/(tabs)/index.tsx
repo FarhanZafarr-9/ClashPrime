@@ -792,6 +792,10 @@ export default function HomeScreen() {
   // Representative building shown as the category header image.
   const SHOW_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
+  // Highest-level sprite available at this TH; falls back to base icon when the building is locked here.
+  const pipelineHeaderImage = (name: string) =>
+    getBuildingItemImage(name, getBuildingMaxLevelAtTH(name, th) ?? 1) ?? undefined;
+
   const buildingGroups = SHOW_BUILDING_CATS.map((cat) => {
     const items = getBuildingCategories(th)[cat] ?? {};
     const entries = Object.entries(items).filter(([, thData]) => {
@@ -1141,7 +1145,7 @@ export default function HomeScreen() {
                   isFirst
                   isLast={false}
                   icon="flask-outline"
-                  iconSource={getBuildingItemImage('Lab') ?? undefined}
+                  iconSource={pipelineHeaderImage('Lab')}
                   title="Laboratory"
                    compact
                    count={labKeys.reduce((s, k) => {
@@ -1211,7 +1215,7 @@ export default function HomeScreen() {
 <CollapsibleSection
                   isLast={false}
                   icon="business-outline"
-                  iconSource={getBuildingItemImage('Builder Hut') ?? undefined}
+                  iconSource={pipelineHeaderImage('Builder Hut')}
                   title="Builders"
                    compact
                    count={builderGroups.reduce((s, g) => s + g.rows.length, 0)}
@@ -1324,7 +1328,7 @@ export default function HomeScreen() {
 <CollapsibleSection
                 isLast={false}
                 icon="paw"
-                iconSource={getBuildingItemImage('Pet House') ?? undefined}
+                iconSource={pipelineHeaderImage('Pet House')}
                 title="Pets"
                 compact
                count={progressGroups.find(g => g.key === 'pets')?.rows.length ?? 0}
@@ -1382,7 +1386,7 @@ export default function HomeScreen() {
               <CollapsibleSection
                 isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
                 icon="hammer-outline"
-                iconSource={getBuildingItemImage('Blacksmith') ?? undefined}
+                iconSource={pipelineHeaderImage('Blacksmith')}
                 title="Equipment"
                 compact
                count={progressGroups.find(g => g.key === 'equipment')?.rows.length ?? 0}
