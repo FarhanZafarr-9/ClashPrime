@@ -1161,7 +1161,7 @@ export default function HomeScreen() {
                      const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
                      const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
                      const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-                     const navigateInstead = displayRows.length >= 10;
+                     const navigateInstead = displayRows.length >= 5;
                      return (
                        <CollapsibleSection
                          key={group.key}
@@ -1277,7 +1277,7 @@ export default function HomeScreen() {
                     return builderCategoryGroups.map((group, gi, groups) => {
                       const isHero = group.isHero;
                       const displayRows = group.rows.filter((r) => (isHero || r.maxLevel > 0) && r.level < r.maxLevel);
-                      const navigateInstead = displayRows.length >= 10;
+                      const navigateInstead = displayRows.length >= 5;
                       return (
                         <CollapsibleSection
                           key={group.key}
