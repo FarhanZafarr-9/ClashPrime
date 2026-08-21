@@ -12,7 +12,7 @@ import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
 import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
-import { getBuildingItemImage, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getBuildingItemImage, getMaxTownHall, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
 import { computeThReadiness } from '../../src/utils/thReadiness';
@@ -74,6 +74,8 @@ export default function MaxTimeScreen() {
   const [rushExpanded, setRushExpanded] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
+  const maxTh = getMaxTownHall();
+  const isMaxTh = th >= maxTh;
 
   const armyNames = useMemo(() => {
     if (!player) return [] as string[];
@@ -482,16 +484,12 @@ export default function MaxTimeScreen() {
               })}
             </React.Fragment>
           )}
-          {readinessOpen && readiness && discounted && nextDiscounted && (
+          {readinessOpen && readiness && discounted && nextDiscounted && !isMaxTh && (
             <React.Fragment>
               <SettingRow
                 icon="trending-up-outline"
                 title={`Rush to TH${readiness.nextTh}`}
-                desc={
-                  nextDiscounted.headlineTime > discounted.headlineTime
-                    ? `with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`
-                    : `with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`
-                }
+                desc={`with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`}
                 compact
                 isFirst
                 isLast={!rushExpanded}
@@ -538,8 +536,10 @@ export default function MaxTimeScreen() {
                   {readiness.nextUnlocks.length > 0 ? (
                     <>
                       {readiness.nextUnlocks.map((u, i) => (
-                        <View key={`${u.label}-${i}`} style={styles.rushNewItemRow}>
-                          <Text style={styles.rushNewItemCategory}>{u.label === 'lab' ? 'Lab' : u.label === 'heroes' ? 'Heroes' : u.label === 'buildings' ? 'Buildings' : u.label === 'levels' ? 'Levels' : u.label}</Text>
+                        <View key={`${u.label}-${i}`} style={styles.rushNewItemGroup}>
+                          <Text style={styles.rushNewItemCategory}>
+                            {u.label === 'lab' ? 'Lab' : u.label === 'heroes' ? 'Heroes' : u.label === 'buildings' ? 'Buildings' : u.label === 'levels' ? 'Levels' : u.label}
+                          </Text>
                           {(u.names || u.details) ? (
                             <View style={styles.rushNewItemGrid}>
                               {(u.names || []).map((name, ni) => (
@@ -559,7 +559,7 @@ export default function MaxTimeScreen() {
                               {(u.details || []).map((d, di) => (
                                 <View key={`${d.name}-${di}`} style={styles.rushNewItemCell}>
                                   <Image
-                                    source={getBuildingItemImage(d.name, d.levels) ?? getBuildingItemImage(d.name) ?? undefined}
+                                    source={getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name) ?? undefined}
                                     style={styles.rushNewItemIcon}
                                     resizeMode="contain"
                                   />
@@ -582,6 +582,20 @@ export default function MaxTimeScreen() {
                 </View>
               )}
             </React.Fragment>
+          )}
+          {readinessOpen && readiness && isMaxTh && (
+            <View style={styles.maxThCelebration}>
+              <Ionicons name="trophy" size={48} color={Colors.warning} />
+              <Text style={styles.maxThTitle}>Maximum Town Hall Reached!</Text>
+              <Text style={styles.maxThSubtitle}>Congratulations, Chief! 🎉</Text>
+              <Text style={styles.maxThBody}>
+                You've maxed out every building, troop, spell, hero, and pet.
+                Your village stands complete — a testament to your dedication.
+              </Text>
+              <Text style={styles.maxThBody}>
+                Thank you for choosing ClashPrime for your journey.
+              </Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -972,11 +986,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.sm,
   },
-  rushNewItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  rushNewItemGroup: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  rushNewItemCategory: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.xs,
   },
   rushNewItemLabel: {
     ...Typography.footnote,
@@ -1011,13 +1031,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     maxWidth: 100,
   },
-  rushNewItemCategory: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
+  maxThCelebration: {
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.md,
+    padding: Spacing.xl,
+    borderRadius: Radius.xl * 1.25,
+    backgroundColor: Colors.bgCard,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.warning,
+    shadowColor: Colors.warning,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  maxThTitle: {
+    ...Typography.title2,
+    color: Colors.warning,
+    fontWeight: '800',
+    marginTop: Spacing.md,
+    textAlign: 'center',
+  },
+  maxThSubtitle: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+  maxThBody: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

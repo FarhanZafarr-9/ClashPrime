@@ -32,7 +32,7 @@ export interface ThReadiness {
     label: string;
     value: string;
     names?: string[];
-    details?: { name: string; count: number; levels: number }[];
+    details?: { name: string; count: number; levels: number; nextMax: number }[];
   }[];
 }
 
@@ -230,7 +230,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     label: string;
     value: string;
     names?: string[];
-    details?: { name: string; count: number; levels: number }[];
+    details?: { name: string; count: number; levels: number; nextMax: number }[];
   }[] = [];
   const newTroops = newItems.filter((i) => i.type === 'troop');
   const newSpells = newItems.filter((i) => i.type === 'spell');
@@ -255,7 +255,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
   let newBuildings = 0;
   let extraLevels = 0;
   const newBuildingNames: string[] = [];
-  const extraLevelDetails: { name: string; count: number; levels: number }[] = [];
+  const extraLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   for (const [cat, buildings] of Object.entries(catsNext)) {
     for (const [name, thData] of Object.entries(buildings)) {
       const nextMax = thData[String(nextTh)]?.level ?? 0;
@@ -271,13 +271,13 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
           extraLevels += levelDelta;
         } else {
           extraLevels += count * levelDelta;
-          extraLevelDetails.push({ name, count, levels: levelDelta });
+          extraLevelDetails.push({ name, count, levels: levelDelta, nextMax });
         }
       }
     }
   }
-  if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, names: newBuildingNames });
-  if (extraLevels > 0) nextUnlocks.push({ label: 'levels', value: `+${extraLevels} building level`, details: extraLevelDetails });
+  if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, names: newBuildingNames } as const);
+  if (extraLevels > 0) nextUnlocks.push({ label: 'levels', value: `+${extraLevels} building level`, details: extraLevelDetails } as const);
 
   const note =
     verdict === 'ready'
