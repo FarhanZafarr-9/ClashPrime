@@ -335,6 +335,15 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     }
   }
   if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, names: newBuildingNames } as const);
+  // Sort extra levels: Army buildings first, then others by category priority
+  const ARMY_BUILDINGS = ['Army Camp', 'Barracks', 'Clan Castle', 'Lab', 'Hero Hall', 'Spell Factory', 'Dark Barracks', 'Dark Spell Factory', 'Blacksmith', 'Workshop', 'Pet House'];
+  extraLevelDetails.sort((a, b) => {
+    const aIsArmy = ARMY_BUILDINGS.includes(a.name);
+    const bIsArmy = ARMY_BUILDINGS.includes(b.name);
+    if (aIsArmy && !bIsArmy) return -1;
+    if (!aIsArmy && bIsArmy) return 1;
+    return 0;
+  });
   if (extraLevels > 0) nextUnlocks.push({ label: 'levels', value: `+${extraLevels} building level`, details: extraLevelDetails } as const);
 
   const note =
