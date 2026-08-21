@@ -1413,7 +1413,7 @@ export default function HomeScreen() {
 {(unlockableItems.length > 0 || rushedItems.length > 0) && (
                <CollapsibleSection
                  isLast
-                 iconSource={pipelineHeaderImage('Town Hall')}
+                 iconUrl={getTownHallImageUrl(th) || undefined}
                  title="Backlog"
                  compact
                 count={unlockableItems.length + rushedItems.length}
