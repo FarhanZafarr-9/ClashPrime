@@ -512,9 +512,9 @@ export default function MaxTimeScreen() {
                 <View style={styles.rushExpandBody}>
                   <View style={styles.rushCompareHeader}>
                     <Text style={styles.rushCompareCol}>Pipeline</Text>
-                    <Text style={styles.rushCompareCol}>TH{th}</Text>
-                    <Text style={styles.rushCompareCol}>TH{readiness.nextTh}</Text>
-                    <Text style={styles.rushCompareCol}>Δ</Text>
+                    <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
+                    <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
+                    <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
                   </View>
                   {[
                     { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
@@ -525,10 +525,8 @@ export default function MaxTimeScreen() {
                     <View key={p.key} style={styles.rushCompareRow}>
                       <Text style={styles.rushCompareLabel}>{p.label}</Text>
                       <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
+                      <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
                       <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
-                      <Text style={[styles.rushCompareDelta, { color: p.next > p.cur ? Colors.warning : Colors.success }]}>
-                        {p.instant ? '—' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : formatTimeShort(p.cur - p.next)}
-                      </Text>
                     </View>
                   ))}
                   <View style={styles.rushDivider} />
@@ -1007,7 +1005,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
   },
   rushNewItemCell: {
