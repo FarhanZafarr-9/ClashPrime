@@ -329,12 +329,8 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
         if (count > 0) newBuildingNames.push(name);
       } else if (nextMax > curMax) {
         const levelDelta = nextMax - curMax;
-        if (name.toLowerCase().includes('wall')) {
-          extraLevels += levelDelta;
-        } else {
-          extraLevels += count * levelDelta;
-          extraLevelDetails.push({ name, count, levels: levelDelta, nextMax });
-        }
+        extraLevels += count * levelDelta;
+        extraLevelDetails.push({ name, count, levels: levelDelta, nextMax });
       }
     }
   }
