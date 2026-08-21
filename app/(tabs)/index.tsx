@@ -1336,51 +1336,32 @@ export default function HomeScreen() {
                totalMax={progressGroups.find(g => g.key === 'pets')?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
                description={renderProgressHeader(progressGroups.find(g => g.key === 'pets')?.progress ?? 0, progressCosts.pets)}
              >
-               <View style={styles.progressInner}>
-               {(() => {
-                 const group = progressGroups.find(g => g.key === 'pets');
-                 if (!group) return null;
-                 const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-                 const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
-                 const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-                 const navigateInstead = displayRows.length >= 10;
-                 return (
-                   <CollapsibleSection
-                     key={group.key}
-                     isLast
-                     icon={group.icon}
-                     iconUrl={group.iconUrl}
-                     title={group.title}
-                     compact
-                     onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                     description={renderProgressHeader(group.progress, progressCosts[group.key])}
-                     count={displayRows.length}
-                     totalLevel={totalLevel}
-                     totalMax={totalMax}
-                   >
-                     {displayRows.map((row, ri) => {
-                       const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
-                       return (
-                         <ItemCard
-                           key={`${group.key}-${ri}`}
-                           name={row.name}
-                           level={row.level}
-                           maxLevel={row.maxLevel}
-                           icon={row.icon}
-                           costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                           costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                           timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                           locked={row.level === 0}
-                           isLast={ri === displayRows.length - 1}
-                           onPress={() => router.push(group.pushTo)}
-                         />
-                       );
-                     })}
-                   </CollapsibleSection>
-                 );
-               })()}
-               </View>
-             </CollapsibleSection>
+                <View style={styles.progressInner}>
+                {(() => {
+                  const group = progressGroups.find(g => g.key === 'pets');
+                  if (!group) return null;
+                  const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+                  return displayRows.map((row, ri) => {
+                    const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                    return (
+                      <ItemCard
+                        key={`${group.key}-${ri}`}
+                        name={row.name}
+                        level={row.level}
+                        maxLevel={row.maxLevel}
+                        icon={row.icon}
+                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                        costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                        timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                        locked={row.level === 0}
+                        isLast={ri === displayRows.length - 1}
+                        onPress={() => router.push(group.pushTo)}
+                      />
+                    );
+                  });
+                })()}
+                </View>
+              </CollapsibleSection>
 
 {/* ── Equipment ── */}
               <CollapsibleSection
@@ -1394,51 +1375,32 @@ export default function HomeScreen() {
                totalMax={progressGroups.find(g => g.key === 'equipment')?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
                description={renderProgressHeader(progressGroups.find(g => g.key === 'equipment')?.progress ?? 0, progressCosts.equipment)}
              >
-               <View style={styles.progressInner}>
-               {(() => {
-                 const group = progressGroups.find(g => g.key === 'equipment');
-                 if (!group) return null;
-                 const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-                 const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
-                 const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-                 const navigateInstead = displayRows.length >= 10;
-                 return (
-                   <CollapsibleSection
-                     key={group.key}
-                     isLast
-                     icon={group.icon}
-                     iconUrl={group.iconUrl}
-                     title={group.title}
-                     compact
-                     onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                     description={renderProgressHeader(group.progress, progressCosts[group.key])}
-                     count={displayRows.length}
-                     totalLevel={totalLevel}
-                     totalMax={totalMax}
-                   >
-                     {displayRows.map((row, ri) => {
-                       const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
-                       return (
-                         <ItemCard
-                           key={`${group.key}-${ri}`}
-                           name={row.name}
-                           level={row.level}
-                           maxLevel={row.maxLevel}
-                           icon={row.icon}
-                           costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                           costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                           timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                           locked={row.level === 0}
-                           isLast={ri === displayRows.length - 1}
-                           onPress={() => router.push(group.pushTo)}
-                         />
-                       );
-                     })}
-                   </CollapsibleSection>
-                 );
-               })()}
-               </View>
-             </CollapsibleSection>
+                <View style={styles.progressInner}>
+                {(() => {
+                  const group = progressGroups.find(g => g.key === 'equipment');
+                  if (!group) return null;
+                  const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+                  return displayRows.map((row, ri) => {
+                    const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                    return (
+                      <ItemCard
+                        key={`${group.key}-${ri}`}
+                        name={row.name}
+                        level={row.level}
+                        maxLevel={row.maxLevel}
+                        icon={row.icon}
+                        costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                        costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                        timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                        locked={row.level === 0}
+                        isLast={ri === displayRows.length - 1}
+                        onPress={() => router.push(group.pushTo)}
+                      />
+                    );
+                  });
+                })()}
+                </View>
+              </CollapsibleSection>
 
              {(unlockableItems.length > 0 || rushedItems.length > 0) && (
               <CollapsibleSection
