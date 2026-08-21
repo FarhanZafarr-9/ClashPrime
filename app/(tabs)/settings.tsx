@@ -1011,15 +1011,15 @@ export default function SettingsScreen() {
           <SettingRow
             icon="refresh-outline"
             title="Refresh Game Data"
-            desc="Re-fetch reference data from the wiki"
+            desc="Reload the bundled game database"
             compact
             onPress={() => {
               showDialog({
                 title: 'Refresh Game Data',
-                message: 'Re-fetches all game reference data (siege machines, pets, super troops, max levels) from the wiki and clash.ninja. This ensures you have the latest unit names and balance changes. Data is cached for 7 days.',
+                message: 'Reloads all game reference data (buildings, troops, heroes, spells, pets, siege machines, equipment, max levels, costs) from the clash-of-clans-data package bundled with the app. No web sources are used, so this is instant.',
                 actions: [
                   { label: 'Cancel', onPress: () => { } },
-                  { label: 'Refresh', primary: true, onPress: async () => { await refreshGameData(); } },
+                  { label: 'Reload', primary: true, onPress: async () => { await refreshGameData(); } },
                 ],
               });
             }}
