@@ -11,7 +11,7 @@ import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
-import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
+import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getMaxLevelAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
 import { getBuildingItemImage, getMaxTownHall, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
@@ -534,20 +534,28 @@ export default function MaxTimeScreen() {
                           </Text>
                           {(u.names || u.details) ? (
                             <View style={styles.rushNewItemGrid}>
-                              {(u.names || []).map((name, ni) => (
-                                <View key={name} style={styles.rushNewItemCell}>
-                                  <Image
-                                    source={
-                                      (u.label === 'lab' || u.label === 'heroes'
-                                        ? getArmyItemImage(name)
-                                        : getBuildingItemImage(name)) ?? undefined
-                                    }
-                                    style={styles.rushNewItemIcon}
-                                    resizeMode="contain"
-                                  />
-                                  {false && <Text style={styles.rushNewItemName} numberOfLines={1}>{name}</Text>}
-                                </View>
-                              ))}
+                              {(u.names || []).map((name, ni) => {
+                                const maxLvl = (u.label === 'lab' || u.label === 'heroes') ? getMaxLevelAtTH(name, readiness.nextTh) : null;
+                                return (
+                                  <View key={name} style={styles.rushNewItemCell}>
+                                    <View style={styles.rushNewItemIconWrap}>
+                                      <Image
+                                        source={
+                                          (u.label === 'lab' || u.label === 'heroes'
+                                            ? getArmyItemImage(name)
+                                            : getBuildingItemImage(name)) ?? undefined
+                                        }
+                                        style={styles.rushNewItemIcon}
+                                        resizeMode="contain"
+                                      />
+                                      {maxLvl != null && maxLvl > 0 && (
+                                        <Text style={styles.rushNewItemMaxLvl}>{maxLvl}</Text>
+                                      )}
+                                    </View>
+                                    {false && <Text style={styles.rushNewItemName} numberOfLines={1}>{name}</Text>}
+                                  </View>
+                                );
+                              })}
                               {(u.details || []).map((d, di) => (
                                 <View key={`${d.name}-${di}`} style={styles.rushNewItemCell}>
                                   <Image
@@ -1015,6 +1023,23 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bg,
+  },
+  rushNewItemIconWrap: {
+    position: 'relative',
+  },
+  rushNewItemMaxLvl: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    backgroundColor: Colors.warning,
+    color: Colors.bg,
+    fontSize: 8,
+    fontWeight: '800',
+    paddingHorizontal: 3,
+    paddingVertical: 0.5,
+    borderRadius: 4,
+    minWidth: 16,
+    textAlign: 'center',
   },
   rushNewItemName: {
     ...Typography.caption,
