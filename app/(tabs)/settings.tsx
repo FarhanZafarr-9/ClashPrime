@@ -109,6 +109,18 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '5.1.0',
+    date: 'August 21, 2026',
+    items: [
+      'Critical-path TH readiness using computeMaxTime — bottleneck-driven score (Lab/Builders/Pets pipeline times) replaces weighted average, exposing hero/building bottlenecks correctly.',
+      'Rush to TH+1 expandable comparison: remaining time, added time, total time per pipeline + new unlocks grid with icons and max-level badges.',
+      'Lab expandable in readiness card with Troops/Spells/Sieges tier progress.',
+      'Walls counted per-copy (not ×250) in next-TH level counts; Army buildings prioritized in level unlocks grid.',
+      'Max TH celebration screen; GitHub version checker in Home & Settings (shows update badge when new tag available).',
+      'Buildings/Army max level images in Rush unlocks; troop/spell max-level badges on icons.',
+    ],
+  },
+  {
     version: '5.0.0',
     date: 'August 17, 2026',
     items: [
@@ -233,7 +245,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.0.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.1.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
@@ -368,49 +380,37 @@ export default function SettingsScreen() {
   };
 
   const handleCheckUpdates = async () => {
-    const variant = (Constants.expoConfig as any)?.extra?.variant;
-    if (variant === 'development' || __DEV__) {
-      showDialog({
-        title: 'Development Build',
-        message: 'Over-the-air updates only apply to release builds. You are running a development build, so updates arrive by installing a new build (EAS or `expo run`) — not through the update channel.',
-        actions: [{ label: 'Got It', primary: true, onPress: () => { } }],
-      });
-      return;
-    }
-
     setCheckingUpdates(true);
     try {
       const online = await probeConnectivity();
       if (!online) {
         showDialog({
           title: 'No Internet Connection',
-          message: 'Could not reach the update server. Check your Wi-Fi or mobile data, then try again.',
+          message: 'Could not reach GitHub to check for updates. Check your Wi-Fi or mobile data, then try again.',
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
         return;
       }
 
-      try {
-        const update = await checkForUpdateAsync();
-        if (update.isAvailable) {
-          showDialog({
-            title: 'Update Available',
-            message: 'A new update is ready for this channel. Tap Install to download and apply it now — you will return to the app once it is applied.',
-            actions: [
-              { label: 'Later', onPress: () => { } },
-              { label: 'Install', primary: true, onPress: async () => { await fetchUpdateAsync(); await reloadAsync(); } },
-            ],
-          });
-        } else {
-          showDialog({ title: "You're Up to Date", message: 'ClashPrime is running the latest available update for this channel.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
-        }
-      } catch {
+      const { hasUpdate, latestVersion: v, currentVersion } = await checkForUpdate();
+      if (hasUpdate) {
         showDialog({
-          title: 'Update Check Failed',
-          message: 'The update server was reachable but the check could not complete. This can happen if the update channel is misconfigured or the Expo servers are busy. Please try again in a moment.',
-          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+          title: 'Update Available',
+          message: `v${v} is available (you have v${currentVersion}). Tap "View on GitHub" to see the release notes and download the latest build.`,
+          actions: [
+            { label: 'Later', onPress: () => { } },
+            { label: 'View on GitHub', primary: true, onPress: () => openURL('https://github.com/FarhanZafarr-9/ClashPrime/releases') },
+          ],
         });
+      } else {
+        showDialog({ title: "You're Up to Date", message: `ClashPrime v${currentVersion} is the latest version.`, actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
       }
+    } catch {
+      showDialog({
+        title: 'Update Check Failed',
+        message: 'Could not check for updates. Please try again in a moment.',
+        actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+      });
     } finally {
       setCheckingUpdates(false);
     }
