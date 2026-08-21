@@ -70,6 +70,7 @@ export default function MaxTimeScreen() {
   const [expanded, setExpanded] = useState<Record<PipelineKey, boolean>>({ lab: false, builders: false, pets: false, equipment: false });
   const [readinessOpen, setReadinessOpen] = useState(false);
   const [buildersExpanded, setBuildersExpanded] = useState(false);
+  const [labExpanded, setLabExpanded] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
 
@@ -441,7 +442,9 @@ export default function MaxTimeScreen() {
             <React.Fragment>
               {readiness.pipelines.map((p, i) => {
                 const isBuilders = p.key === 'builders';
-                const isOpen = buildersExpanded;
+                const isLab = p.key === 'lab';
+                const isOpen = isBuilders ? buildersExpanded : isLab ? labExpanded : false;
+                const isExpandable = isBuilders || isLab;
                 return (
                   <React.Fragment key={p.key}>
                     <SettingRow
@@ -449,14 +452,14 @@ export default function MaxTimeScreen() {
                       title={PIPELINE_META[p.key].title}
                       desc={READINESS_PIPELINE_DESC[p.key]}
                       compact
-                      isLast={isBuilders ? !isOpen : i === readiness.pipelines.length - 1}
-                      onPress={isBuilders ? () => setBuildersExpanded((o) => !o) : undefined}
+                      isLast={isExpandable ? !isOpen : i === readiness.pipelines.length - 1}
+                      onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
                       children={
                         <View style={styles.readinessChildren}>
                           <View style={styles.pipelineBadge}>
                             <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
                           </View>
-                          {isBuilders && (
+                          {isExpandable && (
                             <Ionicons
                               name="chevron-down"
                               size={16}
@@ -467,7 +470,7 @@ export default function MaxTimeScreen() {
                         </View>
                       }
                     />
-                    {isBuilders && isOpen && (
+                    {isExpandable && isOpen && (
                       <View style={styles.pipelineExpandBody}>
                         {p.children.map((c) => (
                           <View key={c.key} style={styles.readinessCatRow}>
