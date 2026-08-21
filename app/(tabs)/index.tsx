@@ -1413,13 +1413,13 @@ export default function HomeScreen() {
 {(unlockableItems.length > 0 || rushedItems.length > 0) && (
                <CollapsibleSection
                  isLast
-                 iconUrl={getTownHallImageUrl(th) || undefined}
+                 iconUrl={getTownHallImageUrl((th ?? 1) - 1) || undefined}
                  title="Backlog"
                  compact
                 count={unlockableItems.length + rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
-                description="Items waiting to be upgraded"
+                description="Items waiting to be upgraded / unlocked"
               >
               <View style={styles.progressInner}>
               {unlockableItems.length > 0 && (
