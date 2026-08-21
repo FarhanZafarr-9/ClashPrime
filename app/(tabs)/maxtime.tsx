@@ -71,6 +71,7 @@ export default function MaxTimeScreen() {
   const [readinessOpen, setReadinessOpen] = useState(false);
   const [buildersExpanded, setBuildersExpanded] = useState(false);
   const [labExpanded, setLabExpanded] = useState(false);
+  const [rushExpanded, setRushExpanded] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
 
@@ -460,14 +461,6 @@ export default function MaxTimeScreen() {
                           <View style={styles.pipelineBadge}>
                             <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
                           </View>
-                          {isExpandable && (
-                            <Ionicons
-                              name="chevron-down"
-                              size={16}
-                              color={colors.textTertiary}
-                              style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
-                            />
-                          )}
                         </View>
                       }
                     />
@@ -496,23 +489,65 @@ export default function MaxTimeScreen() {
                 title={`Rush to TH${readiness.nextTh}`}
                 desc={
                   nextDiscounted.headlineTime > discounted.headlineTime
-                    ? `with current levels · ${fmtDelta(nextDiscounted.headlineTime - discounted.headlineTime)} extra`
-                    : 'with current levels · no extra time'
+                    ? `with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`
+                    : `with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`
                 }
                 compact
                 isFirst
-                isLast
+                isLast={!rushExpanded}
+                onPress={() => setRushExpanded((o) => !o)}
                 children={
-                  <View style={styles.pipelineBadge}>
-                    <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
+                  <View style={styles.readinessChildren}>
+                    <View style={styles.pipelineBadge}>
+                      <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
+                    </View>
+                    <Ionicons
+                      name="chevron-down"
+                      size={16}
+                      color={colors.textTertiary}
+                      style={{ transform: [{ rotate: rushExpanded ? '180deg' : '0deg' }] }}
+                    />
                   </View>
                 }
               />
-              <Text style={[styles.readinessNext, styles.readinessFooter]}>
-                TH{readiness.nextTh} adds → Lab {fmtDelta(Math.max(0, nextDiscounted.lab.timeSec - discounted.lab.timeSec))} · Builders{' '}
-                {fmtDelta(Math.max(0, nextDiscounted.builders.timeSec - discounted.builders.timeSec))} · Pets{' '}
-                {fmtDelta(Math.max(0, nextDiscounted.pets.timeSec - discounted.pets.timeSec))} · Equipment Instant
-              </Text>
+              {rushExpanded && (
+                <View style={styles.rushExpandBody}>
+                  <View style={styles.rushCompareHeader}>
+                    <Text style={styles.rushCompareCol}>Pipeline</Text>
+                    <Text style={styles.rushCompareCol}>TH{th}</Text>
+                    <Text style={styles.rushCompareCol}>TH{readiness.nextTh}</Text>
+                    <Text style={styles.rushCompareCol}>Δ</Text>
+                  </View>
+                  {[
+                    { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
+                    { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
+                    { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
+                    { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
+                  ].map((p) => (
+                    <View key={p.key} style={styles.rushCompareRow}>
+                      <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                      <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
+                      <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
+                      <Text style={[styles.rushCompareDelta, { color: p.next > p.cur ? Colors.warning : Colors.success }]}>
+                        {p.instant ? '—' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : formatTimeShort(p.cur - p.next)}
+                      </Text>
+                    </View>
+                  ))}
+                  <View style={styles.rushDivider} />
+                  <Text style={styles.rushNewItemsTitle}>New at TH{readiness.nextTh}</Text>
+                  {readiness.nextUnlocks.length > 0 ? (
+                    <>
+                      {readiness.nextUnlocks.map((u, i) => (
+                        <View key={`${u.label}-${i}`} style={styles.rushNewItemRow}>
+                          <Text style={styles.rushNewItemLabel}>{u.value}</Text>
+                        </View>
+                      ))}
+                    </>
+                  ) : (
+                    <Text style={styles.rushNewItemLabel}>No new items</Text>
+                  )}
+                </View>
+              )}
             </React.Fragment>
           )}
         </View>
@@ -839,5 +874,80 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     textAlign: 'center',
     paddingVertical: Spacing.md,
+  },
+  rushExpandBody: {
+    backgroundColor: Colors.bgCard,
+    borderTopLeftRadius: Radius.md,
+    borderTopRightRadius: Radius.md,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  rushCompareHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  rushCompareCol: {
+    flex: 1,
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  rushCompareRow: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  rushCompareLabel: {
+    flex: 1,
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  rushCompareVal: {
+    flex: 1,
+    ...Typography.footnote,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+  },
+  rushCompareDelta: {
+    flex: 1,
+    ...Typography.footnote,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+  },
+  rushDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    marginVertical: Spacing.xs,
+  },
+  rushNewItemsTitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+  },
+  rushNewItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  rushNewItemLabel: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });
