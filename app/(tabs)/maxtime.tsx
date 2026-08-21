@@ -539,6 +539,7 @@ export default function MaxTimeScreen() {
                     <>
                       {readiness.nextUnlocks.map((u, i) => (
                         <View key={`${u.label}-${i}`} style={styles.rushNewItemRow}>
+                          <Text style={styles.rushNewItemCategory}>{u.label === 'lab' ? 'Lab' : u.label === 'heroes' ? 'Heroes' : u.label === 'buildings' ? 'Buildings' : u.label === 'levels' ? 'Levels' : u.label}</Text>
                           {(u.names || u.details) ? (
                             <View style={styles.rushNewItemGrid}>
                               {(u.names || []).map((name, ni) => (
@@ -552,19 +553,20 @@ export default function MaxTimeScreen() {
                                     style={styles.rushNewItemIcon}
                                     resizeMode="contain"
                                   />
-                                  <Text style={styles.rushNewItemName} numberOfLines={1}>{name}</Text>
+                                  {false && <Text style={styles.rushNewItemName} numberOfLines={1}>{name}</Text>}
                                 </View>
                               ))}
                               {(u.details || []).map((d, di) => (
                                 <View key={`${d.name}-${di}`} style={styles.rushNewItemCell}>
                                   <Image
-                                    source={getBuildingItemImage(d.name) ?? undefined}
+                                    source={getBuildingItemImage(d.name, d.levels) ?? getBuildingItemImage(d.name) ?? undefined}
                                     style={styles.rushNewItemIcon}
                                     resizeMode="contain"
                                   />
                                   <Text style={styles.rushNewItemName} numberOfLines={1}>
-                                    {d.name} {d.count > 1 ? `×${d.count}` : ''} +{d.levels}L
+                                    {d.count > 1 ? `×${d.count}` : ''} +{d.levels}L
                                   </Text>
+                                  {false && <Text style={styles.rushNewItemName} numberOfLines={1}>{d.name}</Text>}
                                 </View>
                               ))}
                             </View>
@@ -991,9 +993,9 @@ const styles = StyleSheet.create({
   rushNewItemCell: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     backgroundColor: Colors.bgCardHover,
     borderRadius: Radius.sm,
   },
@@ -1008,5 +1010,14 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
     maxWidth: 100,
+  },
+  rushNewItemCategory: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
   },
 });
