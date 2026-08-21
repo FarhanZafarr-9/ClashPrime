@@ -45,6 +45,19 @@ export async function checkForUpdate(): Promise<{ hasUpdate: boolean; latestVers
   }
 }
 
+export async function probeGitHubOnline(): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetch('https://api.github.com/', { method: 'HEAD', signal: controller.signal });
+    return res.status > 0;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function clearVersionCache() {
   cachedResult = null;
 }

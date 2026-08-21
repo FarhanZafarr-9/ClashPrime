@@ -15,6 +15,7 @@ import {
   Platform,
   Animated,
   BackHandler,
+  Linking,
   type ImageSourcePropType,
 } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
@@ -53,7 +54,7 @@ import {
   ProgressDiff,
 } from '../../src/hooks/useProgressSnapshot';
 import type { ClashPlayer } from '../../src/types/clash';
-import { checkForUpdate } from '../../src/utils/versionCheck';
+import { checkForUpdate, clearVersionCache, probeGitHubOnline } from '../../src/utils/versionCheck';
 import { APP_VERSION } from '../../src/constants/appVersion';
 
 const CATEGORY_META: Record<ProgressCategory, { label: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
@@ -300,6 +301,7 @@ export default function HomeScreen() {
   const progressFetched = useRef<Set<string> | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [latestVersion, setLatestVersion] = useState('');
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
 
   // Wiki details for the progress-overview army items are cached globally and
   // shared across accounts; reset the in-memory state per account.
@@ -318,6 +320,51 @@ export default function HomeScreen() {
     });
     return () => { mounted = false; };
   }, []);
+
+  const handleCheckUpdates = useCallback(async () => {
+    if (checkingUpdate) return;
+    setCheckingUpdate(true);
+    try {
+      const online = await probeGitHubOnline();
+      if (!online) {
+        showDialog({
+          title: 'No Internet Connection',
+          message: 'Could not reach GitHub to check for updates. Check your Wi-Fi or mobile data, then try again.',
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+        });
+        return;
+      }
+
+      clearVersionCache();
+      const { hasUpdate, latestVersion: v, currentVersion } = await checkForUpdate();
+      setUpdateAvailable(hasUpdate);
+      setLatestVersion(v);
+      if (hasUpdate) {
+        showDialog({
+          title: 'Update Available',
+          message: `A new version of ClashPrime (v${v}) has been published — you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
+          actions: [
+            { label: 'Later', onPress: () => { } },
+            { label: 'View on GitHub', primary: true, onPress: () => Linking.openURL('https://github.com/FarhanZafarr-9/ClashPrime/releases') },
+          ],
+        });
+      } else if (v !== currentVersion) {
+        showDialog({
+          title: "You're Ahead of the Releases",
+          message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build — nothing to update.`,
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+        });
+      } else {
+        showDialog({
+          title: "You're Up to Date",
+          message: `ClashPrime v${currentVersion} matches the latest published release. Check back later for new versions.`,
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+        });
+      }
+    } finally {
+      setCheckingUpdate(false);
+    }
+  }, [checkingUpdate, showDialog]);
 
   React.useEffect(() => {
     if (error && player) {
@@ -898,6 +945,13 @@ export default function HomeScreen() {
                 </View>
               )}
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+                <PressableRipple style={styles.switchBtn} onPress={handleCheckUpdates}>
+                  {checkingUpdate ? (
+                    <ActivityIndicator size="small" color={Colors.textSecondary} />
+                  ) : (
+                    <Ionicons name={updateAvailable ? 'cloud-download-outline' : 'cloud-done-outline'} size={18} color={updateAvailable ? Colors.warning : Colors.textSecondary} />
+                  )}
+                </PressableRipple>
                 <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
                 </PressableRipple>
@@ -2116,8 +2170,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     backgroundColor: Colors.bgCardHover,
     borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
   },
   statCellLeagueImage: {
     width: 32,
