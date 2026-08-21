@@ -20,10 +20,8 @@ function remindersKey(accountTag: string): string {
 }
 
 let Notifications: any = null;
-let SchedulableTriggerInputTypes: any = null;
 try {
   Notifications = require('expo-notifications');
-  SchedulableTriggerInputTypes = Notifications.SchedulableTriggerInputTypes;
 } catch {}
 
 if (Notifications) {
@@ -89,13 +87,19 @@ interface ActiveTimer {
   id: string;
   label: string;
   target: number;
+  totalMs: number;
 }
 
 function getActiveTimers(reminders: TimerReminder[]): ActiveTimer[] {
   const now = Date.now();
   return reminders
     .filter((r) => r.status === 'active' && new Date(r.targetDate).getTime() > now)
-    .map((r) => ({ id: r.id, label: r.label, target: new Date(r.targetDate).getTime() }))
+    .map((r) => ({
+      id: r.id,
+      label: r.label,
+      target: new Date(r.targetDate).getTime(),
+      totalMs: Math.max(1, new Date(r.targetDate).getTime() - new Date(r.createdAt).getTime()),
+    }))
     .sort((a, b) => a.target - b.target);
 }
 
@@ -109,9 +113,11 @@ export async function stopOngoingTimerNotification(): Promise<void> {
 
 async function displayOngoingFor(next: ActiveTimer, moreCount: number): Promise<void> {
   if (!ongoingChannelReady) await ensureOngoingChannel();
+  const elapsed = Math.max(0, next.totalMs - (next.target - Date.now()));
+  const pct = Math.min(100, Math.max(0, Math.round((elapsed / next.totalMs) * 100)));
   await notifee.displayNotification({
     id: ONGOING_NOTIFICATION_ID,
-    title: `⏳ ${next.label}`,
+    title: `${next.label}`,
     body: `Ends ${formatEndTime(next.target)}${moreCount > 0 ? ` · ${moreCount} more active` : ''}`,
     data: { type: 'timer-ongoing', reminderId: next.id },
     android: {
@@ -125,6 +131,7 @@ async function displayOngoingFor(next: ActiveTimer, moreCount: number): Promise<
       timestamp: next.target,
       showChronometer: true,
       chronometerDirection: 'down',
+      progress: { current: pct, max: 100, indeterminate: false },
     },
   });
 }
@@ -153,13 +160,16 @@ export async function syncOngoingTimerNotification(reminders: TimerReminder[]): 
     await displayOngoingFor(next, rest.length);
 
     // Schedule a native swap at the moment this timer ends: promote the next
-    // timer into the pinned slot, or leave a dismissible "finished" card.
+    // timer into the pinned slot, or fire a sounding "finished" alert.
     const followUp = rest[0];
+    const followUpPct = followUp
+      ? Math.min(100, Math.max(0, Math.round(((followUp.target - next.target) / followUp.totalMs) * 100)))
+      : 0;
     await notifee.createTriggerNotification(
       followUp
         ? {
             id: ONGOING_NOTIFICATION_ID,
-            title: `⏳ ${followUp.label}`,
+            title: `${followUp.label}`,
             body: `Ends ${formatEndTime(followUp.target)}${rest.length > 1 ? ` · ${rest.length - 1} more active` : ''}`,
             data: { type: 'timer-ongoing', reminderId: followUp.id },
             android: {
@@ -173,15 +183,16 @@ export async function syncOngoingTimerNotification(reminders: TimerReminder[]): 
               timestamp: followUp.target,
               showChronometer: true,
               chronometerDirection: 'down',
+              progress: { current: Math.max(0, followUpPct), max: 100, indeterminate: false },
             },
           }
         : {
             id: ONGOING_NOTIFICATION_ID,
-            title: `✅ ${next.label} — finished`,
-            body: 'Builder is free — plan your next upgrade.',
+            title: `${next.label} — finished!`,
+            body: 'Builder is free — log in to set your next upgrade.',
             data: { type: 'timer-ongoing', reminderId: next.id },
             android: {
-              channelId: ONGOING_CHANNEL_ID,
+              channelId: CHANNEL_ID,
               smallIcon: 'notification_icon',
               ongoing: false,
               autoCancel: true,
@@ -232,32 +243,9 @@ function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function scheduleSystems(reminders: TimerReminder[]) {
-  if (!Notifications || !SchedulableTriggerInputTypes) return;
-  try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    for (const r of reminders) {
-      if (r.status !== 'active') continue;
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Builder free!',
-          body: `"${r.label}" is done — log in to set your next upgrade.`,
-          sound: true,
-          ...(Platform.OS === 'android' ? {
-            sticky: true,
-            autoDismiss: false,
-            channelId: CHANNEL_ID,
-          } : {}),
-        },
-        trigger: { type: SchedulableTriggerInputTypes.DATE, date: new Date(r.targetDate) },
-      });
-    }
-  } catch {}
-}
-
 export async function rescheduleReminders(accountTag: string): Promise<void> {
-  const reminders = await getReminders(accountTag);
-  await scheduleSystems(reminders);
+  // Expiry alerts are handled natively by Notifee timestamp triggers
+  // (scheduled in syncOngoingTimerNotification) — nothing to re-register here.
 }
 
 export async function migrateLegacyReminders(accountTag: string): Promise<void> {
@@ -290,11 +278,7 @@ export async function createReminder(accountTag: string, label: string, duration
   reminders.push(reminder);
   await saveReminders(accountTag, reminders);
 
-  const permission = await requestPermission();
-  if (permission) {
-    await ensureChannel();
-    await scheduleSystems(reminders);
-  }
+  await requestPermission();
 
   return reminder;
 }
@@ -305,7 +289,6 @@ export async function dismissReminder(accountTag: string, id: string): Promise<v
   if (idx === -1) return;
   reminders.splice(idx, 1);
   await saveReminders(accountTag, reminders);
-  await scheduleSystems(reminders);
 }
 
 export async function markExpiredReminders(accountTag: string): Promise<TimerReminder[]> {
