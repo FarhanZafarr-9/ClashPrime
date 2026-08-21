@@ -312,6 +312,24 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     });
   }
 
+  // Army level increases (existing items that get higher max levels at TH+1)
+  const armyLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
+  const armyTypes = ['troop', 'spell', 'siege', 'hero'] as const;
+  for (const type of armyTypes) {
+    const currentTypeItems = currentItems.filter(i => i.type === type);
+    for (const cur of currentTypeItems) {
+      const next = nextItems.find(n => n.name === cur.name && n.type === type);
+      if (next && next.maxLevel > cur.maxLevel) {
+        armyLevelDetails.push({
+          name: cur.name,
+          count: type === 'hero' ? 1 : 1, // heroes have 1 copy, troops/spells typically 1 research
+          levels: next.maxLevel - cur.maxLevel,
+          nextMax: next.maxLevel,
+        });
+      }
+    }
+  }
+
   const catsNext = getBuildingCategories(nextTh);
   const catsNow = getBuildingCategories(th);
   let newBuildings = 0;
@@ -345,6 +363,10 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     return 0;
   });
   if (extraLevels > 0) nextUnlocks.push({ label: 'levels', value: `+${extraLevels} building level`, details: extraLevelDetails } as const);
+  if (armyLevelDetails.length > 0) {
+    const totalArmyLevels = armyLevelDetails.reduce((s, d) => s + d.levels * d.count, 0);
+    nextUnlocks.push({ label: 'levels', value: `+${totalArmyLevels} army level`, details: armyLevelDetails } as const);
+  }
 
   const note =
     verdict === 'ready'
