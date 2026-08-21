@@ -138,6 +138,15 @@ npm run gen:images
 npm run gen:coc-ids
 ```
 
+### When `clash-of-clans-data` updates upstream
+
+```bash
+npm run sync:coc-data   # installs latest package + regenerates images & ID mapping
+npx tsc --noEmit        # sanity check for schema changes
+```
+
+Then commit the regenerated `src/data/` files + lockfile, push, and tag the release (e.g. `v5.2.0`) so the in-app version checker picks it up.
+
 > The old Fandom wiki scrapers in `scraper/` are deprecated — all building/troop data now comes from `clash-of-clans-data` npm package.
 
 ## Roadmap
