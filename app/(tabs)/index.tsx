@@ -303,6 +303,13 @@ export default function HomeScreen() {
   const [latestVersion, setLatestVersion] = useState('');
   const [checkingUpdate, setCheckingUpdate] = useState(false);
 
+  // Per-second UI clock for timer rows (foreground only; RN pauses it in bg).
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   // Wiki details for the progress-overview army items are cached globally and
   // shared across accounts; reset the in-memory state per account.
   useEffect(() => {
@@ -1483,7 +1490,7 @@ export default function HomeScreen() {
                 )}
               >
                 {reminders.map((r) => {
-                  const remaining = Math.max(0, new Date(r.targetDate).getTime() - Date.now());
+                  const remaining = Math.max(0, new Date(r.targetDate).getTime() - nowTick);
                   const expired = r.status === 'expired' || remaining <= 0;
                   const days = Math.floor(remaining / 86400000);
                   const hours = Math.floor((remaining % 86400000) / 3600000);

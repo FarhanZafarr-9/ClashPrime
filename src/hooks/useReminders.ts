@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
-import notifee, { AndroidCategory, AndroidImportance, AuthorizationStatus } from 'react-native-notify-kit';
+import notifee, { AndroidCategory, AndroidImportance, AuthorizationStatus, TriggerType } from 'react-native-notify-kit';
 import { TimerReminder } from '../types/clash';
 
 const LEGACY_KEY = 'clashprime_reminders';
@@ -51,16 +51,18 @@ export async function ensureChannel(): Promise<void> {
 }
 
 // ── Ongoing pinned timer notification ─────────────────────────────────────────
-// A sticky (non-dismissible) Android notification showing live countdown
-// progress for the next active timer. It is backed by Notifee so it can render
-// a real Android progress bar and update in place by re-presenting the same id.
+// A sticky (non-dismissible) Android notification showing a live countdown for
+// the next active timer. The per-second ticking is rendered natively by Android
+// (showChronometer + chronometerDirection 'down'), so it keeps counting even
+// when the app is killed and costs no battery — JS only re-posts when the set
+// of active timers changes. A timestamp trigger scheduled at the earliest end
+// time swaps the card for the next timer (or a quiet "finished" card) without
+// the app ever needing to run.
 
 const ONGOING_CHANNEL_ID = 'timer-ongoing';
 const ONGOING_NOTIFICATION_ID = 'clashprime-ongoing-timer';
-const ONGOING_REFRESH_MS = 30_000;
 
 let ongoingChannelReady = false;
-let lastOngoingSync = 0;
 let lastOngoingSignature = '';
 
 export async function ensureOngoingChannel(): Promise<void> {
@@ -79,11 +81,22 @@ export async function ensureOngoingChannel(): Promise<void> {
   } catch {}
 }
 
-function formatCountdownLabel(ms: number): string {
-  const totalSec = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+function formatEndTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+interface ActiveTimer {
+  id: string;
+  label: string;
+  target: number;
+}
+
+function getActiveTimers(reminders: TimerReminder[]): ActiveTimer[] {
+  const now = Date.now();
+  return reminders
+    .filter((r) => r.status === 'active' && new Date(r.targetDate).getTime() > now)
+    .map((r) => ({ id: r.id, label: r.label, target: new Date(r.targetDate).getTime() }))
+    .sort((a, b) => a.target - b.target);
 }
 
 export async function stopOngoingTimerNotification(): Promise<void> {
@@ -94,55 +107,94 @@ export async function stopOngoingTimerNotification(): Promise<void> {
   lastOngoingSignature = '';
 }
 
+async function displayOngoingFor(next: ActiveTimer, moreCount: number): Promise<void> {
+  if (!ongoingChannelReady) await ensureOngoingChannel();
+  await notifee.displayNotification({
+    id: ONGOING_NOTIFICATION_ID,
+    title: `⏳ ${next.label}`,
+    body: `Ends ${formatEndTime(next.target)}${moreCount > 0 ? ` · ${moreCount} more active` : ''}`,
+    data: { type: 'timer-ongoing', reminderId: next.id },
+    android: {
+      channelId: ONGOING_CHANNEL_ID,
+      smallIcon: 'notification_icon',
+      category: AndroidCategory.PROGRESS,
+      ongoing: true,
+      autoCancel: false,
+      onlyAlertOnce: true,
+      localOnly: true,
+      timestamp: next.target,
+      showChronometer: true,
+      chronometerDirection: 'down',
+    },
+  });
+}
+
 export async function syncOngoingTimerNotification(reminders: TimerReminder[]): Promise<void> {
   if (!notifeeLinked || Platform.OS !== 'android') return;
 
-  const now = Date.now();
-  const active = reminders
-    .filter((r) => r.status === 'active')
-    .map((r) => {
-      const total = Math.max(1, new Date(r.targetDate).getTime() - new Date(r.createdAt).getTime());
-      const remaining = Math.max(0, new Date(r.targetDate).getTime() - now);
-      const pct = Math.min(100, Math.max(0, Math.round(((total - remaining) / total) * 100)));
-      return { id: r.id, label: r.label, target: new Date(r.targetDate).getTime(), remaining, pct };
-    })
-    .sort((a, b) => a.target - b.target);
+  const active = getActiveTimers(reminders);
 
+  // Nothing active → clear the pinned card and any pending swap trigger.
   if (active.length === 0) {
     await stopOngoingTimerNotification();
     return;
   }
 
-  // Skip re-presenting unless the set/percentages changed or the throttle window passed.
-  const signature = active.map((a) => `${a.id}:${a.pct}`).join('|');
-  if (signature === lastOngoingSignature && now - lastOngoingSync < ONGOING_REFRESH_MS) {
-    return;
-  }
+  // Only touch the notification when the timer set actually changed — the
+  // countdown itself ticks natively without our involvement.
+  const signature = active.map((a) => `${a.id}@${a.target}`).join('|');
+  if (signature === lastOngoingSignature) return;
   lastOngoingSignature = signature;
-  lastOngoingSync = now;
-
-  if (!ongoingChannelReady) await ensureOngoingChannel();
-
-  const next = active[0];
-  const remainingLabel = next.remaining > 0 ? formatCountdownLabel(next.remaining) : 'done';
 
   try {
-    await notifee.displayNotification({
-      id: ONGOING_NOTIFICATION_ID,
-      title: `Active timer · ${next.label}`,
-      body: `${next.pct}% — ${remainingLabel}`,
-      data: { type: 'timer-ongoing', reminderId: next.id },
-      android: {
-        channelId: ONGOING_CHANNEL_ID,
-        smallIcon: 'notification_icon',
-        category: AndroidCategory.PROGRESS,
-        ongoing: true,
-        autoCancel: false,
-        onlyAlertOnce: true,
-        localOnly: true,
-        progress: { current: next.pct, max: 100 },
-      },
-    });
+    const [next, ...rest] = active;
+
+    // Post the pinned live-countdown card.
+    await displayOngoingFor(next, rest.length);
+
+    // Schedule a native swap at the moment this timer ends: promote the next
+    // timer into the pinned slot, or leave a dismissible "finished" card.
+    const followUp = rest[0];
+    await notifee.createTriggerNotification(
+      followUp
+        ? {
+            id: ONGOING_NOTIFICATION_ID,
+            title: `⏳ ${followUp.label}`,
+            body: `Ends ${formatEndTime(followUp.target)}${rest.length > 1 ? ` · ${rest.length - 1} more active` : ''}`,
+            data: { type: 'timer-ongoing', reminderId: followUp.id },
+            android: {
+              channelId: ONGOING_CHANNEL_ID,
+              smallIcon: 'notification_icon',
+              category: AndroidCategory.PROGRESS,
+              ongoing: true,
+              autoCancel: false,
+              onlyAlertOnce: true,
+              localOnly: true,
+              timestamp: followUp.target,
+              showChronometer: true,
+              chronometerDirection: 'down',
+            },
+          }
+        : {
+            id: ONGOING_NOTIFICATION_ID,
+            title: `✅ ${next.label} — finished`,
+            body: 'Builder is free — plan your next upgrade.',
+            data: { type: 'timer-ongoing', reminderId: next.id },
+            android: {
+              channelId: ONGOING_CHANNEL_ID,
+              smallIcon: 'notification_icon',
+              ongoing: false,
+              autoCancel: true,
+              onlyAlertOnce: true,
+              localOnly: true,
+            },
+          },
+      {
+        type: TriggerType.TIMESTAMP,
+        timestamp: next.target + 1000,
+        alarmManager: { allowWhileIdle: true },
+      } as any,
+    );
   } catch {}
 }
 

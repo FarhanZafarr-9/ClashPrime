@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { AppState } from 'react-native';
 import { TimerReminder } from '../types/clash';
 import {
   createReminder,
@@ -36,14 +37,20 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const [reminders, setReminders] = useState<TimerReminder[]>([]);
   const [hasPermission, setHasPermission] = useState(false);
   const tagRef = useRef('');
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const permRef = useRef(false);
 
   const tag = activeAccount?.tag || '';
   tagRef.current = tag;
 
+  // Reload from storage, flip expired statuses and refresh the pinned
+  // notification. Called on account change, timer changes and foreground
+  // resume — never on a timer loop (the countdown ticks natively).
   const reload = useCallback(async (accountTag: string) => {
     const updated = await markExpiredReminders(accountTag);
     setReminders(updated);
+    if (permRef.current) {
+      await syncOngoingTimerNotification(updated);
+    }
     return updated;
   }, []);
 
@@ -52,6 +59,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       await ensureChannel();
       await ensureOngoingChannel();
       const perm = await requestPermission();
+      permRef.current = perm;
       setHasPermission(perm);
     })();
   }, []);
@@ -66,16 +74,13 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   }, [tag, reload]);
 
   useEffect(() => {
-    tickRef.current = setInterval(async () => {
-      const updated = await reload(tagRef.current);
-      if (hasPermission) {
-        await syncOngoingTimerNotification(updated);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        reload(tagRef.current);
       }
-    }, 1000);
-    return () => {
-      if (tickRef.current) clearInterval(tickRef.current);
-    };
-  }, [reload, hasPermission]);
+    });
+    return () => sub.remove();
+  }, [reload]);
 
   const addTimer = useCallback(async (label: string, durationMinutes: number) => {
     await createReminder(tagRef.current, label, durationMinutes);
