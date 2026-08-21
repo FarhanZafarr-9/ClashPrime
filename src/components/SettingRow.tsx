@@ -24,7 +24,7 @@ function getPillPos(pos: PillPosition, topOffset: number, rightOffset: number): 
 }
 
 interface SettingRowProps {
-  icon: string;
+  icon?: string;
   iconUrl?: string;
   iconSource?: ImageSourcePropType;
   title: string;
@@ -91,7 +91,7 @@ export function SettingRow({
           isLast && styles.settingBlockLast,
         ]}
       >
-        {icon && (
+        {(icon || iconSource || iconUrl) && (
           <View style={[
             styles.settingRowIcon,
             accent && { backgroundColor: `${accent}2e` },

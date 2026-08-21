@@ -168,7 +168,7 @@ function CollapsibleSection({
   children,
 }: {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
   iconUrl?: string;
   iconSource?: ImageSourcePropType;
   description: React.ReactNode;
@@ -1413,7 +1413,6 @@ export default function HomeScreen() {
 {(unlockableItems.length > 0 || rushedItems.length > 0) && (
                <CollapsibleSection
                  isLast
-                 icon="list-outline"
                  iconSource={pipelineHeaderImage('Town Hall')}
                  title="Backlog"
                  compact
