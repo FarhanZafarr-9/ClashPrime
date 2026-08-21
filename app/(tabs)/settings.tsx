@@ -380,6 +380,7 @@ export default function SettingsScreen() {
   };
 
   const handleCheckUpdates = async () => {
+    if (checkingUpdates) return;
     setCheckingUpdates(true);
     try {
       const online = await probeConnectivity();
@@ -396,19 +397,29 @@ export default function SettingsScreen() {
       if (hasUpdate) {
         showDialog({
           title: 'Update Available',
-          message: `v${v} is available (you have v${currentVersion}). Tap "View on GitHub" to see the release notes and download the latest build.`,
+          message: `A new version of ClashPrime (v${v}) has been published — you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
           actions: [
             { label: 'Later', onPress: () => { } },
             { label: 'View on GitHub', primary: true, onPress: () => openURL('https://github.com/FarhanZafarr-9/ClashPrime/releases') },
           ],
         });
+      } else if (v !== currentVersion) {
+        showDialog({
+          title: "You're Ahead of the Releases",
+          message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build — nothing to update.`,
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+        });
       } else {
-        showDialog({ title: "You're Up to Date", message: `ClashPrime v${currentVersion} is the latest version.`, actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+        showDialog({
+          title: "You're Up to Date",
+          message: `ClashPrime v${currentVersion} matches the latest published release. Check back later for new versions.`,
+          actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+        });
       }
     } catch {
       showDialog({
         title: 'Update Check Failed',
-        message: 'Could not check for updates. Please try again in a moment.',
+        message: 'Could not check for updates right now. This can happen if GitHub is rate-limiting or temporarily unavailable — please try again in a moment.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
     } finally {
@@ -1021,9 +1032,9 @@ export default function SettingsScreen() {
           <SettingRow
             icon="cloud-outline"
             title="Check for Updates"
-            desc="Look for the latest version"
+            desc={checkingUpdates ? 'Checking GitHub for the latest release…' : 'Compare your build against the latest GitHub release'}
             compact
-            onPress={handleCheckUpdates}
+            onPress={checkingUpdates ? undefined : handleCheckUpdates}
             children={checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
             isFirst
           />

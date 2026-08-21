@@ -30,8 +30,10 @@ export async function checkForUpdate(): Promise<{ hasUpdate: boolean; latestVers
     const res = await fetch(GITHUB_API, { headers: { Accept: 'application/vnd.github+json' } });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
     const tags: { name: string }[] = await res.json();
-    const latestTag = tags[0]?.name ?? 'v0.0.0';
-    const latest = latestTag.replace(/^v/, '');
+    const latest = tags
+      .map(t => t.name.replace(/^v/, ''))
+      .sort((a, b) => compareVersions(a, b))
+      .pop() ?? '0.0.0';
     const current = APP_VERSION;
     const hasUpdate = compareVersions(latest, current) > 0;
 
