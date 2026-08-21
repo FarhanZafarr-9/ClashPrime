@@ -499,12 +499,6 @@ export default function MaxTimeScreen() {
                     <View style={styles.pipelineBadge}>
                       <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
                     </View>
-                    <Ionicons
-                      name="chevron-down"
-                      size={16}
-                      color={colors.textTertiary}
-                      style={{ transform: [{ rotate: rushExpanded ? '180deg' : '0deg' }] }}
-                    />
                   </View>
                 }
               />
