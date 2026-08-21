@@ -28,6 +28,8 @@ import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 const heartImg = require('../../images/heart.png') as any;
 import type { ClashPlayer } from '../../src/types/clash';
 import { ClashAPI } from '../../src/api/clash';
+import { checkForUpdate } from '../../src/utils/versionCheck';
+import { APP_VERSION } from '../../src/constants/appVersion';
 import {
   getPlayerTag,
   setPlayerTag,
@@ -256,6 +258,8 @@ export default function SettingsScreen() {
   const [contentVisible, setContentVisible] = useState(false);
   const [contentTitle, setContentTitle] = useState('');
   const [contentBody, setContentBody] = useState<React.ReactNode>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [latestVersion, setLatestVersion] = useState('');
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -296,6 +300,17 @@ export default function SettingsScreen() {
     getApiToken().then((t) => {
       setApiTokenState(maskSecret(t));
     });
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    checkForUpdate().then(({ hasUpdate, latestVersion: v }) => {
+      if (mounted) {
+        setUpdateAvailable(hasUpdate);
+        setLatestVersion(v);
+      }
+    });
+    return () => { mounted = false; };
   }, []);
 
   const openModal = (type: 'tag' | 'token', title: string, placeholder: string, current: string, onSave: (text: string) => void) => {
@@ -511,6 +526,12 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.creditHeroText}>
               <Text style={styles.creditName}>ClashPrime {appVersion}</Text>
+              {updateAvailable && (
+                <View style={styles.updateBadge}>
+                  <Ionicons name="cloud-download-outline" size={12} color={Colors.warning} />
+                  <Text style={styles.updateBadgeText}>v{latestVersion} available</Text>
+                </View>
+              )}
               <Text style={styles.creditHandle}>Premium Clash of Clans companion</Text>
             </View>
           </View>
@@ -2050,6 +2071,21 @@ const styles = StyleSheet.create({
   },
   creditHeroText: {
     gap: 2,
+  },
+  updateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    backgroundColor: Colors.warning + '20',
+    borderRadius: Radius.full,
+    marginTop: 4,
+  },
+  updateBadgeText: {
+    ...Typography.caption,
+    color: Colors.warning,
+    fontWeight: '700',
   },
   creditName: {
     ...Typography.headline,

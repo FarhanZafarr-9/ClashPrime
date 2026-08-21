@@ -53,6 +53,8 @@ import {
   ProgressDiff,
 } from '../../src/hooks/useProgressSnapshot';
 import type { ClashPlayer } from '../../src/types/clash';
+import { checkForUpdate } from '../../src/utils/versionCheck';
+import { APP_VERSION } from '../../src/constants/appVersion';
 
 const CATEGORY_META: Record<ProgressCategory, { label: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
   heroes: { label: 'Heroes', icon: { set: 'ion', name: 'shield-half-outline' } },
@@ -296,6 +298,8 @@ export default function HomeScreen() {
   const [switchingHome, setSwitchingHome] = useState(false);
   const [progressDetails, setProgressDetails] = useState<Record<string, TroopDetail | null>>({});
   const progressFetched = useRef<Set<string> | null>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [latestVersion, setLatestVersion] = useState('');
 
   // Wiki details for the progress-overview army items are cached globally and
   // shared across accounts; reset the in-memory state per account.
@@ -303,6 +307,17 @@ export default function HomeScreen() {
     setProgressDetails({});
     progressFetched.current = null;
   }, [player?.tag]);
+
+  useEffect(() => {
+    let mounted = true;
+    checkForUpdate().then(({ hasUpdate, latestVersion: v }) => {
+      if (mounted) {
+        setUpdateAvailable(hasUpdate);
+        setLatestVersion(v);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
 
   React.useEffect(() => {
     if (error && player) {
@@ -876,6 +891,12 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <Text style={styles.greeting}>ClashPrime</Text>
+              {updateAvailable && (
+                <View style={styles.updateBadge}>
+                  <Ionicons name="cloud-download-outline" size={14} color={Colors.warning} />
+                  <Text style={styles.updateBadgeText}>v{latestVersion}</Text>
+                </View>
+              )}
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
                 <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
@@ -1785,6 +1806,20 @@ const styles = StyleSheet.create({
   greeting: {
     ...Typography.largeTitle,
     color: Colors.textPrimary,
+  },
+  updateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    backgroundColor: Colors.warning + '20',
+    borderRadius: Radius.full,
+  },
+  updateBadgeText: {
+    ...Typography.caption,
+    color: Colors.warning,
+    fontWeight: '700',
   },
   switchBtn: {
     width: 36,
