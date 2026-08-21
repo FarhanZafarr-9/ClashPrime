@@ -1410,12 +1410,13 @@ export default function HomeScreen() {
                 );
               })()}
 
-             {(unlockableItems.length > 0 || rushedItems.length > 0) && (
-              <CollapsibleSection
-                isLast
-                icon="list-outline"
-                title="Backlog"
-                compact
+{(unlockableItems.length > 0 || rushedItems.length > 0) && (
+               <CollapsibleSection
+                 isLast
+                 icon="list-outline"
+                 iconSource={pipelineHeaderImage('Town Hall')}
+                 title="Backlog"
+                 compact
                 count={unlockableItems.length + rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
