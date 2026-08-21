@@ -116,8 +116,10 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Rush to TH+1 expandable comparison: remaining time, added time, total time per pipeline + new unlocks grid with icons and max-level badges.',
       'Lab expandable in readiness card with Troops/Spells/Sieges tier progress.',
       'Walls counted per-copy (not ×250) in next-TH level counts; Army buildings prioritized in level unlocks grid.',
-      'Max TH celebration screen; GitHub version checker in Home & Settings (shows update badge when new tag available).',
+      'Max TH celebration screen; GitHub version checker in Home & Settings with ahead-of-release detection and one-tap release links.',
       'Buildings/Army max level images in Rush unlocks; troop/spell max-level badges on icons.',
+      'Timer notifications rebuilt: Android-native per-second countdown (works with app killed, zero battery), progress-free pinned card, sound + vibration on finish, monochrome notification icon.',
+      'Add Account button directly in the Home account switcher.',
     ],
   },
   {

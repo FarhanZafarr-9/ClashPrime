@@ -1048,7 +1048,6 @@ const styles = StyleSheet.create({
     maxWidth: 100,
   },
   maxThCelebration: {
-    marginHorizontal: Spacing.base,
     marginTop: Spacing.md,
     padding: Spacing.xl,
     borderRadius: Radius.xl * 1.25,

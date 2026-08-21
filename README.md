@@ -23,7 +23,8 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Awards** — standalone tab with star summary and village-filtered achievement list
 - **Settings** — API token, dark mode, discounts, account management, plus a **redesigned What's New changelog** with version chips and "Latest" badge, About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
 - **Onboarding** — guided first-run flow with an image-based Town Hall picker and an Add Account (Full Setup) flow
-- **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding
+- **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding, and an ongoing notification with an **Android-native per-second countdown** that keeps ticking even when the app is killed (zero battery) plus sound/vibration on finish
+- **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection
 
 ## Design
 
@@ -150,7 +151,7 @@ npm run gen:coc-ids
 - **Fork `clash-of-clans-data`** — Upstream is pre-1.0 and updates on Supercell's schedule. Consider forking as `@clashprime/clash-of-clans-data` with a sync script to apply custom mappings (display names, BB building fixes, image paths) and publish on our own cadence when new content drops.
 - **Offline-first sync** — Cache player data + reference data for full offline usage; background sync when online.
 - **Clan roster management** — Track member donations, war participation, and activity across seasons.
-- **Push notifications** — Event start/end, war attacks, builder completion, upgrade timers.
+- **Push notifications** — Event start/end, war attacks. Builder/upgrade timers already ship as native countdown notifications; remaining: event and war attack alerts.
 - **Builder chain planner** — Visual scheduler for serial upgrade chains across N builders with drag-to-reorder.
 
 ## License
