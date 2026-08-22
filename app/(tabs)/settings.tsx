@@ -47,6 +47,7 @@ import { useGameData } from '../../src/hooks/useGameData';
 import { useDialog } from '../../src/components/AlertDialog';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
+import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import DiscountModal from '../../src/components/DiscountModal';
 import Constants from 'expo-constants';
 import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
@@ -283,9 +284,11 @@ export default function SettingsScreen() {
   const [onboardingPlayer, setOnboardingPlayer] = useState<ClashPlayer | null>(null);
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
-  const [checkingUpdates, setCheckingUpdates] = useState(false);
+const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [showBuilderCountModal, setShowBuilderCountModal] = useState(false);
   const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
+  const { count: builderCount, setBuilderCount, loaded: builderLoaded, verified: builderVerified, setBuilderVerified } = useBuilderCount();
   const { discounts, setBuildingCost, setBuildingTime, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
 
   const discountDesc = (s: ScopeDiscount) => {
@@ -814,6 +817,23 @@ export default function SettingsScreen() {
     );
   };
 
+  // Builder Count Modal
+  const showBuilderCountDialog = () => {
+    setShowBuilderCountModal(true);
+    showDialog({
+      title: 'Builder Count',
+      message: 'Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).',
+      actions: [
+        { label: 'Cancel', onPress: () => setShowBuilderCountModal(false) },
+        { label: '2', onPress: () => { setBuilderCount(2); setBuilderVerified(false); setShowBuilderCountModal(false); } },
+        { label: '3', onPress: () => { setBuilderCount(3); setBuilderVerified(false); setShowBuilderCountModal(false); } },
+        { label: '4', onPress: () => { setBuilderCount(4); setBuilderVerified(false); setShowBuilderCountModal(false); } },
+        { label: '5', onPress: () => { setBuilderCount(5); setBuilderVerified(false); setShowBuilderCountModal(false); } },
+        { label: '6', onPress: () => { setBuilderCount(6); setBuilderVerified(false); setShowBuilderCountModal(false); } },
+      ],
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -1009,6 +1029,19 @@ export default function SettingsScreen() {
             desc="Paste a Clash of Clans JSON Export to bulk-set levels"
             compact
             onPress={() => router.push('/import-export')}
+          />
+          <SettingRow
+            icon="hammer-outline"
+            title="Builder Count"
+            desc={builderVerified ? 'Auto-detected from JSON import' : 'Number of builders (2–6)'}
+            compact
+            children={
+              <>
+                <Text style={styles.settingValue}>{builderCount}</Text>
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+              </>
+            }
+            onPress={showBuilderCountDialog}
           />
           <SettingRow
             icon="refresh-outline"
