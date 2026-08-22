@@ -824,7 +824,7 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
       title: 'Builder Count',
       message: (
         <>
-          <Text style={{ marginBottom: 12 }}>Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).</Text>
+          <Text style={styles.builderCountMessage}>Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).</Text>
           {renderBuilderCountChips((n) => {
             setBuilderCount(n);
             setBuilderVerified(false);
@@ -1663,6 +1663,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
     flexWrap: 'wrap',
+  },
+  builderCountMessage: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    letterSpacing: 0.1,
+    marginBottom: 12,
   },
   discountDot: {
     width: 10,
