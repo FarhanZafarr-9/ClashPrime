@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../src/components/PressableRipple';
+import { Chip } from '../src/components/Chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -87,16 +88,20 @@ function StepCard({
   );
 }
 
+import { useBuilderCount } from '../src/hooks/useBuilderCount';
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
   const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
-  const [step, setStep] = useState<'form' | 'profile' | 'thPicker'>(mode === 'reset' ? 'thPicker' : 'form');
+  const { setBuilderCount } = useBuilderCount();
+  const [step, setStep] = useState<'form' | 'profile' | 'thPicker' | 'builderCount'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
   const [tag, setTag] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [builderCount, setBuilderCountState] = useState(2);
 
   const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
@@ -152,12 +157,12 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleThPick = async (selectedTh: number) => {
+const handleThPick = async (selectedTh: number) => {
     if (mode !== 'reset' && !playerData) return;
     setLoading(true);
 
     const player = mode === 'reset' ? contextPlayer : playerData;
-const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
+    const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
 
     const levels = seedBuildingLevelsForTH(player, selectedTh, { currentTh });
 
@@ -171,8 +176,14 @@ const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playe
       playerData!.lastMaxedTH = selectedTh;
       await cachePlayer(playerData!);
       try { await refresh(); } catch { /* proceed even if API is unreachable */ }
-      router.replace('/(tabs)');
+      setStep('builderCount');
+      setLoading(false);
     }
+  };
+
+  const handleBuilderCountNext = () => {
+    setBuilderCount(builderCount);
+    router.replace('/(tabs)');
   };
 
   return (
@@ -394,6 +405,54 @@ const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playe
                   </PressableRipple>
                 </View>
               </>
+            )}
+            {step === 'builderCount' && (
+              <View style={styles.content}>
+                {!loading && (
+                  <View style={styles.hero}>
+                    <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
+                    <Text style={styles.title}>Builder Count</Text>
+                    <Text style={styles.subtitle}>How many builders do you have in Home Village?</Text>
+                  </View>
+                )}
+                {loading ? (
+                  <View style={styles.loadingState}>
+                    <ActivityIndicator size="small" color={Colors.textPrimary} />
+                    <Text style={styles.loadingStateText}>Saving…</Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.thLabel}>Select your builder count</Text>
+                    <View style={styles.chipRow}>
+                      {[2, 3, 4, 5, 6].map((n) => (
+                        <Chip
+                          key={n}
+                          label={n === 6 ? '6 (OTTO)' : String(n)}
+                          selected={builderCount === n}
+                          onPress={() => setBuilderCountState(n)}
+                        />
+                      ))}
+                    </View>
+                    <Text style={styles.thHint}>
+                      6 builders requires O.T.T.O. Hut (Builder Base)
+                    </Text>
+                    <View style={styles.thPickerActions}>
+                      <PressableRipple
+                        style={[styles.profileBtn, styles.profileBtnGhost]}
+                        onPress={() => setStep('thPicker')}
+                      >
+                        <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
+                      </PressableRipple>
+                      <PressableRipple
+                        style={styles.profileBtn}
+                        onPress={handleBuilderCountNext}
+                      >
+                        <Text style={styles.profileBtnText}>Continue</Text>
+                      </PressableRipple>
+                    </View>
+                  </>
+                )}
+              </View>
             )}
           </View>
         )}
@@ -806,5 +865,12 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
 });

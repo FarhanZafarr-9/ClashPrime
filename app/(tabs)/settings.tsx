@@ -822,16 +822,37 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
     setShowBuilderCountModal(true);
     showDialog({
       title: 'Builder Count',
-      message: 'Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).',
+      message: (
+        <>
+          <Text style={{ marginBottom: 12 }}>Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).</Text>
+          {renderBuilderCountChips((n) => {
+            setBuilderCount(n);
+            setBuilderVerified(false);
+            setShowBuilderCountModal(false);
+          })}
+        </>
+      ),
       actions: [
         { label: 'Cancel', onPress: () => setShowBuilderCountModal(false) },
-        { label: '2', onPress: () => { setBuilderCount(2); setBuilderVerified(false); setShowBuilderCountModal(false); } },
-        { label: '3', onPress: () => { setBuilderCount(3); setBuilderVerified(false); setShowBuilderCountModal(false); } },
-        { label: '4', onPress: () => { setBuilderCount(4); setBuilderVerified(false); setShowBuilderCountModal(false); } },
-        { label: '5', onPress: () => { setBuilderCount(5); setBuilderVerified(false); setShowBuilderCountModal(false); } },
-        { label: '6', onPress: () => { setBuilderCount(6); setBuilderVerified(false); setShowBuilderCountModal(false); } },
       ],
     });
+  };
+
+  // Builder count chips for onboarding/dialog
+  const renderBuilderCountChips = (onSelect: (n: number) => void) => {
+    const counts = [2, 3, 4, 5, 6];
+    return (
+      <View style={styles.chipRow}>
+        {counts.map((n) => (
+          <Chip
+            key={n}
+            label={n === 6 ? '6 (OTTO)' : String(n)}
+            selected={builderCount === n}
+            onPress={() => onSelect(n)}
+          />
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -1635,6 +1656,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
     flexShrink: 1,
+    flexWrap: 'wrap',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    flexWrap: 'wrap',
   },
   discountDot: {
     width: 10,
