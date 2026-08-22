@@ -4,6 +4,7 @@ import PressableRipple from './PressableRipple';
 import { ResourceCostChips } from './ResourceCostChips';
 import { formatCompact } from '../utils/buildingImages';
 import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
+const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
 
 interface Props {
   name: string;
@@ -116,7 +117,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
         <View style={styles.right}>
           {locked ? (
             <View style={styles.lockedBadge}>
-              <Text style={styles.lockedBadgeText}>Locked</Text>
+              <Image source={lockedImage} style={styles.lockedBadgeImage} resizeMode="contain" />
             </View>
           ) : (
             <View style={[
@@ -263,12 +264,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   lockedBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockedBadgeImage: {
+    width: 20,
+    height: 20,
   },
   lockedBadgeText: {
     ...Typography.footnote,
