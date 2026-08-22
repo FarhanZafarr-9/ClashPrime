@@ -1492,7 +1492,7 @@ export default function HomeScreen() {
               {rushedItems.length > 0 && (
               <CollapsibleSection
                 isLast
-                icon="warning-outline"
+                iconSource={require('../assets/images/chiefs-journey/rushed.png')}
                 title={`${rushedItems.length} rushed`}
                 accentColor={RUSHED_ACCENT}
                 compact

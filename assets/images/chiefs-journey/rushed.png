@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html
+    class="mod modLayout"
+    lang="en"
+    data-guideline-current-language="en"
+    data-main-language=""
+>
+    <head>
+        <title>Game assets - Clash of Clans</title>
+
+        
+
+        <!-- Favicon -->
+        
+            <link
+                rel="icon"
+                href="https://media.ffycdn.net/eu/supercell/sh6EdAxcB43Zmj8eAewS.png?width={width}"
+                type="image/png"
+            />
+        
+
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+
+        <!-- This product is built using third-party software, as described here: https://app.frontify.com/licenses.md -->
+        <link rel="stylesheet" type="text/css" href="https://cdn.frontify.com/css/frontify-bootstrap.691286661aecfaf2.css" />
+
+        <meta property="og:title" content="Supercell Brand" />
+        
+        <meta property="og:description" content="Your one-stop shop for all Supercell assets." />
+        <meta property="og:image" content="https://cdn-assets-eu.frontify.com/s3/frontify-enterprise-files-eu/eyJwYXRoIjoic3VwZXJjZWxsXC9maWxlXC9iUkxySzZKM0M5dUhTWGdrWFVuby5qcGcifQ:supercell:PcMCsxzVDFy0iyk43ZhFzKL3r0m8j91h-BxrZ56fQag" />
+        <meta name="description" content="Your one-stop shop for all Supercell assets." />
+        
+
+        <meta name="x-csrf-token" content="59cac4a07fcd01fa72634de029f1c31ba82f6bbcd9ff63637d43650579f51ae0">
+    </head>
+    <body
+        class="mod mod-guideline react"
+        data-marketplace-app-id="35"
+        data-portal-token="vkEdmkUCngKw"
+        data-user-signup-mode=""
+    >
+        <div class="main-content"
+            
+            data-powerbar-visibility="hidden"
+            
+            data-login-button-settings="{&quot;enabled&quot;:false,&quot;background&quot;:&quot;rgba(45,133,243,1.00)&quot;,&quot;color&quot;:&quot;#fff&quot;}"
+        >
+
+            <div class="mod mod-skip-to-main-content skip-to-main-content"></div>
+
+            <div class="mod mod-c-outstandingpayment co-outstandingpayment"></div>
+
+            <div class="mod mod-c-globalmessage c-globalmessage c-globalmessage--hidden">
+    <div class="c-globalmessage__container js-c-globalmessage__container c-globalmessage__container--fixed"></div>
+    <div class="c-globalmessage__spacer"></div>
+</div>
+
+            <div class="js-theme-container"></div>
+        </div>
+
+        <script type="text/javascript">
+            window.currentLanguage = "en" || window.currentLanguage;
+
+            window.__frontify_do_not_use_or_you_will_be_fired = {
+                context: {"route_initial":true,"view":"styleguide","user":[],"marketplace_app_cdn_url":"https:\/\/frontify-artifacts.com","product":"styleguide","success":true,"brand":{"id":33,"name":"Supercell - Fankit","slug":"supercell-fankit","creator":181869,"color":"rgb(45, 133, 243)","account_id":4001733,"logo_file_id":"9DhQELxYR7WjWLwDzTF9","logo_settings":"[]","image":"https:\/\/media.ffycdn.net\/eu\/supercell\/TboCkwo3pn3B2dRERAUa.png?width={width}","permission_view_brand_updates_list":false},"project":{"id":158,"account":4001733,"hub_id":65,"project_type":"STYLEGUIDE","permissions":{"view":true,"comment":false,"translate":false,"edit":false,"admin":false}},"features":["ANALYTICS","ASSET_AUDIT_TRAIL","ASSET_EXPIRY_NOTIFICATIONS","ASSET_LIFECYCLE","AUTOMATIONS","AUTO_TAGGING","BRAND_UPDATE","COLLECTIONS","CONDITIONAL_FACETS","CORE_ACCESS_REQUEST","CORE_BRANDED_LOGIN_PAGE","CORE_CUSTOM_EMAIL_TEMPLATE","CORE_CUSTOM_SUBDOMAIN","CORE_MULTIPLE_STYLEGUIDE","CORE_SSO","CORE_USER_GROUPS","CUSTOM_CROPPING","DAM_METADATA","DOWNLOAD_REQUEST","FOCAL_POINT","MARKETPLACE","MARKETPLACE_SHARE_LINK","PUBLIC_API","PUBLIC_ASSET_SHARING","PUBLISHING_SAVE_TO","REPORTS","STYLEGUIDE_CHANGELOG","STYLEGUIDE_PUBLIC_SHARING","STYLEGUIDE_SEGMENT_ANALYTICS","STYLEGUIDE_STATS","STYLEGUIDE_TERMS","TARGETS","TWO_FACTOR_AUTHENTICATION","WORKSPACE_API_ACCESS","WORKSPACE_EXTERNAL_ASSET_PASSWORD_PROTECTION","WORKSPACE_WORKFLOW","WORKSPACE_WORKFLOW_CUSTOM"],"products":["BRAND_PORTAL","DAM","DOCUMENT_LIBRARY","ICON_LIBRARY","LOGO_LIBRARY","STYLEGUIDE"],"account":{"development_flags":["ADMIN_EMAIL_VERIFICATION_BANNER","APPLY_SETTINGS_TO_TEMPLATE","ASSET_DESCRIPTION_OVERLAY","ASSET_DOWNLOAD_SIGNED_URL","ASSET_SCOPES","ASSET_SEARCH_METRICS_LOGGER","BRAND_ASSISTANT_AGENTIC","BRAND_ASSISTANT_EXACT_TERM_SEARCH","BRAND_ASSISTANT_GUIDELINE_SETTINGS","CATALOG_DEV","CDN_DOWNLOAD_URL","ESSENTIALS_COLORS_V2","ESSENTIALS_FONTS_V2","LIBRARY_DOCUMENT_COLLECTIONS_REFACTOR","LIBRARY_FILTERS_V2","MOVE_TEMPLATES_ACROSS_LIBRARIES","NEW_NOTIFICATIONS","PAGE_MANAGER_COPY_TO_TEMPLATE","REACT_PUBLICATION_EDITOR","REACT_TEMPLATE_EDITOR","REFACTOR_MODULE_CUSTOM_METADATA","RESTORE_CONTENT","SCALABLE_LIBRARY_SORTING","STYLEGUIDE_NEW_TEXT_BLOCK","UNVERIFIED_USER_VERIFICATION_GATE","VISUAL_SEARCH"]},"global_message":{"enabled":false,"text":"","admin_only":true},"authenticated":false},
+            };
+
+            window.APPLICATION_CONFIG = {
+                locales: {"ca.json":"https:\/\/cdn.frontify.com\/locales\/ca.252ce446c23ffa56.json","cs.json":"https:\/\/cdn.frontify.com\/locales\/cs.57d7c7793a251855.json","da.json":"https:\/\/cdn.frontify.com\/locales\/da.12122ed1d1923d84.json","de.json":"https:\/\/cdn.frontify.com\/locales\/de.e096bf84d3b929ee.json","en.json":"https:\/\/cdn.frontify.com\/locales\/en.6539948cb00376db.json","es.json":"https:\/\/cdn.frontify.com\/locales\/es.39fa28956211efb4.json","et.json":"https:\/\/cdn.frontify.com\/locales\/et.2e16aee6902ecae0.json","fi.json":"https:\/\/cdn.frontify.com\/locales\/fi.eeb6f640d8b9c5dd.json","fr.json":"https:\/\/cdn.frontify.com\/locales\/fr.bcef8e71a91a6234.json","hu.json":"https:\/\/cdn.frontify.com\/locales\/hu.77ac67db3656f5b7.json","it.json":"https:\/\/cdn.frontify.com\/locales\/it.a2b9c83982b9ef63.json","ja.json":"https:\/\/cdn.frontify.com\/locales\/ja.bef2aabc46476db5.json","lt.json":"https:\/\/cdn.frontify.com\/locales\/lt.b68f2ef043df43c8.json","lv.json":"https:\/\/cdn.frontify.com\/locales\/lv.e6e5538771408b2d.json","nl.json":"https:\/\/cdn.frontify.com\/locales\/nl.affadf74e5184614.json","no.json":"https:\/\/cdn.frontify.com\/locales\/no.0f4efece634c6f3c.json","pl.json":"https:\/\/cdn.frontify.com\/locales\/pl.209d37e1459af637.json","pt.json":"https:\/\/cdn.frontify.com\/locales\/pt.d59c08d7461a0045.json","ro.json":"https:\/\/cdn.frontify.com\/locales\/ro.0159c85c4adf6952.json","sk.json":"https:\/\/cdn.frontify.com\/locales\/sk.32d5a0dbd98e560b.json","sl.json":"https:\/\/cdn.frontify.com\/locales\/sl.615c55baf235eea1.json","sv.json":"https:\/\/cdn.frontify.com\/locales\/sv.5ae8f45f2b419e67.json"},
+                thirdParty: {
+                    amplitude: {
+                        enabled: true,
+                        region: "EU",
+                        amplitudeId: "ebff31b9da313efd071a193786671111",
+                        accountId: 4001733,
+                        enterpriseEnabled: true,
+                        enterpriseId: 4000111,
+                        plan: "ENTERPRISE",
+                        isPaid: true,
+                        isTrial: false,
+                        user: {
+                            id: null,
+                            creator: null,
+                            signUpDate: null,
+                            referer: null,
+                            landing: null,
+                        },
+                    },
+                    intercom: {
+                        enabled: false,
+                        settings: null,
+                    },
+                    pusher: {
+                        enabled: null,
+                        key: null,
+                        cluster: null,
+                        projectIds: null,
+                    },
+                    sentry: {
+                        enabled: true,
+                        dsn: "https:\/\/07efd26759d575d252eb3fb4f5539d3d@sentryapp.appsupport.frontify.dev\/51",
+                    },
+                },
+            };
+        </script>
+
+        <script src="https://cdn.frontify.com/js/frontify-runtime.ad426b00d6fb067c.js"></script>
+        <script src="https://cdn.frontify.com/js/frontify-vendors.cf77884a5350319d.js"></script>
+        <script src="https://cdn.frontify.com/js/frontify-bootstrap.fcee97f4efc19822.js"></script>
+    </body>
+</html>
