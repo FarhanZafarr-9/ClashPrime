@@ -113,7 +113,6 @@ async function scrapeBases(
   if (cached) return cached;
 
   const label = hallPrefix(village).toUpperCase();
-  console.log(`[BaseScraper] Fetching ${label}${level} from ClashLy...`);
 
   const allLayouts: ClashLyLayout[] = [];
   let skip = 0;
@@ -156,7 +155,6 @@ async function scrapeBases(
   };
 
   await setCache(village, level, result);
-  console.log(`[BaseScraper] ${label}${level}: ${bases.length} bases from ClashLy`);
   return result;
 }
 
