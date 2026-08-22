@@ -104,6 +104,7 @@ export default function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
   const [builderCount, setBuilderCountState] = useState(2);
   const [onboardingBuilderHuts, setOnboardingBuilderHuts] = useState(2);
+  const [onboardingThLevel, setOnboardingThLevel] = useState('');
 
   const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
@@ -375,10 +376,10 @@ const handleThPick = async (selectedTh: number) => {
                 <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
               </View>
             )}
-            {loading ? (
+{loading ? (
               <View style={styles.loadingState}>
                 <ActivityIndicator size="small" color={Colors.textPrimary} />
-                <Text style={styles.loadingStateText}>Setting up your base…</Text>
+                <Text style={styles.loadingStateText}>Fetching profile…</Text>
               </View>
             ) : (
               <>
@@ -386,20 +387,25 @@ const handleThPick = async (selectedTh: number) => {
                 <View style={styles.thGrid}>
                   {thOptions.map((th, index, arr) => {
                     const thImg = getTownHallImageUrl(th);
+                    const isSelected = onboardingThLevel === String(th);
                     return (
                       <PressableRipple
                         key={th}
                         style={[
                           styles.thCell,
+                          isSelected && styles.thCellSelected,
                           index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
                           index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
                           index === arr.length - 2 && index % 2 === 0 && { borderBottomLeftRadius: Radius.xl * 1.25 },
                           index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                         ]}
-                        onPress={() => handleThPick(th)}
+                        onPress={() => setOnboardingThLevel(String(th))}
                       >
                         <Image source={{ uri: thImg! }} style={styles.thImg} resizeMode="contain" />
-                        <Text style={styles.thText}>TH{th}</Text>
+                        <Text style={[
+                          styles.thText,
+                          isSelected && styles.thTextSelected
+                        ]}>TH{th}</Text>
                       </PressableRipple>
                     );
                   })}
@@ -414,6 +420,14 @@ const handleThPick = async (selectedTh: number) => {
                   >
                     <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
                   </PressableRipple>
+                  {onboardingThLevel && (
+                    <PressableRipple
+                      style={styles.profileBtn}
+                      onPress={() => handleThPick(parseInt(onboardingThLevel, 10))}
+                    >
+                      <Text style={styles.profileBtnText}>Next</Text>
+                    </PressableRipple>
+                  )}
                 </View>
               </>
             )}
@@ -927,6 +941,15 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  thCellSelected: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+    borderWidth: 2,
+  },
+  thTextSelected: {
+    color: Colors.bg,
+    fontWeight: '700',
   },
   chipRow: {
     flexDirection: 'row',
