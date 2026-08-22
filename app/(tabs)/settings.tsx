@@ -285,7 +285,6 @@ export default function SettingsScreen() {
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
 const [checkingUpdates, setCheckingUpdates] = useState(false);
-  const [showBuilderCountModal, setShowBuilderCountModal] = useState(false);
   const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
   const { count: builderCount, setBuilderCount, loaded: builderLoaded, verified: builderVerified, setBuilderVerified } = useBuilderCount();
@@ -817,29 +816,35 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
     );
   };
 
-  // Builder Count Modal
+  // Builder Count Modal using showDialog
   const showBuilderCountDialog = () => {
-    setShowBuilderCountModal(true);
     showDialog({
       title: 'Builder Count',
       message: (
         <>
-          <Text style={styles.builderCountMessage}>Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).</Text>
-          {renderBuilderCountChips((n) => {
-            setBuilderCount(n);
-            setBuilderVerified(false);
-            setShowBuilderCountModal(false);
-          })}
+          <Text style={styles.builderCountMessage}>
+            Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).
+          </Text>
+          {renderBuilderCountChips()}
         </>
       ),
       actions: [
-        { label: 'Cancel', onPress: () => setShowBuilderCountModal(false) },
+        { label: 'Cancel', onPress: () => {} },
       ],
     });
   };
 
+  const handleBuilderCountSelect = (n: number) => {
+    setBuilderCount(n);
+    setBuilderVerified(false);
+    // Reopen dialog with updated selection
+    setTimeout(() => {
+      showBuilderCountDialog();
+    }, 100);
+  };
+
   // Builder count chips for onboarding/dialog
-  const renderBuilderCountChips = (onSelect: (n: number) => void) => {
+  const renderBuilderCountChips = () => {
     const counts = [2, 3, 4, 5, 6];
     return (
       <View style={styles.chipRow}>
@@ -848,7 +853,7 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
             key={n}
             label={n === 6 ? '6 (OTTO)' : String(n)}
             selected={builderCount === n}
-            onPress={() => onSelect(n)}
+            onPress={() => handleBuilderCountSelect(n)}
           />
         ))}
       </View>
