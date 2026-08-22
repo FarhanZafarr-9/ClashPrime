@@ -548,6 +548,10 @@ export default function HomeScreen() {
       const maxPrev = getMaxLevelAtTH(h.name, prevTh);
       if (maxPrev !== null && h.level < maxPrev) rushedItems.push({ name: h.name, currentLevel: h.level, maxLevelAtPrevTH: maxPrev, type: 'hero' });
     }
+    for (const s of homeSpells) {
+      const maxPrev = getMaxLevelAtTH(s.name, prevTh);
+      if (maxPrev !== null && s.level < maxPrev) rushedItems.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
+    }
   }
 
   // Names of every troop/spell/hero/equipment the progress overview (and the
