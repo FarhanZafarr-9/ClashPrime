@@ -278,8 +278,9 @@ export default function SettingsScreen() {
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState<'tag' | 'profile' | 'thPicker'>('tag');
+  const [onboardingStep, setOnboardingStep] = useState<'tag' | 'profile' | 'builderCount' | 'thPicker'>('tag');
   const [onboardingTag, setOnboardingTag] = useState('');
+  const [onboardingBuilderCount, setOnboardingBuilderCount] = useState(2);
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
   const [onboardingPlayer, setOnboardingPlayer] = useState<ClashPlayer | null>(null);
   const [switchingAccount, setSwitchingAccount] = useState(false);
@@ -488,7 +489,13 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
     }
 
     if (onboardingStep === 'profile') {
-      // User confirmed profile, go to TH picker
+      // User confirmed profile, go to builder count
+      setOnboardingStep('builderCount');
+      return;
+    }
+
+    if (onboardingStep === 'builderCount') {
+      // User set builder count, go to TH picker
       setOnboardingStep('thPicker');
       return;
     }
@@ -517,6 +524,10 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
       const updatedPlayer = { ...player, buildingLevels: levels, lastMaxedTH: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh };
       await cachePlayer(updatedPlayer, tag);
       await refreshAccounts();
+
+      // Save builder count globally
+      setBuilderCount(onboardingBuilderCount);
+      setBuilderVerified(false);
 
       setShowOnboarding(false);
       setOnboardingTag('');
@@ -1395,9 +1406,50 @@ children={
                 </PressableRipple>
                 <PressableRipple
                   style={styles.onboardingBtn}
-                  onPress={handleOnboardingSave}
+                  onPress={() => setOnboardingStep('builderCount')}
                 >
                   <Text style={styles.onboardingBtnText}>Confirm & Continue</Text>
+                </PressableRipple>
+              </View>
+            </View>
+          )}
+
+          {onboardingStep === 'builderCount' && onboardingPlayer && (
+            <View style={styles.onboardingCard}>
+              <View style={styles.onboardingIcon}>
+                <Ionicons name="hammer-outline" size={24} color={Colors.textPrimary} />
+              </View>
+              <Text style={styles.onboardingTitle}>Builder Count</Text>
+              <Text style={styles.onboardingDesc}>
+                How many builders do you have in Home Village? This affects time-to-max calculations.
+              </Text>
+              <View style={styles.builderCountRow}>
+                <PressableRipple
+                  style={styles.builderCountBtn}
+                  onPress={() => setOnboardingBuilderCount(Math.max(2, onboardingBuilderCount - 1))}
+                >
+                  <Ionicons name="remove" size={18} color={Colors.textPrimary} />
+                </PressableRipple>
+                <Text style={styles.builderCountValue}>{onboardingBuilderCount}</Text>
+                <PressableRipple
+                  style={styles.builderCountBtn}
+                  onPress={() => setOnboardingBuilderCount(Math.min(6, onboardingBuilderCount + 1))}
+                >
+                  <Ionicons name="add" size={18} color={Colors.textPrimary} />
+                </PressableRipple>
+              </View>
+              <View style={styles.onboardingActions}>
+                <PressableRipple
+                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
+                  onPress={() => setOnboardingStep('profile')}
+                >
+                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Back</Text>
+                </PressableRipple>
+                <PressableRipple
+                  style={styles.onboardingBtn}
+                  onPress={() => setOnboardingStep('thPicker')}
+                >
+                  <Text style={styles.onboardingBtnText}>Continue</Text>
                 </PressableRipple>
               </View>
             </View>
@@ -1642,26 +1694,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: 0.1,
     marginBottom: 12,
-  },
-  builderCountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  builderCountBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  builderCountValue: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    minWidth: 24,
-    textAlign: 'center',
   },
   discountDot: {
     width: 10,
@@ -2437,6 +2469,27 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.sm,
+  },
+  builderCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    justifyContent: 'center',
+  },
+  builderCountBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  builderCountValue: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    minWidth: 24,
+    textAlign: 'center',
   },
   changelogEntry: {
     marginBottom: Spacing.lg,

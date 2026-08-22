@@ -21,6 +21,7 @@ import { Colors, Typography, Spacing, Radius } from '../src/theme';
 import {
   setPlayerTag,
   setApiToken,
+  getApiToken,
   saveAccount,
   setActiveAccountTag,
 } from '../src/hooks/usePlayer';
@@ -244,6 +245,9 @@ const handleThPick = async (selectedTh: number) => {
                 />
                 <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
                   <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
+                </PressableRipple>
+                <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getApiToken(); if (t) setToken(t); }} hitSlop={8}>
+                  <Ionicons name="refresh-outline" size={18} color={Colors.textPrimary} />
                 </PressableRipple>
               </View>
               <StepCard
