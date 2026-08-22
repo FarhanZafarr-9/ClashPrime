@@ -251,7 +251,7 @@ export default function SettingsScreen() {
   const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.1.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
-  const { show: showDialog, Dialog } = useDialog();
+  const { show: showDialog, hide: hideDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
   const { isDark, colors, setThemeMode } = useTheme();
@@ -837,6 +837,7 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
   const handleBuilderCountSelect = (n: number) => {
     setBuilderCount(n);
     setBuilderVerified(false);
+    hideDialog();
   };
 
   // Builder count chips for onboarding/dialog
