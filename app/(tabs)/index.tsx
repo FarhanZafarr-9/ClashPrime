@@ -1413,7 +1413,7 @@ export default function HomeScreen() {
 {(unlockableItems.length > 0 || rushedItems.length > 0) && (
                <CollapsibleSection
                  isLast
-                 iconUrl={getTownHallImageUrl((th ?? 1) - 1) || undefined}
+                 iconSource={require('../assets/images/chiefs-journey/icon.png')}
                  title="Backlog"
                  compact
                 count={unlockableItems.length + rushedItems.length}
@@ -1425,7 +1425,7 @@ export default function HomeScreen() {
               {unlockableItems.length > 0 && (
               <CollapsibleSection
                 isLast={rushedItems.length === 0}
-                icon="ban-outline"
+                iconSource={require('../assets/images/chiefs-journey/locked.png')}
                 title={`${unlockableItems.length} locked`}
                 destructive
                 compact
