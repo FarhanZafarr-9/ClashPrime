@@ -837,10 +837,6 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
   const handleBuilderCountSelect = (n: number) => {
     setBuilderCount(n);
     setBuilderVerified(false);
-    // Reopen dialog with updated selection
-    setTimeout(() => {
-      showBuilderCountDialog();
-    }, 100);
   };
 
   // Builder count chips for onboarding/dialog
