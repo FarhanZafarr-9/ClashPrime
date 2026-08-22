@@ -162,6 +162,8 @@ export default function OnboardingScreen() {
 
 const handleThPick = async (selectedTh: number) => {
     if (mode !== 'reset' && !playerData) return;
+    // Switch step FIRST so UI transitions before loading state
+    setStep('builderHutPicker');
     setLoading(true);
 
     const player = mode === 'reset' ? contextPlayer : playerData;
@@ -179,9 +181,8 @@ const handleThPick = async (selectedTh: number) => {
       playerData!.lastMaxedTH = selectedTh;
       await cachePlayer(playerData!);
       try { await refresh(); } catch { /* proceed even if API is unreachable */ }
-      setStep('builderHutPicker');
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleBuilderHutPick = async (builderHuts: number) => {
@@ -351,10 +352,10 @@ const handleThPick = async (selectedTh: number) => {
                   >
                     <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
                   </PressableRipple>
-                  <PressableRipple
-                    style={styles.profileBtn}
-                    onPress={() => setStep('thPicker')}
-                  >
+<PressableRipple
+                        style={[styles.profileBtn, styles.profileBtnGhost]}
+                        onPress={() => setStep('builderHutPicker')}
+                      >
                     <Text style={styles.profileBtnText}>Confirm & Continue</Text>
                   </PressableRipple>
                 </View>
