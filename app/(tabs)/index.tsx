@@ -1413,7 +1413,7 @@ export default function HomeScreen() {
 {(unlockableItems.length > 0 || rushedItems.length > 0) && (
                <CollapsibleSection
                  isLast
-                 iconSource={require('../assets/images/chiefs-journey/icon.png')}
+                 iconSource={require('../../assets/images/chiefs-journey/icon.png')}
                  title="Backlog"
                  compact
                 count={unlockableItems.length + rushedItems.length}
@@ -1425,7 +1425,7 @@ export default function HomeScreen() {
               {unlockableItems.length > 0 && (
               <CollapsibleSection
                 isLast={rushedItems.length === 0}
-                iconSource={require('../assets/images/chiefs-journey/locked.png')}
+                iconSource={require('../../assets/images/chiefs-journey/locked.png')}
                 title={`${unlockableItems.length} locked`}
                 destructive
                 compact
@@ -1492,7 +1492,7 @@ export default function HomeScreen() {
               {rushedItems.length > 0 && (
               <CollapsibleSection
                 isLast
-                iconSource={require('../assets/images/chiefs-journey/rushed.png')}
+                iconSource={require('../../assets/images/chiefs-journey/rushed.png')}
                 title={`${rushedItems.length} rushed`}
                 accentColor={RUSHED_ACCENT}
                 compact
