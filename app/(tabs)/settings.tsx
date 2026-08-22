@@ -816,47 +816,6 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
     );
   };
 
-  // Builder Count Modal using showDialog
-  const showBuilderCountDialog = () => {
-    showDialog({
-      title: 'Builder Count',
-      message: (
-        <>
-          <Text style={styles.builderCountMessage}>
-            Set the number of Home Village builders. This affects time-to-max calculations. 6 builders requires O.T.T.O. Hut (Builder Base).
-          </Text>
-          {renderBuilderCountChips()}
-        </>
-      ),
-      actions: [
-        { label: 'Cancel', onPress: () => {} },
-      ],
-    });
-  };
-
-  const handleBuilderCountSelect = (n: number) => {
-    setBuilderCount(n);
-    setBuilderVerified(false);
-    hideDialog();
-  };
-
-  // Builder count chips for onboarding/dialog
-  const renderBuilderCountChips = () => {
-    const counts = [2, 3, 4, 5, 6];
-    return (
-      <View style={styles.chipRow}>
-        {counts.map((n) => (
-          <Chip
-            key={n}
-            label={n === 6 ? '6 (OTTO)' : String(n)}
-            selected={builderCount === n}
-            onPress={() => handleBuilderCountSelect(n)}
-          />
-        ))}
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -1058,13 +1017,24 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
             title="Builder Count"
             desc={builderVerified ? 'Auto-detected from JSON import' : 'Number of builders (2–6)'}
             compact
-            children={
-              <>
-                <Text style={styles.settingValue}>{builderCount}</Text>
-                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-              </>
+children={
+              <View style={styles.builderCountRow}>
+                <PressableRipple
+                  style={styles.builderCountBtn}
+                  onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
+                >
+                  <Ionicons name="remove" size={18} color={Colors.textPrimary} />
+                </PressableRipple>
+                <Text style={styles.builderCountValue}>{builderCount}</Text>
+                <PressableRipple
+                  style={styles.builderCountBtn}
+                  onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
+                >
+                  <Ionicons name="add" size={18} color={Colors.textPrimary} />
+                </PressableRipple>
+              </View>
             }
-            onPress={showBuilderCountDialog}
+            onPress={() => {}}
           />
           <SettingRow
             icon="refresh-outline"
@@ -1672,6 +1642,26 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: 0.1,
     marginBottom: 12,
+  },
+  builderCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  builderCountBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  builderCountValue: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    minWidth: 24,
+    textAlign: 'center',
   },
   discountDot: {
     width: 10,
