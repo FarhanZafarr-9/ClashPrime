@@ -76,7 +76,7 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
           {config.message ? (
             typeof config.message === 'string'
               ? <Text style={styles.message}>{config.message}</Text>
-              : <View style={styles.messageContainer}>{config.message}</View>
+              : config.message
           ) : null}
           <View style={styles.actions}>
             {config.actions.map((action, i) => (
