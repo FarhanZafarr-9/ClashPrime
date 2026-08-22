@@ -76,7 +76,7 @@ function AlertDialog({ visible, config, onDismiss }: AlertDialogProps) {
           {config.message ? (
             typeof config.message === 'string'
               ? <Text style={styles.message}>{config.message}</Text>
-              : config.message
+              : <View style={styles.messageContainer}>{config.message}</View>
           ) : null}
           <View style={styles.actions}>
             {config.actions.map((action, i) => (
@@ -160,6 +160,9 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
     letterSpacing: 0.1,
+  },
+  messageContainer: {
+    // View-compatible style for non-string messages
   },
   actions: {
     flexDirection: 'row',
