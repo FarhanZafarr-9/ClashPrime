@@ -516,7 +516,7 @@ const handleThPick = async (selectedTh: number) => {
                     <View style={styles.thPickerActions}>
                       <PressableRipple
                         style={[styles.profileBtn, styles.profileBtnGhost]}
-                        onPress={() => setStep('thPicker')}
+                        onPress={() => setStep('builderHutPicker')}
                       >
                         <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
                       </PressableRipple>
