@@ -2,7 +2,7 @@
   "expo": {
     "name": "ClashPrime",
     "slug": "ClashPrime",
-    "version": "5.1.0",
+    "version": "5.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "clashprime",
@@ -12,7 +12,9 @@
       "bundleIdentifier": "com.clashprime.app"
     },
     "android": {
-      "adaptiveIcon": { "foregroundImage": "./images/icon.png", "backgroundColor": "#ffffff"
+      "adaptiveIcon": {
+        "foregroundImage": "./images/icon.png",
+        "backgroundColor": "#ffffff"
       },
       "package": "com.clashprime.app",
       "predictiveBackGestureEnabled": false
@@ -60,4 +62,3 @@
     "owner": "parzival_89"
   }
 }
-

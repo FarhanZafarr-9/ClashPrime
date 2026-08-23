@@ -110,7 +110,7 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
-    version: '5.1.0',
+    version: '5.3.0',
     date: 'August 21, 2026',
     items: [
       'Critical-path TH readiness using computeMaxTime — bottleneck-driven score (Lab/Builders/Pets pipeline times) replaces weighted average, exposing hero/building bottlenecks correctly.',
@@ -248,7 +248,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.1.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.3.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
   const { show: showDialog, hide: hideDialog, Dialog } = useDialog();
@@ -285,7 +285,7 @@ export default function SettingsScreen() {
   const [onboardingPlayer, setOnboardingPlayer] = useState<ClashPlayer | null>(null);
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
-const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
   const { count: builderCount, setBuilderCount, loaded: builderLoaded, verified: builderVerified, setBuilderVerified } = useBuilderCount();
@@ -1028,7 +1028,7 @@ const [checkingUpdates, setCheckingUpdates] = useState(false);
             title="Builder Count"
             desc={builderVerified ? 'Auto-detected from JSON import' : 'Number of builders (2–6)'}
             compact
-children={
+            children={
               <View style={styles.builderCountRow}>
                 <PressableRipple
                   style={styles.builderCountBtn}
@@ -1045,7 +1045,7 @@ children={
                 </PressableRipple>
               </View>
             }
-            onPress={() => {}}
+            onPress={() => { }}
           />
           <SettingRow
             icon="refresh-outline"
@@ -2442,7 +2442,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: Spacing.md,
     marginBottom: Spacing.md,
-    justifyContent:'space-between'
+    justifyContent: 'space-between'
   },
   onboardingThCell: {
     flexDirection: 'row',
@@ -2452,7 +2452,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCardHover,
     borderRadius: Radius.sm,
     minWidth: '48%',
-    flex:1
+    flex: 1
   },
   onboardingThImg: {
     width: 32,
