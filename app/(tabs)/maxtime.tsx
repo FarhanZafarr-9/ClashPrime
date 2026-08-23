@@ -342,12 +342,24 @@ export default function MaxTimeScreen() {
                 : 'Building Levels';
       const rows: NewItemRow[] = (u.names ?? []).map((name) => {
         const maxLvl = isArmy ? getMaxLevelAtTH(name, readiness!.nextTh) : null;
-        const levelLabel = maxLvl != null && maxLvl > 1 ? `1→${maxLvl}` : maxLvl != null ? `${maxLvl} Max` : 'New';
+        const costResource = isArmy ? details?.[name]?.costResource : undefined;
+        const typeLabel = costResource
+          ? costResource.includes('Dark')
+            ? 'Dark Elixir Troop'
+            : costResource.includes('Shiny')
+              ? 'Ore Troop'
+              : costResource.includes('Glowing')
+                ? 'Glowing Ore Troop'
+                : costResource.includes('Starry')
+                  ? 'Starry Ore Troop'
+                  : `${costResource} Troop`
+          : undefined;
+        const levelLabel = maxLvl != null && maxLvl > 1 ? `1→${maxLvl}` : maxLvl != null ? `${maxLvl} Max` : undefined;
         return {
           key: name,
           name,
           icon: (isArmy ? getArmyItemImage(name) : getBuildingItemImage(name)) ?? undefined,
-          meta: levelLabel,
+          meta: typeLabel ?? levelLabel ?? '',
         };
       });
       for (const d of u.details ?? []) {
