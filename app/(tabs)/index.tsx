@@ -1320,7 +1320,16 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                      count={builderGroups.reduce((s, g) => s + g.rows.length, 0)}
                      totalLevel={builderTl}
                      totalMax={builderTm}
-                     description={renderProgressHeader(builderProgress, builderCost)}
+                     description={
+                    <>
+                      {builderSplit && (
+                        <Text style={{ ...styles.splitInfoLabel, marginBottom: -Spacing.xs }}>
+                          Buildings: {formatTimeShort(builderSplit.buildingsOnlySec)} · Heroes: {formatTimeShort(builderSplit.heroesOnlySec)} · Optimal: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
+                        </Text>
+                      )}
+                      {renderProgressHeader(builderProgress, builderCost)}
+                    </>
+                  }
 >
                   <View style={styles.progressInner}>
                   {(() => {
@@ -1684,16 +1693,16 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
               compact
               icon="hourglass-outline"
               title="Time to Max"
-              desc="Remaining upgrade time & resources for your Town Hall"
+              desc="Remaining upgrade time & resources"
               onPress={() => router.push('/(tabs)/maxtime')}
             >
               <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
             </SettingRow>
             <SettingRow
               compact
-              icon="cloud-upload-outline"
+              icon="cloud-download-outline"
               title="Import"
-              desc="Import building levels from a Clash of Clans JSON export"
+              desc="Import building levels from a CoC JSON export"
               onPress={() => router.push('/import-export')}
             >
               <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
