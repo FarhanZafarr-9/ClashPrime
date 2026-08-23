@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -42,8 +42,6 @@ const RESOURCE_ORDER: (CostResource | BuildingCostResource)[] = [
   'Glowing Ore',
   'Starry Ore',
 ];
-
-const BUILDER_PILLS = [2, 3, 4, 5];
 
 function applyScope(timeSec: number, cost: number, byResource: Record<string, number>, scope: ScopeDiscount) {
   const t = Math.max(0, Math.round(timeSec * (1 - scope.timePercent / 100)));
@@ -213,23 +211,15 @@ export default function MaxTimeScreen() {
       });
     const renderResourceRow = (r: string, v: number) => (
       <View key={r} style={styles.oreRow}>
-        {r === 'Gold or Elixir' ? (
-          <>
-            <Image source={PACKAGE_RESOURCE_IMAGES['Gold']} style={styles.oreIcon} resizeMode="contain" />
-            <Text style={{ color: '#D4A537', fontWeight: '600', marginRight: -2 }}>/</Text>
-            <Image source={PACKAGE_RESOURCE_IMAGES['Elixir']} style={styles.oreIcon} resizeMode="contain" />
-          </>
-        ) : (
-          <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.oreIcon} resizeMode="contain" />
-        )}
+        <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.oreIcon} resizeMode="contain" />
         <Text style={[styles.oreLabel, { color: RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8' }]}>
           {RESOURCE_META[r as CostResource]?.label ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.label ?? r}
         </Text>
         <Text style={styles.oreValue}>{formatCost(v)}</Text>
       </View>
     );
-    const withIcon = entries.filter(([r]) => PACKAGE_RESOURCE_IMAGES[r] || r === 'Gold or Elixir');
-    const fallback = entries.filter(([r]) => !PACKAGE_RESOURCE_IMAGES[r] && r !== 'Gold or Elixir');
+    const withIcon = entries.filter(([r]) => PACKAGE_RESOURCE_IMAGES[r]);
+    const fallback = entries.filter(([r]) => !PACKAGE_RESOURCE_IMAGES[r]);
     return (
       <>
         {withIcon.map(([r, v]) => renderResourceRow(r, v))}
@@ -354,9 +344,6 @@ export default function MaxTimeScreen() {
                 })
                 .map(([r, v], index, arr) => {
                   const color = RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8';
-                  const isGoldOrElixir = r === 'Gold or Elixir';
-                  const goldIcon = PACKAGE_RESOURCE_IMAGES['Gold'];
-                  const elixirIcon = PACKAGE_RESOURCE_IMAGES['Elixir'];
                   return (
                     <View
                       key={r}
@@ -368,15 +355,7 @@ export default function MaxTimeScreen() {
                         index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                       ]}
                     >
-                      {isGoldOrElixir ? (
-                        <>
-                          <Image source={goldIcon} style={styles.heroResourceIcon} resizeMode="contain" />
-                          <Text style={{ color: '#D4A537', fontWeight: '600', marginRight: Spacing.sm, marginLeft: -Spacing.md }}>/</Text>
-                          <Image source={elixirIcon} style={styles.heroResourceIcon} resizeMode="contain" />
-                        </>
-                      ) : (
-                        <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
-                      )}
+                      <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
                       <Text style={[styles.heroResourceValue, { color }]}>{formatCost(v)}</Text>
                     </View>
                   );
@@ -393,15 +372,30 @@ export default function MaxTimeScreen() {
             <Text style={styles.builderTitle}>Builders</Text>
             <Text style={styles.builderDesc}>Building & hero time is divided across these</Text>
           </View>
-          <View style={styles.builderChips}>
-            {BUILDER_PILLS.map((n) => (
-              <Chip
-                key={n}
-                label={String(n)}
-                selected={builderCount === n}
-                onPress={() => setBuilderCount(n)}
-              />
-            ))}
+          <View style={styles.builderStepper}>
+            <Pressable
+              onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
+              disabled={builderCount <= 2}
+              style={[
+                styles.stepperBtn,
+                builderCount <= 2 && styles.stepperBtnDisabled,
+              ]}
+            >
+              <Ionicons name="remove" size={18} color={builderCount <= 2 ? Colors.textMuted : Colors.textPrimary} />
+            </Pressable>
+            <View style={styles.builderCountPill}>
+              <Text style={styles.builderCountText}>{builderCount}</Text>
+            </View>
+            <Pressable
+              onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
+              disabled={builderCount >= 6}
+              style={[
+                styles.stepperBtn,
+                builderCount >= 6 && styles.stepperBtnDisabled,
+              ]}
+            >
+              <Ionicons name="add" size={18} color={builderCount >= 6 ? Colors.textMuted : Colors.textPrimary} />
+            </Pressable>
           </View>
         </View>
 
@@ -850,6 +844,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
+  },
+  builderCountPill: {
+    minWidth: 44,
+    height: 36,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  builderCountText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '700',
+  },
+  builderStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  stepperBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnDisabled: {
+    opacity: 0.4,
+  },
+  stepperBtnText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: Colors.textPrimary,
   },
   sectionHeaderWrap: {
     paddingHorizontal: Spacing.base,
