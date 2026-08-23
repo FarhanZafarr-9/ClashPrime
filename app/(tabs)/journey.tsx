@@ -48,19 +48,20 @@ export default function JourneyScreen() {
     if (!player) return;
     setDetailsLoading(true);
     try {
-      const names = new Set<string>();
-      for (let t = th; t <= maxTh; t++) {
-        const items = getAllItemsAtTH(t);
-        for (const item of items) names.add(item.name);
-      const fetched = await Promise.all(
-        [...names].map(name => getArmyTroopDetail(name).catch(() => null))
-      );
-      const next: Record<string, TroopDetail | null> = {};
-      [...names].forEach((name, i) => { next[name] = fetched[i]; });
-      setArmyDetails(next);
-    } finally {
-      setDetailsLoading(false);
-    }
+        const names = new Set<string>();
+        for (let t = th; t <= maxTh; t++) {
+          const items = getAllItemsAtTH(t);
+          for (const item of items) names.add(item.name);
+        }
+        const fetched = await Promise.all(
+          [...names].map(name => getArmyTroopDetail(name).catch(() => null))
+        );
+        const next: Record<string, TroopDetail | null> = {};
+        [...names].forEach((name, i) => { next[name] = fetched[i]; });
+        setArmyDetails(next);
+      } finally {
+        setDetailsLoading(false);
+      }
   }, [player, th]);
 
   const computeJourney = React.useCallback(() => {
