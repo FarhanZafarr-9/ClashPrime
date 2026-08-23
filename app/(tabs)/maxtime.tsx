@@ -11,7 +11,7 @@ import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
-import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getMaxLevelAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
+import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
 import { getBuildingItemImage, getBuildingMaxLevelAtTH, getMaxTownHall, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
@@ -324,6 +324,7 @@ export default function MaxTimeScreen() {
     name: string;
     icon: number | undefined;
     meta: string | undefined;
+    type: string | undefined;
   }
 
   const newGroups = (readiness?.nextUnlocks ?? [])
@@ -346,27 +347,35 @@ export default function MaxTimeScreen() {
         const costResource = isArmy
           ? troopDetail?.levels?.find((l) => l.costResource)?.costResource
           : undefined;
-        const typeLabel = costResource
-          ? costResource.includes('Dark')
-            ? 'Dark Elixir Troop'
-            : costResource.includes('Shiny')
-              ? 'Ore Troop'
-              : costResource.includes('Glowing')
-                ? 'Glowing Ore Troop'
-                : costResource.includes('Starry')
-                  ? 'Starry Ore Troop'
-                  : `${costResource} Troop`
+        const category = isArmy ? getArmyItem(name)?.category : undefined;
+        const kind =
+          category === 'spell' ? 'Spell'
+          : category === 'siege-machine' ? 'Siege Machine'
+          : category === 'hero' ? 'Hero'
+          : category === 'pet' ? 'Pet'
+          : category === 'hero-equipment' ? 'Equipment'
+          : category ? 'Troop'
           : undefined;
+        const typeLabel = kind === 'Spell'
+          ? `${costResource ?? 'Elixir'} Spell`
+          : kind === 'Troop' && costResource
+            ? costResource.includes('Dark')
+              ? 'Dark Elixir Troop'
+              : costResource.includes('Shiny')
+                ? 'Ore Troop'
+                : costResource.includes('Glowing')
+                  ? 'Glowing Ore Troop'
+                  : costResource.includes('Starry')
+                    ? 'Starry Ore Troop'
+                    : `${costResource} Troop`
+            : kind;
         const levelLabel = maxLvl != null && maxLvl > 1 ? `1→${maxLvl}` : maxLvl != null ? `${maxLvl} Max` : undefined;
         return {
           key: name,
           name,
           icon: (isArmy ? getArmyItemImage(name) : getBuildingItemImage(name)) ?? undefined,
-          meta: typeLabel
-          ? levelLabel
-            ? `${typeLabel} ${levelLabel}`
-            : typeLabel
-          : levelLabel,
+          meta: levelLabel,
+          type: typeLabel,
         };
       });
       for (const d of u.details ?? []) {
@@ -375,6 +384,7 @@ export default function MaxTimeScreen() {
           name: d.name,
           icon: (getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name)) ?? undefined,
           meta: `${d.count > 1 ? `×${d.count} ` : ''}+${d.levels} → ${d.nextMax}`,
+          type: undefined,
         });
       }
       return { key: `${u.label}-${gi}`, title, rows };
@@ -612,9 +622,12 @@ export default function MaxTimeScreen() {
                               {r.icon ? (
                                 <Image source={r.icon} style={styles.newRowIcon} resizeMode="contain" />
                               ) : null}
-                              <Text style={styles.newRowName} numberOfLines={1}>
-                                {r.name}
-                              </Text>
+                              <View style={styles.newRowTextBlock}>
+                                <Text style={styles.newRowName} numberOfLines={1}>
+                                  {r.name}
+                                </Text>
+                                {r.type ? <Text style={styles.newRowType}>{r.type}</Text> : null}
+                              </View>
                               <Text style={styles.newRowMeta}>{r.meta}</Text>
                             </View>
                           ))}
@@ -1122,11 +1135,19 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
   },
-  newRowName: {
+  newRowTextBlock: {
     flex: 1,
+    marginRight: Spacing.md,
+  },
+  newRowName: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  newRowType: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 1,
   },
   newRowMeta: {
     ...Typography.footnote,
