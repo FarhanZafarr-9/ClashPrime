@@ -137,6 +137,8 @@ export default function MaxTimeScreen() {
     };
   }, [result, discounts]);
 
+  console.log(discounted)
+
   const nextResult = useMemo(() => {
     if (!player || !details) return null;
     return computeMaxTime({ player, th: th + 1, builderCount, armyDetails: details });
@@ -211,19 +213,28 @@ export default function MaxTimeScreen() {
         const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
         return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
       });
-    const withIcon = entries.filter(([r]) => PACKAGE_RESOURCE_IMAGES[r]);
-    const fallback = entries.filter(([r]) => !PACKAGE_RESOURCE_IMAGES[r]);
+    const renderResourceRow = (r: string, v: number) => (
+      <View key={r} style={styles.oreRow}>
+        {r === 'Gold or Elixir' ? (
+          <>
+            <Image source={PACKAGE_RESOURCE_IMAGES['Gold']} style={styles.oreIcon} resizeMode="contain" />
+            <Text style={{ color: '#D4A537', fontWeight: '600', marginRight: 2 }}>+</Text>
+            <Image source={PACKAGE_RESOURCE_IMAGES['Elixir']} style={styles.oreIcon} resizeMode="contain" />
+          </>
+        ) : (
+          <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.oreIcon} resizeMode="contain" />
+        )}
+        <Text style={[styles.oreLabel, { color: RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8' }]}>
+          {RESOURCE_META[r as CostResource]?.label ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.label ?? r}
+        </Text>
+        <Text style={styles.oreValue}>{formatCost(v)}</Text>
+      </View>
+    );
+    const withIcon = entries.filter(([r]) => PACKAGE_RESOURCE_IMAGES[r] || r === 'Gold or Elixir');
+    const fallback = entries.filter(([r]) => !PACKAGE_RESOURCE_IMAGES[r] && r !== 'Gold or Elixir');
     return (
       <>
-        {withIcon.map(([r, v]) => (
-          <View key={r} style={styles.oreRow}>
-            <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.oreIcon} resizeMode="contain" />
-            <Text style={[styles.oreLabel, { color: RESOURCE_META[r as CostResource]?.color ?? '#94A3B8' }]}>
-              {RESOURCE_META[r as CostResource]?.label ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.label ?? r}
-            </Text>
-            <Text style={styles.oreValue}>{formatCost(v)}</Text>
-          </View>
-        ))}
+        {withIcon.map(([r, v]) => renderResourceRow(r, v))}
         {fallback.length > 0 && (
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Resources</Text>
