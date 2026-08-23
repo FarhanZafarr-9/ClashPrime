@@ -355,8 +355,10 @@ export default function MaxTimeScreen() {
                   return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
                 })
                 .map(([r, v], index, arr) => {
-                  const icon = PACKAGE_RESOURCE_IMAGES[r];
                   const color = RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8';
+                  const isGoldOrElixir = r === 'Gold or Elixir';
+                  const goldIcon = PACKAGE_RESOURCE_IMAGES['Gold'];
+                  const elixirIcon = PACKAGE_RESOURCE_IMAGES['Elixir'];
                   return (
                     <View
                       key={r}
@@ -368,10 +370,13 @@ export default function MaxTimeScreen() {
                         index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                       ]}
                     >
-                      {icon ? (
-                        <Image source={icon} style={styles.heroResourceIcon} resizeMode="contain" />
+                      {isGoldOrElixir ? (
+                        <>
+                          <Image source={goldIcon} style={styles.heroResourceIcon} resizeMode="contain" />
+                          <Image source={elixirIcon} style={styles.heroResourceIcon} resizeMode="contain" />
+                        </>
                       ) : (
-                        <View style={[styles.heroResourceDot, { backgroundColor: color }]} />
+                        <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
                       )}
                       <Text style={[styles.heroResourceValue, { color }]}>{formatCost(v)}</Text>
                     </View>
