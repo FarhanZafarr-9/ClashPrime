@@ -111,7 +111,7 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
     version: '5.3.0',
-    date: 'August 21, 2026',
+    date: 'August 23, 2026',
     items: [
       'Critical-path TH readiness using computeMaxTime — bottleneck-driven score (Lab/Builders/Pets pipeline times) replaces weighted average, exposing hero/building bottlenecks correctly.',
       'Rush to TH+1 expandable comparison: remaining time, added time, total time per pipeline + new unlocks grid with icons and max-level badges.',
@@ -121,8 +121,14 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Buildings/Army max level images in Rush unlocks; troop/spell max-level badges on icons.',
       'Timer notifications rebuilt: Android-native per-second countdown (works with app killed, zero battery), progress-free pinned card, sound + vibration on finish, monochrome notification icon.',
       'Add Account button directly in the Home account switcher.',
-      'Builder split label shortened: "Buildings" → "Build", "Heroes" → "Hero", "Optimal" → "Opt" for compact readability.',
+      'Builder pipeline header shows buildings/heroes/optimal split time inline on Home tab.',
+      'Builder split computes internally using player TH/progress details; uses builderCount from settings/onboarding.',
+      'Max Time screen: dual Gold/Elixir icons for Gold or Elixir resources (hero resource grid and resource summary).',
       'Max Time screen: hero resource icons resized (32→24px), Gold/Elixir separator changed from "+" to "/", improved padding and spacing.',
+      'Builder split label shortened: "Buildings" → "Build", "Heroes" → "Hero", "Optimal" → "Opt" for compact readability.',
+      'Auto-refresh player data once per day per account on app start.',
+      'Onboarding flow redesign: TH picker now select-then-confirm with Next button; added Builder Hut picker step between TH and builder count; builder count step integrated; fixed navigation/back flow between steps.',
+      'Settings: builder count inline +/- controls (removed modal), reactive chip selection with proper dialog dismissal.',
       'Settings screen: fixed indentation and spacing inconsistencies.',
     ],
   },
