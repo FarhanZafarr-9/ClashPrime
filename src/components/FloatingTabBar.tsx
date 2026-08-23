@@ -14,7 +14,6 @@ type IconDef = { set: 'ion' | 'mc'; name: string };
 const TAB_GROUPS: string[][] = [
   ['index', 'army', 'buildings', 'maxtime', 'events'],
   ['settings', 'bases', 'armies', 'war', 'search'],
-  ['journey', 'saved', 'achievements'],
 ];
 
 const TAB_ICONS: Record<string, IconDef> = {
@@ -27,7 +26,6 @@ const TAB_ICONS: Record<string, IconDef> = {
   bases: { set: 'ion', name: 'grid' },
   armies: { set: 'ion', name: 'shield-half-outline' },
   war: { set: 'ion', name: 'flag-outline' },
-  journey: { set: 'ion', name: 'map-outline' },
   saved: { set: 'ion', name: 'bookmarks-outline' },
   achievements: { set: 'ion', name: 'trophy-outline' },
   search: { set: 'ion', name: 'search-outline' },
