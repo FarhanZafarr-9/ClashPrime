@@ -16,13 +16,6 @@ interface JourneyNodeProps {
   onFilterChange: (filter: string) => void;
 }
 
-const PIPELINE_COLORS = {
-  lab: '#E84A9D',
-  builders: '#E8B339',
-  pets: '#60A5FA',
-  equipment: '#A78BFA',
-};
-
 const FILTER_OPTIONS = [
   { key: 'all', label: 'All' },
   { key: 'buildings', label: 'Buildings', icon: 'hammer-outline' },
@@ -69,7 +62,6 @@ function PipelineRing({ pct, color, size = 36 }: { pct: number; color: string; s
             height: size,
             borderRadius: size / 2,
             borderWidth: 3,
-            borderColor: color,
             borderStyle: 'solid',
             position: 'absolute',
             top: 0,
@@ -251,38 +243,38 @@ export function JourneyNode({ step, index, isFirst, isLast, filters, onFilterCha
             <View style={styles.summaryRow}>
               {summary.newBuildingsCount > 0 && (
                 <View style={styles.summaryItem}>
-                  <Ionicons name="business-outline" size={16} color={PIPELINE_COLORS.builders} />
+                  <Ionicons name="business-outline" size={16} color={Colors.accent} />
                   <Text style={styles.summaryLabel}>{summary.newBuildingsCount} new</Text>
                 </View>
               )}
               {summary.newHeroesCount > 0 && (
                 <View style={styles.summaryItem}>
-                  <Ionicons name="shield-half-outline" size={16} color={PIPELINE_COLORS.builders} />
+                  <Ionicons name="shield-half-outline" size={16} color={Colors.accent} />
                   <Text style={styles.summaryLabel}>{summary.newHeroesCount} heroes</Text>
                 </View>
               )}
               {summary.newTroopsSpellsCount > 0 && (
                 <View style={styles.summaryItem}>
-                  <Ionicons name="flask-outline" size={16} color={PIPELINE_COLORS.lab} />
-                  <Text style={styles.summaryLabel}>{summary.newTroopsSpellsCount} lab</Text>
+                  <Ionicons name="flask-outline" size={16} color={Colors.accent} />
+                  <Text style={styles.summaryLabel}>newTroopsSpellsCount lab</Text>
                 </View>
               )}
               {summary.newPetsCount > 0 && (
                 <View style={styles.summaryItem}>
-                  <Ionicons name="paw-outline" size={16} color={PIPELINE_COLORS.pets} />
+                  <Ionicons name="paw-outline" size={16} color={Colors.accent} />
                   <Text style={styles.summaryLabel}>{summary.newPetsCount} pets</Text>
                 </View>
               )}
               {summary.newSiegesCount > 0 && (
                 <View style={styles.summaryItem}>
-                  <Ionicons name="build-outline" size={16} color={PIPELINE_COLORS.lab} />
-                  <Text style={styles.summaryLabel}>{summary.newSiegesCount} sieges</Text>
+                  <Ionicons name="build-outline" size={16} color={Colors.accent} />
+                  <Text style={styles.summaryLabel}>summary.newSiegesCount sieges</Text>
                 </View>
               )}
               {summary.newEquipmentCount > 0 && (
                 <View style={styles.summaryItem}>
-                  <Ionicons name="diamond-outline" size={16} color={PIPELINE_COLORS.equipment} />
-                  <Text style={styles.summaryLabel}>{summary.newEquipmentCount} equip</Text>
+                  <Ionicons name="diamond-outline" size={16} color={Colors.accent} />
+                  <Text style={styles.summaryLabel}>summary.newEquipmentCount equip</Text>
                 </View>
               )}
             </View>
@@ -336,13 +328,13 @@ export function JourneyNode({ step, index, isFirst, isLast, filters, onFilterCha
                 })}
               </View>
 
-              {renderCategory('buildings', 'Buildings', 'business-outline', 'ion', PIPELINE_COLORS.builders, detail.newBuildings)}
-              {renderCategory('heroes', 'Heroes', 'shield-half-outline', 'ion', PIPELINE_COLORS.builders, detail.newHeroes)}
-              {renderCategory('troops', 'Troops', 'sword-cross', 'mc', PIPELINE_COLORS.lab, detail.newTroops)}
-              {renderCategory('spells', 'Spells', 'flask-outline', 'ion', PIPELINE_COLORS.lab, detail.newSpells)}
-              {renderCategory('pets', 'Pets', 'paw-outline', 'ion', PIPELINE_COLORS.pets, detail.newPets)}
-              {renderCategory('sieges', 'Sieges', 'build-outline', 'ion', PIPELINE_COLORS.lab, detail.newSieges)}
-              {renderCategory('equipment', 'Equipment', 'diamond-outline', 'ion', PIPELINE_COLORS.equipment, detail.newEquipment)}
+              {renderCategory('buildings', 'Buildings', 'business-outline', 'ion', Colors.accent, detail.newBuildings)}
+              {renderCategory('heroes', 'Heroes', 'shield-half-outline', 'ion', Colors.accent, detail.newHeroes)}
+              {renderCategory('troops', 'Troops', 'sword-cross', 'mc', Colors.accent, detail.newTroops)}
+              {renderCategory('spells', 'Spells', 'flask-outline', 'ion', Colors.accent, detail.newSpells)}
+              {renderCategory('pets', 'Pets', 'paw-outline', 'ion', Colors.accent, detail.newPets)}
+              {renderCategory('sieges', 'Sieges', 'build-outline', 'ion', Colors.accent, detail.newSieges)}
+              {renderCategory('equipment', 'Equipment', 'diamond-outline', 'ion', Colors.accent, detail.newEquipment)}
               {renderCategory('building-ups', 'Building Level Ups', 'arrow-up-circle-outline', 'ion', Colors.textTertiary, detail.buildingLevelUps, true)}
               {renderCategory('army-ups', 'Army Level Ups', 'arrow-up-circle-outline', 'ion', Colors.textTertiary, detail.armyLevelUps, true)}
             </View>
@@ -409,12 +401,12 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   nodeBadgeCurrent: {
-    backgroundColor: PIPELINE_COLORS.builders,
-    borderColor: PIPELINE_COLORS.builders,
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
   },
   nodeBadgeMax: {
-    backgroundColor: '#F6C453',
-    borderColor: '#F6C453',
+    backgroundColor: Colors.warning,
+    borderColor: Colors.warning,
   },
   nodeBadgeText: {
     fontSize: 13,
@@ -433,7 +425,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: PIPELINE_COLORS.builders,
+    borderColor: Colors.accent,
     opacity: 0.5,
   },
   nodeContent: {
@@ -465,7 +457,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   nodeTitleCurrent: {
-    color: PIPELINE_COLORS.builders,
+    color: Colors.accent,
   },
   nodeTime: {
     fontSize: 13,
@@ -474,8 +466,8 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   currentChip: {
-    backgroundColor: PIPELINE_COLORS.builders + '22',
-    borderColor: PIPELINE_COLORS.builders,
+    backgroundColor: Colors.accent + '22',
+    borderColor: Colors.accent,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: Radius.sm,
@@ -484,10 +476,10 @@ const styles = StyleSheet.create({
   currentChipText: {
     fontSize: 9,
     fontWeight: '700',
-    color: PIPELINE_COLORS.builders,
+    color: Colors.accent,
   },
   maxChip: {
-    backgroundColor: '#F6C453',
+    backgroundColor: Colors.warning,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: Radius.sm,
