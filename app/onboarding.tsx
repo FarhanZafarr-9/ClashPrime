@@ -11,7 +11,6 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../src/components/PressableRipple';
-import { Chip } from '../src/components/Chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -96,13 +95,12 @@ export default function OnboardingScreen() {
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
   const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
   const { setBuilderCount } = useBuilderCount();
-  const [step, setStep] = useState<'form' | 'profile' | 'thPicker' | 'builderHutPicker' | 'builderCount'>(mode === 'reset' ? 'thPicker' : 'form');
+  const [step, setStep] = useState<'form' | 'profile' | 'thPicker' | 'builderHutPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
   const [tag, setTag] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [builderCount, setBuilderCountState] = useState(2);
   const [onboardingBuilderHuts, setOnboardingBuilderHuts] = useState(2);
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
 
@@ -160,7 +158,7 @@ export default function OnboardingScreen() {
     }
   };
 
-const handleThPick = async (selectedTh: number) => {
+  const handleThPick = async (selectedTh: number) => {
     if (mode !== 'reset' && !playerData) return;
     // Switch step FIRST so UI transitions before loading state
     setStep('builderHutPicker');
@@ -185,14 +183,8 @@ const handleThPick = async (selectedTh: number) => {
     setLoading(false);
   };
 
-  const handleBuilderHutPick = async (builderHuts: number) => {
-    setBuilderCountState(builderHuts);
-    setStep('builderCount');
-    setLoading(false);
-  };
-
-  const handleBuilderCountNext = () => {
-    setBuilderCount(builderCount);
+  const handleBuilderHutNext = () => {
+    setBuilderCount(onboardingBuilderHuts);
     router.replace('/(tabs)');
   };
 
@@ -300,14 +292,14 @@ const handleThPick = async (selectedTh: number) => {
                 style={styles.profileScroll}
                 contentContainerStyle={styles.profileScrollContent}
                 showsVerticalScrollIndicator={false}
-                >
-                  <View style={styles.hero}>
-                    <Image source={require('../assets/icon.png')} style={styles.logo} />
-                    <Text style={styles.title}>ClashPrime</Text>
-                    <Text style={styles.subtitle}>Your Clash of Clans companion</Text>
-                  </View>
+              >
+                <View style={styles.hero}>
+                  <Image source={require('../assets/icon.png')} style={styles.logo} />
+                  <Text style={styles.title}>ClashPrime</Text>
+                  <Text style={styles.subtitle}>Your Clash of Clans companion</Text>
+                </View>
 
-                  <Text style={styles.profileConfirmText}>Does this profile information look right? You can go back and change the tag if needed.</Text>
+                <Text style={styles.profileConfirmText}>Does this profile information look right? You can go back and change the tag if needed.</Text>
 
                 <View style={styles.profileCard}>
                   <View style={styles.profileCardRow}>
@@ -352,10 +344,10 @@ const handleThPick = async (selectedTh: number) => {
                   >
                     <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
                   </PressableRipple>
-<PressableRipple
-                        style={[styles.profileBtn, styles.profileBtnGhost]}
-                        onPress={() => setStep('builderHutPicker')}
-                      >
+                  <PressableRipple
+                    style={styles.profileBtn}
+                    onPress={() => setStep('thPicker')}
+                  >
                     <Text style={styles.profileBtnText}>Confirm & Continue</Text>
                   </PressableRipple>
                 </View>
@@ -368,7 +360,7 @@ const handleThPick = async (selectedTh: number) => {
               </View>
             )}
           </View>
-        ) : (
+        ) : step === 'thPicker' ? (
           <View style={styles.content}>
             {!loading && (
               <View style={styles.hero}>
@@ -377,10 +369,10 @@ const handleThPick = async (selectedTh: number) => {
                 <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
               </View>
             )}
-{loading ? (
+            {loading ? (
               <View style={styles.loadingState}>
                 <ActivityIndicator size="small" color={Colors.textPrimary} />
-                <Text style={styles.loadingStateText}>Fetching profile…</Text>
+                <Text style={styles.loadingStateText}>Saving…</Text>
               </View>
             ) : (
               <>
@@ -432,104 +424,61 @@ const handleThPick = async (selectedTh: number) => {
                 </View>
               </>
             )}
-            {step === 'builderHutPicker' && (
-              <View style={styles.content}>
-                {!loading && (
-                  <View style={styles.hero}>
-                    <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
-                    <Text style={styles.title}>Builder Huts</Text>
-                    <Text style={styles.subtitle}>How many Builder Huts do you have?</Text>
-                  </View>
-                )}
-                {loading ? (
-                  <View style={styles.loadingState}>
-                    <ActivityIndicator size="small" color={Colors.textPrimary} />
-                    <Text style={styles.loadingStateText}>Saving…</Text>
-                  </View>
-                ) : (
-                  <>
-                    <Text style={styles.thLabel}>Select your builder hut count</Text>
-                    <View style={styles.chipRow}>
-                      {[2, 3, 4, 5, 6].map((n) => (
-                        <PressableRipple
-                          key={n}
-                          style={[
-                            styles.chipRow,
-                            builderCount === n && { backgroundColor: Colors.textPrimary }
-                          ]}
-                          onPress={() => handleBuilderHutPick(n)}
-                        >
-                          <Text style={[
-                            styles.profileBtnText,
-                            builderCount === n && { color: Colors.bg }
-                          ]}>
-                            {n === 6 ? '6 (OTTO)' : String(n)}
-                          </Text>
-                        </PressableRipple>
-                      ))}
-                    </View>
-                    <Text style={styles.thHint}>
-                      6 builder huts = O.T.T.O. Hut (Builder Base)
-                    </Text>
-                    <View style={styles.thPickerActions}>
-                      <PressableRipple
-                        style={[styles.profileBtn, styles.profileBtnGhost]}
-                        onPress={() => setStep('thPicker')}
-                      >
-                        <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
-                      </PressableRipple>
-                    </View>
-                  </>
-                )}
+          </View>
+        ) : (
+          <View style={styles.content}>
+            {!loading && (
+              <View style={styles.hero}>
+                <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
+                <Text style={styles.title}>Builder Huts</Text>
+                <Text style={styles.subtitle}>How many Builder Huts do you have?</Text>
               </View>
             )}
-            {step === 'builderCount' && (
-              <View style={styles.content}>
-                {!loading && (
-                  <View style={styles.hero}>
-                    <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
-                    <Text style={styles.title}>Builder Count</Text>
-                    <Text style={styles.subtitle}>How many builders do you have in Home Village?</Text>
-                  </View>
-                )}
-                {loading ? (
-                  <View style={styles.loadingState}>
-                    <ActivityIndicator size="small" color={Colors.textPrimary} />
-                    <Text style={styles.loadingStateText}>Saving…</Text>
-                  </View>
-                ) : (
-                  <>
-                    <Text style={styles.thLabel}>Select your builder count</Text>
-                    <View style={styles.chipRow}>
-                      {[2, 3, 4, 5, 6].map((n) => (
-                        <Chip
-                          key={n}
-                          label={n === 6 ? '6 (OTTO)' : String(n)}
-                          selected={builderCount === n}
-                          onPress={() => setBuilderCountState(n)}
-                        />
-                      ))}
-                    </View>
-                    <Text style={styles.thHint}>
-                      6 builders requires O.T.T.O. Hut (Builder Base)
-                    </Text>
-                    <View style={styles.thPickerActions}>
-                      <PressableRipple
-                        style={[styles.profileBtn, styles.profileBtnGhost]}
-                        onPress={() => setStep('builderHutPicker')}
-                      >
-                        <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
-                      </PressableRipple>
-                      <PressableRipple
-                        style={styles.profileBtn}
-                        onPress={handleBuilderCountNext}
-                      >
-                        <Text style={styles.profileBtnText}>Continue</Text>
-                      </PressableRipple>
-                    </View>
-                  </>
-                )}
+            {loading ? (
+              <View style={styles.loadingState}>
+                <ActivityIndicator size="small" color={Colors.textPrimary} />
+                <Text style={styles.loadingStateText}>Saving…</Text>
               </View>
+            ) : (
+              <>
+                <Text style={styles.thLabel}>Select your builder hut count</Text>
+                <View style={styles.chipRow}>
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <PressableRipple
+                      key={n}
+                      style={[
+                        styles.hutChip,
+                        onboardingBuilderHuts === n && styles.hutChipSelected
+                      ]}
+                      onPress={() => setOnboardingBuilderHuts(n)}
+                    >
+                      <Text style={[
+                        styles.hutChipText,
+                        onboardingBuilderHuts === n && styles.hutChipTextSelected
+                      ]}>
+                        {n === 6 ? '6 (OTTO)' : String(n)}
+                      </Text>
+                    </PressableRipple>
+                  ))}
+                </View>
+                <Text style={styles.thHint}>
+                  6 builder huts = O.T.T.O. Hut (Builder Base)
+                </Text>
+                <View style={styles.thPickerActions}>
+                  <PressableRipple
+                    style={[styles.profileBtn, styles.profileBtnGhost]}
+                    onPress={() => setStep('thPicker')}
+                  >
+                    <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
+                  </PressableRipple>
+                  <PressableRipple
+                    style={styles.profileBtn}
+                    onPress={handleBuilderHutNext}
+                  >
+                    <Text style={styles.profileBtnText}>Continue</Text>
+                  </PressableRipple>
+                </View>
+              </>
             )}
           </View>
         )}
@@ -958,5 +907,26 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     flexWrap: 'wrap',
     justifyContent: 'center',
+  },
+  hutChip: {
+    minWidth: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
+  },
+  hutChipSelected: {
+    backgroundColor: Colors.textPrimary,
+  },
+  hutChipText: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  hutChipTextSelected: {
+    color: Colors.bg,
   },
 });
