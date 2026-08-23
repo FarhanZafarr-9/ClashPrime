@@ -13,13 +13,6 @@ import { JourneyNode } from '../../src/components/JourneyNode';
 import type { ClashPlayer } from '../../src/types/clash';
 import type { TroopDetail } from '../../src/api/troopDetail';
 
-const PIPELINE_COLORS = {
-  lab: '#E84A9D',
-  builders: '#E8B339',
-  pets: '#60A5FA',
-  equipment: '#A78BFA',
-};
-
 const FILTER_OPTIONS = [
   { key: 'all', label: 'All' },
   { key: 'buildings', label: 'Buildings' },
@@ -59,7 +52,6 @@ export default function JourneyScreen() {
       for (let t = th; t <= maxTh; t++) {
         const items = getAllItemsAtTH(t);
         for (const item of items) names.add(item.name);
-      }
       const fetched = await Promise.all(
         [...names].map(name => getArmyTroopDetail(name).catch(() => null))
       );
@@ -293,12 +285,11 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    ...Typography.title1,
     color: Colors.textPrimary,
   },
   subtitle: {
-    fontSize: 14,
+    ...Typography.caption,
     color: Colors.textSecondary,
     marginTop: -2,
   },
