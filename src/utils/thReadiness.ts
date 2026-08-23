@@ -291,7 +291,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
   const catsNow = getBuildingCategories(th);
   let newBuildings = 0;
   let extraLevels = 0;
-  const newBuildingNames: string[] = [];
+  const newBuildingDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   const extraLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   for (const [cat, buildings] of Object.entries(catsNext)) {
     for (const [name, thData] of Object.entries(buildings)) {
@@ -301,7 +301,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
       if (nextMax <= 0) continue;
       if (curMax <= 0) {
         newBuildings += count;
-        if (count > 0) newBuildingNames.push(name);
+        if (count > 0) newBuildingDetails.push({ name, count, levels: nextMax - 1, nextMax });
       } else if (nextMax > curMax) {
         const levelDelta = nextMax - curMax;
         extraLevels += count * levelDelta;
@@ -309,7 +309,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
       }
     }
   }
-  if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, names: newBuildingNames } as const);
+  if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, details: newBuildingDetails } as const);
   // Sort extra levels: Army buildings first, then others by category priority
   const ARMY_BUILDINGS = ['Army Camp', 'Barracks', 'Clan Castle', 'Lab', 'Hero Hall', 'Spell Factory', 'Dark Barracks', 'Dark Spell Factory', 'Blacksmith', 'Workshop', 'Pet House'];
   extraLevelDetails.sort((a, b) => {
