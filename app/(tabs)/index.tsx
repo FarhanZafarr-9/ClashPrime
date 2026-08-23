@@ -26,6 +26,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useTimers } from '../../src/hooks/useTimerContext';
+import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
@@ -35,7 +36,7 @@ import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
-import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime } from '../../src/utils/upgradeCosts';
+import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime, buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
 import { getBuildingCategories, getBuildingMaxLevelAtTH } from '../../src/utils/buildingData';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
@@ -265,6 +266,7 @@ export default function HomeScreen() {
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
   const { superTroopNames, petNames } = useGameData();
   const { reminders, addTimer, dismissTimer, hasPermission } = useTimers();
+  const { count: builderCount } = useBuilderCount();
   const { show: showDialog, Dialog } = useDialog();
   const [refreshing, setRefreshing] = useState(false);
   const [progressDiff, setProgressDiff] = useState<ProgressDiff | null>(null);
@@ -854,6 +856,72 @@ export default function HomeScreen() {
     return tm > 0 ? tl / tm : 0;
   })();
 
+  // ── Builder split calculation (for Builders pipeline) ──
+  const builderSplit = useMemo(() => {
+    if (!player) return null;
+    
+    // Get building chains (similar to maxTime.ts buildBuildersPipeline)
+    const buildingChains: number[] = [];
+    const heroChains: number[] = [];
+    
+    // Building chains from buildingGroups
+    for (const catGroup of buildingGroups) {
+      for (const row of catGroup.rows) {
+        if (row.maxLevel <= 0) continue;
+        const times = buildingUpgradeChainTimes(row.name, row.copies ?? [], row.effectiveMax ?? 0);
+        if (times.length > 0) buildingChains.push(...times);
+      }
+    }
+    
+    // Hero chains from heroGroup
+    const heroGroup = progressGroups.find((g) => g.key === 'heroes');
+    if (heroGroup) {
+      for (const row of heroGroup.rows) {
+        if (row.maxLevel <= 0 || row.level >= row.maxLevel) continue;
+        const detail = progressDetails[row.name];
+        if (!detail) continue;
+        const ct = remainingArmyCosts(detail, row.level, row.maxLevel);
+        if (ct.time > 0) heroChains.push(ct.time);
+      }
+    }
+    
+    if (builderCount <= 1 || (buildingChains.length === 0 && heroChains.length === 0)) {
+      return null;
+    }
+    
+    // Calculate times
+    const buildingsOnlySec = scheduleChains(buildingChains, builderCount);
+    const heroesOnlySec = scheduleChains(heroChains, builderCount);
+    const buildingsSerialSec = buildingChains.reduce((a, b) => a + b, 0);
+    const heroesSerialSec = heroChains.reduce((a, b) => a + b, 0);
+    
+    // Find optimal split
+    let optimalHeroBuilders = -1;
+    let optimalSec = Infinity;
+    if (builderCount >= 2) {
+      for (let h = 1; h < builderCount; h++) {
+        const b = builderCount - h;
+        const sec = Math.max(scheduleChains(heroChains, h), scheduleChains(buildingChains, b));
+        if (sec < optimalSec) {
+          optimalSec = sec;
+          optimalHeroBuilders = h;
+        }
+      }
+    }
+    
+    if (optimalHeroBuilders === -1) return null;
+    
+    return {
+      buildingsOnlySec,
+      heroesOnlySec,
+      buildingsSerialSec,
+      heroesSerialSec,
+      optimalHeroBuilders,
+      optimalBuildingBuilders: builderCount - optimalHeroBuilders,
+      optimalSec,
+    };
+  }, [buildingGroups, progressGroups, progressDetails, player, builderCount]);
+
   const renderProgressHeader = (progress: number, ct: CostTime) => {
     // Categories/sub-categories show only remaining time; costs are shown per
     // item instead, so gold/elixir/dark elixir are never merged into one sum.
@@ -1206,18 +1274,38 @@ export default function HomeScreen() {
                const builderTl = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
                const builderTm = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
                const builderProgress = builderTm > 0 ? builderTl / builderTm : 0;
-               const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progressCosts.heroes : buildingCosts[g.key]).filter(Boolean));
-               return (
-<CollapsibleSection
-                  isLast={false}
-                  icon="business-outline"
-                  iconSource={pipelineHeaderImage('Builder Hut')}
-                  title="Builders"
-                   compact
-                   count={builderGroups.reduce((s, g) => s + g.rows.length, 0)}
-                   totalLevel={builderTl}
-                   totalMax={builderTm}
-                   description={renderProgressHeader(builderProgress, builderCost)}
+const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progressCosts.heroes : buildingCosts[g.key]).filter(Boolean));
+                // Builder split info
+                const splitInfo = builderSplit ? (
+                  <>
+                    <View style={styles.splitInfoRow}>
+                      <Text style={styles.splitInfoLabel}>Buildings only: </Text>
+                      <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.buildingsOnlySec)}</Text>
+                    </View>
+                    <View style={styles.splitInfoRow}>
+                      <Text style={styles.splitInfoLabel}>Heroes only: </Text>
+                      <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.heroesOnlySec)}</Text>
+                    </View>
+                    <View style={styles.splitInfoRow}>
+                      <Text style={styles.splitInfoLabel}>Optimal split: </Text>
+                      <Text style={styles.splitInfoValue}>
+                        {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
+                      </Text>
+                    </View>
+                  </>
+                ) : null;
+
+                return (
+                  <CollapsibleSection
+                     isLast={false}
+                     icon="business-outline"
+                     iconSource={pipelineHeaderImage('Builder Hut')}
+                     title="Builders"
+                      compact
+                     count={builderGroups.reduce((s, g) => s + g.rows.length, 0)}
+                     totalLevel={builderTl}
+                     totalMax={builderTm}
+                     description={renderProgressHeader(builderProgress, builderCost)}
 >
                   <View style={styles.progressInner}>
                   {(() => {
@@ -3016,5 +3104,21 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '700',
+  },
+  splitInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  splitInfoLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+  },
+  splitInfoValue: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
 });
