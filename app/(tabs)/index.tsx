@@ -1680,24 +1680,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
             >
               <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
             </SettingRow>
-            <SettingRow
-              compact
-              icon="search-outline"
-              title="Player Search"
-              desc="Inspect any player by tag"
-              onPress={() => router.push('/player')}
-            >
-              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
-            </SettingRow>
-            <SettingRow
-              compact
-              icon="hourglass-outline"
-              title="Time to Max"
-              desc="Remaining upgrade time & resources"
-              onPress={() => router.push('/(tabs)/maxtime')}
-            >
-              <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
-            </SettingRow>
+
             <SettingRow
               compact
               icon="cloud-download-outline"
