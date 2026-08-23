@@ -342,7 +342,7 @@ export default function MaxTimeScreen() {
                 : 'Building Levels';
       const rows: NewItemRow[] = (u.names ?? []).map((name) => {
         const maxLvl = isArmy ? getMaxLevelAtTH(name, readiness!.nextTh) : null;
-        const costResource = isArmy ? armyDetails?.[name]?.costResource : undefined;
+        const costResource = isArmy ? details?.[name]?.costResource : undefined;
         const typeLabel = costResource
           ? costResource.includes('Dark')
             ? 'Dark Elixir Troop'
