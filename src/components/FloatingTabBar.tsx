@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, BackHandler } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Colors, Spacing, Radius } from '../theme';
 import PressableRipple from './PressableRipple';
 import { Skeleton } from './Skeleton';
@@ -8,21 +9,29 @@ import { usePlayer } from '../hooks/usePlayerContext';
 
 type IconDef = { set: 'ion' | 'mc'; name: string };
 
-const MAIN_TABS: { key: string; icon: IconDef }[] = [
-  { key: 'index', icon: { set: 'ion', name: 'home' } },
-  { key: 'army', icon: { set: 'mc', name: 'sword-cross' } },
-  { key: 'buildings', icon: { set: 'mc', name: 'castle' } },
-  { key: 'bases', icon: { set: 'ion', name: 'grid' } },
-  { key: 'maxtime', icon: { set: 'ion', name: 'hourglass-outline' } },
+/** Pages of tabs, in display order. The chevron cycles through these.
+ * 'search' is a pseudo-entry: it pushes the /player route instead of switching tabs. */
+const TAB_GROUPS: string[][] = [
+  ['index', 'army', 'buildings', 'maxtime', 'events'],
+  ['settings', 'bases', 'armies', 'war', 'search'],
+  ['journey', 'saved', 'achievements'],
 ];
 
-const EXTRA_TABS: { key: string; icon: IconDef }[] = [
-  { key: 'war', icon: { set: 'ion', name: 'flag-outline' } },
-  { key: 'events', icon: { set: 'ion', name: 'calendar-outline' } },
-  { key: 'armies', icon: { set: 'ion', name: 'shield-half-outline' } },
-  { key: 'achievements', icon: { set: 'ion', name: 'trophy-outline' } },
-  { key: 'saved', icon: { set: 'ion', name: 'bookmarks-outline' } },
-];
+const TAB_ICONS: Record<string, IconDef> = {
+  index: { set: 'ion', name: 'home' },
+  army: { set: 'mc', name: 'sword-cross' },
+  buildings: { set: 'mc', name: 'castle' },
+  maxtime: { set: 'ion', name: 'hourglass-outline' },
+  events: { set: 'ion', name: 'calendar-outline' },
+  settings: { set: 'ion', name: 'settings-outline' },
+  bases: { set: 'ion', name: 'grid' },
+  armies: { set: 'ion', name: 'shield-half-outline' },
+  war: { set: 'ion', name: 'flag-outline' },
+  journey: { set: 'ion', name: 'map-outline' },
+  saved: { set: 'ion', name: 'bookmarks-outline' },
+  achievements: { set: 'ion', name: 'trophy-outline' },
+  search: { set: 'ion', name: 'search-outline' },
+};
 
 function TabIcon({ icon, color, size }: { icon: IconDef; color: string; size?: number }) {
   const s = size ?? 18;
@@ -33,10 +42,25 @@ function TabIcon({ icon, color, size }: { icon: IconDef; color: string; size?: n
   );
 }
 
+function groupOf(key: string): number {
+  return TAB_GROUPS.findIndex((g) => g.includes(key));
+}
+
 export default function FloatingTabBar({ state, navigation }: any) {
   const { player, loading } = usePlayer();
-  const activeKey = state.routeNames[state.index];
-  const [showExtras, setShowExtras] = useState(false);
+  const router = useRouter();
+  const activeKey: string = state.routeNames[state.index];
+  const [page, setPage] = useState(() => {
+    const g = groupOf(activeKey);
+    return g >= 0 ? g : 0;
+  });
+
+  // Follow the active tab: deep links / back nav land on the right page.
+  useEffect(() => {
+    const g = groupOf(activeKey);
+    if (g >= 0 && g !== page) setPage(g);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeKey]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -50,7 +74,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
         navigation.getParent()?.goBack();
         return true;
       }
-      if (state.history.length > 1) {
+      if (state.history?.length > 1) {
         navigation.goBack();
         return true;
       }
@@ -63,27 +87,33 @@ export default function FloatingTabBar({ state, navigation }: any) {
   // a real nav bar so it doesn't look half-broken while the screen shimmers.
   const skeletons = activeKey === 'index' && loading && !player;
 
-  useEffect(() => {
-    const onExtra = EXTRA_TABS.some((t) => t.key === activeKey);
-    setShowExtras(onExtra);
-  }, [activeKey]);
+  const visibleTabs = TAB_GROUPS[Math.min(page, TAB_GROUPS.length - 1)];
 
-  const navigate = (key: string) => {
-    const route = state.routes.find((r: any) => r.key === key || r.name === key);
-    if (route) {
-      navigation.navigate(route.name);
+  const navigate = (name: string) => {
+    if (name === 'search') {
+      router.push('/player');
+      return;
     }
+    const route = state.routes.find((r: any) => r.name === name);
+    if (route) navigation.navigate(route.name);
   };
 
-  const visibleTabs = showExtras ? EXTRA_TABS : MAIN_TABS;
+  const nextPage = () => setPage((p: number) => (p + 1) % TAB_GROUPS.length);
 
   return (
     <View style={styles.container}>
+      {!skeletons && (
+        <View style={styles.pagePill}>
+          {TAB_GROUPS.map((_, i) => (
+            <View key={i} style={[styles.pageDot, i === page && styles.pageDotActive]} />
+          ))}
+        </View>
+      )}
       <View style={styles.bar}>
         {skeletons ? (
           <>
-            {MAIN_TABS.map((tab) => (
-              <View key={tab.key} style={[styles.tabItem, styles.tabItemSkeleton]}>
+            {visibleTabs.map((tab) => (
+              <View key={tab} style={[styles.tabItem, styles.tabItemSkeleton]}>
                 <Skeleton width={22} height={22} borderRadius={8} />
               </View>
             ))}
@@ -92,31 +122,26 @@ export default function FloatingTabBar({ state, navigation }: any) {
             </View>
           </>
         ) : (
-        <>
-        {visibleTabs.map((tab, i) => {
-          const isActive = activeKey === tab.key;
-          const isFirst = i === 0;
-          return (
-            <PressableRipple
-              key={tab.key}
-              style={[
-                styles.tabItem,
-                isActive && styles.tabItemActive,
-              ]}
-              onPress={() => navigate(tab.key)}
-            >
-              <TabIcon icon={tab.icon} color={ Colors.textMuted} />
+          <>
+            {visibleTabs.map((tab) => {
+              const isActive = activeKey === tab;
+              return (
+                <PressableRipple
+                  key={tab}
+                  style={[styles.tabItem, isActive && styles.tabItemActive]}
+                  onPress={() => navigate(tab)}
+                >
+                  <TabIcon
+                    icon={TAB_ICONS[tab] ?? { set: 'ion', name: 'ellipse-outline' }}
+                    color={isActive ? Colors.bg : Colors.textMuted}
+                  />
+                </PressableRipple>
+              );
+            })}
+            <PressableRipple style={styles.tabItemChevron} onPress={nextPage}>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
             </PressableRipple>
-          );
-        })}
-        <PressableRipple style={styles.tabItem} onPress={() => setShowExtras((v) => !v)}>
-          <Ionicons
-            name={showExtras ? 'chevron-back' : 'chevron-forward'}
-            size={18}
-            color={Colors.textSecondary}
-          />
-        </PressableRipple>
-        </>
+          </>
         )}
       </View>
     </View>
@@ -161,11 +186,43 @@ const styles = StyleSheet.create({
   tabItemActive: {
     backgroundColor: Colors.textPrimary,
   },
-  tabItemActiveFirst: {
-    borderRadius: Radius.full,
-  },
   tabItemSkeleton: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabItemChevron: {
+    minWidth: 36,
+    height: 46,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pagePill: {
+    position: 'absolute',
+    bottom: 82,
+    right: 28,
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgCardHover,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  pageDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.textMuted,
+    opacity: 0.5,
+  },
+  pageDotActive: {
+    backgroundColor: Colors.textSecondary,
+    opacity: 1,
   },
 });

@@ -319,6 +319,47 @@ export default function MaxTimeScreen() {
     );
   };
 
+  interface NewItemRow {
+    key: string;
+    name: string;
+    icon: number | undefined;
+    meta: string;
+  }
+
+  const newGroups = (readiness?.nextUnlocks ?? [])
+    .map((u, gi) => {
+      const isArmy = u.label === 'lab' || u.label === 'heroes';
+      const title =
+        u.label === 'lab'
+          ? 'Laboratory'
+          : u.label === 'heroes'
+            ? 'Heroes'
+            : u.label === 'buildings'
+              ? 'New Buildings'
+              : u.value.includes('army')
+                ? 'Army Levels'
+                : 'Building Levels';
+      const rows: NewItemRow[] = (u.names ?? []).map((name) => {
+        const maxLvl = isArmy ? getMaxLevelAtTH(name, readiness!.nextTh) : null;
+        return {
+          key: name,
+          name,
+          icon: (isArmy ? getArmyItemImage(name) : getBuildingItemImage(name)) ?? undefined,
+          meta: maxLvl != null && maxLvl > 0 ? `Lv ${maxLvl}` : 'New',
+        };
+      });
+      for (const d of u.details ?? []) {
+        rows.push({
+          key: `${d.name}-${d.nextMax}-${gi}`,
+          name: d.name,
+          icon: (getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name)) ?? undefined,
+          meta: `${d.count > 1 ? `×${d.count} ` : ''}+${d.levels} → ${d.nextMax}`,
+        });
+      }
+      return { key: `${u.label}-${gi}`, title, rows };
+    })
+    .filter((g) => g.rows.length > 0);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -537,57 +578,28 @@ export default function MaxTimeScreen() {
                   ))}
                   <View style={styles.rushDivider} />
                   <Text style={styles.rushNewItemsTitle}>New at TH{readiness.nextTh}</Text>
-                  {readiness.nextUnlocks.length > 0 ? (
-                    <>
-                      {readiness.nextUnlocks.map((u, i) => (
-                        <View key={`${u.label}-${i}`} style={styles.rushNewItemGroup}>
-                          <Text style={styles.rushNewItemCategory}>
-                            {u.label === 'lab' ? 'Lab' : u.label === 'heroes' ? 'Heroes' : u.label === 'buildings' ? 'Buildings' : u.label === 'levels' ? 'Levels' : u.label}
-                          </Text>
-                          {(u.names || u.details) ? (
-                            <View style={styles.rushNewItemGrid}>
-                              {(u.names || []).map((name, ni) => {
-                                const maxLvl = (u.label === 'lab' || u.label === 'heroes') ? getMaxLevelAtTH(name, readiness.nextTh) : null;
-                                return (
-                                  <View key={name} style={styles.rushNewItemCell}>
-                                    <View style={styles.rushNewItemIconWrap}>
-                                      <Image
-                                        source={
-                                          (u.label === 'lab' || u.label === 'heroes'
-                                            ? getArmyItemImage(name)
-                                            : getBuildingItemImage(name)) ?? undefined
-                                        }
-                                        style={styles.rushNewItemIcon}
-                                        resizeMode="contain"
-                                      />
-                                      {maxLvl != null && maxLvl > 0 && (
-                                        <Text style={styles.rushNewItemMaxLvl}>{maxLvl}</Text>
-                                      )}
-                                    </View>
-                                    {false && <Text style={styles.rushNewItemName} numberOfLines={1}>{name}</Text>}
-                                  </View>
-                                );
-                              })}
-                              {(u.details || []).map((d, di) => (
-                                <View key={`${d.name}-${di}`} style={styles.rushNewItemCell}>
-                                  <Image
-                                    source={getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name) ?? undefined}
-                                    style={styles.rushNewItemIcon}
-                                    resizeMode="contain"
-                                  />
-                                  <Text style={styles.rushNewItemName} numberOfLines={1}>
-                                    {d.count > 1 ? `×${d.count}` : ''} +{d.levels}L
-                                  </Text>
-                                  {false && <Text style={styles.rushNewItemName} numberOfLines={1}>{d.name}</Text>}
-                                </View>
-                              ))}
-                            </View>
-                          ) : (
-                            <Text style={styles.rushNewItemLabel}>{u.value}</Text>
-                          )}
+                  {newGroups.length > 0 ? (
+                    newGroups.map((g) => (
+                      <View key={g.key} style={styles.newGroup}>
+                        <View style={styles.newGroupHeader}>
+                          <Text style={styles.newGroupTitle}>{g.title}</Text>
+                          <Text style={styles.newGroupCount}>{g.rows.length}</Text>
                         </View>
-                      ))}
-                    </>
+                        <View style={styles.newGroupCard}>
+                          {g.rows.map((r, i) => (
+                            <View key={`${r.key}-${i}`} style={[styles.newRow, i > 0 && styles.newRowBorder]}>
+                              {r.icon ? (
+                                <Image source={r.icon} style={styles.newRowIcon} resizeMode="contain" />
+                              ) : null}
+                              <Text style={styles.newRowName} numberOfLines={1}>
+                                {r.name}
+                              </Text>
+                              <Text style={styles.newRowMeta}>{r.meta}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    ))
                   ) : (
                     <Text style={styles.rushNewItemLabel}>No new items</Text>
                   )}
@@ -1037,66 +1049,68 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.sm,
   },
-  rushNewItemGroup: {
-    paddingHorizontal: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  rushNewItemCategory: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.xs,
-  },
   rushNewItemLabel: {
     ...Typography.footnote,
     color: Colors.textSecondary,
     fontWeight: '500',
   },
-  rushNewItemGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
+  newGroup: {
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.md,
   },
-  rushNewItemCell: {
+  newGroupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: Colors.bgCardHover,
-    borderRadius: Radius.sm,
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    marginBottom: Spacing.xs,
   },
-  rushNewItemIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bg,
-  },
-  rushNewItemIconWrap: {
-    position: 'relative',
-  },
-  rushNewItemMaxLvl: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    backgroundColor: Colors.warning,
-    color: Colors.bg,
-    fontSize: 8,
-    fontWeight: '800',
-    paddingHorizontal: 3,
-    paddingVertical: 0.5,
-    borderRadius: 4,
-    minWidth: 16,
-    textAlign: 'center',
-  },
-  rushNewItemName: {
+  newGroupTitle: {
     ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  newGroupCount: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  newGroupCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+  },
+  newRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+  },
+  newRowBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderSubtle,
+  },
+  newRowIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+  },
+  newRowName: {
+    flex: 1,
+    ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
-    maxWidth: 100,
+  },
+  newRowMeta: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   maxThCelebration: {
     marginTop: Spacing.md,
