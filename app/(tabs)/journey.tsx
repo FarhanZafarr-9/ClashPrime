@@ -1,6 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  RefreshControl,
+  Image,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView as SafeAreaViewDep } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import PressableRipple from '../../src/components/PressableRipple';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -48,20 +57,20 @@ export default function JourneyScreen() {
     if (!player) return;
     setDetailsLoading(true);
     try {
-        const names = new Set<string>();
-        for (let t = th; t <= maxTh; t++) {
-          const items = getAllItemsAtTH(t);
-          for (const item of items) names.add(item.name);
-        }
-        const fetched = await Promise.all(
-          [...names].map(name => getArmyTroopDetail(name).catch(() => null))
-        );
-        const next: Record<string, TroopDetail | null> = {};
-        [...names].forEach((name, i) => { next[name] = fetched[i]; });
-        setArmyDetails(next);
-      } finally {
-        setDetailsLoading(false);
+      const names = new Set<string>();
+      for (let t = th; t <= maxTh; t++) {
+        const items = getAllItemsAtTH(t);
+        for (const item of items) names.add(item.name);
       }
+      const fetched = await Promise.all(
+        [...names].map(name => getArmyTroopDetail(name).catch(() => null))
+      );
+      const next: Record<string, TroopDetail | null> = {};
+      [...names].forEach((name, i) => { next[name] = fetched[i]; });
+      setArmyDetails(next);
+    } finally {
+      setDetailsLoading(false);
+    }
   }, [player, th]);
 
   const computeJourney = React.useCallback(() => {
@@ -111,7 +120,7 @@ export default function JourneyScreen() {
 
   if (playerLoading || !builderLoaded || gameDataLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaViewDep style={styles.container}>
         <View style={styles.skeletonContainer}>
           <View style={styles.skeletonHeader}>
             <View style={styles.skeletonTitle} />
@@ -122,24 +131,24 @@ export default function JourneyScreen() {
             <View key={i} style={styles.skeletonNode} />
           ))}
         </View>
-      </SafeAreaView>
+      </SafeAreaViewDep>
     );
   }
 
   if (!player) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaViewDep style={styles.container}>
         <View style={styles.emptyState}>
           <Ionicons name="person-outline" size={64} color={Colors.textTertiary} />
           <Text style={styles.emptyTitle}>No Account</Text>
           <Text style={styles.emptyDesc}>Add a player account to see your Hero Journey</Text>
         </View>
-      </SafeAreaView>
+      </SafeAreaViewDep>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaViewDep style={styles.container}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.scrollContent}
@@ -232,7 +241,7 @@ export default function JourneyScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaViewDep>
   );
 }
 
