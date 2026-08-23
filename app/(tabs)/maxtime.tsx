@@ -1079,8 +1079,6 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   newGroupCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.sm,
     overflow: 'hidden',
   },
   newRow: {
@@ -1089,6 +1087,9 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 2,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    marginBottom: Spacing.xs,
   },
   newRowBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,
