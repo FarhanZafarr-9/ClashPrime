@@ -359,7 +359,11 @@ export default function MaxTimeScreen() {
           key: name,
           name,
           icon: (isArmy ? getArmyItemImage(name) : getBuildingItemImage(name)) ?? undefined,
-          meta: typeLabel ?? levelLabel ?? '',
+          meta: typeLabel
+          ? levelLabel
+            ? `${typeLabel} ${levelLabel}`
+            : typeLabel
+          : levelLabel,
         };
       });
       for (const d of u.details ?? []) {
