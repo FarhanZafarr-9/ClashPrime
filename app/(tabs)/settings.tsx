@@ -121,6 +121,9 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Buildings/Army max level images in Rush unlocks; troop/spell max-level badges on icons.',
       'Timer notifications rebuilt: Android-native per-second countdown (works with app killed, zero battery), progress-free pinned card, sound + vibration on finish, monochrome notification icon.',
       'Add Account button directly in the Home account switcher.',
+      'Builder split label shortened: "Buildings" → "Build", "Heroes" → "Hero", "Optimal" → "Opt" for compact readability.',
+      'Max Time screen: hero resource icons resized (32→24px), Gold/Elixir separator changed from "+" to "/", improved padding and spacing.',
+      'Settings screen: fixed indentation and spacing inconsistencies.',
     ],
   },
   {
