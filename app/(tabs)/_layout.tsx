@@ -14,7 +14,6 @@ export default function TabLayout() {
       <Tabs.Screen name="index" />
       <Tabs.Screen name="army" />
       <Tabs.Screen name="buildings" />
-      <Tabs.Screen name="journey" />
       <Tabs.Screen name="maxtime" options={{ href: null }} />
       <Tabs.Screen name="bases" options={{ href: null }} />
       <Tabs.Screen name="war" options={{ href: null }} />
