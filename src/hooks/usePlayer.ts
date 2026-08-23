@@ -10,6 +10,7 @@ const FAVORITES_KEY = 'clashprime_favorites';
 const LAST_MAXED_TH_KEY = 'clashprime_last_maxed_th';
 const ACCOUNTS_KEY = 'clashprime_accounts';
 const ACTIVE_ACCOUNT_KEY = 'clashprime_active_account';
+const AUTO_REFRESH_TIMESTAMP_KEY = 'clashprime_auto_refresh_ts';
 
 export interface SavedBase {
   id: string;
@@ -349,6 +350,35 @@ export async function toggleFavorite(id: string, accountTag?: string): Promise<b
 
 // --- Backfill account names/TH from cached player data ---
 
+// --- Auto Refresh Timestamp ---
+
+const AUTO_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export async function getLastAutoRefreshTimestamp(accountTag?: string): Promise<number | null> {
+  const tag = accountTag || await getActiveAccountTag();
+  if (tag) {
+    const raw = await AsyncStorage.getItem(`${AUTO_REFRESH_TIMESTAMP_KEY}_${tag}`);
+    if (raw) return parseInt(raw, 10);
+    return null;
+  }
+  return null;
+}
+
+export async function setAutoRefreshTimestamp(accountTag?: string): Promise<void> {
+  const tag = accountTag || await getActiveAccountTag();
+  if (tag) {
+    await AsyncStorage.setItem(`${AUTO_REFRESH_TIMESTAMP_KEY}_${tag}`, Date.now().toString());
+  }
+}
+
+export function shouldAutoRefresh(accountTag?: string): Promise<boolean> {
+  return getLastAutoRefreshTimestamp(accountTag).then((ts) => {
+    if (!ts) return true; // Never refreshed, should refresh
+    return Date.now() - ts >= AUTO_REFRESH_INTERVAL_MS;
+  });
+}
+
+// --- Backfill Account Names ---
 export async function backfillAccountNames(accounts: StoredAccount[]): Promise<void> {
   let changed = false;
   for (const acct of accounts) {

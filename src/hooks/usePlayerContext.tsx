@@ -12,6 +12,8 @@ import {
   setActiveAccountTag,
   migrateToMultiAccount,
   ensureAccountRegistered,
+  shouldAutoRefresh,
+  setAutoRefreshTimestamp,
 } from './usePlayer';
 import { ClashAPI } from '../api/clash';
 import { toJsonName, toStoreName } from '../utils/buildingCopies';
@@ -158,6 +160,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       await ensureAccountRegistered({ tag, name: data.name, townHallLevel: data.townHallLevel });
       setLastSync(new Date());
       await refreshAccounts();
+      // Update auto-refresh timestamp on successful fetch
+      await setAutoRefreshTimestamp();
       return data;
     } catch (e: any) {
       setError(e.message || 'Failed to fetch player data');
@@ -242,7 +246,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       await migrateToMultiAccount();
       await refreshAccounts();
-      await fetchPlayer();
+      
+      // Check if auto-refresh is needed for the active account
+      const shouldRefresh = await shouldAutoRefresh();
+      if (shouldRefresh) {
+        // Trigger auto-refresh in background without blocking UI
+        fetchPlayer(true).catch(() => {});
+      } else {
+        // Normal fetch without forcing refresh
+        await fetchPlayer(false);
+      }
     })();
   }, [fetchPlayer, refreshAccounts]);
 
