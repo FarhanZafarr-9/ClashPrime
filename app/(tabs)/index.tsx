@@ -1324,7 +1324,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                     <>
                       {builderSplit && (
                         <Text style={{ ...styles.splitInfoLabel, marginBottom: -Spacing.xs }}>
-                          Buildings: {formatTimeShort(builderSplit.buildingsOnlySec)} · Heroes: {formatTimeShort(builderSplit.heroesOnlySec)} · Optimal: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
+                          Build: {formatTimeShort(builderSplit.buildingsOnlySec)} · Hero: {formatTimeShort(builderSplit.heroesOnlySec)} · Opt: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
                         </Text>
                       )}
                       {renderProgressHeader(builderProgress, builderCost)}

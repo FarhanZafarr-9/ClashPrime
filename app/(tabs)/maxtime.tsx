@@ -218,7 +218,7 @@ export default function MaxTimeScreen() {
         {r === 'Gold or Elixir' ? (
           <>
             <Image source={PACKAGE_RESOURCE_IMAGES['Gold']} style={styles.oreIcon} resizeMode="contain" />
-            <Text style={{ color: '#D4A537', fontWeight: '600', marginRight: 2 }}>+</Text>
+            <Text style={{ color: '#D4A537', fontWeight: '600', marginRight: -2 }}>/</Text>
             <Image source={PACKAGE_RESOURCE_IMAGES['Elixir']} style={styles.oreIcon} resizeMode="contain" />
           </>
         ) : (
@@ -373,6 +373,7 @@ export default function MaxTimeScreen() {
                       {isGoldOrElixir ? (
                         <>
                           <Image source={goldIcon} style={styles.heroResourceIcon} resizeMode="contain" />
+                          <Text style={{ color: '#D4A537', fontWeight: '600', marginRight: Spacing.sm, marginLeft: -Spacing.md }}>/</Text>
                           <Image source={elixirIcon} style={styles.heroResourceIcon} resizeMode="contain" />
                         </>
                       ) : (
@@ -689,8 +690,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroResourceIcon: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     marginRight: Spacing.lg,
   },
   heroResourceDot: {
@@ -889,6 +890,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm
   },
   summaryRow: {
     flexDirection: 'row',
