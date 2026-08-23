@@ -323,7 +323,7 @@ export default function MaxTimeScreen() {
     key: string;
     name: string;
     icon: number | undefined;
-    meta: string;
+    meta: string | undefined;
   }
 
   const newGroups = (readiness?.nextUnlocks ?? [])
@@ -342,7 +342,10 @@ export default function MaxTimeScreen() {
                 : 'Building Levels';
       const rows: NewItemRow[] = (u.names ?? []).map((name) => {
         const maxLvl = isArmy ? getMaxLevelAtTH(name, readiness!.nextTh) : null;
-        const costResource = isArmy ? details?.[name]?.costResource : undefined;
+        const troopDetail = details?.[name];
+        const costResource = isArmy
+          ? troopDetail?.levels?.find((l) => l.costResource)?.costResource
+          : undefined;
         const typeLabel = costResource
           ? costResource.includes('Dark')
             ? 'Dark Elixir Troop'
