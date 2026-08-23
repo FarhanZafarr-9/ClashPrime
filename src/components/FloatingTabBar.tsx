@@ -21,7 +21,7 @@ const TAB_ICONS: Record<string, IconDef> = {
   index: { set: 'ion', name: 'home' },
   army: { set: 'mc', name: 'sword-cross' },
   buildings: { set: 'mc', name: 'castle' },
-  maxtime: { set: 'ion', name: 'hourglass-outline' },
+  maxtime: { set: 'ion', name: 'analytics-outline' },
   events: { set: 'ion', name: 'calendar-outline' },
   settings: { set: 'ion', name: 'settings-outline' },
   bases: { set: 'ion', name: 'grid' },
