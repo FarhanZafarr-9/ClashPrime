@@ -327,6 +327,7 @@ export default function MaxTimeScreen() {
   }
 
   const newGroups = (readiness?.nextUnlocks ?? [])
+    .filter(u => u.label !== 'levels')
     .map((u, gi) => {
       const isArmy = u.label === 'lab' || u.label === 'heroes';
       const title =
