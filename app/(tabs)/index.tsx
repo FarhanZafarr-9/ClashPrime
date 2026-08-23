@@ -645,6 +645,87 @@ export default function HomeScreen() {
   const lockedCostsPending = unlockableItems.some((i) => progressDetails[i.name] === undefined);
   const rushedCostsPending = rushedItems.some((i) => progressDetails[i.name] === undefined);
 
+  // ── Builder split calculation (for Builders pipeline) ──
+  const builderSplit = useMemo(() => {
+    if (!player) return null;
+    
+    // Compute building chains directly (same logic as buildingGroups creation)
+    const buildingChains: number[] = [];
+    const heroChains: number[] = [];
+    
+    // Building chains from player's building data
+    const SHOW_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
+    
+    for (const cat of SHOW_BUILDING_CATS) {
+      const items = getBuildingCategories(th)[cat] ?? {};
+      const entries = Object.entries(items).filter(([, thData]) => {
+        const thEntry = thData[String(th)];
+        return thEntry != null && (thEntry.level ?? 0) > 0;
+      });
+      
+      for (const [name] of entries) {
+        const effectiveMax = getBuildingEffectiveMax(name, th);
+        const count = getCountAtTH(name, th);
+        const copies = getBuildingCopies(name, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
+        if (copies.levels.length === 0) continue;
+        const currentMaxLevel = copies.levels.reduce((s, l) => s + l, 0);
+        if (currentMaxLevel >= count * effectiveMax) continue;
+        const times = buildingUpgradeChainTimes(name, copies.levels, effectiveMax);
+        if (times.length > 0) buildingChains.push(...times);
+      }
+    }
+    
+    // Hero chains from player's hero data
+    const allHeroesAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
+    const homeHeroes = (player.heroes ?? []).filter((h: any) => h.village === 'home');
+    const heroMap = new Map(homeHeroes.map((h: any) => [h.name.toLowerCase(), h.level]));
+    
+    for (const hero of allHeroesAtTH) {
+      const currentLevel = heroMap.get(hero.name.toLowerCase()) ?? 0;
+      if (currentLevel >= hero.maxLevel) continue;
+      const detail = progressDetails[hero.name];
+      if (!detail) continue;
+      const ct = remainingArmyCosts(detail, currentLevel, hero.maxLevel);
+      if (ct.time > 0) heroChains.push(ct.time);
+    }
+    
+    if (builderCount <= 1 || (buildingChains.length === 0 && heroChains.length === 0)) {
+      return null;
+    }
+    
+    // Calculate times
+    const buildingsOnlySec = scheduleChains(buildingChains, builderCount);
+    const heroesOnlySec = scheduleChains(heroChains, builderCount);
+    const buildingsSerialSec = buildingChains.reduce((a, b) => a + b, 0);
+    const heroesSerialSec = heroChains.reduce((a, b) => a + b, 0);
+    
+    // Find optimal split
+    let optimalHeroBuilders = -1;
+    let optimalSec = Infinity;
+    if (builderCount >= 2) {
+      for (let h = 1; h < builderCount; h++) {
+        const b = builderCount - h;
+        const sec = Math.max(scheduleChains(heroChains, h), scheduleChains(buildingChains, b));
+        if (sec < optimalSec) {
+          optimalSec = sec;
+          optimalHeroBuilders = h;
+        }
+      }
+    }
+    
+    if (optimalHeroBuilders === -1) return null;
+    
+    return {
+      buildingsOnlySec,
+      heroesOnlySec,
+      buildingsSerialSec,
+      heroesSerialSec,
+      optimalHeroBuilders,
+      optimalBuildingBuilders: builderCount - optimalHeroBuilders,
+      optimalSec,
+    };
+  }, [player, th, progressDetails, builderCount]);
+
   // ── Aggregates ──
   const aggregateTime = Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
   const aggregateRushedTime = Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
@@ -855,72 +936,6 @@ export default function HomeScreen() {
     const tm = counted.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
     return tm > 0 ? tl / tm : 0;
   })();
-
-  // ── Builder split calculation (for Builders pipeline) ──
-  const builderSplit = useMemo(() => {
-    if (!player) return null;
-    
-    // Get building chains (similar to maxTime.ts buildBuildersPipeline)
-    const buildingChains: number[] = [];
-    const heroChains: number[] = [];
-    
-    // Building chains from buildingGroups
-    for (const catGroup of buildingGroups) {
-      for (const row of catGroup.rows) {
-        if (row.maxLevel <= 0) continue;
-        const times = buildingUpgradeChainTimes(row.name, row.copies ?? [], row.effectiveMax ?? 0);
-        if (times.length > 0) buildingChains.push(...times);
-      }
-    }
-    
-    // Hero chains from heroGroup
-    const heroGroup = progressGroups.find((g) => g.key === 'heroes');
-    if (heroGroup) {
-      for (const row of heroGroup.rows) {
-        if (row.maxLevel <= 0 || row.level >= row.maxLevel) continue;
-        const detail = progressDetails[row.name];
-        if (!detail) continue;
-        const ct = remainingArmyCosts(detail, row.level, row.maxLevel);
-        if (ct.time > 0) heroChains.push(ct.time);
-      }
-    }
-    
-    if (builderCount <= 1 || (buildingChains.length === 0 && heroChains.length === 0)) {
-      return null;
-    }
-    
-    // Calculate times
-    const buildingsOnlySec = scheduleChains(buildingChains, builderCount);
-    const heroesOnlySec = scheduleChains(heroChains, builderCount);
-    const buildingsSerialSec = buildingChains.reduce((a, b) => a + b, 0);
-    const heroesSerialSec = heroChains.reduce((a, b) => a + b, 0);
-    
-    // Find optimal split
-    let optimalHeroBuilders = -1;
-    let optimalSec = Infinity;
-    if (builderCount >= 2) {
-      for (let h = 1; h < builderCount; h++) {
-        const b = builderCount - h;
-        const sec = Math.max(scheduleChains(heroChains, h), scheduleChains(buildingChains, b));
-        if (sec < optimalSec) {
-          optimalSec = sec;
-          optimalHeroBuilders = h;
-        }
-      }
-    }
-    
-    if (optimalHeroBuilders === -1) return null;
-    
-    return {
-      buildingsOnlySec,
-      heroesOnlySec,
-      buildingsSerialSec,
-      heroesSerialSec,
-      optimalHeroBuilders,
-      optimalBuildingBuilders: builderCount - optimalHeroBuilders,
-      optimalSec,
-    };
-  }, [buildingGroups, progressGroups, progressDetails, player, builderCount]);
 
   const renderProgressHeader = (progress: number, ct: CostTime) => {
     // Categories/sub-categories show only remaining time; costs are shown per
