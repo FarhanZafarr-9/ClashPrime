@@ -23,6 +23,7 @@ import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildi
 import { buildingUpgradeCosts, buildingUpgradeChainTimes, scheduleChains, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../src/utils/upgradeCosts';
 import { PACKAGE_RESOURCE_IMAGES } from '../src/data/packageImages';
 import { BUILDING_RESOURCE_META, type BuildingCostResource } from '../src/utils/buildingData';
+import { getTownHallImageUrl } from '../src/utils/thImages';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -447,12 +448,30 @@ export default function ImportExportScreen() {
                   <Text style={styles.sectionHint}>
                     Town Hall and similar entities are skipped because the app reads those from the API.
                   </Text>
-                  <View style={styles.list}>
+                  <View style={styles.upgradeList}>
                     {result.skipped.map((item, i) => (
-                      <View key={item.storeName} style={[styles.levelRow, i < result.skipped.length - 1 && styles.levelRowBorder]}>
-                        <BuildingRowIcon storeName={item.storeName} level={item.level} />
-                        <Text style={styles.levelName} numberOfLines={1}>{item.displayName}</Text>
-                        <Text style={styles.levelValue}>Lv {item.level} · ×{item.copies}</Text>
+                      <View
+                        key={item.storeName}
+                        style={[
+                          styles.upgradeRow,
+                          { backgroundColor: colors.bgCard },
+                          i === 0 && styles.upgradeRowFirst,
+                          i === result.skipped.length - 1 && styles.upgradeRowLast,
+                        ]}
+                      >
+                        {item.storeName === 'Town Hall' && player
+                          ? (getTownHallImageUrl(player.townHallLevel) ? (
+                            <Image source={{ uri: getTownHallImageUrl(player.townHallLevel)! }} style={styles.levelIcon} resizeMode="contain" />
+                          ) : (
+                            <View style={styles.levelIconBox}>
+                              <Ionicons name="business-outline" size={16} color={Colors.textTertiary} />
+                            </View>
+                          ))
+                          : <BuildingRowIcon storeName={item.storeName} level={item.level} />}
+                        <View style={styles.upgradeText}>
+                          <Text style={styles.rowLabel} numberOfLines={1}>{item.displayName}</Text>
+                          <Text style={styles.upgradeSub}>Lv {item.level} · ×{item.copies}</Text>
+                        </View>
                       </View>
                     ))}
                   </View>
