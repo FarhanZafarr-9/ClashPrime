@@ -683,7 +683,8 @@ export default function PlayerProfileScreen() {
                               style={{
                                 color: showDiscounted ? colors.warning : RESOURCE_META[s.resource].color,
                                 fontWeight: '600',
-                                fontSize: 12,
+                                fontSize: 10,
+                                fontFamily: clashFontFamily(600, 10),
                               }}
                             >
                               {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)}
@@ -854,6 +855,60 @@ export default function PlayerProfileScreen() {
       setActiveTab(visibleTabs[0].key);
     }
   }, [visibleTabs, activeTab]);
+
+  const renderSheetHeader = (name: string) => {
+    const allItems = player
+      ? [
+        ...player.heroes,
+        ...player.troops,
+        ...player.spells,
+        ...player.heroEquipment,
+        ...(player.pets ?? []),
+      ]
+      : [];
+    const item = allItems.find((i) => i.name === name);
+    const level = item?.level ?? 0;
+    const maxLevel = item?.maxLevel ?? level;
+    const progress = maxLevel > 0 ? level / maxLevel : 0;
+    const isMaxed = maxLevel > 0 && level >= maxLevel;
+    const iconSource = cardIconProps(name, level).iconSource;
+    return (
+      <View style={styles.sheetHeaderRow}>
+        <View style={styles.sheetHeaderIcon}>
+          {iconSource ? (
+            <Image source={iconSource} style={styles.sheetHeaderIconImg} resizeMode="contain" />
+          ) : (
+            <Text style={styles.sheetHeaderIconText}>
+              {name.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+            </Text>
+          )}
+        </View>
+        <View style={styles.sheetHeaderText}>
+          <Text style={styles.sheetHeaderTitle} numberOfLines={1}>{name}</Text>
+          <View style={styles.sheetHeaderBar}>
+            <View
+              style={[
+                styles.sheetHeaderFill,
+                {
+                  width: `${Math.min(progress, 1) * 100}%`,
+                  backgroundColor: isMaxed ? Colors.warning : Colors.textPrimary,
+                },
+              ]}
+            />
+          </View>
+        </View>
+        <View style={styles.sheetHeaderBadges}>
+          <View style={[styles.buildingSectionBadge, isMaxed && styles.buildingSectionBadgeMaxed]}>
+            <Text style={[styles.buildingSectionBadgeText, isMaxed && styles.buildingSectionBadgeTextMaxed]}>{level}</Text>
+            <Text style={[styles.buildingSectionBadgeLabel, isMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {maxLevel}</Text>
+          </View>
+          <PressableRipple onPress={() => setSheetName(null)} hitSlop={8} style={styles.sheetHeaderClose} accessibilityLabel="Close" accessibilityRole="button">
+            <Ionicons name="close" size={18} color={Colors.textPrimary} />
+          </PressableRipple>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -1349,9 +1404,7 @@ export default function PlayerProfileScreen() {
       <BottomSheet
         visible={sheetName !== null}
         onClose={() => setSheetName(null)}
-        title={sheetName ?? ''}
-        subtitle={activeTab}
-        iconSource={sheetName ? cardIconProps(sheetName).iconSource : undefined}
+        header={sheetName ? renderSheetHeader(sheetName) : undefined}
       >
         {sheetName ? renderDetailPanel(sheetName) : null}
       </BottomSheet>
@@ -1631,6 +1684,92 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  sheetHeaderRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: Spacing.sm,
+  },
+  sheetHeaderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  sheetHeaderIconImg: {
+    width: 40,
+    height: 40,
+  },
+  sheetHeaderIconText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+  },
+  sheetHeaderText: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  sheetHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  sheetHeaderBar: {
+    height: 4,
+    backgroundColor: Colors.progressTrack,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 3,
+  },
+  sheetHeaderFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  sheetHeaderBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  sheetHeaderClose: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buildingSectionBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  buildingSectionBadgeMaxed: {
+    backgroundColor: Colors.warning,
+  },
+  buildingSectionBadgeText: {
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  buildingSectionBadgeTextMaxed: {
+    color: Colors.bg,
+  },
+  buildingSectionBadgeLabel: {
+    fontSize: 8,
+    lineHeight: 9,
+    color: Colors.textPrimary,
+    opacity: 0.7,
+    fontVariant: ['tabular-nums'],
   },
   sectionHeader: {
     ...Typography.caption,
