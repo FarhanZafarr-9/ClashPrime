@@ -1426,7 +1426,16 @@ export default function PlayerProfileScreen() {
 
       <BottomSheet
         visible={sheetName !== null}
-        onClose={() => setSheetName(null)}
+        onClose={() => {
+          setSheetName(null);
+          if (sheetName) {
+            setShowFullLevels((prev) => {
+              const next = { ...prev };
+              delete next[sheetName];
+              return next;
+            });
+          }
+        }}
         header={sheetName ? renderSheetHeader(sheetName) : undefined}
       >
         {sheetName ? renderDetailPanel(sheetName) : null}
