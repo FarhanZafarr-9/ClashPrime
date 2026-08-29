@@ -10,7 +10,7 @@ import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, clashFontFamily } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import {
   getBuildingLevelImageSource,
@@ -39,6 +39,7 @@ import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { useDialog } from '../../src/components/AlertDialog';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
+import BottomSheet from '../../src/components/BottomSheet';
 
 const COL_ABBREV: Record<string, string> = {
   'Damage per Second': 'DPS',
@@ -179,6 +180,7 @@ function renderResourceRows(
                 color: showDiscounted ? Colors.warning : (meta?.color ?? Colors.textSecondary),
                 fontWeight: '600',
                 fontSize: 11,
+                fontFamily: clashFontFamily(600, 11),
               }}
             >
               {showDiscounted ? applyCostDiscount(fmtCost(amt), discount) : fmtCost(amt)}
@@ -216,7 +218,7 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription, inSection }: {
+function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription, inSection, onOpen, inSheet }: {
   name: string;
   copyIndex: number;
   count: number;
@@ -228,6 +230,8 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   isLast?: boolean;
   showDescription?: boolean;
   inSection?: boolean;
+  onOpen?: () => void;
+  inSheet?: boolean;
 }) {
   const { setBuildingCopies } = usePlayer();
   const [expanded, setExpanded] = useState(false);
@@ -250,9 +254,10 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   const allLevels: any[] = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
     .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
   const showExpand = allLevels.length > 3;
+  const isExpanded = inSheet || expanded;
 
   let displayLevels: any[];
-  if (!expanded) {
+  if (!isExpanded) {
     displayLevels = [];
   } else if (showFull || !showExpand) {
     displayLevels = allLevels;
@@ -294,7 +299,17 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
     const gridLevels = hideMaxLevelCell
       ? allLevels.slice(-3)
       : displayLevels;
-    const cells = gridLevels.map((levelData: any) => {
+    const cells = condenseLevels(gridLevels, 2, 3, showFull).map((item) => {
+      if (item.kind === 'ellipsis') {
+        return (
+          <View key="ellipsis" style={styles.levelGridCell}>
+            <View style={styles.levelGridEllipsisWrap}>
+              <Text style={styles.levelGridEllipsisText}>...</Text>
+            </View>
+          </View>
+        );
+      }
+      const levelData = item.data;
       const lvl = levelData.Level;
       const cellSource = getBuildingLevelImageSource(lookupName, lvl);
       const isCurrent = lvl === currentLevel;
@@ -349,6 +364,11 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
 
   const toggleExpanded = () => {
     if (inSection) return;
+    if (inSheet) return;
+    if (onOpen) {
+      onOpen();
+      return;
+    }
     if (expanded) {
       setExpanded(false);
       setShowFull(false);
@@ -360,6 +380,8 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   return (
     <View style={[
       styles.itemCard,
+      inSheet && styles.itemCardInSheet,
+      inSection && styles.itemCardInSection,
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
     ]}>
@@ -481,7 +503,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
         </View>
       )}
 
-      {!isLocked && !inSection && expanded && displayLevels.length > 0 && (
+      {!isLocked && !inSection && isExpanded && displayLevels.length > 0 && (
         <View style={styles.expandedSection}>
           {showDescription && buildingStats?.description ? (
             <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
@@ -527,7 +549,17 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
                     );
                   })}
                 </View>
-                {displayLevels.map((levelData: any) => {
+                {condenseLevels(displayLevels, 2, 3, showFull).map((item) => {
+                  if (item.kind === 'ellipsis') {
+                    return (
+                      <View key="ellipsis" style={styles.buildingStatRow}>
+                        <View style={[styles.buildingStatCell, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                          <Text style={{ color: Colors.textMuted, fontSize: 11 }}>...</Text>
+                        </View>
+                      </View>
+                    );
+                  }
+                  const levelData = item.data;
                   const lvl = levelData.Level;
                   const isCurrentLevel = lvl === currentLevel;
                   return (
@@ -557,8 +589,8 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
                                 key={col}
                                 style={[styles.buildingStatCell, styles.buildingStatCostCell, { minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
                               >
-                                {icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
-                                <Text style={{ color, fontSize: 11 }} numberOfLines={1}>{displayVal}</Text>
+{icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
+<Text style={{ color, fontSize: 11, fontWeight: '500', fontFamily: clashFontFamily(500, 11) }} numberOfLines={1}>{displayVal}</Text>
                               </View>
                             );
                           }
@@ -669,6 +701,7 @@ function BuildingCollapsibleSection({
   onOpen,
   compact,
   groupByLevel,
+  inSheet,
   children,
 }: {
   title: string;
@@ -682,6 +715,7 @@ function BuildingCollapsibleSection({
   onOpen?: () => void;
   compact?: boolean;
   groupByLevel?: boolean;
+  inSheet?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -691,8 +725,13 @@ function BuildingCollapsibleSection({
   const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
   const totalMax = copies.levels.length * effectiveMax;
   const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
+  const isOpen = inSheet || open;
   const toggle = () => {
-    if (!open) onOpen?.();
+    if (inSheet) return;
+    if (onOpen) {
+      onOpen();
+      return;
+    }
     setOpen(!open);
   };
   const lookupName = NAME_FIX[title] ?? title;
@@ -865,19 +904,20 @@ function BuildingCollapsibleSection({
 
   return (
     <>
+      {!inSheet && (
       <PressableRipple
         onPress={toggle}
         style={[
           styles.buildingSectionHeader,
           compact && styles.buildingSectionHeaderCompact,
-          (isFirst || open) && styles.buildingSectionHeaderFirst,
-          isLast && !open && styles.buildingSectionHeaderLast,
+          (isFirst || isOpen) && styles.buildingSectionHeaderFirst,
+          isLast && !isOpen && styles.buildingSectionHeaderLast,
         ]}
       >
         <View style={[
           styles.buildingSectionIcon,
-          (isFirst || open) && styles.buildingSectionIconTopLeftRounded,
-          isLast && !open && styles.buildingSectionIconBottomLeftRounded,
+          (isFirst || isOpen) && styles.buildingSectionIconTopLeftRounded,
+          isLast && !isOpen && styles.buildingSectionIconBottomLeftRounded,
         ]}>
           {icon ? (
             <Image source={icon} style={styles.buildingSectionIconImg} resizeMode="contain" />
@@ -909,8 +949,8 @@ function BuildingCollapsibleSection({
           </View>
           <View style={[
             styles.buildingSectionBadge,
-            (isFirst || open) && styles.buildingSectionBadgeTopRightRounded,
-            isLast && !open && styles.buildingSectionBadgeBottomRightRounded,
+            (isFirst || isOpen) && styles.buildingSectionBadgeTopRightRounded,
+            isLast && !isOpen && styles.buildingSectionBadgeBottomRightRounded,
             isSectionMaxed && styles.buildingSectionBadgeMaxed,
           ]}>
             <Text style={[styles.buildingSectionBadgeText, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>{fmtLevels(totalLevel)}</Text>
@@ -918,7 +958,8 @@ function BuildingCollapsibleSection({
           </View>
         </View>
       </PressableRipple>
-      {open && (
+      )}
+      {isOpen && (
         <View style={styles.buildingSectionBody}>
           {buildingStats?.description ? (
             <Text style={styles.buildingSectionDescText} numberOfLines={3}>{buildingStats.description}</Text>
@@ -971,10 +1012,20 @@ function BuildingCollapsibleSection({
             </View>
           )}
           {mergedDisplayLevels.length > 0 && (
-            <View style={styles.buildingSectionMerged}>
+            <View>
               <View style={styles.levelGridBorder}>
                 <View style={styles.levelGrid}>
-                  {mergedGridLevels.map((levelData: any) => {
+                  {condenseLevels(mergedGridLevels, 2, 3, showAllLevels).map((item) => {
+                    if (item.kind === 'ellipsis') {
+                      return (
+                        <View key="ellipsis" style={styles.levelGridCell}>
+                          <View style={styles.levelGridEllipsisWrap}>
+                            <Text style={styles.levelGridEllipsisText}>...</Text>
+                          </View>
+                        </View>
+                      );
+                    }
+                    const levelData = item.data;
                     const lvl = levelData.Level;
                     const cellSource = getBuildingLevelImageSource(lookupName, lvl);
                     const isCurrent = copies.levels.includes(lvl);
@@ -1029,7 +1080,17 @@ function BuildingCollapsibleSection({
                         );
                       })}
                     </View>
-                    {mergedDisplayLevels.map((levelData: any) => {
+                    {condenseLevels(mergedDisplayLevels, 2, 3, showAllLevels).map((item) => {
+                      if (item.kind === 'ellipsis') {
+                        return (
+                          <View key="ellipsis" style={styles.buildingStatRow}>
+                            <View style={[styles.buildingStatCell, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                              <Text style={{ color: Colors.textMuted, fontSize: 11 }}>...</Text>
+                            </View>
+                          </View>
+                        );
+                      }
+                      const levelData = item.data;
                       const lvl = levelData.Level;
                       const isCurrent = copies.levels.includes(lvl);
                       return (
@@ -1075,7 +1136,7 @@ function BuildingCollapsibleSection({
           {groupByLevel
             ? buildLevelGroups()
             : children}
-          {!isLast && <View style={styles.buildingSectionSeparator} />}
+          {!isLast && !inSheet && <View style={styles.buildingSectionSeparator} />}
         </View>
       )}
     </>
@@ -1090,6 +1151,19 @@ function CategoryIcon({ cat, isActive }: { cat: string; isActive: boolean }) {
   ) : (
     <Ionicons name={icon.name as any} size={14} color={iconColor} />
   );
+}
+
+type CondensedLevel = { kind: 'row'; data: any } | { kind: 'ellipsis' };
+
+function condenseLevels(levels: any[], head = 2, tail = 3, expand = false): CondensedLevel[] {
+  if (expand || levels.length <= head + tail + 1) {
+    return levels.map((data) => ({ kind: 'row', data }));
+  }
+  const out: CondensedLevel[] = [];
+  for (let i = 0; i < head; i++) out.push({ kind: 'row', data: levels[i] });
+  out.push({ kind: 'ellipsis' });
+  for (let i = levels.length - tail; i < levels.length; i++) out.push({ kind: 'row', data: levels[i] });
+  return out;
 }
 
 function formatCostShort(cost: number): string {
@@ -1109,6 +1183,13 @@ export default function BuildingsScreen() {
   const bh = player?.builderHallLevel ?? 1;
   const categories = getBuildingCategories(th);
   const [selectedCat, setSelectedCat] = useState(initialCat ?? '');
+  const [sheetName, setSheetName] = useState<string | null>(null);
+
+  // Close any open sheet if the active category changes (the section may no
+  // longer exist in the list, e.g. switching between Home and Builder Base).
+  useEffect(() => {
+    setSheetName(null);
+  }, [selectedCat]);
 
   const bbEntries = useMemo(() => {
     if (!player || th < 6) return [];
@@ -1264,6 +1345,110 @@ export default function BuildingsScreen() {
     });
   };
 
+  const sheetSection = sheetName
+    ? buildingSections.find((s) => s.name === sheetName) ?? null
+    : null;
+
+  const renderSheetHeader = (section: NonNullable<typeof sheetSection>) => {
+    const lookupName = NAME_FIX[section.name] ?? section.name;
+    const posLevels = section.copies.levels.filter((l) => l > 0);
+    const minLevel = posLevels.length > 0 ? Math.min(...posLevels) : 1;
+    const headerIcon = getBuildingLevelImageSource(lookupName, minLevel);
+    const totalLevel = section.copies.levels.reduce((s, l) => s + l, 0);
+    const totalMax = section.copies.levels.length * section.effectiveMax;
+    const isMaxed = totalMax > 0 && totalLevel >= totalMax;
+    const fmtHeaderLevels = (n: number): string => (n >= 1000 ? Math.round(n / 1000) + 'K' : n.toString());
+    return (
+      <View style={styles.sheetHeaderRow}>
+        <View style={styles.sheetHeaderIcon}>
+          {headerIcon ? (
+            <Image source={headerIcon} style={styles.sheetHeaderIconImg} resizeMode="contain" />
+          ) : (
+            <Text style={styles.sheetHeaderIconText}>
+              {section.name.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+            </Text>
+          )}
+        </View>
+        <View style={styles.sheetHeaderText}>
+          <Text style={styles.sheetHeaderTitle} numberOfLines={1}>{section.name}</Text>
+          <View style={styles.sheetHeaderBar}>
+            <View
+              style={[
+                styles.sheetHeaderFill,
+                {
+                  width: `${Math.min(totalMax > 0 ? totalLevel / totalMax : 0, 1) * 100}%`,
+                  backgroundColor: isMaxed ? Colors.warning : Colors.textPrimary,
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.sheetHeaderSubtitle} numberOfLines={1}>
+            {isBB ? `BH${bh} · ${section.count} ${section.count > 1 ? 'copies' : 'copy'}` : `TH${th} · ${section.count} ${section.count > 1 ? 'copies' : 'copy'}`}
+          </Text>
+        </View>
+        <View style={styles.sheetHeaderBadges}>
+          <View style={[styles.buildingSectionBadge, isMaxed && styles.buildingSectionBadgeMaxed]}>
+            <Text style={[styles.buildingSectionBadgeText, isMaxed && styles.buildingSectionBadgeTextMaxed]}>{fmtHeaderLevels(totalLevel)}</Text>
+            <Text style={[styles.buildingSectionBadgeLabel, isMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {fmtHeaderLevels(totalMax)}</Text>
+          </View>
+          <PressableRipple onPress={() => setSheetName(null)} hitSlop={8} style={styles.sheetHeaderClose} accessibilityLabel="Close" accessibilityRole="button">
+            <Ionicons name="close" size={18} color={Colors.textPrimary} />
+          </PressableRipple>
+        </View>
+      </View>
+    );
+  };
+
+  const renderSheetBody = (section: NonNullable<typeof sheetSection>) => {
+    if (section.count > 1) {
+      return (
+        <BuildingCollapsibleSection
+          title={section.name}
+          count={section.count}
+          copies={section.copies}
+          effectiveMax={section.effectiveMax}
+          isBB={isBB}
+          discounts={discounts.buildings}
+          isFirst={false}
+          isLast={false}
+          compact
+          groupByLevel={section.name === 'Walls'}
+          inSheet
+        >
+          {section.name !== 'Walls' && section.copyIndices.map((copyIndex) => (
+            <BuildingCard
+              key={copyIndex}
+              name={section.name}
+              copyIndex={copyIndex}
+              count={section.count}
+              copies={section.copies}
+              effectiveMax={section.effectiveMax}
+              isBB={isBB}
+              discounts={discounts.buildings}
+              inSection
+              isLast={copyIndex === section.copyIndices[section.copyIndices.length - 1]}
+            />
+          ))}
+        </BuildingCollapsibleSection>
+      );
+    }
+    return (
+      <BuildingCard
+        name={section.name}
+        copyIndex={section.copyIndices[0] ?? 0}
+        count={1}
+        copies={section.copies}
+        effectiveMax={section.effectiveMax}
+        isBB={isBB}
+        discounts={discounts.buildings}
+        isFirst={false}
+        isLast={false}
+        showDescription
+        inSheet
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -1318,6 +1503,7 @@ export default function BuildingsScreen() {
                 isLast={isLast}
                 compact
                 groupByLevel={section.name === 'Walls'}
+                onOpen={() => setSheetName(section.name)}
               >
                 {section.name !== 'Walls' && section.copyIndices.map((copyIndex) => (
                   <BuildingCard
@@ -1349,12 +1535,21 @@ export default function BuildingsScreen() {
               isFirst={isFirst}
               isLast={isLast}
               showDescription
+              onOpen={() => setSheetName(section.name)}
             />
           );
         })}
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <BottomSheet
+        visible={sheetName !== null}
+        onClose={() => setSheetName(null)}
+        header={sheetSection ? renderSheetHeader(sheetSection) : undefined}
+      >
+        {sheetSection ? renderSheetBody(sheetSection) : null}
+      </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -1500,14 +1695,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard,
     overflow: 'hidden',
   },
+  itemCardInSheet: {
+    marginHorizontal: 0,
+    backgroundColor: 'transparent',
+  },
+  itemCardInSection: {
+    marginHorizontal: 0,
+  },
   itemCardTouchable: {
     flex: 1,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
   },
   itemRowInner: {
     flex: 1,
@@ -1695,7 +1897,6 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
     lineHeight: 18,
   },
   remainingTable: {
@@ -1798,6 +1999,69 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     opacity: 0.85,
+  },
+  sheetHeaderRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  sheetHeaderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  sheetHeaderIconImg: {
+    width: 40,
+    height: 40,
+  },
+  sheetHeaderIconText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+  },
+  sheetHeaderText: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  sheetHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  sheetHeaderSubtitle: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  sheetHeaderBar: {
+    height: 4,
+    backgroundColor: Colors.progressTrack,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: 4,
+    marginBottom: 3,
+  },
+  sheetHeaderFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  sheetHeaderBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  sheetHeaderClose: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buildingSectionHeader: {
     flexDirection: 'row',
@@ -1925,14 +2189,12 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.base,
     lineHeight: 18,
   },
   buildingSectionRemainingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    marginHorizontal: Spacing.base,
     marginVertical: Spacing.sm,
   },
   buildingSectionRemaining: {
@@ -1971,9 +2233,6 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     margin: Spacing.lg,
   },
-  buildingSectionMerged: {
-    marginHorizontal: Spacing.base,
-  },
   levelGridBorder: {
     borderRadius: Radius.sm,
     borderWidth: 0.75,
@@ -2008,6 +2267,17 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+  },
+  levelGridEllipsisWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+  },
+  levelGridEllipsisText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontWeight: '700',
     paddingVertical: Spacing.xs,
   },
   levelGridImg: {
@@ -2104,7 +2374,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   expandedSection: {
-    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
