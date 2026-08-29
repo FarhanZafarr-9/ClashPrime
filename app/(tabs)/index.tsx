@@ -799,7 +799,6 @@ export default function HomeScreen() {
       key: 'heroes',
       title: 'Heroes',
       icon: 'shield-half-outline',
-      iconUrl: getHeroImageUrl('Barbarian King') || undefined,
       progress: heroesProgress,
       pushTo: '/(tabs)/army?tab=heroes',
       rows: allHeroesAtTH.map((h) => {
@@ -1361,7 +1360,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                             key: heroGroup.key,
                             title: heroGroup.title,
                             icon: heroGroup.icon,
-                            iconUrl: heroGroup.iconUrl,
+                            iconSource: pipelineHeaderImage('Hero Hall'),
                             pushTo: heroGroup.pushTo,
                             progress: heroGroup.progress,
                             isHero: true,
