@@ -110,6 +110,20 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '5.5.0',
+    date: 'August 29, 2026',
+    items: [
+      'Army and Buildings detail panels open in a slide-up bottom sheet with a custom header — item icon, title, progress bar and level badge, plus a badge-styled close button.',
+      'Locked heroes/units/spells open their detail sheet too: header shows a lock badge and the item description, and the stats table starts from the first levels.',
+      'Detail sheets reset to the default level window whenever they close.',
+      'Building detail sheets condense long level ranges with "..." in both the level grid and stats table, with a Show-all toggle.',
+      'Import screen: skipped/un-tracked buildings now match the tracked Upgrade rows, and the Town Hall row shows its actual TH-level image.',
+      'Home tab Heroes progress section now uses the Hero Hall building image.',
+      'Floating tab bar and Time to Max: new-unlock rows show item type and count info, and first/last rows keep per-group corner rounding.',
+      'Engine upgrade: Expo 57, React Native 0.86, eslint-config-expo 57.',
+    ],
+  },
+  {
     version: '5.3.0',
     date: 'August 23, 2026',
     items: [
