@@ -618,7 +618,15 @@ export default function MaxTimeScreen() {
                         </View>
                         <View style={styles.newGroupCard}>
                           {g.rows.map((r, i) => (
-                            <View key={`${r.key}-${i}`} style={[styles.newRow, i > 0 && styles.newRowBorder]}>
+                            <View
+                              key={`${r.key}-${i}`}
+                              style={[
+                                styles.newRow,
+                                i === 0 && styles.newRowFirst,
+                                i === g.rows.length - 1 && styles.newRowLast,
+                                i > 0 && styles.newRowBorder,
+                              ]}
+                            >
                               {r.icon ? (
                                 <Image source={r.icon} style={styles.newRowIcon} resizeMode="contain" />
                               ) : null}
@@ -1124,6 +1132,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCardHover,
     borderRadius: Radius.sm,
     marginBottom: Spacing.xs,
+  },
+  newRowFirst: {
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
+  },
+  newRowLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
   },
   newRowBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,
