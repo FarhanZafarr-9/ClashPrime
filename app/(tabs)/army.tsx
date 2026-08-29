@@ -39,6 +39,8 @@ import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { Skeleton } from '../../src/components/Skeleton';
 import BottomSheet from '../../src/components/BottomSheet';
 
+const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
+
 
 type Tab = 'heroes' | 'bhHeroes' | 'troops' | 'bhTroops' | 'spells' | 'pets' | 'siege' | 'equipment';
 
@@ -490,9 +492,13 @@ export default function PlayerProfileScreen() {
       displayLevels = visibleDetailLevels;
     } else {
       const currentIdx = visibleDetailLevels.findIndex((l) => l.level === currentLevel);
-      const start = Math.max(0, currentIdx - 1);
-      const end = Math.min(visibleDetailLevels.length, currentIdx + 2);
-      displayLevels = visibleDetailLevels.slice(start, end);
+      if (currentIdx < 0) {
+        displayLevels = visibleDetailLevels.slice(0, 2);
+      } else {
+        const start = Math.max(0, currentIdx - 1);
+        const end = Math.min(visibleDetailLevels.length, currentIdx + 2);
+        displayLevels = visibleDetailLevels.slice(start, end);
+      }
     }
 
     const pills = formatStatPills(detail.info);
@@ -867,11 +873,13 @@ export default function PlayerProfileScreen() {
       ]
       : [];
     const item = allItems.find((i) => i.name === name);
+    const isLocked = item === undefined;
     const level = item?.level ?? 0;
     const maxLevel = item?.maxLevel ?? level;
     const progress = maxLevel > 0 ? level / maxLevel : 0;
     const isMaxed = maxLevel > 0 && level >= maxLevel;
     const iconSource = cardIconProps(name, level).iconSource;
+    const lockedDesc = details[name]?.description;
     return (
       <View style={styles.sheetHeaderRow}>
         <View style={styles.sheetHeaderIcon}>
@@ -885,23 +893,35 @@ export default function PlayerProfileScreen() {
         </View>
         <View style={styles.sheetHeaderText}>
           <Text style={styles.sheetHeaderTitle} numberOfLines={1}>{name}</Text>
-          <View style={styles.sheetHeaderBar}>
-            <View
-              style={[
-                styles.sheetHeaderFill,
-                {
-                  width: `${Math.min(progress, 1) * 100}%`,
-                  backgroundColor: isMaxed ? Colors.warning : Colors.textPrimary,
-                },
-              ]}
-            />
-          </View>
+          {isLocked ? (
+            <Text style={styles.sheetHeaderLockedDesc} numberOfLines={1}>
+              {lockedDesc || 'Not yet unlocked'}
+            </Text>
+          ) : (
+            <View style={styles.sheetHeaderBar}>
+              <View
+                style={[
+                  styles.sheetHeaderFill,
+                  {
+                    width: `${Math.min(progress, 1) * 100}%`,
+                    backgroundColor: isMaxed ? Colors.warning : Colors.textPrimary,
+                  },
+                ]}
+              />
+            </View>
+          )}
         </View>
         <View style={styles.sheetHeaderBadges}>
-          <View style={[styles.buildingSectionBadge, isMaxed && styles.buildingSectionBadgeMaxed]}>
-            <Text style={[styles.buildingSectionBadgeText, isMaxed && styles.buildingSectionBadgeTextMaxed]}>{level}</Text>
-            <Text style={[styles.buildingSectionBadgeLabel, isMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {maxLevel}</Text>
-          </View>
+          {isLocked ? (
+            <View style={styles.buildingSectionBadge}>
+              <Image source={lockedImage} style={styles.sheetHeaderLockedImg} resizeMode="contain" />
+            </View>
+          ) : (
+            <View style={[styles.buildingSectionBadge, isMaxed && styles.buildingSectionBadgeMaxed]}>
+              <Text style={[styles.buildingSectionBadgeText, isMaxed && styles.buildingSectionBadgeTextMaxed]}>{level}</Text>
+              <Text style={[styles.buildingSectionBadgeLabel, isMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {maxLevel}</Text>
+            </View>
+          )}
           <PressableRipple onPress={() => setSheetName(null)} hitSlop={8} style={styles.sheetHeaderClose} accessibilityLabel="Close" accessibilityRole="button">
             <Ionicons name="close" size={18} color={Colors.textPrimary} />
           </PressableRipple>
@@ -1007,6 +1027,7 @@ export default function PlayerProfileScreen() {
                       thMaxLevel={h.maxLevel}
                         {...cardIconProps(h.name)}
                       locked
+                      onPress={() => toggleDetail(h.name)}
                       isFirst={i == 0}
                       isLast={i == lockedHeroes?.length - 1}
                     />
@@ -1127,6 +1148,7 @@ export default function PlayerProfileScreen() {
                       thMaxLevel={t.maxLevel}
                             {...cardIconProps(t.name, 1)}
                       locked
+                      onPress={() => toggleDetail(t.name)}
                       isFirst={i == 0}
                       isLast={i == lockedTroops.length - 1}
                     />
@@ -1275,6 +1297,7 @@ export default function PlayerProfileScreen() {
                       thMaxLevel={s.maxLevel}
                       {...cardIconProps(s.name)}
                       locked
+                      onPress={() => toggleDetail(s.name)}
                       isFirst={i == 0}
                       isLast={i == lockedSpells.length - 1}
                     />
@@ -1741,6 +1764,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sheetHeaderLockedImg: {
+    width: 20,
+    height: 20,
+  },
+  sheetHeaderLockedDesc: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 11,
+    lineHeight: 13,
   },
   buildingSectionBadge: {
     width: 32,
