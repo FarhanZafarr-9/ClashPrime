@@ -271,7 +271,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.3.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.5.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
   const { show: showDialog, hide: hideDialog, Dialog } = useDialog();
