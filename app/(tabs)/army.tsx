@@ -37,6 +37,7 @@ import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUt
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { Skeleton } from '../../src/components/Skeleton';
+import BottomSheet from '../../src/components/BottomSheet';
 
 
 type Tab = 'heroes' | 'bhHeroes' | 'troops' | 'bhTroops' | 'spells' | 'pets' | 'siege' | 'equipment';
@@ -94,7 +95,7 @@ export default function PlayerProfileScreen() {
     }
   }, [initialTab]);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedName, setExpandedName] = useState<string | null>(null);
+  const [sheetName, setSheetName] = useState<string | null>(null);
 
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
   const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
@@ -155,13 +156,8 @@ export default function PlayerProfileScreen() {
   }
 
   const toggleDetail = useCallback(async (name: string) => {
-    // Collapse if already open.
-    if (expandedName === name) {
-      setExpandedName(null);
-      return;
-    }
-    setExpandedName(name);
-    // Fetch on first expansion (or if a previous fetch failed).
+    // Open the bottom sheet for this item and fetch its details if needed.
+    setSheetName(name);
     if (details[name] === undefined) {
       const isBB = player
         ? player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
@@ -218,7 +214,7 @@ export default function PlayerProfileScreen() {
       ].filter((u): u is string => !!u);
       urls.forEach((url) => Image.prefetch(url).catch(() => { }));
     }
-  }, [expandedName, details, player]);
+  }, [details, player]);
 
   // When the equipment tab is opened, prefetch every hero-equipment detail so
   // the Blacksmith-capped max level is known immediately (without waiting for
@@ -360,13 +356,15 @@ export default function PlayerProfileScreen() {
   const cardIconProps = (name: string, level?: number | null): { icon?: string; iconSource?: ImageSourcePropType } => {
     const local = getArmyItemImage(name);
     if (local) return { iconSource: local };
+    const url =
+      getTroopImageUrl(name, level ?? undefined) ||
+      getHeroImageUrl(name) ||
+      getPetImageUrl(name) ||
+      getEquipmentImageUrl(name) ||
+      undefined;
     return {
-      icon:
-        getTroopImageUrl(name, level ?? undefined) ||
-        getHeroImageUrl(name) ||
-        getPetImageUrl(name) ||
-        getEquipmentImageUrl(name) ||
-        undefined,
+      icon: url,
+      iconSource: url ? { uri: url } : undefined,
     };
   };
 
@@ -430,12 +428,11 @@ export default function PlayerProfileScreen() {
   // old modal). Because it lives in the page's own ScrollView, the stats table
   // scrolls naturally with the page — no nested-scroll quirks.
   const renderDetailPanel = (name: string) => {
-    if (expandedName !== name) return null;
     const detail = details[name];
 
     if (detail === undefined) {
       return (
-        <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
+        <View style={styles.panel}>
           {/* Description skeleton */}
           <View style={{ marginBottom: Spacing.base, gap: 4 }}>
             <Skeleton width="100%" height={10} borderRadius={3} />
@@ -524,7 +521,7 @@ export default function PlayerProfileScreen() {
     const headerLabels = extraLabels.map((lbl) => acronymMap.get(lbl) ?? lbl);
 
     return (
-      <View style={[styles.panel, { backgroundColor: colors.bgSubtle, borderColor: colors.border }]}>
+      <View style={styles.panel}>
         {detail.description ? (
           <View style={styles.panelHeader}>
             <Text style={[styles.panelDesc, { color: colors.textTertiary }]}>{detail.description}</Text>
@@ -542,7 +539,7 @@ export default function PlayerProfileScreen() {
           </View>
         )}
 
-        {unlockReqItems.length > 0 ? (
+        {!isEquip && unlockReqItems.length > 0 ? (
           <View style={[styles.panelTable, { borderColor: colors.border }]}>
             <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
               <Text
@@ -567,7 +564,7 @@ export default function PlayerProfileScreen() {
               ) : null}
             </View>
             {unlockReqItems.map((r, i) => (
-              <View key={i} style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+              <View key={i} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle, borderBottomColor: colors.border }]}>
                 <Text
                   style={[
                     styles.panelTableCell,
@@ -665,16 +662,18 @@ export default function PlayerProfileScreen() {
                   <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
                   <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
                 </View>
-                <View style={styles.panelTableRow}>
-                  <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                    Lv{currentLevel} → Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
-                  </Text>
-                  <View style={[styles.panelTableCell, { alignItems: 'center', gap: 2, justifyContent: 'center' }]}>
-                    {resourceSums.length > 0 ? (
-                      resourceSums.map((s) => {
-                        const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
-                        return (
-                          <View key={s.resource} style={styles.resourceSumRow}>
+                {resourceSums.length > 0 ? (
+                  resourceSums.map((s, ri) => {
+                    const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
+                    return (
+                      <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
+                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
+                          {ri === 0
+                            ? `Lv${currentLevel} → Lv${maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}`
+                            : ''}
+                        </Text>
+                        <View style={[styles.panelTableCell, { alignItems: 'center', justifyContent: 'center' }]}>
+                          <View style={styles.resourceSumRow}>
                             {icon ? (
                               <Image source={icon} style={styles.resourceSumIcon} resizeMode="contain" />
                             ) : (
@@ -690,23 +689,33 @@ export default function PlayerProfileScreen() {
                               {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)}
                             </Text>
                           </View>
-                        );
-                      })
-                    ) : (
-                      <Text style={{ color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }}>—</Text>
-                    )}
+                        </View>
+                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                          {ri === 0
+                            ? (showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime))
+                            : ''}
+                        </Text>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
+                    <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
+                      Lv{currentLevel} → Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                    </Text>
+                    <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>—</Text>
+                    <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                      {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
+                    </Text>
                   </View>
-                  <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
-                    {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
-                  </Text>
-                </View>
+                )}
               </View>
             )}
             <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
             {legendEntries.length > 0 && (
               <View style={{ marginBottom: Spacing.sm }}>
-                {legendEntries.map((e) => (
-                  <Text key={e.acronym} style={[styles.panelLegend, { color: colors.textTertiary }]}>
+                {legendEntries.map((e, li) => (
+                  <Text key={`${e.acronym}-${li}`} style={[styles.panelLegend, { color: colors.textTertiary }]}>
                     <Text style={{ fontWeight: '700', fontFamily: clashFontFamily(700) }}>{e.acronym}</Text> = {e.full}
                   </Text>
                 ))}
@@ -735,7 +744,7 @@ export default function PlayerProfileScreen() {
                 {displayLevels.map((l) => {
                   const isCurrentRow = l.level === currentLevel;
                   return (
-                    <View key={l.level} style={[styles.panelTableRow, { borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
+                    <View key={l.level} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle, borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
                       <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 28 }]}>{l.level}</Text>
                       {isTroopLike ? (
                         <>
@@ -924,10 +933,9 @@ export default function PlayerProfileScreen() {
                         subtitle={h.equipment?.map((e) => e.name).join(', ')}
                         {...cardIconProps(h.name)}
                         onPress={() => toggleDetail(h.name)}
-                        isFirst={i == 0 || expandedName === h.name}
-                        isLast={i == homeHeroesSplit?.leveling?.length - 1 && expandedName !== h.name}
+                        isFirst={i == 0}
+                        isLast={i == homeHeroesSplit?.leveling?.length - 1}
                       />
-                      {renderDetailPanel(h.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -963,10 +971,9 @@ export default function PlayerProfileScreen() {
                         subtitle={h.equipment?.map((e) => e.name).join(', ')}
                         {...cardIconProps(h.name)}
                         onPress={() => toggleDetail(h.name)}
-                        isFirst={i == 0 || expandedName === h.name}
-                        isLast={i == homeHeroesSplit?.maxed?.length - 1 && expandedName !== h.name}
+                        isFirst={i == 0}
+                        isLast={i == homeHeroesSplit?.maxed?.length - 1}
                       />
-                      {renderDetailPanel(h.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1002,10 +1009,9 @@ export default function PlayerProfileScreen() {
                             maxLevel={h.maxLevel}
                             {...cardIconProps(h.name)}
                             onPress={() => toggleDetail(h.name)}
-                            isFirst={i == 0 || expandedName === h.name}
-                            isLast={i == builderHeroesSplit?.leveling?.length - 1 && expandedName !== h.name}
+                            isFirst={i == 0}
+                            isLast={i == builderHeroesSplit?.leveling?.length - 1}
                           />
-                          {renderDetailPanel(h.name)}
                         </React.Fragment>
                       ))}
                     </>
@@ -1021,10 +1027,9 @@ export default function PlayerProfileScreen() {
                             maxLevel={h.maxLevel}
                             {...cardIconProps(h.name)}
                             onPress={() => toggleDetail(h.name)}
-                            isFirst={i == 0 || expandedName === h.name}
-                            isLast={i == builderHeroesSplit?.maxed?.length - 1 && expandedName !== h.name}
+                            isFirst={i == 0}
+                            isLast={i == builderHeroesSplit?.maxed?.length - 1}
                           />
-                          {renderDetailPanel(h.name)}
                         </React.Fragment>
                       ))}
                     </>
@@ -1048,10 +1053,9 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(t.name, th)}
                         {...cardIconProps(t.name, t.level)}
                         onPress={() => toggleDetail(t.name)}
-                        isFirst={i == 0 || expandedName === t.name}
-                        isLast={i == homeTroopsSplit?.leveling?.length - 1 && expandedName !== t.name}
+                        isFirst={i == 0}
+                        isLast={i == homeTroopsSplit?.leveling?.length - 1}
                       />
-                      {renderDetailPanel(t.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1086,10 +1090,9 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(t.name, th)}
                         {...cardIconProps(t.name, t.level)}
                         onPress={() => toggleDetail(t.name)}
-                        isFirst={i == 0 || expandedName === t.name}
-                        isLast={i == homeTroopsSplit?.maxed?.length - 1 && expandedName !== t.name}
+                        isFirst={i == 0}
+                        isLast={i == homeTroopsSplit?.maxed?.length - 1}
                       />
-                      {renderDetailPanel(t.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1125,10 +1128,9 @@ export default function PlayerProfileScreen() {
                             maxLevel={getBuilderTroopMaxLevel(t.name, bhLevel) ?? t.maxLevel}
                             {...cardIconProps(t.name, t.level)}
                             onPress={() => toggleDetail(t.name)}
-                            isFirst={i == 0 || expandedName === t.name}
-                            isLast={i == builderTroopsSplit?.leveling?.length - 1 && expandedName !== t.name}
+                            isFirst={i == 0}
+                            isLast={i == builderTroopsSplit?.leveling?.length - 1}
                           />
-                          {renderDetailPanel(t.name)}
                         </React.Fragment>
                       ))}
                     </>
@@ -1144,10 +1146,9 @@ export default function PlayerProfileScreen() {
                             maxLevel={getBuilderTroopMaxLevel(t.name, bhLevel) ?? t.maxLevel}
                             {...cardIconProps(t.name, t.level)}
                             onPress={() => toggleDetail(t.name)}
-                            isFirst={i == 0 || expandedName === t.name}
-                            isLast={i == builderTroopsSplit?.maxed?.length - 1 && expandedName !== t.name}
+                            isFirst={i == 0}
+                            isLast={i == builderTroopsSplit?.maxed?.length - 1}
                           />
-                          {renderDetailPanel(t.name)}
                         </React.Fragment>
                       ))}
                     </>
@@ -1176,10 +1177,9 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
                             {...cardIconProps(s.name, s.level)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0 || expandedName === s.name}
-                        isLast={i == siegeMachines.length - 1 && expandedName !== s.name}
+                        isFirst={i == 0}
+                        isLast={i == siegeMachines.length - 1}
                       />
-                      {renderDetailPanel(s.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1201,10 +1201,9 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
                         {...cardIconProps(s.name)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0 || expandedName === s.name}
-                        isLast={i == homeSpellsSplit?.leveling?.length - 1 && expandedName !== s.name}
+                        isFirst={i == 0}
+                        isLast={i == homeSpellsSplit?.leveling?.length - 1}
                       />
-                      {renderDetailPanel(s.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1239,10 +1238,9 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
                         {...cardIconProps(s.name)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0 || expandedName === s.name}
-                        isLast={i == homeSpellsSplit?.maxed?.length - 1 && expandedName !== s.name}
+                        isFirst={i == 0}
+                        isLast={i == homeSpellsSplit?.maxed?.length - 1}
                       />
-                      {renderDetailPanel(s.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1279,10 +1277,9 @@ export default function PlayerProfileScreen() {
                             thMaxLevel={getMaxLevelAtTH(p.name, th)}
                             {...cardIconProps(p.name)}
                             onPress={() => toggleDetail(p.name)}
-                            isFirst={i == 0 || expandedName === p.name}
-                            isLast={i == homePetsSplit?.leveling?.length - 1 && expandedName !== p.name}
+                            isFirst={i == 0}
+                            isLast={i == homePetsSplit?.leveling?.length - 1}
                           />
-                          {renderDetailPanel(p.name)}
                         </React.Fragment>
                       ))}
                     </>
@@ -1299,10 +1296,9 @@ export default function PlayerProfileScreen() {
                             thMaxLevel={getMaxLevelAtTH(p.name, th)}
                             {...cardIconProps(p.name)}
                             onPress={() => toggleDetail(p.name)}
-                            isFirst={i == 0 || expandedName === p.name}
-                            isLast={i == homePetsSplit?.maxed?.length - 1 && expandedName !== p.name}
+                            isFirst={i == 0}
+                            isLast={i == homePetsSplit?.maxed?.length - 1}
                           />
-                          {renderDetailPanel(p.name)}
                         </React.Fragment>
                       ))}
                     </>
@@ -1336,10 +1332,9 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getEquipmentMaxLevel(e.name) || undefined}
                         {...cardIconProps(e.name)}
                         onPress={() => toggleDetail(e.name)}
-                        isFirst={i == 0 || expandedName === e.name}
-                        isLast={i == sortedHeroEquipment.length - 1 && expandedName !== e.name}
+                        isFirst={i == 0}
+                        isLast={i == sortedHeroEquipment.length - 1}
                       />
-                      {renderDetailPanel(e.name)}
                     </React.Fragment>
                   ))}
                 </>
@@ -1350,6 +1345,16 @@ export default function PlayerProfileScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <BottomSheet
+        visible={sheetName !== null}
+        onClose={() => setSheetName(null)}
+        title={sheetName ?? ''}
+        subtitle={activeTab}
+        iconSource={sheetName ? cardIconProps(sheetName).iconSource : undefined}
+      >
+        {sheetName ? renderDetailPanel(sheetName) : null}
+      </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -1433,10 +1438,6 @@ const styles = StyleSheet.create({
   panel: {
     marginTop: 2,
     marginBottom: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
   },
   panelEmpty: {
     paddingVertical: Spacing.base,
