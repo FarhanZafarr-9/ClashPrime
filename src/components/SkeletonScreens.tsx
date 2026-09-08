@@ -197,15 +197,6 @@ export function HomeScreenSkeleton() {
             </View>
             <Skeleton width={48} height={48} borderRadius={Radius.sm} />
           </View>
-          {/* Stats collapse row */}
-          <View style={[styles.homeCollapseRowSkeleton, { borderTopColor: colors.border }]}>
-            <Skeleton width={28} height={28} borderRadius={Radius.sm} />
-            <View style={{ flex: 1, gap: 3 }}>
-              <Skeleton width={50} height={11} borderRadius={3} />
-              <Skeleton width={80} height={10} borderRadius={3} />
-            </View>
-            <Skeleton width={16} height={16} borderRadius={8} />
-          </View>
         </View>
         {/* Section: Progress Overview / Buildings / Backlog (collapsed rows) */}
         <View style={styles.sectionLabel}>
@@ -602,15 +593,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  homeCollapseRowSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
-    paddingTop: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingBottom: Spacing.xs,
   },
   homeSectionsSkeleton: {
     marginHorizontal: Spacing.base,

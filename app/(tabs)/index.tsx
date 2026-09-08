@@ -32,7 +32,6 @@ import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl, getPetImageUrl } from '../../src/utils/troopImages';
 import { getBuildingItemImage } from '../../src/utils/buildingData';
-import { STAT_ICONS } from '../../src/utils/statImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
@@ -55,7 +54,7 @@ import {
   ProgressCategory,
   ProgressDiff,
 } from '../../src/hooks/useProgressSnapshot';
-import type { ClashPlayer } from '../../src/types/clash';
+import type { ClashPlayer, TimerReminder } from '../../src/types/clash';
 import { checkForUpdate, clearVersionCache, probeGitHubOnline } from '../../src/utils/versionCheck';
 import { APP_VERSION } from '../../src/constants/appVersion';
 
@@ -147,6 +146,17 @@ function StarBonusValue({ star }: { star: { gold: number | null; dark: number | 
   );
 }
 
+type SectionBadgeTone = 'default' | 'danger' | 'warning' | 'maxed';
+
+interface SectionBadgeConfig {
+  key: string;
+  value?: React.ReactNode;
+  label?: React.ReactNode;
+  icon?: keyof typeof Ionicons.glyphMap;
+  tone?: SectionBadgeTone;
+  action?: () => void;
+}
+
 function CollapsibleSection({
   title,
   icon,
@@ -156,7 +166,7 @@ function CollapsibleSection({
   count,
   totalLevel,
   totalMax,
-  badge,
+  badges,
   isFirst,
   isLast,
   onOpen,
@@ -176,7 +186,7 @@ function CollapsibleSection({
   count: number;
   totalLevel: number;
   totalMax: number;
-  badge?: React.ReactNode;
+  badges?: SectionBadgeConfig[];
   isFirst?: boolean;
   isLast?: boolean;
   onOpen?: () => void;
@@ -200,6 +210,117 @@ function CollapsibleSection({
     if (!open) onOpen?.();
     setOpen(!open);
   };
+
+  const badgeList: SectionBadgeConfig[] = badges && badges.length > 0
+    ? badges
+    : maxed
+      ? [
+          { key: 'done', icon: 'checkmark', tone: 'maxed' },
+          { key: 'level', value: formatCompact(totalLevel), label: `/ ${formatCompact(totalMax)}`, tone: 'maxed' },
+        ]
+      : totalMax > 0
+        ? [{ key: 'level', value: formatCompact(totalLevel), label: `/ ${formatCompact(totalMax)}`, tone: isSectionMaxed ? 'maxed' : 'default' }]
+        : [{ key: 'count', value: count, tone: 'default' }];
+
+  const renderBadge = (b: SectionBadgeConfig, i: number) => {
+    const isFirstBadge = (isFirst || open) && i === 0;
+    const isLastBadge = isLast && !open && i === badgeList.length - 1;
+    const cornerStyles = [
+      isFirstBadge && styles.sectionBadgeFirst,
+      isLastBadge && styles.sectionBadgeLast,
+    ] as const;
+    const box = (
+      <View
+        key={b.key}
+        style={[
+          styles.sectionBadge,
+          b.tone === 'maxed' && styles.sectionBadgeMaxed,
+          b.tone === 'danger' && styles.sectionBadgeDanger,
+          b.tone === 'warning' && styles.sectionBadgeWarning,
+          ...cornerStyles,
+        ]}
+      >
+        {b.icon ? (
+          <Ionicons name={b.icon} size={18} color={b.tone === 'maxed' ? Colors.bg : Colors.textPrimary} />
+        ) : (
+          <>
+            {b.value != null && (
+              <Text
+                style={[
+                  styles.sectionBadgeText,
+                  b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
+                  b.tone === 'danger' && styles.sectionBadgeDangerText,
+                  b.tone === 'warning' && styles.sectionBadgeWarningText,
+                ]}
+              >
+                {b.value}
+              </Text>
+            )}
+            {b.label != null && (
+              <Text
+                style={[
+                  styles.sectionBadgeLabel,
+                  b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
+                  b.tone === 'danger' && styles.sectionBadgeDangerText,
+                  b.tone === 'warning' && styles.sectionBadgeWarningText,
+                ]}
+              >
+                {b.label}
+              </Text>
+            )}
+          </>
+        )}
+      </View>
+    );
+    return b.action ? (
+      <PressableRipple
+        key={b.key}
+        style={[
+          styles.sectionBadge,
+          b.tone === 'maxed' && styles.sectionBadgeMaxed,
+          b.tone === 'danger' && styles.sectionBadgeDanger,
+          b.tone === 'warning' && styles.sectionBadgeWarning,
+          ...cornerStyles,
+        ]}
+        onPress={b.action}
+        hitSlop={6}
+      >
+        {b.icon ? (
+          <Ionicons name={b.icon} size={18} color={b.tone === 'maxed' ? Colors.bg : Colors.textPrimary} />
+        ) : (
+          <>
+            {b.value != null && (
+              <Text
+                style={[
+                  styles.sectionBadgeText,
+                  b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
+                  b.tone === 'danger' && styles.sectionBadgeDangerText,
+                  b.tone === 'warning' && styles.sectionBadgeWarningText,
+                ]}
+              >
+                {b.value}
+              </Text>
+            )}
+            {b.label != null && (
+              <Text
+                style={[
+                  styles.sectionBadgeLabel,
+                  b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
+                  b.tone === 'danger' && styles.sectionBadgeDangerText,
+                  b.tone === 'warning' && styles.sectionBadgeWarningText,
+                ]}
+              >
+                {b.label}
+              </Text>
+            )}
+          </>
+        )}
+      </PressableRipple>
+    ) : (
+      box
+    );
+  };
+
   return (
     <>
       <SettingRow
@@ -215,40 +336,9 @@ function CollapsibleSection({
         accentColor={accentColor}
         compact={compact}
       >
-        {maxed ? (
-          <View style={styles.sectionBadges}>
-            <View style={[styles.sectionBadge, styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && styles.sectionBadgeLast]}>
-              <Ionicons name="checkmark" size={18} color={Colors.bg} />
-            </View>
-            <View style={[styles.sectionBadge, styles.sectionBadgeMaxed, isLast && styles.sectionBadgeLast]}>
-              <Text style={[styles.sectionBadgeText, styles.sectionBadgeTextMaxed]}>{formatCompact(totalLevel)}</Text>
-              <Text style={[styles.sectionBadgeLabel, styles.sectionBadgeTextMaxed]}>/ {formatCompact(totalMax)}</Text>
-            </View>
-          </View>
-        ) : badge != null ? (
-          React.isValidElement(badge)
-            ? React.cloneElement(badge as React.ReactElement<{ style?: any }>, {
-                style: [
-                  (badge as React.ReactElement<{ style?: any }>).props.style,
-                  isFirst && styles.sectionBadgeFirst,
-                  isLast && !open && styles.sectionBadgeLast,
-                ],
-              })
-            : badge
-        ) : (
-          <View style={styles.sectionBadges}>
-            {totalMax > 0 ? (
-              <View style={[styles.sectionBadge, isSectionMaxed && styles.sectionBadgeMaxed, isFirst && styles.sectionBadgeFirst, isLast && !open && styles.sectionBadgeLast]}>
-                <Text style={[styles.sectionBadgeText, isSectionMaxed && styles.sectionBadgeTextMaxed]}>{formatCompact(totalLevel)}</Text>
-                <Text style={[styles.sectionBadgeLabel, isSectionMaxed && styles.sectionBadgeTextMaxed]}>/ {formatCompact(totalMax)}</Text>
-              </View>
-            ) : (
-              <View style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>{count}</Text>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={styles.sectionBadges}>
+          {badgeList.map(renderBadge)}
+        </View>
       </SettingRow>
       {open && (
         <View style={styles.sectionBody}>
@@ -265,12 +355,13 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
   const { superTroopNames, petNames } = useGameData();
-  const { reminders, addTimer, dismissTimer, hasPermission } = useTimers();
+  const { reminders, addTimer, updateTimer, dismissTimer, hasPermission } = useTimers();
   const { count: builderCount } = useBuilderCount();
   const { show: showDialog, Dialog } = useDialog();
   const [refreshing, setRefreshing] = useState(false);
   const [progressDiff, setProgressDiff] = useState<ProgressDiff | null>(null);
   const [addTimerVisible, setAddTimerVisible] = useState(false);
+  const [editingTimer, setEditingTimer] = useState<TimerReminder | null>(null);
   const [timerLabel, setTimerLabel] = useState('');
   const [timerMinutes, setTimerMinutes] = useState(30);
   const [timerCustom, setTimerCustom] = useState('');
@@ -296,7 +387,6 @@ export default function HomeScreen() {
     }
   }, [addTimerVisible, timerCardAnim]);
   const [showBH, setShowBH] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
   const [equipDetails, setEquipDetails] = useState<Record<string, TroopDetail | null>>({});
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [switchingHome, setSwitchingHome] = useState(false);
@@ -1113,89 +1203,7 @@ export default function HomeScreen() {
                   <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
                   <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
                 </View>
-              </View>
-              <PressableRipple style={styles.collapseRow} onPress={() => setStatsOpen((v) => !v)}>
-                <View style={styles.collapseRowIcon}>
-                  <Ionicons name="stats-chart" size={16} color={Colors.textSecondary} />
-                </View>
-                <View style={styles.collapseRowText}>
-                  <Text style={styles.collapseRowTitle}>Stats</Text>
-                  <Text style={styles.collapseRowSub}>{showBH ? 'Builder Base' : 'Home Village'}</Text>
-                </View>
-                <Ionicons name={statsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
-              </PressableRipple>
-              {statsOpen && (
-                <View style={styles.statsGrid}>
-                  {showBH ? (
-                    <>
-                      <View style={styles.statCell}>
-                        <Image source={getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1)} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue}>BH{player.builderHallLevel ?? 1}</Text>
-                          <Text style={styles.statCellLabel}>Builder Hall</Text>
-                        </View>
-                      </View>
-                      <View style={styles.statCell}>
-                        <Image source={STAT_ICONS.exp} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue}>{player.expLevel}</Text>
-                          <Text style={styles.statCellLabel}>Exp Level</Text>
-                        </View>
-                      </View>
-                      <View style={styles.statCell}>
-                        <Image source={STAT_ICONS.bhTrophies} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue}>{player.builderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
-                          <Text style={styles.statCellLabel}>Trophies</Text>
-                        </View>
-                      </View>
-                      <View style={styles.statCell}>
-                        <Image source={STAT_ICONS.bhBestTrophies} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={[styles.statCellValue, { color: Colors.warning }]}>{player.bestBuilderBaseTrophies?.toLocaleString() ?? 'N/A'}</Text>
-                          <Text style={styles.statCellLabel}>Best</Text>
-                        </View>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.statCell}>
-                        {playerLeague?.iconUrls?.small ? (
-                          <Image source={{ uri: playerLeague.iconUrls.small }} style={styles.statCellLeagueImage} resizeMode="contain" />
-                        ) : (
-                          <Ionicons name="arrow-up-outline" size={20} color={Colors.textSecondary} />
-                        )}
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue} numberOfLines={1}>{playerLeague?.name?.split(' ')[0] || 'N/A'}</Text>
-                          <Text style={styles.statCellLabel}>League</Text>
-                        </View>
-                      </View>
-                      <View style={styles.statCell}>
-                        <Image source={STAT_ICONS.exp} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue}>{player.expLevel}</Text>
-                          <Text style={styles.statCellLabel}>Exp Level</Text>
-                        </View>
-                      </View>
-                      <View style={styles.statCell}>
-                        <Image source={STAT_ICONS.bestTrophies} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue}>{player.bestTrophies.toLocaleString()}</Text>
-                          <Text style={styles.statCellLabel}>Best Trophies</Text>
-                        </View>
-                      </View>
-                      <View style={styles.statCell}>
-                        <Image source={STAT_ICONS.warStars} style={styles.statCellIcon} resizeMode="contain" />
-                        <View style={styles.statCellText}>
-                          <Text style={styles.statCellValue}>{player.warStars.toLocaleString()}</Text>
-                          <Text style={styles.statCellLabel}>War Stars</Text>
-                        </View>
-                      </View>
-                    </>
-                  )}
-                </View>
-              )}
-
+</View>
               <PressableRipple onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
                 <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
               </PressableRipple>
@@ -1540,11 +1548,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 count={unlockableItems.length}
                 totalLevel={0}
                 totalMax={0}
-                badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeDanger]}>
-                    <Text style={[styles.sectionBadgeText, styles.sectionBadgeDangerText]}>{unlockableItems.length}</Text>
-                  </View>
-                )}
+                badges={[{ key: 'locked', value: unlockableItems.length, tone: 'danger' }]}
               >
                 {(() => {
                   let lastTh = -1;
@@ -1607,11 +1611,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 count={rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
-                badge={(
-                  <View style={[styles.sectionBadge, styles.sectionBadgeWarning]}>
-                    <Text style={[styles.sectionBadgeText, styles.sectionBadgeWarningText]}>{rushedItems.length}</Text>
-                  </View>
-                )}
+                badges={[{ key: 'rushed', value: rushedItems.length, tone: 'warning' }]}
               >
                 {(() => {
                   const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
@@ -1719,11 +1719,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 count={group.rows.length}
                 totalLevel={0}
                 totalMax={0}
-                badge={(
-                  <View style={styles.sectionBadge}>
-                    <Text style={styles.sectionBadgeText}>{group.rows.length}</Text>
-                  </View>
-                )}
+                badges={[{ key: 'count', value: group.rows.length }]}
               >
                 {group.rows.map((row, ri) => (
                   <View key={`${group.title}-${ri}`} style={[styles.statRow, ri === group.rows.length - 1 && styles.statRowLast]}>
@@ -1768,13 +1764,11 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 count={reminders.length}
                 totalLevel={0}
                 totalMax={0}
-                badge={(
-                  <View style={styles.sectionBadge}>
-                    <Text style={styles.sectionBadgeText}>{reminders.length}</Text>
-                  </View>
-                )}
+                badges={[{ key: 'count', value: reminders.length }]}
               >
-                {reminders.map((r) => {
+                {[...reminders]
+                  .sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime())
+                  .map((r) => {
                   const remaining = Math.max(0, new Date(r.targetDate).getTime() - nowTick);
                   const expired = r.status === 'expired' || remaining <= 0;
                   const days = Math.floor(remaining / 86400000);
@@ -1785,6 +1779,8 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                   const timeStr = days > 0
                     ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
                     : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                  const fmtClock = (iso: string) =>
+                    new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                   return (
                     <View key={r.id} style={styles.statRow}>
                       <View style={styles.statRowIcon}>
@@ -1794,35 +1790,44 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                         <Text style={styles.statRowLabel} numberOfLines={1}>{r.label}</Text>
                         <Text style={[styles.statRowSub, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
                       </View>
-                      <PressableRipple style={styles.timerDismiss} onPress={() => dismissTimer(r.id)} hitSlop={8}>
-                        <Ionicons name="close-circle-outline" size={20} color={Colors.textTertiary} />
+                      <View style={styles.timerTimes}>
+                        <Text style={styles.timerTimeStart} numberOfLines={1}>{fmtClock(r.createdAt)}</Text>
+                        <Text style={styles.timerTimeEnd} numberOfLines={1}>{fmtClock(r.targetDate)}</Text>
+                      </View>
+                      <PressableRipple style={[styles.timerEditBadge, expired && styles.timerExpiredBtn]} onPress={() => { setEditingTimer(r); setTimerLabel(r.label); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }} hitSlop={6}>
+                        <Ionicons name="pencil" size={15} color={expired ? Colors.success : Colors.textPrimary} />
+                      </PressableRipple>
+                      <PressableRipple style={styles.timerDismissBadge} onPress={() => dismissTimer(r.id)} hitSlop={6}>
+                        <Ionicons name="close" size={16} color={Colors.textPrimary} />
                       </PressableRipple>
                     </View>
                   );
                 })}
-                <PressableRipple style={[styles.statRow, styles.statRowLast, styles.addTimerRow]} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
+                <PressableRipple style={[styles.statRow, styles.statRowLast, styles.addTimerRow]} onPress={() => { setEditingTimer(null); setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
                   <View style={[styles.statRowIcon, styles.addTimerRowIcon]}>
                     <Ionicons name="alarm-outline" size={16} color={Colors.textPrimary} />
                   </View>
                   <View style={styles.statRowText}>
                     <Text style={styles.statRowLabel}>Add timer</Text>
-                    <Text style={styles.statRowSub}>Set a countdown for an upgrade</Text>
+                    <Text style={styles.statRowSub}>Set a countdown</Text>
                   </View>
-                  <Ionicons name="add" size={20} color={Colors.textSecondary} />
+                  <View style={[styles.timerAddBadge, styles.timerAddBadgeLast]}>
+                    <Ionicons name="add" size={18} color={Colors.textPrimary} />
+                  </View>
                 </PressableRipple>
               </CollapsibleSection>
             </View>
           ) : (
-            <PressableRipple style={styles.timersEmpty} onPress={() => { setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
+            <PressableRipple style={styles.timersEmpty} onPress={() => { setEditingTimer(null); setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
               <View style={styles.timersEmptyIcon}>
                 <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
               </View>
               <View style={styles.timersEmptyText}>
                 <Text style={styles.timersEmptyTitle}>No active timers</Text>
-                <Text style={styles.timersEmptySub}>Add a countdown to know exactly when a builder frees up.</Text>
+                <Text style={styles.timersEmptySub}>Set a countdown for an upgrade.</Text>
               </View>
-              <View style={styles.timersEmptyAdd}>
-                <Ionicons name="add" size={16} color={Colors.bg} />
+              <View style={[styles.timersEmptyAdd, styles.timersEmptyAddFirstLast]}>
+                <Ionicons name="add" size={18} color={Colors.textPrimary} />
               </View>
             </PressableRipple>
           )}
@@ -1833,13 +1838,13 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
 
       <Dialog />
 
-      <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => setAddTimerVisible(false)} statusBarTranslucent>
+      <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => { setEditingTimer(null); setAddTimerVisible(false); }} statusBarTranslucent>
         <View style={styles.modalRoot}>
           <KeyboardAvoidingView
             style={styles.modalRoot}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
-            <Pressable style={styles.modalOverlay} onPress={() => setAddTimerVisible(false)}>
+            <Pressable style={styles.modalOverlay} onPress={() => { setEditingTimer(null); setAddTimerVisible(false); }}>
               <Animated.View
                 style={[
                   styles.modalCard,
@@ -1857,8 +1862,12 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                     <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
                   </View>
                   <View style={styles.modalHeaderText}>
-                    <Text style={styles.modalTitle}>New Timer</Text>
-                    <Text style={styles.modalSubtitle}>Get a reminder when the time is up</Text>
+                    <Text style={styles.modalTitle}>{editingTimer ? 'Edit Timer' : 'New Timer'}</Text>
+                    {editingTimer ? (
+                      <Text style={styles.modalSubtitle}>Restart the countdown for "{editingTimer.label}"</Text>
+                    ) : (
+                      <Text style={styles.modalSubtitle}>Get a reminder when the time is up</Text>
+                    )}
                   </View>
                 </View>
 
@@ -1932,7 +1941,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 )}
 
                 <View style={styles.modalActions}>
-                  <PressableRipple style={styles.modalCancelBtn} onPress={() => setAddTimerVisible(false)}>
+                  <PressableRipple style={styles.modalCancelBtn} onPress={() => { setEditingTimer(null); setAddTimerVisible(false); }}>
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </PressableRipple>
                   <PressableRipple
@@ -1940,15 +1949,20 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                     disabled={!timerLabel.trim() || !hasValidDuration || addingTimer}
                     onPress={async () => {
                       setAddingTimer(true);
-                      await addTimer(timerLabel.trim(), effectiveMinutes);
+                      if (editingTimer) {
+                        await updateTimer(editingTimer.id, timerLabel.trim(), effectiveMinutes);
+                      } else {
+                        await addTimer(timerLabel.trim(), effectiveMinutes);
+                      }
                       setAddingTimer(false);
+                      setEditingTimer(null);
                       setAddTimerVisible(false);
                     }}
                   >
                     {addingTimer ? (
                       <ActivityIndicator size="small" color={Colors.bg} />
                     ) : (
-                      <Text style={styles.modalConfirmText}>Start Timer</Text>
+                      <Text style={styles.modalConfirmText}>{editingTimer ? 'Save' : 'Start Timer'}</Text>
                     )}
                   </PressableRipple>
                 </View>
@@ -2473,76 +2487,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.border,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    paddingBottom: Spacing.sm,
-  },
-  statCell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    width: '48%',
-    paddingVertical: Spacing.xs + 2,
-    paddingHorizontal: Spacing.sm,
-    backgroundColor: Colors.bgCardHover,
-    borderRadius: Radius.sm,
-  },
-  statCellLeagueImage: {
-    width: 32,
-    height: 32,
-  },
-  statCellIcon: {
-    width: 28,
-    height: 28,
-  },
-  statCellText: {
-    flex: 1,
-  },
-  statCellValue: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  statCellLabel: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 10,
-    marginTop: 1,
-  },
-  collapseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
-    padding: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-  },
-  collapseRowIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  collapseRowText: {
-    flex: 1,
-  },
-  collapseRowTitle: {
-    ...Typography.caption,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  collapseRowSub: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    marginTop: 1,
-  },
   sectionLabel: {
     paddingHorizontal: Spacing.base,
     marginTop: Spacing.lg,
@@ -2763,8 +2707,58 @@ const styles = StyleSheet.create({
     color: Colors.success,
     fontWeight: '700',
   },
-  timerDismiss: {
-    padding: 4,
+  timerTimes: {
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginVertical: 2,
+  },
+  timerTimeStart: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 14,
+    fontVariant: ['tabular-nums'],
+  },
+  timerTimeEnd: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 11,
+    lineHeight: 14,
+    fontVariant: ['tabular-nums'],
+  },
+  timerEditBadge: {
+    minWidth: 36,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  timerExpiredBtn: {
+    backgroundColor: Colors.successGhost,
+  },
+  timerDismissBadge: {
+    minWidth: 36,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  timerAddBadge: {
+    minWidth: 36,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  timerAddBadgeLast: {
+    borderBottomRightRadius: Radius.xl,
   },
   addTimerRow: {
     borderStyle: 'dashed',
@@ -2807,12 +2801,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   timersEmptyAdd: {
-    width: 24,
-    height: 24,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.textPrimary,
+    minWidth: 36,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  timersEmptyAddFirstLast: {
+    borderTopRightRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
   },
   modalRoot: {
     flex: 1,
