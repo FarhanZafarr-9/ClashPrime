@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../src/components/PressableRipple';
+import { useDialog } from '../src/components/AlertDialog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -94,6 +95,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
   const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
+  const { show: showDialog, Dialog } = useDialog();
   const { setBuilderCount } = useBuilderCount();
   const [step, setStep] = useState<'form' | 'profile' | 'thPicker' | 'builderHutPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
@@ -154,6 +156,11 @@ export default function OnboardingScreen() {
       setLoading(false);
     } catch (e: any) {
       setError(e.message || 'Failed to connect. Check your token and tag.');
+      showDialog({
+        title: 'Sign-in Failed',
+        message: e.message || 'Failed to connect. Check your token and tag.',
+        actions: [{ label: 'OK', primary: true, onPress: () => {} }],
+      });
       setLoading(false);
     }
   };
@@ -483,6 +490,8 @@ export default function OnboardingScreen() {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      <Dialog />
     </SafeAreaView>
   );
 }
