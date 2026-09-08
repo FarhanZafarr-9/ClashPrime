@@ -284,6 +284,26 @@ export async function dismissReminder(accountTag: string, id: string): Promise<v
   await saveReminders(accountTag, reminders);
 }
 
+// Replace an existing reminder with a fresh countdown (same id), used when the
+// user edits a timer or resets an expired one. Resets createdAt so the ongoing
+// notification's progress reflects the new duration.
+export async function updateReminder(accountTag: string, id: string, label: string, durationMinutes: number): Promise<void> {
+  const reminders = await getReminders(accountTag);
+  const idx = reminders.findIndex((r) => r.id === id);
+  if (idx === -1) return;
+  const now = Date.now();
+  reminders[idx] = {
+    id,
+    label,
+    targetDate: new Date(now + durationMinutes * 60_000).toISOString(),
+    createdAt: new Date(now).toISOString(),
+    status: 'active',
+  };
+  await saveReminders(accountTag, reminders);
+
+  await requestPermission();
+}
+
 export async function markExpiredReminders(accountTag: string): Promise<TimerReminder[]> {
   const reminders = await getReminders(accountTag);
   const now = Date.now();

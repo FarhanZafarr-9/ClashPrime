@@ -4,6 +4,7 @@ import { TimerReminder } from '../types/clash';
 import {
   createReminder,
   dismissReminder as dismissFromStorage,
+  updateReminder as updateFromStorage,
   markExpiredReminders,
   rescheduleReminders,
   migrateLegacyReminders,
@@ -17,6 +18,7 @@ import { usePlayer } from './usePlayerContext';
 interface TimerContextValue {
   reminders: TimerReminder[];
   addTimer: (label: string, durationMinutes: number) => Promise<void>;
+  updateTimer: (id: string, label: string, durationMinutes: number) => Promise<void>;
   dismissTimer: (id: string) => Promise<void>;
   hasPermission: boolean;
 }
@@ -24,6 +26,7 @@ interface TimerContextValue {
 const TimerContext = createContext<TimerContextValue>({
   reminders: [],
   addTimer: async () => {},
+  updateTimer: async () => {},
   dismissTimer: async () => {},
   hasPermission: false,
 });
@@ -87,13 +90,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     await reload(tagRef.current);
   }, [reload]);
 
+  const updateTimer = useCallback(async (id: string, label: string, durationMinutes: number) => {
+    await updateFromStorage(tagRef.current, id, label, durationMinutes);
+    await reload(tagRef.current);
+  }, [reload]);
+
   const dismissTimer = useCallback(async (id: string) => {
     await dismissFromStorage(tagRef.current, id);
     await reload(tagRef.current);
   }, [reload]);
 
   return (
-    <TimerContext.Provider value={{ reminders, addTimer, dismissTimer, hasPermission }}>
+    <TimerContext.Provider value={{ reminders, addTimer, updateTimer, dismissTimer, hasPermission }}>
       {children}
     </TimerContext.Provider>
   );

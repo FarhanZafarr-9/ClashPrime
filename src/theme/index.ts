@@ -19,6 +19,7 @@ export const DarkColors = {
   accentSubtle: 'rgba(255,255,255,0.08)',
   accentGhost: 'rgba(255,255,255,0.04)',
   success: '#A0A0A0',
+  successGhost: 'rgba(255,255,255,0.06)',
   warning: '#D4A359', // Premium gold theme color
   destructive: '#666666',
   overlay: 'rgba(0,0,0,0.6)',
@@ -42,6 +43,7 @@ export const LightColors = {
   accentSubtle: 'rgba(0,0,0,0.06)',
   accentGhost: 'rgba(0,0,0,0.03)',
   success: '#34C759',
+  successGhost: 'rgba(52,199,89,0.12)',
   warning: '#D4A359', // Premium gold theme color
   destructive: '#FF3B30',
   overlay: 'rgba(0,0,0,0.4)',
