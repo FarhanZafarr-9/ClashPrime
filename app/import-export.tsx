@@ -60,6 +60,7 @@ export default function ImportExportScreen() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CocImportResult | null>(null);
   const [exportTag, setExportTag] = useState<string | null>(null);
+  const [markInProgressDone, setMarkInProgressDone] = useState(false);
 
   const handleParse = (raw: string) => {
     const parsed = parseCocExport(raw);
@@ -93,12 +94,14 @@ export default function ImportExportScreen() {
   const targetAccount = exportTag
     ? accounts.find((a) => a.tag.toUpperCase() === exportTag) ?? null
     : null;
-  const targetIsActive = targetAccount?.tag === player?.tag;
+  const targetIsActive = targetAccount !== null && exportTag !== null
+    && targetAccount.tag.toUpperCase() === player?.tag?.toUpperCase();
   const tagUnattached = exportTag !== null && targetAccount === null;
 
-  // Actual upgrades the import would perform: only buildings whose imported
-  // level is higher than their current per-copy level. Each copy is upgraded
-  // independently, and time/cost come straight from the package data.
+  // Actual upgrades the import would perform. Each building keeps its per-copy
+  // imported levels — a copy is only "upgraded" when its imported level is higher
+  // than the current level of the same copy slot — so mixed-level buildings
+  // (e.g. 2× Lv12 + 2× Lv13 cannons) upgrade only the lagging copies.
   const upgradeRows = useMemo(() => {
     if (!player || !result) return [];
     const th = player.townHallLevel ?? 0;
@@ -108,7 +111,10 @@ export default function ImportExportScreen() {
       currentLevel: number;
       targetLevel: number;
       copies: number;
-      levels: number[];
+      currentLevels: number[];
+      targetLevels: number[];
+      changed: number;
+      pairs: { c: number; t: number; timeSec: number; cost: number; byResource: Record<string, number> }[];
       timeSec: number;
       cost: number;
       byResource: Record<string, number>;
@@ -117,8 +123,25 @@ export default function ImportExportScreen() {
       const effectiveMax = getBuildingEffectiveMax(item.storeName, th);
       if (effectiveMax <= 0) continue;
       const count = getCountAtTH(item.storeName, th);
-      const targetLevel = Math.min(item.level, effectiveMax);
-      const copies = getBuildingCopies(
+      // Timer rows describe copies that are mid-upgrade at `lvl`. When the user
+      // opts to treat them as done, those copies import at `lvl + 1` instead.
+      let importedLevels = [...item.levels].map((l) => Math.min(l, effectiveMax));
+      if (markInProgressDone && item.timerRows.length > 0) {
+        const bump = new Map<number, number>();
+        for (const t of item.timerRows) bump.set(t.level, (bump.get(t.level) ?? 0) + 1);
+        const remaining = new Map(bump);
+        importedLevels = importedLevels
+          .sort((a, b) => b - a)
+          .map((lvl) => {
+            const need = remaining.get(lvl);
+            if (need && need > 0) {
+              remaining.set(lvl, need - 1);
+              return Math.min(lvl + 1, effectiveMax);
+            }
+            return lvl;
+          });
+      }
+      const copiesInfo = getBuildingCopies(
         item.storeName,
         player.buildingLevels,
         player.buildings,
@@ -127,24 +150,48 @@ export default function ImportExportScreen() {
         player.lastMaxedTH,
         th,
       );
-      const highestCurrent = copies.levels.length > 0 ? Math.max(...copies.levels) : 0;
-      if (targetLevel <= highestCurrent) continue;
-      const ct = buildingUpgradeCosts(item.storeName, copies.levels, targetLevel);
-      if (ct.time <= 0 && ct.cost <= 0) continue;
+      const current = copiesInfo.levels.map((l) => (l > 0 ? Math.min(l, effectiveMax) : 1));
+      const currentArr = [...current].sort((a, b) => b - a);
+      const slotCount = Math.min(importedLevels.length, currentArr.length);
+      const targetLevels = [...currentArr];
+      const pairs: { c: number; t: number; timeSec: number; cost: number; byResource: Record<string, number> }[] = [];
+      let changed = 0;
+      let timeSec = 0;
+      let cost = 0;
+      const byResource: Record<string, number> = {};
+      for (let i = 0; i < slotCount; i++) {
+        const t = importedLevels[i];
+        const c = currentArr[i];
+        if (t > c) {
+          const ct = buildingUpgradeCosts(item.storeName, [c], t);
+          changed++;
+          timeSec += ct.time;
+          cost += ct.cost;
+          for (const [res, v] of Object.entries(ct.byResource ?? {})) {
+            byResource[res] = (byResource[res] ?? 0) + v;
+          }
+          targetLevels[i] = t;
+          pairs.push({ c, t, timeSec: ct.time, cost: ct.cost, byResource: ct.byResource ?? {} });
+        }
+      }
+      if (changed === 0) continue;
       rows.push({
         storeName: item.storeName,
         displayName: item.displayName,
-        currentLevel: highestCurrent,
-        targetLevel,
+        currentLevel: currentArr[0] ?? 0,
+        targetLevel: Math.max(...targetLevels),
         copies: count,
-        levels: copies.levels,
-        timeSec: ct.time,
-        cost: ct.cost,
-        byResource: ct.byResource ?? {},
+        currentLevels: currentArr,
+        targetLevels,
+        changed,
+        pairs,
+        timeSec,
+        cost,
+        byResource,
       });
     }
     return rows.sort((a, b) => b.timeSec - a.timeSec);
-  }, [player, result]);
+  }, [player, result, markInProgressDone]);
 
   // Builders pipeline for the upgrades: chain-scheduled time + per-resource costs.
   const upgradePipeline = useMemo(() => {
@@ -152,9 +199,15 @@ export default function ImportExportScreen() {
     const ct = sumCosts(
       upgradeRows.map((r) => ({ cost: r.cost, time: r.timeSec, hasData: true, byResource: r.byResource })),
     );
-    const chains = upgradeRows.flatMap((r) =>
-      buildingUpgradeChainTimes(r.storeName, r.levels, r.targetLevel),
-    );
+    const chains = upgradeRows.flatMap((r) => {
+      const chainsForRow: number[] = [];
+      for (let i = 0; i < r.currentLevels.length; i++) {
+        if (r.targetLevels[i] > r.currentLevels[i]) {
+          chainsForRow.push(...buildingUpgradeChainTimes(r.storeName, [r.currentLevels[i]], r.targetLevels[i]));
+        }
+      }
+      return chainsForRow;
+    });
     return {
       timeSec: scheduleChains(chains, builderCount),
       cost: ct.cost,
@@ -163,25 +216,90 @@ export default function ImportExportScreen() {
   }, [upgradeRows, builderCount]);
 
   const applyCount = upgradeRows.length;
-  const canApply = applyCount > 0 && !!player;
+  const totalChanged = upgradeRows.reduce((s, r) => s + r.changed, 0);
 
-  const doApply = (tag: string) => {
+  // Flatten each building into one row per distinct level transition so the list
+  // reads cleanly when copies upgrade across different levels. Each variant keeps
+  // its own count and summed cost/time.
+  const variantRows = useMemo(() => {
+    const rows: {
+      key: string;
+      storeName: string;
+      displayName: string;
+      c: number;
+      t: number;
+      count: number;
+      timeSec: number;
+      cost: number;
+      byResource: Record<string, number>;
+    }[] = [];
+    for (const r of upgradeRows) {
+      const group = new Map<string, { c: number; t: number; count: number; timeSec: number; cost: number; byResource: Record<string, number> }>();
+      for (const p of r.pairs) {
+        const key = `${p.c}->${p.t}`;
+        const cur = group.get(key);
+        if (cur) {
+          cur.count += 1;
+          cur.timeSec += p.timeSec;
+          cur.cost += p.cost;
+          for (const [res, v] of Object.entries(p.byResource)) {
+            cur.byResource[res] = (cur.byResource[res] ?? 0) + v;
+          }
+        } else {
+          group.set(key, { c: p.c, t: p.t, count: 1, timeSec: p.timeSec, cost: p.cost, byResource: { ...p.byResource } });
+        }
+      }
+      for (const [key, g] of group) {
+        rows.push({ key: `${r.storeName}|${key}`, storeName: r.storeName, displayName: r.displayName, ...g });
+      }
+    }
+    return rows.sort((a, b) => b.timeSec - a.timeSec);
+  }, [upgradeRows]);
+
+  // Copies with an in-progress upgrade (timer rows in the export), showing the
+  // current level, the upcoming level and time left.
+  const upgradingRows = useMemo(() => {
+    if (!result) return [];
+    const byKey = new Map<string, { storeName: string; displayName: string; level: number; remainingSec: number; copies: number }>();
+    for (const item of result.resolved) {
+      for (const t of item.timerRows) {
+        const key = `${item.storeName}|${t.level}`;
+        const prev = byKey.get(key);
+        if (prev) {
+          prev.copies += 1;
+          prev.remainingSec = Math.min(prev.remainingSec, t.remainingSec);
+        } else {
+          byKey.set(key, {
+            storeName: item.storeName,
+            displayName: item.displayName,
+            level: t.level,
+            remainingSec: t.remainingSec,
+            copies: 1,
+          });
+        }
+      }
+    }
+    return [...byKey.values()].sort((a, b) => b.remainingSec - a.remainingSec);
+  }, [result]);
+  const canApply = applyCount > 0 && totalChanged > 0 && !!player;
+
+  const doApply = async (tag: string) => {
     if (!result || !player) return;
     const th = player.townHallLevel ?? 12;
     const perBuilding = upgradeRows.map((row) => ({
       name: row.storeName,
-      levels: new Array(Math.max(row.copies, 1)).fill(row.targetLevel),
+      levels: [...row.targetLevels],
       maxLevel: getBuildingEffectiveMax(row.storeName, th),
     }));
     const levels: Record<string, number> = {};
-    for (const row of upgradeRows) levels[row.storeName] = row.targetLevel;
-    if (tag === player.tag) {
+    for (const row of upgradeRows) levels[row.storeName] = Math.max(...row.targetLevels);
+    if (tag.toUpperCase() === player.tag.toUpperCase()) {
       setBulkLevels(levels, perBuilding);
       router.back();
       return;
     }
-    const target = accounts.find((a) => a.tag === tag);
-    applyLevelsToAccount(tag, levels, perBuilding);
+    const target = accounts.find((a) => a.tag.toUpperCase() === tag.toUpperCase());
+    await applyLevelsToAccount(tag, levels, perBuilding);
     show({
       title: 'Levels applied',
       message: `Building levels were saved to ${target?.name || tag}. Switch to that account to see them.`,
@@ -207,8 +325,8 @@ export default function ImportExportScreen() {
     show({
       title: 'Apply imported levels?',
       message: forActive
-        ? `Set ${applyCount} building level${applyCount === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept.`
-        : `Set ${applyCount} building level${applyCount === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). This account is not active right now — the levels are saved to its cache.`,
+        ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept.`
+        : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). This account is not active right now — the levels are saved to its cache.`,
       actions: [
         { label: 'Cancel', onPress: () => {} },
         { label: 'Apply', primary: true, onPress: () => doApply(targetTag) },
@@ -303,7 +421,7 @@ export default function ImportExportScreen() {
                           : `${player?.name ?? 'active account'} (active)`,
                       warning: tagUnattached,
                     },
-                    { key: 'matched', icon: 'checkmark-done-outline' as const, label: 'Buildings to upgrade', value: String(upgradeRows.length) },
+                    { key: 'matched', icon: 'checkmark-done-outline' as const, label: 'Copies to upgrade', value: `${totalChanged} in ${upgradeRows.length} building${upgradeRows.length === 1 ? '' : 's'}` },
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
                     { key: 'unknown', icon: 'help-circle-outline' as const, label: 'Unknown IDs', value: String(result.unresolved.length), warning: result.unresolved.length > 0 },
                   ];
@@ -326,6 +444,45 @@ export default function ImportExportScreen() {
                   ));
                 })()}
               </View>
+
+              {upgradingRows.length > 0 ? (
+                <>
+                  <Text style={styles.sectionTitle}>Upgrading now</Text>
+                  <View style={styles.upgradeList}>
+                    {upgradingRows.map((u, i) => (
+                      <View
+                        key={`${u.storeName}-${u.level}`}
+                        style={[
+                          styles.upgradeRow,
+                          { backgroundColor: colors.bgCard },
+                          i === 0 && styles.upgradeRowFirst,
+                          i === upgradingRows.length - 1 && styles.upgradeRowLast,
+                        ]}
+                      >
+                        <BuildingRowIcon storeName={u.storeName} level={u.level + 1} />
+                        <View style={styles.upgradeText}>
+                          <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
+                          <Text style={styles.upgradeSub} numberOfLines={2}>
+                            {u.copies > 1 ? `×${u.copies} ` : ''}Lv {u.level} → Lv {u.level + 1} · {formatTimeShort(u.remainingSec)} left
+                          </Text>
+                        </View>
+                        <View style={styles.upgradeRight}>
+                          <Text style={[styles.upgradeTime, { color: Colors.warning }]}>in progress</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                  <PressableRipple
+                    style={[styles.doneRow, { backgroundColor: colors.bgCard }]}
+                    onPress={() => setMarkInProgressDone((v) => !v)}
+                  >
+                    <View style={[styles.doneCheck, { borderColor: colors.border }]}>
+                      {markInProgressDone ? <Ionicons name="checkmark" size={14} color={Colors.success} /> : null}
+                    </View>
+                    <Text style={styles.doneLabel}>Treat upgrades in progress as completed (Lv +1)</Text>
+                  </PressableRipple>
+                </>
+              ) : null}
 
               {upgradePipeline ? (
                 <>
@@ -384,21 +541,21 @@ export default function ImportExportScreen() {
 
                   <Text style={styles.sectionTitle}>Upgrades</Text>
                   <View style={styles.upgradeList}>
-                    {upgradeRows.map((u, i) => (
+                    {variantRows.map((u, i) => (
                       <View
-                        key={u.storeName}
+                        key={u.key}
                         style={[
                           styles.upgradeRow,
                           { backgroundColor: colors.bgCard },
                           i === 0 && styles.upgradeRowFirst,
-                          i === upgradeRows.length - 1 && styles.upgradeRowLast,
+                          i === variantRows.length - 1 && styles.upgradeRowLast,
                         ]}
                       >
-                        <BuildingRowIcon storeName={u.storeName} level={u.targetLevel} />
+                        <BuildingRowIcon storeName={u.storeName} level={u.t} />
                         <View style={styles.upgradeText}>
                           <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
-                          <Text style={styles.upgradeSub}>
-                            Lv {u.currentLevel} → Lv {u.targetLevel} · ×{u.copies}
+                          <Text style={styles.upgradeSub} numberOfLines={2}>
+                            Lv {u.c} → Lv {u.t}{u.count > 1 ? ` ×${u.count}` : ''}
                           </Text>
                         </View>
                         <View style={styles.upgradeRight}>
@@ -816,6 +973,27 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 2,
     maxWidth: 130,
+  },
+  doneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.base,
+    borderRadius: Radius.sm,
+  },
+  doneCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneLabel: {
+    flex: 1,
+    ...Typography.subhead,
+    color: Colors.textPrimary,
   },
   upgradeTime: {
     ...Typography.subhead,
