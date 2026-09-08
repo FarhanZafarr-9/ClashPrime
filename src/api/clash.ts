@@ -17,23 +17,23 @@ export class ClashAPIError extends Error {
 
 function friendlyStatusMessage(status: number, reason?: string, body?: string): string {
   if (reason === 'accessDenied') {
-    return 'Access denied. Your API token may be invalid or lack permission, or the clan\u2019s war log may be private or unavailable (e.g. fewer than 5 recorded wars).';
+    return 'Access denied. Your API token may lack permission for this clan, or its war log is private (war logs become public after roughly 5 recorded wars).';
   }
   if (reason === 'notFound') {
-    return 'Not found. The clan tag may be invalid or this resource does not exist.';
+    return 'Not found. Check the player or clan tag — it may be incorrect, or this data is no longer available.';
   }
   switch (status) {
     case 0:
-      return 'Couldn\'t reach the Clash of Clans servers. Check your connection and try again.';
+      return 'Couldn\u2019t reach the Clash of Clans servers. Check your connection and try again.';
     case 403:
-      return 'Access denied. Your API token may be invalid or lack permission, or this clan\u2019s war data may be private or unavailable.';
+      return 'Access denied. Verify your API token in Settings, confirm the account has the right permissions, and whitelist IP 45.79.218.79 (the app uses a proxy).';
     case 404:
-      return 'Not found. The clan tag may be invalid or this resource no longer exists.';
+      return 'Not found. The player or clan tag may be wrong, or this account\u2019s data has changed.';
     case 429:
-      return 'Rate limited. Too many requests — wait a moment and pull to refresh.';
+      return 'Rate limited. Too many requests in a short time — wait a minute, then pull to refresh.';
     case 502:
     case 503:
-      return 'The Clash of Clans API is temporarily unavailable. Try again shortly.';
+      return 'The Clash of Clans API is temporarily unavailable (maintenance or overload). Give it a moment and try again.';
     default:
       break;
   }
