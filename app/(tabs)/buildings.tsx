@@ -36,9 +36,11 @@ import type { BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 
 import { useDiscounts } from '../../src/hooks/useDiscounts';
+import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useDialog } from '../../src/components/AlertDialog';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
+import { buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
 import BottomSheet from '../../src/components/BottomSheet';
 
 const COL_ABBREV: Record<string, string> = {
@@ -722,6 +724,7 @@ function BuildingCollapsibleSection({
   const [showAllLevels, setShowAllLevels] = useState(false);
   const [tableViewportW, setTableViewportW] = useState(0);
   const { setBuildingCopies } = usePlayer();
+  const { count: builderCount } = useBuilderCount();
   const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
   const totalMax = copies.levels.length * effectiveMax;
   const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
@@ -882,6 +885,16 @@ function BuildingCollapsibleSection({
     return { remainingLevels, totalCost, totalTime, byResource };
   }, [title, copies, effectiveMax, buildingStats]);
 
+  // Wall-clock time to finish all remaining levels across every copy, using the
+  // chosen builder count. Per-copy serial chains are LPT bin-packed across the
+  // builders, yielding the makespan — a naive total/builders is wrong because a
+  // single long chain can't be split across builders.
+  const distributedTime = useMemo(() => {
+    if (builderCount <= 1) return aggregate.totalTime;
+    const chains = buildingUpgradeChainTimes(NAME_FIX[title] ?? title, copies.levels, effectiveMax);
+    if (chains.length === 0) return 0;
+    return scheduleChains(chains, builderCount);
+  }, [builderCount, aggregate.totalTime, title, copies.levels, effectiveMax]);
   const hasRemaining = aggregate.remainingLevels > 0 && aggregate.totalCost > 0;
 
   // Merged level grid + stats table across every copy. Concise state shows a
@@ -972,6 +985,9 @@ function BuildingCollapsibleSection({
                     <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Remaining</Text>
                     <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Cost</Text>
                     <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Time</Text>
+                    {builderCount > 0 && (
+                      <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Distributed</Text>
+                    )}
                   </View>
                   <View style={styles.remainingTotalRow}>
                     <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
@@ -981,6 +997,11 @@ function BuildingCollapsibleSection({
                     <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
                       {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
                     </Text>
+                    {builderCount > 0 && (
+                      <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
+                        {showDiscounted ? applyTimeDiscount(fmtTime(distributedTime), discounts) : fmtTime(distributedTime)}
+                      </Text>
+                    )}
                   </View>
                 </View>
               )}
@@ -1705,6 +1726,7 @@ const styles = StyleSheet.create({
   itemCardTouchable: {
     flex: 1,
     paddingVertical: Spacing.sm,
+    paddingLeft: Spacing.md,
   },
   itemRow: {
     flexDirection: 'row',
@@ -2148,7 +2170,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buildingSectionBadge: {
-    width: 32,
+    minWidth: 32,
     height: 32,
     borderRadius: Radius.sm,
     backgroundColor: Colors.border,
