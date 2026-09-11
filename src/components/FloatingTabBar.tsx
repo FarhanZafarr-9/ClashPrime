@@ -13,13 +13,14 @@ type IconDef = { set: 'ion' | 'mc'; name: string };
  * 'search' is a pseudo-entry: it pushes the /player route instead of switching tabs. */
 const TAB_GROUPS: string[][] = [
   ['index', 'army', 'buildings', 'maxtime', 'events'],
-  ['settings', 'bases', 'armies', 'war', 'search'],
-  ['saved', 'achievements'],
+  ['hero-journey', 'bases', 'armies', 'war', 'search'],
+  ['settings', 'saved', 'achievements'],
 ];
 
 const TAB_ICONS: Record<string, IconDef> = {
   index: { set: 'ion', name: 'home' },
   army: { set: 'mc', name: 'sword-cross' },
+  'hero-journey': { set: 'mc', name: 'shield-crown' },
   buildings: { set: 'mc', name: 'castle' },
   maxtime: { set: 'ion', name: 'analytics-outline' },
   events: { set: 'ion', name: 'calendar-outline' },

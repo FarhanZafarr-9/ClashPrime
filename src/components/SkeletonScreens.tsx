@@ -563,6 +563,64 @@ export function ArmiesScreenSkeleton() {
   );
 }
 
+// ─── Hero Journey tab skeleton ────────────────────────────────────────────────
+export function HeroJourneyScreenSkeleton() {
+  const { colors } = useTheme();
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={{ flex: 1, paddingBottom: 64 }}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Skeleton width={150} height={24} borderRadius={6} />
+          <Skeleton width={230} height={13} borderRadius={4} />
+        </View>
+        {/* Summary card */}
+        <View style={[styles.heroJourneySummaryCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+              <Skeleton width={56} height={40} borderRadius={8} />
+              <View style={{ gap: 4 }}>
+                <Skeleton width={84} height={11} borderRadius={3} />
+                <Skeleton width={110} height={11} borderRadius={3} />
+              </View>
+            </View>
+            <Skeleton width={48} height={24} borderRadius={12} />
+          </View>
+          <Skeleton width="100%" height={6} borderRadius={3} />
+          <Skeleton width="70%" height={11} borderRadius={3} />
+          <View style={{ flexDirection: 'row', gap: Spacing.xs, marginTop: 4 }}>
+            <Skeleton width={90} height={20} borderRadius={10} />
+            <Skeleton width={100} height={20} borderRadius={10} />
+          </View>
+        </View>
+        {/* Filter chips */}
+        <View style={styles.heroJourneyFilterSkeleton}>
+          {[0, 1, 2, 3, 4, 5].map((c) => (
+            <Skeleton key={c} width={c === 0 ? 44 : 66} height={28} borderRadius={14} />
+          ))}
+        </View>
+        {/* Timeline nodes */}
+        {[0, 1, 2, 3].map((t) => (
+          <View key={t} style={styles.heroJourneyNodeRow}>
+            <View style={styles.heroJourneyRail}>
+              <Skeleton width={30} height={30} borderRadius={15} />
+              {t < 3 && <Skeleton width={2} height="100%" borderRadius={1} />}
+            </View>
+            <View style={[styles.heroJourneyNodeCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <Skeleton width={32} height={32} borderRadius={Radius.sm} />
+              <View style={{ flex: 1, gap: 5 }}>
+                <Skeleton width="55%" height={12} borderRadius={3} />
+                <Skeleton width="35%" height={10} borderRadius={3} />
+                <Skeleton width="45%" height={10} borderRadius={3} />
+              </View>
+            </View>
+          </View>
+        ))}
+      </View>
+    </SafeAreaView>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -783,5 +841,43 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     paddingTop: Spacing.sm,
     marginTop: Spacing.sm,
+  },
+  heroJourneySummaryCard: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+    padding: Spacing.base,
+    borderRadius: Radius.xxl,
+    borderWidth: 0.75,
+    gap: Spacing.sm,
+  },
+  heroJourneyFilterSkeleton: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  heroJourneyNodeRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    paddingHorizontal: Spacing.base,
+  },
+  heroJourneyRail: {
+    width: 40,
+    alignItems: 'center',
+    gap: 6,
+    paddingBottom: Spacing.sm,
+    justifyContent: 'flex-start',
+  },
+  heroJourneyNodeCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    marginLeft: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
   },
 });
