@@ -1,4 +1,4 @@
-import { home, builder } from 'clash-of-clans-data';
+import { home, builder, magicItems as magicItemsApi } from 'clash-of-clans-data';
 import { writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -138,6 +138,19 @@ const resourceFiles = [
   ['Starry Ore', 'ore/starry-ore'],
 ];
 
+// Magic items are exposed via magicItems() with per-type queries (books/hammers/potions/snacks/utilities).
+const magicItemEntries = [];
+{
+  const groups = magicItemsApi();
+  for (const g of ['books', 'hammers', 'potions', 'snacks', 'utilities']) {
+    for (const it of groups[g]().get()) {
+      if (it.image && !magicItemEntries.some((e) => e.name === it.name)) {
+        magicItemEntries.push({ name: it.name, image: it.image });
+      }
+    }
+  }
+}
+
 async function req(p) {
   if (!p) return '0';
   const localPath = await ensureWebp(p);
@@ -180,8 +193,15 @@ async function generate() {
   lines.push('};');
   lines.push('');
 
+  lines.push('export const PACKAGE_MAGIC_ITEM_IMAGES: Record<string, number> = {');
+  for (const e of magicItemEntries) {
+    lines.push(`  ${JSON.stringify(e.name)}: ${await req(e.image)},`);
+  }
+  lines.push('};');
+  lines.push('');
+
   writeFileSync(outPath, lines.join('\n'));
-  console.log(`Wrote ${outPath} (${homeEntries.length} home + ${builderEntries.length} builder items)`);
+  console.log(`Wrote ${outPath} (${homeEntries.length} home + ${builderEntries.length} builder items, ${magicItemEntries.length} magic items)`);
 }
 
 generate().catch((err) => { console.error(err); process.exit(1); });
