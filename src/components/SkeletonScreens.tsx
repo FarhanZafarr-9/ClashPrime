@@ -569,53 +569,109 @@ export function HeroJourneyScreenSkeleton() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={{ flex: 1, paddingBottom: 64 }}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Skeleton width={150} height={24} borderRadius={6} />
-          <Skeleton width={230} height={13} borderRadius={4} />
+        {/* Header + refresh */}
+        <View style={styles.heroJourneyHeader}>
+          <View style={styles.heroJourneyHeaderLeft}>
+            <Skeleton width={150} height={34} borderRadius={8} />
+            <Skeleton width={230} height={13} borderRadius={4} />
+          </View>
+          <Skeleton width={36} height={36} borderRadius={Radius.md} />
         </View>
+
         {/* Summary card */}
         <View style={[styles.heroJourneySummaryCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-              <Skeleton width={56} height={40} borderRadius={8} />
+          <View style={styles.heroJourneySummaryLevelRow}>
+            <View style={styles.heroJourneySummaryLevelGroup}>
+              <Skeleton width={52} height={34} borderRadius={Radius.sm} />
               <View style={{ gap: 4 }}>
                 <Skeleton width={84} height={11} borderRadius={3} />
-                <Skeleton width={110} height={11} borderRadius={3} />
+                <Skeleton width={150} height={11} borderRadius={3} />
               </View>
             </View>
-            <Skeleton width={48} height={24} borderRadius={12} />
+            <Skeleton width={56} height={26} borderRadius={Radius.full} />
           </View>
-          <Skeleton width="100%" height={6} borderRadius={3} />
-          <Skeleton width="70%" height={11} borderRadius={3} />
-          <View style={{ flexDirection: 'row', gap: Spacing.xs, marginTop: 4 }}>
-            <Skeleton width={90} height={20} borderRadius={10} />
-            <Skeleton width={100} height={20} borderRadius={10} />
+          <View style={{ gap: 4 }}>
+            <Skeleton width="100%" height={6} borderRadius={3} />
+            <Skeleton width="70%" height={11} borderRadius={3} />
+          </View>
+          <View style={[styles.heroJourneyNextCard, { backgroundColor: colors.bgSubtle }]}>
+            <Skeleton width={15} height={15} borderRadius={4} />
+            <Skeleton width="78%" height={12} borderRadius={3} />
+          </View>
+          <View style={styles.heroJourneyChips}>
+            <Skeleton width={104} height={20} borderRadius={Radius.full} />
+            <Skeleton width={108} height={20} borderRadius={Radius.full} />
           </View>
         </View>
-        {/* Filter chips */}
-        <View style={styles.heroJourneyFilterSkeleton}>
-          {[0, 1, 2, 3, 4, 5].map((c) => (
-            <Skeleton key={c} width={c === 0 ? 44 : 66} height={28} borderRadius={14} />
+
+        {/* Filter chips + scroll-to-current */}
+        <View style={styles.heroJourneyFilterRow}>
+          <View style={styles.heroJourneyFilterChips}>
+            {[0, 1, 2, 3, 4].map((c) => (
+              <Skeleton key={c} width={c === 0 ? 44 : 66} height={28} borderRadius={Radius.full} />
+            ))}
+          </View>
+          <Skeleton width={30} height={30} borderRadius={Radius.full} />
+        </View>
+
+        {/* Timeline: expanded section + collapsed section headers */}
+        <View style={styles.heroJourneyTimeline}>
+          {/* Expanded section header (isFirst — top rounding) */}
+          <View style={[styles.heroJourneySection, styles.heroJourneySectionFirst, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.sm} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Skeleton width={90} height={14} borderRadius={3} />
+              <Skeleton width={130} height={12} borderRadius={3} />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <Skeleton width={36} height={26} borderRadius={Radius.sm} />
+              <Skeleton width={16} height={16} borderRadius={8} />
+            </View>
+          </View>
+          {/* Expanded body rows */}
+          {[0, 1, 2].map((r) => (
+            <View
+              key={r}
+              style={[
+                styles.heroJourneyMilestoneRow,
+                r === 2 && styles.heroJourneyMilestoneRowLast,
+                { backgroundColor: colors.bgCard, borderColor: colors.border },
+              ]}
+            >
+              <Skeleton width={34} height={34} borderRadius={Radius.md} />
+              <View style={styles.heroJourneyMilestoneIcon}>
+                <Skeleton width={22} height={22} borderRadius={5} />
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="60%" height={12} borderRadius={3} />
+                <Skeleton width="42%" height={10} borderRadius={3} />
+              </View>
+            </View>
+          ))}
+          <View style={[styles.heroJourneySeparator, { borderTopColor: colors.border }]} />
+
+          {/* Collapsed section headers */}
+          {[0, 1].map((s) => (
+            <View
+              key={s}
+              style={[
+                styles.heroJourneySection,
+                s === 1 && styles.heroJourneySectionLast,
+                { backgroundColor: colors.bgCard, borderColor: colors.border },
+              ]}
+            >
+              <Skeleton width={32} height={32} borderRadius={Radius.sm} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width={90} height={14} borderRadius={3} />
+                <Skeleton width={130} height={12} borderRadius={3} />
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                <Skeleton width={36} height={26} borderRadius={Radius.sm} />
+                <Skeleton width={16} height={16} borderRadius={8} />
+              </View>
+            </View>
           ))}
         </View>
-        {/* Timeline nodes */}
-        {[0, 1, 2, 3].map((t) => (
-          <View key={t} style={styles.heroJourneyNodeRow}>
-            <View style={styles.heroJourneyRail}>
-              <Skeleton width={30} height={30} borderRadius={15} />
-              {t < 3 && <Skeleton width={2} height="100%" borderRadius={1} />}
-            </View>
-            <View style={[styles.heroJourneyNodeCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Skeleton width={32} height={32} borderRadius={Radius.sm} />
-              <View style={{ flex: 1, gap: 5 }}>
-                <Skeleton width="55%" height={12} borderRadius={3} />
-                <Skeleton width="35%" height={10} borderRadius={3} />
-                <Skeleton width="45%" height={10} borderRadius={3} />
-              </View>
-            </View>
-          </View>
-        ))}
       </View>
     </SafeAreaView>
   );
@@ -842,42 +898,103 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     marginTop: Spacing.sm,
   },
+  heroJourneyHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  heroJourneyHeaderLeft: {
+    flex: 1,
+    gap: 6,
+  },
   heroJourneySummaryCard: {
     marginHorizontal: Spacing.base,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.base,
     padding: Spacing.base,
     borderRadius: Radius.xxl,
     borderWidth: 0.75,
     gap: Spacing.sm,
   },
-  heroJourneyFilterSkeleton: {
+  heroJourneySummaryLevelRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroJourneySummaryLevelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  heroJourneyNextCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  heroJourneyChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  heroJourneyFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  heroJourneyNodeRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    paddingHorizontal: Spacing.base,
-  },
-  heroJourneyRail: {
-    width: 40,
-    alignItems: 'center',
-    gap: 6,
-    paddingBottom: Spacing.sm,
-    justifyContent: 'flex-start',
-  },
-  heroJourneyNodeCard: {
+  heroJourneyFilterChips: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'flex-start',
     gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
+  },
+  heroJourneyTimeline: {
+    paddingHorizontal: Spacing.base,
+  },
+  heroJourneySection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.base,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
-    marginLeft: Spacing.sm,
-    marginBottom: Spacing.sm,
-    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
+  },
+  heroJourneySectionFirst: {
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
+  },
+  heroJourneySectionLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
+  },
+  heroJourneyMilestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  heroJourneyMilestoneRowLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
+  },
+  heroJourneyMilestoneIcon: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroJourneySeparator: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.sm,
+    marginHorizontal: Spacing.lg,
   },
 });
