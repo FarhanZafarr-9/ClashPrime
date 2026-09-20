@@ -31,6 +31,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "10": require('../../assets/package-images/images/home/troops/barbarian/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/troops/barbarian/normal/level-11.webp'),
       "12": require('../../assets/package-images/images/home/troops/barbarian/normal/level-12.webp'),
+      "13": require('../../assets/package-images/images/home/troops/barbarian/normal/level-13.webp'),
     },
   },
   "Super Barbarian": {
@@ -51,6 +52,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "3": require('../../assets/package-images/images/home/troops/druid/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/troops/druid/normal/level-3.webp'),
       "5": require('../../assets/package-images/images/home/troops/druid/normal/level-5.webp'),
+      "6": require('../../assets/package-images/images/home/troops/druid/normal/level-6.webp'),
     },
   },
   "Furnace": {
@@ -135,6 +137,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "7": require('../../assets/package-images/images/home/troops/goblin/normal/level-7.webp'),
       "8": require('../../assets/package-images/images/home/troops/goblin/normal/level-8.webp'),
       "9": require('../../assets/package-images/images/home/troops/goblin/normal/level-9.webp'),
+      "10": require('../../assets/package-images/images/home/troops/goblin/normal/level-10.webp'),
     },
   },
   "Sneaky Goblin": {
@@ -162,6 +165,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "12": require('../../assets/package-images/images/home/troops/golem/normal/level-12.webp'),
       "13": require('../../assets/package-images/images/home/troops/golem/normal/level-13.webp'),
       "14": require('../../assets/package-images/images/home/troops/golem/normal/level-14.webp'),
+      "15": require('../../assets/package-images/images/home/troops/golem/normal/level-15.webp'),
     },
   },
   "Wall Breaker": {
@@ -211,6 +215,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "10": require('../../assets/package-images/images/home/troops/balloon/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/troops/balloon/normal/level-11.webp'),
       "12": require('../../assets/package-images/images/home/troops/balloon/normal/level-12.webp'),
+      "13": require('../../assets/package-images/images/home/troops/balloon/normal/level-13.webp'),
     },
   },
   "Rocket Balloon": {
@@ -284,6 +289,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "10": require('../../assets/package-images/images/home/troops/dragon/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/troops/dragon/normal/level-11.webp'),
       "12": require('../../assets/package-images/images/home/troops/dragon/normal/level-12.webp'),
+      "13": require('../../assets/package-images/images/home/troops/dragon/normal/level-13.webp'),
     },
   },
   "Super Dragon": {
@@ -408,6 +414,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "5": require('../../assets/package-images/images/home/troops/yeti/normal/level-5.webp'),
       "6": require('../../assets/package-images/images/home/troops/yeti/normal/level-6.webp'),
       "7": require('../../assets/package-images/images/home/troops/yeti/normal/level-7.webp'),
+      "8": require('../../assets/package-images/images/home/troops/yeti/normal/level-8.webp'),
     },
   },
   "Super Yeti": {
@@ -447,6 +454,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "1": require('../../assets/package-images/images/home/troops/root-rider/normal/level-1.webp'),
       "2": require('../../assets/package-images/images/home/troops/root-rider/normal/level-2.webp'),
       "3": require('../../assets/package-images/images/home/troops/root-rider/normal/level-3.webp'),
+      "4": require('../../assets/package-images/images/home/troops/root-rider/normal/level-4.webp'),
     },
   },
   "Thrower": {
@@ -650,6 +658,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "1": require('../../assets/package-images/images/home/troops/headhunter/normal/level-1.webp'),
       "2": require('../../assets/package-images/images/home/troops/headhunter/normal/level-2.webp'),
       "3": require('../../assets/package-images/images/home/troops/headhunter/normal/level-3.webp'),
+      "4": require('../../assets/package-images/images/home/troops/headhunter/normal/level-4.webp'),
     },
   },
   "Ruin Witch": {
@@ -957,6 +966,18 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
     icon: require('../../assets/package-images/images/home/hero-equipment/rocket-backpack/icon.webp'),
     levels: {},
   },
+  "Revenge Deck": {
+    icon: require('../../assets/package-images/images/home/hero-equipment/revenge-deck/icon.webp'),
+    levels: {},
+  },
+  "Monolith Arrow": {
+    icon: require('../../assets/package-images/images/home/hero-equipment/monolith-arrow/icon.webp'),
+    levels: {},
+  },
+  "Electro Fangs": {
+    icon: require('../../assets/package-images/images/home/hero-equipment/electro-fangs/icon.webp'),
+    levels: {},
+  },
   "Rocket Spear": {
     icon: require('../../assets/package-images/images/home/hero-equipment/rocket-spear/icon.webp'),
     levels: {},
@@ -1013,6 +1034,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "3": require('../../assets/package-images/images/home/siege-machines/log-launcher/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/siege-machines/log-launcher/normal/level-4.webp'),
       "5": require('../../assets/package-images/images/home/siege-machines/log-launcher/normal/level-5.webp'),
+      "6": require('../../assets/package-images/images/home/siege-machines/log-launcher/normal/level-6.webp'),
     },
   },
   "Flame Flinger": {
@@ -1867,6 +1889,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "7": require('../../assets/package-images/images/home/army-buildings/blacksmith/normal/level-7.webp'),
       "8": require('../../assets/package-images/images/home/army-buildings/blacksmith/normal/level-7.webp'),
       "9": require('../../assets/package-images/images/home/army-buildings/blacksmith/normal/level-9.webp'),
+      "10": require('../../assets/package-images/images/home/army-buildings/blacksmith/normal/level-9.webp'),
     },
   },
   "Workshop": {
@@ -1880,6 +1903,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "6": require('../../assets/package-images/images/home/army-buildings/workshop/normal/level-6.webp'),
       "7": require('../../assets/package-images/images/home/army-buildings/workshop/normal/level-7.webp'),
       "8": require('../../assets/package-images/images/home/army-buildings/workshop/normal/level-8.webp'),
+      "9": require('../../assets/package-images/images/home/army-buildings/workshop/normal/level-9.webp'),
     },
   },
   "Pet House": {
@@ -1950,6 +1974,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "9": require('../../assets/package-images/images/home/traps/giant-bomb/normal/level-9.webp'),
       "10": require('../../assets/package-images/images/home/traps/giant-bomb/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/traps/giant-bomb/normal/level-11.webp'),
+      "12": require('../../assets/package-images/images/home/traps/giant-bomb/normal/level-12.webp'),
     },
   },
   "Air Bomb": {
