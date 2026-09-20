@@ -1508,7 +1508,7 @@ export default function SettingsScreen() {
           <View style={styles.switchCard}>
             <View style={styles.switchHeader}>
               <View style={styles.switchHeaderIcon}>
-                <Ionicons name="people" size={18} color={Colors.textPrimary} />
+                <Ionicons name="swap-horizontal-outline" size={18} color={Colors.textPrimary} />
               </View>
               <View style={styles.switchHeaderText}>
                 <Text style={styles.switchTitle}>Accounts</Text>
@@ -1566,11 +1566,6 @@ export default function SettingsScreen() {
                   <View style={styles.switchItemText}>
                     <View style={styles.switchItemNameRow}>
                       <Text style={styles.switchItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
-                      {isActive && (
-                        <View style={styles.switchActiveChip}>
-                          <Text style={styles.switchActiveChipText}>Active</Text>
-                        </View>
-                      )}
                     </View>
                     <Text style={styles.switchItemTag}>{acct.tag}</Text>
                   </View>
@@ -1598,7 +1593,7 @@ export default function SettingsScreen() {
                 setShowOnboarding(true);
               }}
             >
-              <Ionicons name="add-circle-outline" size={18} color={Colors.textSecondary} />
+              <Ionicons name="link-outline" size={18} color={Colors.textSecondary} />
               <Text style={styles.switchAddText}>Add Account</Text>
             </PressableRipple>
 
@@ -1745,6 +1740,8 @@ const styles = StyleSheet.create({
   },
   switchHeaderText: {
     flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
   },
   switchTitle: {
     ...Typography.title3,
@@ -1790,6 +1787,9 @@ const styles = StyleSheet.create({
   },
   switchItemText: {
     flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.xs,
   },
   switchItemNameRow: {
     flexDirection: 'row',
@@ -1806,19 +1806,6 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     marginTop: 1,
-  },
-  switchActiveChip: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.textPrimary,
-  },
-  switchActiveChipText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: Colors.bg,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   switchSyncingBadge: {
     width: 40,
@@ -1869,8 +1856,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
     marginTop: Spacing.xs,
     borderRadius: Radius.md,
     borderWidth: 0.75,
