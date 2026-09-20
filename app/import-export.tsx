@@ -370,6 +370,32 @@ export default function ImportExportScreen() {
   const homeVariants = variantRows.filter((r) => !isBuilderName(r.storeName));
   const builderVariants = variantRows.filter((r) => isBuilderName(r.storeName));
 
+  // Cost label for an upgrade row: when every resource has a bundled icon, show
+  // the icons next to the combined cost; otherwise fall back to the text
+  // breakdown (or a plain total when the cost is unknown).
+  const renderUpgradeCost = (byResource: Record<string, number> | undefined, total: number) => {
+    const entries = byResource
+      ? (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][]).filter(
+          ([r]) => r !== 'Unknown' && !!PACKAGE_RESOURCE_IMAGES[r],
+        )
+      : [];
+    if (entries.length === 0) {
+      return (
+        <Text style={styles.upgradeCost} numberOfLines={1}>
+          {formatCostBreakdown(byResource) || formatCost(total)}
+        </Text>
+      );
+    }
+    return (
+      <View style={styles.upgradeResRow}>
+        {entries.map(([r]) => (
+          <Image key={r} source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.upgradeResIcon} resizeMode="contain" />
+        ))}
+        <Text style={styles.upgradeCost} numberOfLines={1}>{formatCost(total)}</Text>
+      </View>
+    );
+  };
+
   const renderVariantList = (rows: typeof variantRows) => (
     <View style={styles.upgradeList}>
       {rows.map((u, i) => (
@@ -391,9 +417,7 @@ export default function ImportExportScreen() {
           </View>
           <View style={styles.upgradeRight}>
             <Text style={styles.upgradeTime}>{formatTimeShort(u.timeSec)}</Text>
-            <Text style={styles.upgradeCost} numberOfLines={1}>
-              {formatCostBreakdown(u.byResource) || formatCost(u.cost)}
-            </Text>
+            {renderUpgradeCost(u.byResource, u.cost)}
           </View>
         </View>
       ))}
@@ -1062,6 +1086,15 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
+  },
+  upgradeResRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  upgradeResIcon: {
+    width: 12,
+    height: 12,
   },
   upgradeCost: {
     ...Typography.caption,
