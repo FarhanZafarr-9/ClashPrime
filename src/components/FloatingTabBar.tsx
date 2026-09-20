@@ -9,12 +9,13 @@ import { usePlayer } from '../hooks/usePlayerContext';
 
 type IconDef = { set: 'ion' | 'mc'; name: string };
 
-/** Pages of tabs, in display order. The chevron cycles through these.
+/** Pages of tabs, in display order. Arrows cycle through these.
  * 'search' is a pseudo-entry: it pushes the /player route instead of switching tabs. */
 const TAB_GROUPS: string[][] = [
-  ['index', 'army', 'buildings', 'maxtime', 'events'],
-  ['hero-journey', 'bases', 'armies', 'war', 'search'],
-  ['settings', 'saved', 'achievements'],
+  ['index', 'army', 'buildings', 'maxtime'],
+  ['events', 'hero-journey', 'bases', 'armies'],
+  ['war', 'search', 'achievements', 'saved'],
+  ['settings'],
 ];
 
 const TAB_ICONS: Record<string, IconDef> = {
@@ -56,11 +57,14 @@ export default function FloatingTabBar({ state, navigation }: any) {
   });
 
   // Follow the active tab: deep links / back nav land on the right page.
-  useEffect(() => {
+  // Adjusted during render from the previous active key (React's documented
+  // "storing information from previous renders" pattern).
+  const [prevActiveKey, setPrevActiveKey] = useState(activeKey);
+  if (prevActiveKey !== activeKey) {
+    setPrevActiveKey(activeKey);
     const g = groupOf(activeKey);
     if (g >= 0 && g !== page) setPage(g);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey]);
+  }
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -99,6 +103,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
   };
 
   const nextPage = () => setPage((p: number) => (p + 1) % TAB_GROUPS.length);
+  const prevPage = () => setPage((p: number) => (p - 1 + TAB_GROUPS.length) % TAB_GROUPS.length);
 
   return (
     <View style={styles.container}>
@@ -112,6 +117,9 @@ export default function FloatingTabBar({ state, navigation }: any) {
       <View style={styles.bar}>
         {skeletons ? (
           <>
+            <View style={[styles.tabItem, styles.tabItemSkeleton]}>
+              <Skeleton width={22} height={22} borderRadius={8} />
+            </View>
             {visibleTabs.map((tab) => (
               <View key={tab} style={[styles.tabItem, styles.tabItemSkeleton]}>
                 <Skeleton width={22} height={22} borderRadius={8} />
@@ -123,6 +131,14 @@ export default function FloatingTabBar({ state, navigation }: any) {
           </>
         ) : (
           <>
+            <PressableRipple
+              style={styles.tabItemChevron}
+              onPress={prevPage}
+              accessibilityRole="button"
+              accessibilityLabel="Previous tab page"
+            >
+              <Ionicons name="chevron-back" size={18} color={Colors.textSecondary} />
+            </PressableRipple>
             {visibleTabs.map((tab) => {
               const isActive = activeKey === tab;
               return (
