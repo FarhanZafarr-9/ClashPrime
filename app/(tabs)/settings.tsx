@@ -133,7 +133,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Floating tab bar: pageable tab groups with prev/next arrows when tabs overflow, plus a wider pagination chevron hit area.',
       'Polished skeleton rows on Home and Hero Journey aligned with the new layouts.',
       'Engine upgrade: Expo 57, React Native 0.86, eslint-config-expo 57.',
-      'New in-app package images for added content and levels (Ruin Witch, Angry Spell, Sky Wagon, Valkyrie L12, X-Bow L13 and more) after upgrading to clash-of-clans-data 0.17.',
+      'New in-app package images for added content and levels — Electro Fangs, Monolith Arrow and Revenge Deck hero equipment, Barbarian/Dragon L13, Golem L15, Yeti L8, Workshop 9, Log Launcher 6 and more — after upgrading to clash-of-clans-data 0.18.',
     ],
   },
   {
