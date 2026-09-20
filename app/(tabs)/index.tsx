@@ -42,7 +42,7 @@ import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
 import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import type { TroopDetail } from '../../src/api/troopDetail';
-import { getArmyTroopDetail } from '../../src/utils/armyData';
+import { getArmyTroopDetail, getArmyItemImage } from '../../src/utils/armyData';
 import { getLeagueLootInfo, type LeagueLootInfo } from '../../src/utils/leagueData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { useDialog } from '../../src/components/AlertDialog';
@@ -58,12 +58,32 @@ import type { ClashPlayer, TimerReminder } from '../../src/types/clash';
 import { checkForUpdate, clearVersionCache, probeGitHubOnline } from '../../src/utils/versionCheck';
 import { APP_VERSION } from '../../src/constants/appVersion';
 
-const CATEGORY_META: Record<ProgressCategory, { label: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
-  heroes: { label: 'Heroes', icon: { set: 'ion', name: 'shield-half-outline' } },
-  troops: { label: 'Troops', icon: { set: 'mc', name: 'sword-cross' } },
-  spells: { label: 'Spells', icon: { set: 'ion', name: 'flask-outline' } },
-  equipment: { label: 'Equipment', icon: { set: 'ion', name: 'trophy-outline' } },
+const CATEGORY_META: Record<ProgressCategory, { label: string; sub: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
+  heroes: { label: 'Heroes', sub: 'Hero levels', icon: { set: 'ion', name: 'shield-half-outline' } },
+  troops: { label: 'Troops', sub: 'Troop levels', icon: { set: 'mc', name: 'sword-cross' } },
+  spells: { label: 'Spells', sub: 'Spell levels', icon: { set: 'ion', name: 'flask-outline' } },
+  equipment: { label: 'Equipment', sub: 'Equipment levels', icon: { set: 'ion', name: 'trophy-outline' } },
 };
+
+// Representative home building shown in the "Overall Progress" rows, using its
+// sprite at the player's current building level (Hero Hall / Lab / Blacksmith).
+const CATEGORY_BUILDING: Record<ProgressCategory, string> = {
+  heroes: 'Hero Hall',
+  troops: 'Laboratory',
+  spells: 'Laboratory',
+  equipment: 'Blacksmith',
+};
+
+function levelUpImage(key: ProgressCategory, name: string): number | string | null {
+  const local = getArmyItemImage(name);
+  if (local) return local;
+  switch (key) {
+    case 'heroes': return getHeroImageUrl(name);
+    case 'troops':
+    case 'spells': return getTroopImageUrl(name);
+    case 'equipment': return getEquipmentImageUrl(name);
+  }
+}
 
 const RUSHED_ACCENT = '#F6C453';
 
@@ -1977,11 +1997,11 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
           <View style={styles.switcherCard}>
             <View style={styles.switcherHeader}>
               <View style={styles.switcherHeaderIcon}>
-                <Ionicons name="people" size={18} color={Colors.textPrimary} />
+                <Ionicons name="swap-horizontal-outline" size={18} color={Colors.textPrimary} />
               </View>
               <View style={styles.switcherHeaderText}>
                 <Text style={styles.switcherTitle}>Accounts</Text>
-                <Text style={styles.switcherSubtitle}>Tap to switch</Text>
+                <Text style={styles.switcherSubtitle}>Tap an account to switch</Text>
               </View>
             </View>
             {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
@@ -2004,11 +2024,6 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                   <View style={styles.switcherItemText}>
                     <View style={styles.switcherItemNameRow}>
                       <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
-                      {isActive && (
-                        <View style={styles.switcherActiveChip}>
-                          <Text style={styles.switcherActiveChipText}>Active</Text>
-                        </View>
-                      )}
                     </View>
                     <Text style={styles.switcherItemTag}>{acct.tag}</Text>
                   </View>
@@ -2033,7 +2048,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 router.push('/onboarding?mode=add');
               }}
             >
-              <Ionicons name="person-add-outline" size={16} color={Colors.textPrimary} />
+              <Ionicons name="link-outline" size={16} color={Colors.textPrimary} />
               <Text style={styles.switcherAddText}>Add Account</Text>
             </PressableRipple>
             <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
@@ -2063,22 +2078,39 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
             {progressDiff && progressDiff.categories.length > 0 && (
               <>
                 <Text style={styles.progressSectionTitle}>Overall Progress</Text>
-                <View style={{ gap: Spacing.sm }}>
-                  {progressDiff.categories.map((c) => {
+                <View style={styles.progressRowsList}>
+                  {progressDiff.categories.map((c, i, arr) => {
                     const meta = CATEGORY_META[c.key];
+                    const buildingImg = pipelineHeaderImage(CATEGORY_BUILDING[c.key]);
+                    const isFirst = i === 0;
+                    const isLast = i === arr.length - 1;
                     return (
-                      <View key={c.key} style={styles.progressRow}>
-                        {meta.icon.set === 'mc' ? (
-                          <MaterialCommunityIcons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
-                        ) : (
-                          <Ionicons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
-                        )}
-                        <Text style={styles.progressRowLabel}>{meta.label}</Text>
-                        <Text style={styles.progressRowValue}>
-                          <Text style={styles.progressRowBefore}>{Math.round(c.before * 100)}%</Text>
-                          {'  →  '}
-                          <Text style={styles.progressRowAfter}>{Math.round(c.after * 100)}%</Text>
-                        </Text>
+                      <View
+                        key={c.key}
+                        style={[
+                          styles.progressRow,
+                          isFirst && styles.progressRowFirst,
+                          isLast && styles.progressRowLast,
+                        ]}
+                      >
+                        <View style={styles.progressRowIcon}>
+                          {buildingImg ? (
+                            <Image source={buildingImg} style={styles.progressRowBuildingImg} resizeMode="contain" />
+                          ) : meta.icon.set === 'mc' ? (
+                            <MaterialCommunityIcons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
+                          ) : (
+                            <Ionicons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
+                          )}
+                        </View>
+                        <View style={styles.progressRowText}>
+                          <Text style={styles.progressRowLabel}>{meta.label}</Text>
+                          <Text style={styles.progressRowSub}>{meta.sub}</Text>
+                        </View>
+                        <View style={styles.progressRowBadge}>
+                          <Text style={styles.progressRowBadgeBefore}>{Math.round(c.before * 100)}%</Text>
+                          <Text style={styles.progressRowBadgeArrow}>→</Text>
+                          <Text style={styles.progressRowBadgeAfter}>{Math.round(c.after * 100)}%</Text>
+                        </View>
                       </View>
                     );
                   })}
@@ -2089,20 +2121,33 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
             {progressDiff && progressDiff.levelUps.length > 0 && (
               <>
                 <Text style={styles.progressSectionTitle}>Level Ups ({progressDiff.levelUps.length})</Text>
-                <View style={styles.progressLevelUps}>
-                  {progressDiff.levelUps.map((u, i) => {
-                    const meta = CATEGORY_META[u.key];
+                <View style={styles.progressLevelGrid}>
+                  {progressDiff.levelUps.map((u, index, arr) => {
+                    const img = levelUpImage(u.key, u.name);
                     return (
-                      <View key={`${u.key}-${u.name}`} style={[styles.progressLevelRow, i < progressDiff!.levelUps.length - 1 && styles.progressLevelRowBorder]}>
-                        {meta.icon.set === 'mc' ? (
-                          <MaterialCommunityIcons name={meta.icon.name as any} size={14} color={Colors.textTertiary} />
+                      <View
+                        key={`${u.key}-${u.name}`}
+                        style={[
+                          styles.progressLevelCell,
+                          index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                          index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                          ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                          index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+                        ]}
+                      >
+                        {img ? (
+                          typeof img === 'number' ? (
+                            <Image source={img} style={styles.progressLevelCellImage} resizeMode="contain" />
+                          ) : (
+                            <Image source={{ uri: img }} style={styles.progressLevelCellImage} resizeMode="contain" />
+                          )
                         ) : (
-                          <Ionicons name={meta.icon.name as any} size={14} color={Colors.textTertiary} />
+                          <Text style={styles.progressLevelCellFallback}>{u.name.charAt(0)}</Text>
                         )}
-                        <Text style={styles.progressLevelName} numberOfLines={1}>{u.name}</Text>
-                        <Text style={styles.progressLevelValue}>
+                        <View style={{ flex: 1 }} />
+                        <Text style={styles.progressLevelCellValue}>
                           <Text style={styles.progressRowBefore}>Lv{u.before}</Text>
-                          {'  →  '}
+                          {' → '}
                           <Text style={styles.progressRowAfter}>Lv{u.after}</Text>
                         </Text>
                       </View>
@@ -2213,7 +2258,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   switcherCard: {
-    width: '86%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 0.75,
@@ -2244,6 +2290,8 @@ const styles = StyleSheet.create({
   },
   switcherHeaderText: {
     flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
   },
   switcherTitle: {
     ...Typography.title3,
@@ -2289,6 +2337,9 @@ const styles = StyleSheet.create({
   },
   switcherItemText: {
     flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.xs,
   },
   switcherItemNameRow: {
     flexDirection: 'row',
@@ -2305,19 +2356,6 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     marginTop: 1,
-  },
-  switcherActiveChip: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.textPrimary,
-  },
-  switcherActiveChipText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: Colors.bg,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   switcherSyncingBadge: {
     width: 40,
@@ -2381,8 +2419,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
     marginTop: Spacing.sm,
     borderRadius: Radius.md,
     borderWidth: 0.75,
@@ -2824,7 +2862,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
   },
   modalCard: {
-    width: '100%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     maxWidth: 420,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xxl,
@@ -2989,7 +3028,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   progressCard: {
-    width: '88%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 0.75,
@@ -3027,6 +3067,7 @@ const styles = StyleSheet.create({
   progressSubtitle: {
     ...Typography.caption,
     color: Colors.textMuted,
+    marginTop: Spacing.xs,
   },
   progressSectionTitle: {
     ...Typography.caption,
@@ -3038,27 +3079,76 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     marginBottom: Spacing.xs,
   },
+  progressRowsList: {
+    gap: Spacing.xs,
+  },
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+  },
+  progressRowFirst: {
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
+  },
+  progressRowLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
+  },
+  progressRowIcon: {
+    width: 32,
+    height: 32,
     borderRadius: Radius.md,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressRowBuildingImg: {
+    width: 24,
+    height: 24,
+  },
+  progressRowText: {
+    flex: 1,
+    justifyContent: 'center',
   },
   progressRowLabel: {
-    flex: 1,
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  progressRowValue: {
-    ...Typography.subhead,
-    color: Colors.textSecondary,
+  progressRowSub: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  progressRowBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+  },
+  progressRowBadgeBefore: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  progressRowBadgeArrow: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '600',
+  },
+  progressRowBadgeAfter: {
+    ...Typography.caption,
+    color: Colors.success,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   progressRowBefore: {
@@ -3069,33 +3159,37 @@ const styles = StyleSheet.create({
     color: Colors.success,
     fontWeight: '700',
   },
-  progressLevelUps: {
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
+  progressLevelGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    justifyContent: 'space-between',
   },
-  progressLevelRow: {
+  progressLevelCell: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-  },
-  progressLevelRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  progressLevelName: {
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    minWidth: '48%',
     flex: 1,
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '500',
   },
-  progressLevelValue: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
+  progressLevelCellImage: {
+    width: 24,
+    height: 24,
+    marginRight: Spacing.lg,
+  },
+  progressLevelCellFallback: {
+    ...Typography.body,
+    color: Colors.textTertiary,
     fontWeight: '600',
+    marginRight: Spacing.lg,
+  },
+  progressLevelCellValue: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   progressClose: {
