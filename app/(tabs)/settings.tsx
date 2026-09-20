@@ -106,34 +106,33 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
-    version: '5.5.0',
-    date: 'August 29, 2026',
+    version: '6.0.0',
+    date: 'September 20, 2026',
     items: [
-      'Import screen: Builder Base upgrades are timed against their own builders (default 1, auto 2 at Builder Hall 6, max 3) while Home Village upgrades keep using your builder count.',
+      'Import screen: Builder Base buildings in JSON exports are now tracked and timed against their own builders — a dedicated "Builder Base Builders" count (default 1, auto 2 at Builder Hall 6, max 3) drives them while Home Village upgrades keep using your builder count.',
+      'Builder Base progress now flows into the rest of the app: Builder Base troops and heroes are tracked in Progress Achieved, the army list shows builder hero max levels and Builder Base items at their Builder Hall, and progress snapshots include them.',
+      'Import screen: the builders pipeline summary is now a stack of rounded rows — a Builders header chip showing the combined time as the first row, one time row per village, and a compact 2-column resource grid using the in-game gold/elixir icons.',
+      'Import screen: building levels apply per-copy — mixed-level copies import and upgrade independently, only copies that actually gain a level show up, and "Upgrading now" lists copies still mid-upgrade with time left plus a treat-as-done toggle (Lv +1).',
+      'Import screen: one row per level variant with its own count, cost and time; applying to another attached account confirms first; re-pasting the same export drops copies the account already absorbed.',
+      'Import screen: skipped/un-tracked buildings match the tracked Upgrade rows, the Town Hall row shows its actual TH-level image, and upgrade rows carry in-game resource icons.',
       'Settings: new "Builder Base Builders" control next to the incoming Builder Count, with inline +/- steppers.',
-      'Import screen: the builders pipeline summary is now a stack of rounded rows — a Builders header chip showing the combined time as the first row, one time row per village, and a compact 2-column resource grid using the in-game gold/elixir icon for compound costs.',
+      'Settings: What\u2019s New dialog redesigned — a hero header with the latest version and release dates, and every release as a collapsible card with version chips, item counts and per-release expand/collapse.',
+      'Home: account switcher dialog polished — name/tag aligned, bigger Add Account button with a link icon, active account highlighted by row instead of a chip; dialogs now span full-width with edge margins.',
+      'Home: Progress Achieved dialog restyled — progress rows use each category\'s building pictograms, level-up rows show in-game item icons, and rows sit in a gap-spaced rounded layout.',
       'Army and Buildings detail panels open in a slide-up bottom sheet with a custom header — item icon, title, progress bar and level badge, plus a badge-styled close button.',
-      'Locked heroes/units/spells open their detail sheet too: header shows a lock badge and the item description, and the stats table starts from the first levels.',
-      'Detail sheets reset to the default level window whenever they close.',
+      'Locked heroes/units/spells open their detail sheet too: header shows a lock badge, stats tables start from the first levels, and sheets reset to the default level window whenever they close.',
       'Building detail sheets condense long level ranges with "..." in both the level grid and stats table, with a Show-all toggle.',
-      'Import screen: skipped/un-tracked buildings now match the tracked Upgrade rows, and the Town Hall row shows its actual TH-level image.',
-      'Home tab Heroes progress section now uses the Hero Hall building image.',
-      'Floating tab bar and Time to Max: new-unlock rows show item type and count info, and first/last rows keep per-group corner rounding.',
-      'Import screen: building levels apply per-copy — mixed-level copies import and upgrade independently, and only copies that actually gain a level show up.',
-      'Import screen: "Upgrading now" section lists copies still mid-upgrade with time left, plus a toggle to treat them as already done (Lv +1).',
-      'Import screen: the upgrade list shows one row per level variant with its own count, cost and time; applying to another attached account now confirms before leaving.',
       'Home timers: edit a timer to restart its countdown; rows show start and end times and are sorted by end time.',
+      'Home tab Heroes progress section now uses the Hero Hall building image.',
+      'Time to Max: exclude any building you don\'t plan to max — all its copies are skipped from max-time estimates and TH readiness.',
+      'Time to Max: new Town Hall upgrade card in the rush comparison shows next-TH build cost and time, and new-unlock rows show item type and count info with per-group corner rounding.',
       'Buildings: "Distributed" column shows how long remaining upgrades take using all your builders.',
       'New Hero Journey tab: the full rewards track from TH7 to TH18 — quests, ore, hero equipment, potions, books, runes and Majestic skins — shown as milestones grouped into collapsible Town Hall sections with claimed badges and lock icons.',
-      'Hero Journey: equipment nodes grant the in-game piece for each hero pool in order, next piece is picked while it is already owned, and a fully-owned pool pays 50 Starry Ore.',
-      'Hero Journey: progress reflects your own Town Hall cap (not the far-away TH18 max), with a scroll-to-current-milestone shortcut.',
+      'Hero Journey: equipment nodes grant the in-game piece for each hero pool in order, next piece is picked while it is already owned, a fully-owned pool pays 50 Starry Ore, and progress reflects your own Town Hall cap with a scroll-to-current-milestone shortcut.',
       'Majestic hero skins, runes and other magic items now render as full images in rewards.',
+      'Floating tab bar: pageable tab groups with prev/next arrows when tabs overflow, plus a wider pagination chevron hit area.',
+      'Polished skeleton rows on Home and Hero Journey aligned with the new layouts.',
       'Engine upgrade: Expo 57, React Native 0.86, eslint-config-expo 57.',
-      'Import screen: re-pasting the same export no longer re-proposes upgrades you already applied — copies the account has absorbed are dropped from the summary and "Upgrading now".',
-      'Time to Max: exclude any building you don\'t plan to max — all its copies are skipped from max-time estimates and TH readiness.',
-      'Time to Max: new Town Hall upgrade card in the rush comparison shows next-TH build cost and time.',
-      'Home: Progress Achieved dialog restyled — progress rows use each category\'s building pictograms, level-up rows show in-game item icons, and rows sit in a gap-spaced rounded layout.',
-      'Home: account switcher dialog polished — name/tag aligned top-and-bottom, bigger Add Account button with a link icon, active account highlighted by row instead of a chip; dialogs now span full-width with edge margins.',
       'New in-app package images for added content and levels (Ruin Witch, Angry Spell, Sky Wagon, Valkyrie L12, X-Bow L13 and more) after upgrading to clash-of-clans-data 0.17.',
     ],
   },
@@ -358,7 +357,7 @@ const CLASHPRIME_REPO_URL = 'https://github.com/FarhanZafarr-9/ClashPrime';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.5.0'}`;
+  const appVersion = `v${(Constants.expoConfig as any)?.version ?? '6.0.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag, player } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
