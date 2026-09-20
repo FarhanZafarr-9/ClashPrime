@@ -36,13 +36,13 @@ import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
 import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime, buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
-import { getBuildingCategories, getBuildingMaxLevelAtTH } from '../../src/utils/buildingData';
+import { getBuildingCategories, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH } from '../../src/utils/buildingData';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
 import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import type { TroopDetail } from '../../src/api/troopDetail';
-import { getArmyTroopDetail, getArmyItemImage } from '../../src/utils/armyData';
+import { getArmyTroopDetail, getArmyItemImage, getAllBuilderItemsAtBH } from '../../src/utils/armyData';
 import { getLeagueLootInfo, type LeagueLootInfo } from '../../src/utils/leagueData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { useDialog } from '../../src/components/AlertDialog';
@@ -63,6 +63,8 @@ const CATEGORY_META: Record<ProgressCategory, { label: string; sub: string; icon
   troops: { label: 'Troops', sub: 'Troop levels', icon: { set: 'mc', name: 'sword-cross' } },
   spells: { label: 'Spells', sub: 'Spell levels', icon: { set: 'ion', name: 'flask-outline' } },
   equipment: { label: 'Equipment', sub: 'Equipment levels', icon: { set: 'ion', name: 'trophy-outline' } },
+  builderTroops: { label: 'Builder Troops', sub: 'Builder troop levels', icon: { set: 'mc', name: 'goblin' } },
+  builderHeroes: { label: 'Builder Heroes', sub: 'Builder hero levels', icon: { set: 'mc', name: 'shield-crown' } },
 };
 
 // Representative home building shown in the "Overall Progress" rows, using its
@@ -72,15 +74,19 @@ const CATEGORY_BUILDING: Record<ProgressCategory, string> = {
   troops: 'Laboratory',
   spells: 'Laboratory',
   equipment: 'Blacksmith',
+  builderTroops: 'Star Laboratory',
+  builderHeroes: 'Builder Hall',
 };
 
 function levelUpImage(key: ProgressCategory, name: string): number | string | null {
   const local = getArmyItemImage(name);
   if (local) return local;
   switch (key) {
-    case 'heroes': return getHeroImageUrl(name);
+    case 'heroes':
+    case 'builderHeroes': return getHeroImageUrl(name);
     case 'troops':
-    case 'spells': return getTroopImageUrl(name);
+    case 'spells':
+    case 'builderTroops': return getTroopImageUrl(name);
     case 'equipment': return getEquipmentImageUrl(name);
   }
 }
@@ -534,6 +540,9 @@ export default function HomeScreen() {
     const ownedSpells = (p.spells ?? []).filter((s: { village?: string }) => s.village === 'home' || !s.village);
     const ownedHeroes = (p.heroes ?? []).filter((h: { village: string }) => h.village === 'home');
     const equip = p.heroEquipment ?? [];
+    const bh = p.builderHallLevel ?? 1;
+    const ownedBuilderTroops = (p.troops ?? []).filter((t: { village?: string }) => t.village === 'builderBase');
+    const ownedBuilderHeroes = (p.heroes ?? []).filter((h: { village: string }) => h.village === 'builderBase');
 
     const calc = (ownedItems: { name: string; level: number }[], allAtTH: { name: string; maxLevel: number }[]) => {
       if (allAtTH.length === 0) return 0;
@@ -550,6 +559,10 @@ export default function HomeScreen() {
     const allSpellsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'spell');
     const allHeroesAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
 
+    const allBuilderAtBH = getAllBuilderItemsAtBH(bh);
+    const allBuilderTroopsAtBH = allBuilderAtBH.filter((i) => i.type === 'troop');
+    const allBuilderHeroesAtBH = allBuilderAtBH.filter((i) => i.type === 'hero');
+
     const itemsMap = (list: { name: string; level: number }[]) => {
       const m: Record<string, number> = {};
       for (const it of list) m[it.name] = it.level;
@@ -563,12 +576,16 @@ export default function HomeScreen() {
         troops: calc(ownedTroops, allTroopsAtTH),
         spells: calc(ownedSpells, allSpellsAtTH),
         equipment: equip.length > 0 ? equip.reduce((s, e) => s + (e.maxLevel > 0 ? e.level / e.maxLevel : 0), 0) / equip.length : 0,
+        builderTroops: calc(ownedBuilderTroops, allBuilderTroopsAtBH),
+        builderHeroes: calc(ownedBuilderHeroes, allBuilderHeroesAtBH),
       },
       items: {
         heroes: itemsMap(ownedHeroes),
         troops: itemsMap(ownedTroops),
         spells: itemsMap(ownedSpells),
         equipment: itemsMap(equip),
+        builderTroops: itemsMap(ownedBuilderTroops),
+        builderHeroes: itemsMap(ownedBuilderHeroes),
       },
     };
   }, [superTroopNames]);
@@ -983,6 +1000,17 @@ export default function HomeScreen() {
   // Highest-level sprite available at this TH; falls back to base icon when the building is locked here.
   const pipelineHeaderImage = (name: string) =>
     getBuildingItemImage(name, getBuildingMaxLevelAtTH(name, th) ?? 1) ?? undefined;
+
+  // Highest-level sprite for a progress-category header (Builder Base buildings use their BH gating).
+  const progressCategoryImage = (key: ProgressCategory) => {
+    const name = CATEGORY_BUILDING[key];
+    if (!name) return undefined;
+    if (key === 'builderTroops' || key === 'builderHeroes') {
+      const bh = player?.builderHallLevel ?? 1;
+      return getBuildingItemImage(name, getBuildingMaxLevelAtBH(name, bh) ?? 1, true) ?? undefined;
+    }
+    return pipelineHeaderImage(name);
+  };
 
   const buildingGroups = SHOW_BUILDING_CATS.map((cat) => {
     const items = getBuildingCategories(th)[cat] ?? {};
@@ -2081,7 +2109,7 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 <View style={styles.progressRowsList}>
                   {progressDiff.categories.map((c, i, arr) => {
                     const meta = CATEGORY_META[c.key];
-                    const buildingImg = pipelineHeaderImage(CATEGORY_BUILDING[c.key]);
+                    const buildingImg = progressCategoryImage(c.key);
                     const isFirst = i === 0;
                     const isLast = i === arr.length - 1;
                     return (
