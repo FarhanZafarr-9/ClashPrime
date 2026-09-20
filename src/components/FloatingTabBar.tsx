@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabItemChevron: {
-    minWidth: 36,
+    minWidth: 46,
     height: 46,
     borderRadius: Radius.md,
     alignItems: 'center',
