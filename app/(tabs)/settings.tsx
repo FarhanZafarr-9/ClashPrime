@@ -272,6 +272,79 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   },
 ];
 
+const TOTAL_RELEASES = CHANGELOG.length;
+const TOTAL_CHANGES = CHANGELOG.reduce((sum, e) => sum + e.items.length, 0);
+
+interface ChangelogBodyProps {
+  expanded: Record<string, boolean>;
+  onToggle: (version: string) => void;
+}
+
+function ChangelogBody({ expanded, onToggle }: ChangelogBodyProps) {
+  return (
+    <View>
+      <View style={styles.changelogHero}>
+        <View style={styles.changelogHeroRow}>
+          <Text style={styles.changelogHeroVersion}>v{CHANGELOG[0].version}</Text>
+          <View style={styles.changelogLatestBadge}>
+            <Ionicons name="sparkles" size={11} color={Colors.warning} />
+            <Text style={styles.changelogLatestText}>Latest</Text>
+          </View>
+        </View>
+        <Text style={styles.changelogHeroDate}>{CHANGELOG[0].date}</Text>
+        <Text style={styles.changelogHeroStats}>
+          {TOTAL_RELEASES} {TOTAL_RELEASES === 1 ? 'release' : 'releases'} · {TOTAL_CHANGES} {TOTAL_CHANGES === 1 ? 'change' : 'changes'}
+        </Text>
+      </View>
+
+      {CHANGELOG.map((entry, entryIndex) => {
+        const isLatest = entryIndex === 0;
+        const isExpanded = expanded[entry.version] ?? false;
+        const isLast = entryIndex === CHANGELOG.length - 1;
+        return (
+          <View key={entry.version} style={
+            [styles.changelogSection,
+              isLatest && { borderTopLeftRadius: Radius.xl * 1.25, borderTopRightRadius: Radius.xl * 1.25 },
+              isLast && { borderBottomLeftRadius: Radius.xl * 1.25, borderBottomRightRadius: Radius.xl * 1.25 }]}>
+            <PressableRipple
+              style={styles.changelogSectionHeader}
+              onPress={() => onToggle(entry.version)}
+            >
+              <View style={[styles.changelogSectionChip, isLatest && styles.changelogSectionChipLatest]}>
+                {isLatest ? <Ionicons name="sparkles" size={11} color={Colors.warning} /> : null}
+                <Text style={[styles.changelogSectionVersion, isLatest && styles.changelogSectionVersionLatest]}>
+                  v{entry.version}
+                </Text>
+              </View>
+              <Text style={styles.changelogSectionDate} numberOfLines={1}>{entry.date}</Text>
+              <View style={styles.changelogSectionRight}>
+                <View style={styles.changelogItemCount}>
+                  <Text style={styles.changelogItemCountText}>{entry.items.length}</Text>
+                </View>
+                <Ionicons
+                  name={isExpanded ? 'chevron-down' : 'chevron-forward'}
+                  size={16}
+                  color={Colors.textMuted}
+                />
+              </View>
+            </PressableRipple>
+            {isExpanded && (
+              <View style={styles.changelogItems}>
+                {entry.items.map((item) => (
+                  <View style={styles.changelogItem} key={item}>
+                    <View style={[styles.changelogDot, isLatest && styles.changelogDotLatest]} />
+                    <Text style={styles.changelogItemText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const DEVELOPER_PROJECTS: { name: string; blurb: string }[] = [
   { name: 'FlexPrime', blurb: 'Academic companion for FASTians — marks analytics, attendance risk, GPA tools and past papers, shipped to Google Play.' },
   { name: 'NotePrime', blurb: 'Material You fork of Note Safe — end-to-end encrypted, local-first notes with a privacy shield and biometric lock.' },
@@ -310,6 +383,8 @@ export default function SettingsScreen() {
   const [contentVisible, setContentVisible] = useState(false);
   const [contentTitle, setContentTitle] = useState('');
   const [contentBody, setContentBody] = useState<React.ReactNode>(null);
+  const [contentIsChangelog, setContentIsChangelog] = useState(false);
+  const [changelogExpanded, setChangelogExpanded] = useState<Record<string, boolean>>({});
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [latestVersion, setLatestVersion] = useState('');
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
@@ -382,6 +457,7 @@ export default function SettingsScreen() {
   const showContent = (title: string, body: React.ReactNode, actions: ContentAction[]) => {
     setContentTitle(title);
     setContentBody(body);
+    setContentIsChangelog(false);
     setContentActions(actions.length ? actions : [{ label: 'Close' }]);
     setContentVisible(true);
   };
@@ -721,41 +797,9 @@ export default function SettingsScreen() {
   };
 
   const openChangelog = () => {
-    showContent(
-      'What\u2019s New',
-      (
-        <View>
-          {CHANGELOG.map((entry, entryIndex) => {
-            const isLatest = entryIndex === 0;
-            return (
-              <View key={entry.version} style={[styles.changelogEntry, isLatest && styles.changelogEntryLatest]}>
-                <View style={styles.changelogVersionRow}>
-                  <View style={[styles.changelogVersionChip, isLatest && styles.changelogVersionChipLatest]}>
-                    <Text style={[styles.changelogVersion, isLatest && styles.changelogVersionLatest]}>v{entry.version}</Text>
-                  </View>
-                  {isLatest && (
-                    <View style={styles.changelogLatestBadge}>
-                      <Ionicons name="sparkles" size={11} color={Colors.warning} />
-                      <Text style={styles.changelogLatestText}>Latest</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.changelogDate}>{entry.date}</Text>
-                <View style={styles.changelogItems}>
-                  {entry.items.map((item) => (
-                    <View style={styles.changelogItem} key={item}>
-                      <View style={[styles.changelogDot, isLatest && styles.changelogDotLatest]} />
-                      <Text style={styles.changelogItemText}>{item}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      ),
-      [{ label: 'Close', primary: true }],
-    );
+    setChangelogExpanded({ [CHANGELOG[0].version]: true });
+    showContent('What\u2019s New', null, [{ label: 'Close', primary: true }]);
+    setContentIsChangelog(true);
   };
 
   const openDeveloper = () => {
@@ -1311,11 +1355,18 @@ export default function SettingsScreen() {
               </PressableRipple>
             </View>
             <ScrollView
-              style={styles.contentBody}
+              style={[styles.contentBody, contentIsChangelog && styles.contentBodyTall]}
               contentContainerStyle={styles.contentBodyInner}
               showsVerticalScrollIndicator={false}
             >
-              {contentBody}
+              {contentIsChangelog ? (
+                <ChangelogBody
+                  expanded={changelogExpanded}
+                  onToggle={(v) => setChangelogExpanded((prev) => ({ ...prev, [v]: !prev[v] }))}
+                />
+              ) : (
+                contentBody
+              )}
             </ScrollView>
             <View style={styles.contentActions}>
               {contentActions.map((a, i) => (
@@ -2151,6 +2202,9 @@ const styles = StyleSheet.create({
   contentBody: {
     maxHeight: 360,
   },
+  contentBodyTall: {
+    maxHeight: 520,
+  },
   contentBodyInner: {
     padding: Spacing.lg,
     gap: Spacing.base,
@@ -2512,39 +2566,96 @@ const styles = StyleSheet.create({
     minWidth: 24,
     textAlign: 'center',
   },
-  changelogEntry: {
-    marginBottom: Spacing.lg,
-    paddingBottom: Spacing.lg,
+  changelogHero: {
+    paddingBottom: Spacing.base,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+    marginBottom: Spacing.base,
   },
-  changelogEntryLatest: {
-    marginBottom: Spacing.lg,
-    borderBottomWidth: 0,
-  },
-  changelogVersionRow: {
+  changelogHeroRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    marginBottom: Spacing.xs,
   },
-  changelogVersionChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.md,
+  changelogHeroVersion: {
+    ...Typography.title2,
+    color: Colors.textPrimary,
+    letterSpacing: -0.4,
+  },
+  changelogHeroDate: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  changelogHeroStats: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: Spacing.xs,
+  },
+  changelogSection: {
     backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    marginBottom: Spacing.xs,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    overflow: 'hidden',
   },
-  changelogVersionChipLatest: {
+  changelogSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+  },
+  changelogSectionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  changelogSectionChipLatest: {
     backgroundColor: `${Colors.warning}22`,
+    borderColor: `${Colors.warning}40`,
   },
-  changelogVersion: {
+  changelogSectionVersion: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
-  changelogVersionLatest: {
+  changelogSectionVersionLatest: {
     color: Colors.warning,
+  },
+  changelogSectionDate: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    flex: 1,
+  },
+  changelogSectionRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  changelogItemCount: {
+    minWidth: 26,
+    height: 26,
+    paddingHorizontal: 6,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  changelogItemCountText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
   },
   changelogLatestBadge: {
     flexDirection: 'row',
@@ -2562,12 +2673,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  changelogDate: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    marginBottom: Spacing.sm,
-  },
   changelogItems: {
+    paddingHorizontal: Spacing.base,
+    paddingBottom: Spacing.base,
+    paddingTop: Spacing.xs,
     gap: 6,
   },
   changelogItem: {
