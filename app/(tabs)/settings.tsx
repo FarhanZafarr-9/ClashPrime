@@ -43,6 +43,7 @@ import { useDialog } from '../../src/components/AlertDialog';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
+import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import DiscountModal from '../../src/components/DiscountModal';
 import Constants from 'expo-constants';
 import { Switch } from 'react-native-paper'
@@ -108,6 +109,9 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '5.5.0',
     date: 'August 29, 2026',
     items: [
+      'Import screen: Builder Base upgrades are timed against their own builders (default 1, auto 2 at Builder Hall 6, max 3) while Home Village upgrades keep using your builder count.',
+      'Settings: new "Builder Base Builders" control next to the incoming Builder Count, with inline +/- steppers.',
+      'Import screen: the builders pipeline summary is now a stack of rounded rows — a Builders header chip showing the combined time as the first row, one time row per village, and a compact 2-column resource grid using the in-game gold/elixir icon for compound costs.',
       'Army and Buildings detail panels open in a slide-up bottom sheet with a custom header — item icon, title, progress bar and level badge, plus a badge-styled close button.',
       'Locked heroes/units/spells open their detail sheet too: header shows a lock badge and the item description, and the stats table starts from the first levels.',
       'Detail sheets reset to the default level window whenever they close.',
@@ -283,7 +287,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.5.0'}`;
   const { bumpTagVersion } = usePlayerActions();
-  const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
+  const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag, player } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
@@ -322,6 +326,7 @@ export default function SettingsScreen() {
   const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
   const { count: builderCount, setBuilderCount, verified: builderVerified, setBuilderVerified } = useBuilderCount();
+  const { count: builderBaseCount, setBuilderBaseCount } = useBuilderBaseCount(player?.builderHallLevel);
   const { discounts, setBuildingCost, setBuildingTime, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
 
   const discountDesc = (s: ScopeDiscount) => {
@@ -1049,6 +1054,29 @@ export default function SettingsScreen() {
               <PressableRipple
                 style={styles.builderCountBtn}
                 onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
+              >
+                <Ionicons name="add" size={18} color={Colors.textPrimary} />
+              </PressableRipple>
+            </View>
+          </SettingRow>
+          <SettingRow
+            icon="construct-outline"
+            title="Builder Base Builders"
+            desc={`Builder Base builders (1–3)${(player?.builderHallLevel ?? 1) >= 6 ? ' · 2 granted at BH6' : ' · unlocks a 2nd at BH6'}`}
+            compact
+            onPress={() => { }}
+          >
+            <View style={styles.builderCountRow}>
+              <PressableRipple
+                style={styles.builderCountBtn}
+                onPress={() => setBuilderBaseCount(Math.max(1, builderBaseCount - 1))}
+              >
+                <Ionicons name="remove" size={18} color={Colors.textPrimary} />
+              </PressableRipple>
+              <Text style={styles.builderCountValue}>{builderBaseCount}</Text>
+              <PressableRipple
+                style={styles.builderCountBtn}
+                onPress={() => setBuilderBaseCount(Math.min(3, builderBaseCount + 1))}
               >
                 <Ionicons name="add" size={18} color={Colors.textPrimary} />
               </PressableRipple>
