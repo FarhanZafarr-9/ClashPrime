@@ -1,10 +1,12 @@
 // Decodes a Clash of Clans JSON Export snapshot (the format produced by the
 // "Clash of Clans JSON Export" app) into building-level records the app can
-// apply via setBulkLevels. Home Village buildings and traps are supported.
+// apply via setBulkLevels. Home Village and Builder Base buildings and traps
+// are supported; each village is resolved against its own dataId map so
+// colliding names (Cannon, Archer Tower, Wall, ...) stay disambiguated.
 
-import { COC_HOME_BUILDING_IDS } from '../data/cocBuildingIds';
+import { COC_HOME_BUILDING_IDS, COC_BUILDER_BUILDING_IDS } from '../data/cocBuildingIds';
 import { toStoreName } from './buildingCopies';
-import { HOME_CATEGORIES } from './buildingData';
+import { HOME_CATEGORIES, BB_BUILDINGS, isBuilderName } from './buildingData';
 
 export interface CocExportEntry {
   data: number;
@@ -49,7 +51,7 @@ export interface CocImportItem {
 export interface CocImportResult {
   /** storeName → representative level, ready for setBulkLevels. */
   levels: Record<string, number>;
-  /** Buildings the app tracks (Home Village buildings + traps). */
+  /** Buildings the app tracks (Home Village + Builder Base buildings and traps). */
   resolved: CocImportItem[];
   /** Resolved by ID but not tracked by the app (e.g. Town Hall). */
   skipped: CocImportItem[];
@@ -57,8 +59,21 @@ export interface CocImportResult {
   unresolved: { dataId: number; level: number; copies: number }[];
 }
 
-/** Every building the app stores levels for (HOME_CATEGORIES values are store names). */
-const TRACKED = new Set<string>(Object.values(HOME_CATEGORIES).flat());
+/** Every building the app stores levels for (HOME_CATEGORIES + BB_BUILDINGS values are store names). */
+const TRACKED = new Set<string>([
+  ...Object.values(HOME_CATEGORIES).flat(),
+  ...BB_BUILDINGS,
+]);
+
+/** Map a COC_BUILDER_BUILDING_IDS display name to the app's Builder Base store
+ * name. Names unique to the Builder Base (Clock Tower, Crusher, Gem Mine, ...)
+ * keep their own label; names that collide with Home Village buildings (Cannon,
+ * Archer Tower, X-Bow, ...) get the "BB " prefix the app keys levels by. "Wall"
+ * pluralizes to "BB Walls" to match the app convention. */
+function toBuilderStoreName(name: string): string {
+  if (name === 'Wall') return 'BB Walls';
+  return isBuilderName(name) ? name : `BB ${name}`;
+}
 
 /** Normalize a Clash of Clans player tag to the app's canonical "#XXXX" form. */
 export function normalizeTag(raw?: string | null): string {
@@ -90,17 +105,18 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
   const skipped = new Map<string, CocImportItem>();
   const unresolved: CocImportResult['unresolved'] = [];
 
-  const ingest = (entry: CocExportEntry) => {
+  const ingest = (entry: CocExportEntry, idMap: Record<number, string>, builderBase: boolean) => {
     const copies = entry.cnt ?? 1;
     const hasTimer = typeof entry.timer === 'number' && entry.timer > 0;
     // A building row with `lvl` + `cnt` packs the level distribution; timer rows
     // are one copy each (stuck/upgrading) described individually.
     const effectiveLvl = entry.lvl;
-    const displayName = COC_HOME_BUILDING_IDS[entry.data];
-    if (!displayName) {
+    const rawName = idMap[entry.data];
+    if (!rawName) {
       unresolved.push({ dataId: entry.data, level: effectiveLvl, copies });
       return;
     }
+    const displayName = builderBase ? toBuilderStoreName(rawName) : rawName;
     const storeName = toStoreName(displayName);
     if (!TRACKED.has(storeName)) {
       const prev = skipped.get(storeName);
@@ -135,8 +151,10 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
     });
   };
 
-  for (const entry of data.buildings ?? []) ingest(entry);
-  for (const entry of data.traps ?? []) ingest(entry);
+  for (const entry of data.buildings ?? []) ingest(entry, COC_HOME_BUILDING_IDS, false);
+  for (const entry of data.traps ?? []) ingest(entry, COC_HOME_BUILDING_IDS, false);
+  for (const entry of data.buildings2 ?? []) ingest(entry, COC_BUILDER_BUILDING_IDS, true);
+  for (const entry of data.traps2 ?? []) ingest(entry, COC_BUILDER_BUILDING_IDS, true);
 
   const resolved = [...byStore.values()].sort((a, b) => a.storeName.localeCompare(b.storeName));
   const levels: Record<string, number> = {};

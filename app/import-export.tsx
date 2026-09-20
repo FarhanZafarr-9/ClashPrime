@@ -22,7 +22,7 @@ import { getBuildingEffectiveMax, getBuildingLevelImageSource } from '../src/uti
 import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildingCopies';
 import { buildingUpgradeCosts, buildingUpgradeChainTimes, scheduleChains, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../src/utils/upgradeCosts';
 import { PACKAGE_RESOURCE_IMAGES } from '../src/data/packageImages';
-import { BUILDING_RESOURCE_META, type BuildingCostResource } from '../src/utils/buildingData';
+import { BUILDING_RESOURCE_META, isBuilderName, type BuildingCostResource } from '../src/utils/buildingData';
 import { getTownHallImageUrl } from '../src/utils/thImages';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
@@ -37,6 +37,12 @@ const RESOURCE_ORDER: BuildingCostResource[] = [
   'Gold or Elixir',
   'Builder Gold or Builder Elixir',
 ];
+
+/** Cap level that gates a building's upgrades: Builder Base buildings are gated
+ * by the Builder Hall level, Home Village buildings by the Town Hall level. */
+function capLevelFor(storeName: string, th: number, bh: number): number {
+  return isBuilderName(storeName) ? bh : th;
+}
 
 function BuildingRowIcon({ storeName, level }: { storeName: string; level: number }) {
   const src = getBuildingLevelImageSource(toJsonName(storeName), level);
@@ -105,9 +111,11 @@ export default function ImportExportScreen() {
   const upgradeRows = useMemo(() => {
     if (!player || !result) return [];
     const th = player.townHallLevel ?? 0;
+    const bh = player.builderHallLevel ?? 1;
     const rows: {
       storeName: string;
       displayName: string;
+      builderBase: boolean;
       currentLevel: number;
       targetLevel: number;
       copies: number;
@@ -120,9 +128,11 @@ export default function ImportExportScreen() {
       byResource: Record<string, number>;
     }[] = [];
     for (const item of result.resolved) {
-      const effectiveMax = getBuildingEffectiveMax(item.storeName, th);
+      const builderBase = isBuilderName(item.storeName);
+      const cap = capLevelFor(item.storeName, th, bh);
+      const effectiveMax = getBuildingEffectiveMax(item.storeName, cap);
       if (effectiveMax <= 0) continue;
-      const count = getCountAtTH(item.storeName, th);
+      const count = getCountAtTH(item.storeName, cap);
       // Timer rows describe copies that are mid-upgrade at `lvl`. When the user
       // opts to treat them as done, those copies import at `lvl + 1` instead.
       // Sort desc so the copied levels always line up with the app's per-copy
@@ -150,7 +160,7 @@ export default function ImportExportScreen() {
         effectiveMax,
         count,
         player.lastMaxedTH,
-        th,
+        builderBase ? undefined : cap,
       );
       const current = copiesInfo.levels.map((l) => (l > 0 ? Math.min(l, effectiveMax) : 1));
       const currentArr = [...current].sort((a, b) => b - a);
@@ -180,6 +190,7 @@ export default function ImportExportScreen() {
       rows.push({
         storeName: item.storeName,
         displayName: item.displayName,
+        builderBase,
         currentLevel: currentArr[0] ?? 0,
         targetLevel: Math.max(...targetLevels),
         copies: count,
@@ -265,12 +276,15 @@ export default function ImportExportScreen() {
   const upgradingRows = useMemo(() => {
     if (!result || !player) return [];
     const th = player.townHallLevel ?? 0;
+    const bh = player.builderHallLevel ?? 1;
     const byKey = new Map<string, { storeName: string; displayName: string; level: number; remainingSec: number; copies: number }>();
     for (const item of result.resolved) {
-      const effectiveMax = getBuildingEffectiveMax(item.storeName, th);
+      const builderBase = isBuilderName(item.storeName);
+      const cap = capLevelFor(item.storeName, th, bh);
+      const effectiveMax = getBuildingEffectiveMax(item.storeName, cap);
       if (effectiveMax <= 0) continue;
-      const count = getCountAtTH(item.storeName, th);
-      const copiesInfo = getBuildingCopies(item.storeName, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
+      const count = getCountAtTH(item.storeName, cap);
+      const copiesInfo = getBuildingCopies(item.storeName, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, builderBase ? undefined : cap);
       const currentArr = copiesInfo.levels
         .map((l) => (l > 0 ? Math.min(l, effectiveMax) : 1))
         .sort((a, b) => b - a);
@@ -302,10 +316,11 @@ export default function ImportExportScreen() {
   const doApply = async (tag: string) => {
     if (!result || !player) return;
     const th = player.townHallLevel ?? 12;
+    const bh = player.builderHallLevel ?? 1;
     const perBuilding = upgradeRows.map((row) => ({
       name: row.storeName,
       levels: [...row.targetLevels],
-      maxLevel: getBuildingEffectiveMax(row.storeName, th),
+      maxLevel: getBuildingEffectiveMax(row.storeName, capLevelFor(row.storeName, th, bh)),
     }));
     const levels: Record<string, number> = {};
     for (const row of upgradeRows) levels[row.storeName] = Math.max(...row.targetLevels);
@@ -350,6 +365,41 @@ export default function ImportExportScreen() {
     });
   };
 
+  // Upgrade rows grouped by village so Home Village and Builder Base upgrades
+  // show up as distinct sections in the summary.
+  const homeVariants = variantRows.filter((r) => !isBuilderName(r.storeName));
+  const builderVariants = variantRows.filter((r) => isBuilderName(r.storeName));
+
+  const renderVariantList = (rows: typeof variantRows) => (
+    <View style={styles.upgradeList}>
+      {rows.map((u, i) => (
+        <View
+          key={u.key}
+          style={[
+            styles.upgradeRow,
+            { backgroundColor: colors.bgCard },
+            i === 0 && styles.upgradeRowFirst,
+            i === rows.length - 1 && styles.upgradeRowLast,
+          ]}
+        >
+          <BuildingRowIcon storeName={u.storeName} level={u.t} />
+          <View style={styles.upgradeText}>
+            <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
+            <Text style={styles.upgradeSub} numberOfLines={2}>
+              Lv {u.c} → Lv {u.t}{u.count > 1 ? ` ×${u.count}` : ''}
+            </Text>
+          </View>
+          <View style={styles.upgradeRight}>
+            <Text style={styles.upgradeTime}>{formatTimeShort(u.timeSec)}</Text>
+            <Text style={styles.upgradeCost} numberOfLines={1}>
+              {formatCostBreakdown(u.byResource) || formatCost(u.cost)}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
@@ -378,7 +428,7 @@ export default function ImportExportScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>Paste the export</Text>
-                <Text style={styles.cardSubtitle}>Home Village buildings and traps are imported</Text>
+                <Text style={styles.cardSubtitle}>Home Village and Builder Base buildings and traps are imported</Text>
               </View>
             </View>
 
@@ -558,33 +608,18 @@ export default function ImportExportScreen() {
                   </View>
 
                   <Text style={styles.sectionTitle}>Upgrades</Text>
-                  <View style={styles.upgradeList}>
-                    {variantRows.map((u, i) => (
-                      <View
-                        key={u.key}
-                        style={[
-                          styles.upgradeRow,
-                          { backgroundColor: colors.bgCard },
-                          i === 0 && styles.upgradeRowFirst,
-                          i === variantRows.length - 1 && styles.upgradeRowLast,
-                        ]}
-                      >
-                        <BuildingRowIcon storeName={u.storeName} level={u.t} />
-                        <View style={styles.upgradeText}>
-                          <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
-                          <Text style={styles.upgradeSub} numberOfLines={2}>
-                            Lv {u.c} → Lv {u.t}{u.count > 1 ? ` ×${u.count}` : ''}
-                          </Text>
-                        </View>
-                        <View style={styles.upgradeRight}>
-                          <Text style={styles.upgradeTime}>{formatTimeShort(u.timeSec)}</Text>
-                          <Text style={styles.upgradeCost} numberOfLines={1}>
-                            {formatCostBreakdown(u.byResource) || formatCost(u.cost)}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
+                  {homeVariants.length > 0 ? (
+                    <>
+                      <Text style={styles.sectionSubtitle}>Home Village</Text>
+                      {renderVariantList(homeVariants)}
+                    </>
+                  ) : null}
+                  {builderVariants.length > 0 ? (
+                    <>
+                      <Text style={styles.sectionSubtitle}>Builder Base</Text>
+                      {renderVariantList(builderVariants)}
+                    </>
+                  ) : null}
                 </>
               ) : null}
 
@@ -810,6 +845,15 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     lineHeight: 16,
     paddingHorizontal: Spacing.sm,
+  },
+  sectionSubtitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.sm,
   },
   rows: {
     borderWidth: 0.75,
