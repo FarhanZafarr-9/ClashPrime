@@ -42,6 +42,18 @@ const addTo = (map, list, name, icon, levels) => {
   list.push(entry);
 };
 
+// Some entries point at a neighbouring level's sprite (upstream data quirk, e.g.
+// Dark Barracks 13 -> level-12.png). Prefer the level-matching file when the
+// package ships one for that level; otherwise keep the pointer (sprite reuse).
+const levelSprite = (p, level) => {
+  const m = /^(.*\/)?level-(\d+)(\.png)$/i.exec(p);
+  if (m && Number(m[2]) !== level) {
+    const correct = `${m[1] ?? ''}level-${level}.png`;
+    if (existsSync(join(pkgRoot, correct))) return correct;
+  }
+  return p;
+};
+
 const homeEntries = [];
 const builderEntries = [];
 const homeByName = new Map();
@@ -52,7 +64,7 @@ const collect = (items) => {
     const levels = {};
     for (const l of it.levels ?? []) {
       const p = l.images?.normal;
-      if (p && !levels[String(l.level)]) levels[String(l.level)] = p;
+      if (p && !levels[String(l.level)]) levels[String(l.level)] = levelSprite(p, l.level);
     }
     addTo(homeByName, homeEntries, it.name, it.images?.icon ?? null, levels);
     if (it.superTroop?.name && it.superTroop.images) {
@@ -71,7 +83,7 @@ const collectBuilding = (items) => {
     const levels = {};
     for (const l of it.levels ?? []) {
       const p = l.images?.normal;
-      if (p && !levels[String(l.level)]) levels[String(l.level)] = p;
+      if (p && !levels[String(l.level)]) levels[String(l.level)] = levelSprite(p, l.level);
     }
     const keys = Object.keys(levels);
     addTo(homeByName, homeEntries, it.name, keys.length ? levels[keys[0]] : null, levels);
@@ -83,7 +95,7 @@ const collectBuilderBuilding = (items) => {
     const levels = {};
     for (const l of it.levels ?? []) {
       const p = l.images?.normal;
-      if (p && !levels[String(l.level)]) levels[String(l.level)] = p;
+      if (p && !levels[String(l.level)]) levels[String(l.level)] = levelSprite(p, l.level);
     }
     const keys = Object.keys(levels);
     addTo(builderByName, builderEntries, it.name, keys.length ? levels[keys[0]] : null, levels);
