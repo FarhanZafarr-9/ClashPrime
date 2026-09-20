@@ -542,6 +542,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "9": require('../../assets/package-images/images/home/troops/valkyrie/normal/level-9.webp'),
       "10": require('../../assets/package-images/images/home/troops/valkyrie/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/troops/valkyrie/normal/level-11.webp'),
+      "12": require('../../assets/package-images/images/home/troops/valkyrie/normal/level-12.webp'),
     },
   },
   "Super Valkyrie": {
@@ -651,6 +652,15 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "3": require('../../assets/package-images/images/home/troops/headhunter/normal/level-3.webp'),
     },
   },
+  "Ruin Witch": {
+    icon: require('../../assets/package-images/images/home/troops/ruin-witch/icon.webp'),
+    levels: {
+      "1": require('../../assets/package-images/images/home/troops/ruin-witch/normal/level-1.webp'),
+      "2": require('../../assets/package-images/images/home/troops/ruin-witch/normal/level-2.webp'),
+      "3": require('../../assets/package-images/images/home/troops/ruin-witch/normal/level-3.webp'),
+      "4": require('../../assets/package-images/images/home/troops/ruin-witch/normal/level-4.webp'),
+    },
+  },
   "Lightning Spell": {
     icon: require('../../assets/package-images/images/home/spells/lightning-spell/icon.webp'),
     levels: {},
@@ -717,6 +727,10 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
   },
   "Ice Block Spell": {
     icon: require('../../assets/package-images/images/home/spells/ice-block-spell/icon.webp'),
+    levels: {},
+  },
+  "Angry Spell": {
+    icon: require('../../assets/package-images/images/home/spells/angry-spell/icon.webp'),
     levels: {},
   },
   "L.A.S.S.I": {
@@ -966,6 +980,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "3": require('../../assets/package-images/images/home/siege-machines/battle-blimp/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/siege-machines/battle-blimp/normal/level-4.webp'),
       "5": require('../../assets/package-images/images/home/siege-machines/battle-blimp/normal/level-5.webp'),
+      "6": require('../../assets/package-images/images/home/siege-machines/battle-blimp/normal/level-6.webp'),
     },
   },
   "Stone Slammer": {
@@ -987,6 +1002,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "3": require('../../assets/package-images/images/home/siege-machines/siege-barracks/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/siege-machines/siege-barracks/normal/level-4.webp'),
       "5": require('../../assets/package-images/images/home/siege-machines/siege-barracks/normal/level-5.webp'),
+      "6": require('../../assets/package-images/images/home/siege-machines/siege-barracks/normal/level-6.webp'),
     },
   },
   "Log Launcher": {
@@ -1017,6 +1033,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "3": require('../../assets/package-images/images/home/siege-machines/battle-drill/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/siege-machines/battle-drill/normal/level-4.webp'),
       "5": require('../../assets/package-images/images/home/siege-machines/battle-drill/normal/level-5.webp'),
+      "6": require('../../assets/package-images/images/home/siege-machines/battle-drill/normal/level-6.webp'),
     },
   },
   "Troop Launcher": {
@@ -1026,6 +1043,15 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "2": require('../../assets/package-images/images/home/siege-machines/troop-launcher/normal/level-2.webp'),
       "3": require('../../assets/package-images/images/home/siege-machines/troop-launcher/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/siege-machines/troop-launcher/normal/level-4.webp'),
+    },
+  },
+  "Sky Wagon": {
+    icon: require('../../assets/package-images/images/home/siege-machines/sky-wagon/icon.webp'),
+    levels: {
+      "1": require('../../assets/package-images/images/home/siege-machines/sky-wagon/normal/level-1.webp'),
+      "2": require('../../assets/package-images/images/home/siege-machines/sky-wagon/normal/level-2.webp'),
+      "3": require('../../assets/package-images/images/home/siege-machines/sky-wagon/normal/level-3.webp'),
+      "4": require('../../assets/package-images/images/home/siege-machines/sky-wagon/normal/level-4.webp'),
     },
   },
   "Beta Minion": {
@@ -1422,6 +1448,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "10": require('../../assets/package-images/images/home/defenses/x-bow/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/defenses/x-bow/normal/level-11.webp'),
       "12": require('../../assets/package-images/images/home/defenses/x-bow/normal/level-12.webp'),
+      "13": require('../../assets/package-images/images/home/defenses/x-bow/normal/level-13.webp'),
     },
   },
   "Inferno Tower": {
@@ -1462,6 +1489,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "4": require('../../assets/package-images/images/home/defenses/scattershot/normal/level-4.webp'),
       "5": require('../../assets/package-images/images/home/defenses/scattershot/normal/level-5.webp'),
       "6": require('../../assets/package-images/images/home/defenses/scattershot/normal/level-6.webp'),
+      "7": require('../../assets/package-images/images/home/defenses/scattershot/normal/level-7.webp'),
     },
   },
   "Builder's Hut": {
@@ -1474,6 +1502,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "5": require('../../assets/package-images/images/home/defenses/builders-hut/normal/level-5.webp'),
       "6": require('../../assets/package-images/images/home/defenses/builders-hut/normal/level-6.webp'),
       "7": require('../../assets/package-images/images/home/defenses/builders-hut/normal/level-7.webp'),
+      "8": require('../../assets/package-images/images/home/defenses/builders-hut/normal/level-8.webp'),
     },
   },
   "Spell Tower": {
@@ -1492,6 +1521,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "2": require('../../assets/package-images/images/home/defenses/monolith/normal/level-2.webp'),
       "3": require('../../assets/package-images/images/home/defenses/monolith/normal/level-3.webp'),
       "4": require('../../assets/package-images/images/home/defenses/monolith/normal/level-4.webp'),
+      "5": require('../../assets/package-images/images/home/defenses/monolith/normal/level-5.webp'),
     },
   },
   "Multi-Archer Tower": {
@@ -1715,6 +1745,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "11": require('../../assets/package-images/images/home/army-buildings/army-camp/normal/level-11.webp'),
       "12": require('../../assets/package-images/images/home/army-buildings/army-camp/normal/level-12.webp'),
       "13": require('../../assets/package-images/images/home/army-buildings/army-camp/normal/level-13.webp'),
+      "14": require('../../assets/package-images/images/home/army-buildings/army-camp/normal/level-14.webp'),
     },
   },
   "Barracks": {
@@ -1756,6 +1787,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "10": require('../../assets/package-images/images/home/army-buildings/dark-barracks/normal/level-10.webp'),
       "11": require('../../assets/package-images/images/home/army-buildings/dark-barracks/normal/level-11.webp'),
       "12": require('../../assets/package-images/images/home/army-buildings/dark-barracks/normal/level-12.webp'),
+      "13": require('../../assets/package-images/images/home/army-buildings/dark-barracks/normal/level-12.webp'),
     },
   },
   "Laboratory": {
@@ -1803,6 +1835,7 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
       "5": require('../../assets/package-images/images/home/army-buildings/dark-spell-factory/normal/level-5.webp'),
       "6": require('../../assets/package-images/images/home/army-buildings/dark-spell-factory/normal/level-6.webp'),
       "7": require('../../assets/package-images/images/home/army-buildings/dark-spell-factory/normal/level-7.webp'),
+      "8": require('../../assets/package-images/images/home/army-buildings/dark-spell-factory/normal/level-8.webp'),
     },
   },
   "Hero Hall": {
