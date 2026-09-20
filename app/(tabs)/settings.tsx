@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,6 @@ import {
   StyleSheet,
   TextInput,
   Modal,
-  Linking,
-  Share,
   Platform,
   KeyboardAvoidingView,
   Image,
@@ -25,18 +23,15 @@ import { Chip } from '../../src/components/Chip';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
-const heartImg = require('../../images/heart.png') as any;
 import type { ClashPlayer } from '../../src/types/clash';
 import { ClashAPI } from '../../src/api/clash';
 import { checkForUpdate } from '../../src/utils/versionCheck';
-import { APP_VERSION } from '../../src/constants/appVersion';
 import {
   getPlayerTag,
   setPlayerTag,
   getApiToken,
   setApiToken,
   clearAppCache,
-  exportAppData,
   saveAccount,
   removeAccount,
   getAccounts,
@@ -50,8 +45,8 @@ import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import DiscountModal from '../../src/components/DiscountModal';
 import Constants from 'expo-constants';
-import { checkForUpdateAsync, fetchUpdateAsync, reloadAsync } from 'expo-updates';
 import { Switch } from 'react-native-paper'
+const heartImg = require('../../images/heart.png') as any;
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return <Text style={styles.sectionHeader}>{children}</Text>;
@@ -130,6 +125,12 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Hero Journey: progress reflects your own Town Hall cap (not the far-away TH18 max), with a scroll-to-current-milestone shortcut.',
       'Majestic hero skins, runes and other magic items now render as full images in rewards.',
       'Engine upgrade: Expo 57, React Native 0.86, eslint-config-expo 57.',
+      'Import screen: re-pasting the same export no longer re-proposes upgrades you already applied — copies the account has absorbed are dropped from the summary and "Upgrading now".',
+      'Time to Max: exclude any building you don\'t plan to max — all its copies are skipped from max-time estimates and TH readiness.',
+      'Time to Max: new Town Hall upgrade card in the rush comparison shows next-TH build cost and time.',
+      'Home: Progress Achieved dialog restyled — progress rows use each category\'s building pictograms, level-up rows show in-game item icons, and rows sit in a gap-spaced rounded layout.',
+      'Home: account switcher dialog polished — name/tag aligned top-and-bottom, bigger Add Account button with a link icon, active account highlighted by row instead of a chip; dialogs now span full-width with edge margins.',
+      'New in-app package images for added content and levels (Ruin Witch, Angry Spell, Sky Wagon, Valkyrie L12, X-Bow L13 and more) after upgrading to clash-of-clans-data 0.17.',
     ],
   },
   {
@@ -283,10 +284,10 @@ export default function SettingsScreen() {
   const appVersion = `v${(Constants.expoConfig as any)?.version ?? '5.5.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag } = usePlayer();
-  const { show: showDialog, hide: hideDialog, Dialog } = useDialog();
+  const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
-  const { isDark, colors, setThemeMode } = useTheme();
+  const { isDark, setThemeMode } = useTheme();
   const { pref: fontPref, setClashFontPref } = useClashFontPref();
   const clashFontDesc = fontPref === 'off'
     ? 'Use the system font'
@@ -320,7 +321,7 @@ export default function SettingsScreen() {
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
-  const { count: builderCount, setBuilderCount, loaded: builderLoaded, verified: builderVerified, setBuilderVerified } = useBuilderCount();
+  const { count: builderCount, setBuilderCount, verified: builderVerified, setBuilderVerified } = useBuilderCount();
   const { discounts, setBuildingCost, setBuildingTime, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
 
   const discountDesc = (s: ScopeDiscount) => {
@@ -470,18 +471,6 @@ export default function SettingsScreen() {
     showDialog({ title: 'Cache Cleared', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
   };
 
-  const handleExportData = async () => {
-    try {
-      const data = await exportAppData();
-      await Share.share({
-        message: data,
-        title: 'ClashPrime Export',
-      });
-    } catch {
-      showDialog({ title: 'Export Failed', message: 'Could not export data. Please try again.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
-    }
-  };
-
   const handleOnboardingSave = async () => {
     if (onboardingStep === 'tag') {
       const tag = onboardingTag;
@@ -624,7 +613,7 @@ export default function SettingsScreen() {
           ))}
           <Text style={styles.policyTitle}>Disclaimer</Text>
           <Text style={styles.policyBody}>
-            ClashPrime is an independent project and is not affiliated with or endorsed by Supercell. Supercell's trademarks and the Clash of Clans brand are used with permission where applicable.
+            {"ClashPrime is an independent project and is not affiliated with or endorsed by Supercell. Supercell's trademarks and the Clash of Clans brand are used with permission where applicable."}
           </Text>
         </View>
       ),
@@ -704,14 +693,14 @@ export default function SettingsScreen() {
       (
         <View>
           <Text style={styles.feedbackText}>
-            We'd love to hear from you — bug reports, feature ideas, or just a hello.
+            {"We'd love to hear from you — bug reports, feature ideas, or just a hello."}
           </Text>
           <View style={styles.feedbackEmailRow}>
             <Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />
             <Text style={styles.feedbackEmail}>{FEEDBACK_EMAIL}</Text>
           </View>
           <Text style={styles.feedbackNote}>
-            Tap "Email Us" to open your mail app, or copy the address above.
+            {'Tap "Email Us" to open your mail app, or copy the address above.'}
           </Text>
         </View>
       ),
@@ -842,7 +831,7 @@ export default function SettingsScreen() {
       (
         <View>
           <Text style={styles.feedbackText}>
-            Technical build details for bug reports. Tap "Copy Info" to paste them into feedback.
+            {'Technical build details for bug reports. Tap "Copy Info" to paste them into feedback.'}
           </Text>
           {rows.map((r) => (
             <View style={styles.devRow} key={r.label}>
@@ -886,13 +875,10 @@ export default function SettingsScreen() {
                 pillTopOffset={18}
                 pillRightOffset={-4}
                 onPress={handleEditToken}
-                children={
-                  <>
-                    <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
-                    <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-                  </>
-                }
-              />
+              >
+                <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+              </SettingRow>
             </>
           ) : (
             <SettingRow
@@ -901,17 +887,14 @@ export default function SettingsScreen() {
               desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} · ${activeAccount?.tag || ''}`}
               compact
               onPress={() => setSwitchModalVisible(true)}
-              children={
-                <>
-                  {switchingAccount ? (
-                    <ActivityIndicator size="small" color={Colors.textSecondary} />
-                  ) : activeAccount && activeAccount.townHallLevel > 0 && getTownHallImageUrl(activeAccount.townHallLevel) ? (
-                    <Image source={{ uri: getTownHallImageUrl(activeAccount.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
-                  ) : null}
-                  <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-                </>
-              }
-            />
+            >
+              {switchingAccount ? (
+                <ActivityIndicator size="small" color={Colors.textSecondary} />
+              ) : activeAccount && activeAccount.townHallLevel > 0 && getTownHallImageUrl(activeAccount.townHallLevel) ? (
+                <Image source={{ uri: getTownHallImageUrl(activeAccount.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
+              ) : null}
+              <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            </SettingRow>
           )}
           {accounts.length > 0 && (
             <SettingRow
@@ -923,13 +906,10 @@ export default function SettingsScreen() {
               pillTopOffset={8}
               pillRightOffset={-10}
               onPress={handleEditToken}
-              children={
-                <>
-                  <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
-                  <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-                </>
-              }
-            />
+            >
+              <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            </SettingRow>
           )}
           <SettingRow
             icon="add-circle-outline"
@@ -975,30 +955,28 @@ export default function SettingsScreen() {
             title="Dark Mode"
             desc="Switch between dark and light theme"
             compact
-            children={
-              <Switch
-                value={isDark}
-                onValueChange={(v) => setThemeMode(v)}
-                trackColor={{ false: Colors.border, true: Colors.textMuted }}
-                thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
-              />
-            }
             isFirst
-          />
+          >
+            <Switch
+              value={isDark}
+              onValueChange={(v) => setThemeMode(v)}
+              trackColor={{ false: Colors.border, true: Colors.textMuted }}
+              thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
+            />
+          </SettingRow>
           <SettingRow
             icon="text-outline"
             title="Clash Font"
             desc={clashFontDesc}
             compact
             isLast
-            children={
-              <View style={styles.fontChipRow}>
-                <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
-                <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
-                <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
-              </View>
-            }
-          />
+          >
+            <View style={styles.fontChipRow}>
+              <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
+              <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
+              <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
+            </View>
+          </SettingRow>
         </SettingCard>
 
         <SectionHeader>Discounts</SectionHeader>
@@ -1009,28 +987,26 @@ export default function SettingsScreen() {
             desc={discountDesc(discounts.buildings)}
             compact
             onPress={() => setDiscountModalScope('buildings')}
-            children={
-              <View style={styles.discountRowRight}>
-                <View style={[styles.discountDot, discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? styles.discountDotActive : null]} />
-                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
-              </View>
-            }
             isFirst
-          />
+          >
+            <View style={styles.discountRowRight}>
+              <View style={[styles.discountDot, discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? styles.discountDotActive : null]} />
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+            </View>
+          </SettingRow>
           <SettingRow
             icon="shield-half-outline"
             title="Army Discounts"
             desc={discountDesc(discounts.army)}
             compact
             onPress={() => setDiscountModalScope('army')}
-            children={
-              <View style={styles.discountRowRight}>
-                <View style={[styles.discountDot, discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? styles.discountDotActive : null]} />
-                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
-              </View>
-            }
             isLast
-          />
+          >
+            <View style={styles.discountRowRight}>
+              <View style={[styles.discountDot, discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? styles.discountDotActive : null]} />
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+            </View>
+          </SettingRow>
         </SettingCard>
 
         <SectionHeader>Data &amp; Preferences</SectionHeader>
@@ -1060,25 +1036,24 @@ export default function SettingsScreen() {
             title="Builder Count"
             desc={builderVerified ? 'Auto-detected from JSON import' : 'Number of builders (2–6)'}
             compact
-            children={
-              <View style={styles.builderCountRow}>
-                <PressableRipple
-                  style={styles.builderCountBtn}
-                  onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
-                >
-                  <Ionicons name="remove" size={18} color={Colors.textPrimary} />
-                </PressableRipple>
-                <Text style={styles.builderCountValue}>{builderCount}</Text>
-                <PressableRipple
-                  style={styles.builderCountBtn}
-                  onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
-                >
-                  <Ionicons name="add" size={18} color={Colors.textPrimary} />
-                </PressableRipple>
-              </View>
-            }
             onPress={() => { }}
-          />
+          >
+            <View style={styles.builderCountRow}>
+              <PressableRipple
+                style={styles.builderCountBtn}
+                onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
+              >
+                <Ionicons name="remove" size={18} color={Colors.textPrimary} />
+              </PressableRipple>
+              <Text style={styles.builderCountValue}>{builderCount}</Text>
+              <PressableRipple
+                style={styles.builderCountBtn}
+                onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
+              >
+                <Ionicons name="add" size={18} color={Colors.textPrimary} />
+              </PressableRipple>
+            </View>
+          </SettingRow>
           <SettingRow
             icon="refresh-outline"
             title="Refresh Game Data"
@@ -1106,32 +1081,29 @@ export default function SettingsScreen() {
             desc={checkingUpdates ? 'Checking GitHub for the latest release…' : 'Compare your build against the latest GitHub release'}
             compact
             onPress={checkingUpdates ? undefined : handleCheckUpdates}
-            children={checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
             isFirst
-          />
+          >
+            {checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
+          </SettingRow>
           <SettingRow
             icon="information-circle-outline"
             title="About ClashPrime"
             desc="What this app does, its features and sources"
             compact
             onPress={openAbout}
-            children={
-              <>
-                <Text style={styles.settingValue}>{appVersion}</Text>
-                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-              </>
-            }
-          />
+          >
+            <Text style={styles.settingValue}>{appVersion}</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+          </SettingRow>
           <SettingRow
             icon="sparkles-outline"
             title="What's New"
             desc="Recent updates and improvements"
             compact
             onPress={openChangelog}
-            children={
-              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-            }
-          />
+          >
+            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+          </SettingRow>
           <SettingRow
             icon="document-text-outline"
             title="Privacy Policy"
@@ -1164,22 +1136,20 @@ export default function SettingsScreen() {
             desc="About the developer behind ClashPrime"
             compact
             onPress={openDeveloper}
-            children={
-              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-            }
             isFirst
-          />
+          >
+            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+          </SettingRow>
           <SettingRow
             icon="code-slash-outline"
             title="Build Diagnostics"
             desc="Technical build details for bug reports"
             compact
             onPress={openBuildDiagnostics}
-            children={
-              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-            }
             isLast
-          />
+          >
+            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+          </SettingRow>
         </SettingCard>
 
         <View style={styles.footer}>
@@ -1236,7 +1206,7 @@ export default function SettingsScreen() {
                     <View style={styles.modalStep}>
                       <Text style={styles.modalStepNum}>2</Text>
                       <Text style={styles.modalStepText}>
-                        Go to <Text style={styles.modalLink}>My Account → Create New Key</Text>, name it "ClashPrime"
+                        Go to <Text style={styles.modalLink}>My Account → Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
                       </Text>
                     </View>
                     <View style={styles.modalStep}>
@@ -1357,7 +1327,7 @@ export default function SettingsScreen() {
               </View>
               <Text style={styles.onboardingTitle}>Add Account</Text>
               <Text style={styles.onboardingDesc}>
-                Enter your player tag. We'll fetch your profile and let you confirm before connecting.
+                {"Enter your player tag. We'll fetch your profile and let you confirm before connecting."}
               </Text>
               <View style={styles.onboardingInputGroup}>
                 <Text style={styles.onboardingFieldLabel}>Player Tag</Text>
@@ -1494,7 +1464,7 @@ export default function SettingsScreen() {
               </View>
               <Text style={styles.onboardingTitle}>Last Maxed Town Hall</Text>
               <Text style={styles.onboardingDesc}>
-                Pick the last Town Hall you've fully maxed. This sets your starting building levels.
+                {"Pick the last Town Hall you've fully maxed. This sets your starting building levels."}
               </Text>
               <View style={styles.onboardingThGrid}>
                 {Array.from({ length: (onboardingPlayer.townHallLevel || getMaxTownHall()) - 1 }, (_, i) => i + 2).map((th, index, arr) => {
@@ -1518,7 +1488,7 @@ export default function SettingsScreen() {
                 })}
               </View>
               <Text style={styles.onboardingThHint}>
-                You're on TH{onboardingPlayer.townHallLevel}. Pick the last Town Hall you've fully maxed.
+                {`You're on TH${onboardingPlayer.townHallLevel}. Pick the last Town Hall you've fully maxed.`}
               </Text>
               <View style={styles.onboardingActions}>
                 <PressableRipple
@@ -1743,7 +1713,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   switchCard: {
-    width: '86%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 0.75,
@@ -1994,7 +1965,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
   },
   modalContent: {
-    width: '85%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 0.75,
@@ -2136,7 +2108,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
   },
   contentCard: {
-    width: '88%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     maxHeight: '80%',
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
@@ -2321,7 +2294,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
   },
   onboardingCard: {
-    width: '85%',
+    alignSelf: 'stretch',
+    marginHorizontal: 20,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 0.75,
