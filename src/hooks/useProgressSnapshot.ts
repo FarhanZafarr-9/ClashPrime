@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_PREFIX = 'clashprime_progress_';
 
-export type ProgressCategory = 'heroes' | 'troops' | 'spells' | 'equipment';
+export type ProgressCategory = 'heroes' | 'troops' | 'spells' | 'equipment' | 'builderTroops' | 'builderHeroes';
 
 export interface ProgressSnapshot {
   timestamp: number;
@@ -38,7 +38,7 @@ export async function saveProgressSnapshot(tag: string, snapshot: ProgressSnapsh
 export function diffProgress(before: ProgressSnapshot, after: ProgressSnapshot): ProgressDiff {
   const categories: ProgressDiff['categories'] = [];
   const levelUps: ProgressDiff['levelUps'] = [];
-  const keys: ProgressCategory[] = ['heroes', 'troops', 'spells', 'equipment'];
+  const keys: ProgressCategory[] = ['heroes', 'troops', 'spells', 'equipment', 'builderTroops', 'builderHeroes'];
 
   for (const key of keys) {
     const b = before.categories[key] ?? 0;
