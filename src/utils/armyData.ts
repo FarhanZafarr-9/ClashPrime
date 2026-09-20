@@ -257,15 +257,32 @@ export function getMaxLevelAtTH(name: string, thLevel: number): number | null {
   return max > 0 ? max : null;
 }
 
+/** Max level of a Builder Base troop at the given Star Lab level. */
+function builderTroopMaxAt(name: string, starLabMax: number): number | null {
+  const item = getArmyItem(name, true);
+  if (!item || item.base !== 'builder' || item.category !== 'troop') return null;
+  if (starLabMax <= 0) return null;
+  const max = maxLevelUnderCap(item.levels, 'starLabRequired', starLabMax);
+  return max > 0 ? max : null;
+}
+
+function starLabMaxLevel(bh: number): number {
+  const starLab = safeLoad(() => ((builder().armyBuildings() as any).starLaboratory()?.get?.() as PackageItem[] | undefined)?.[0], undefined);
+  return starLab?.levels?.length ? maxLevelUnderCap(starLab.levels, 'builderHallRequired', bh) : 0;
+}
+
 /** Max level of a Builder Base troop at a given Builder Hall (Star Lab gating). */
 export function getBuilderTroopMaxLevel(name: string, bh: number): number | null {
   indexItems();
+  return builderTroopMaxAt(name, starLabMaxLevel(bh));
+}
+
+/** Max level of a Builder Base hero at a given Builder Hall. */
+export function getBuilderHeroMaxLevel(name: string, bh: number): number | null {
+  indexItems();
   const item = getArmyItem(name, true);
-  if (!item || item.base !== 'builder' || item.category !== 'troop') return null;
-  const starLab = safeLoad(() => ((builder().armyBuildings() as any).starLaboratory()?.get?.() as PackageItem[] | undefined)?.[0], undefined);
-  const starLabMax = starLab?.levels?.length ? maxLevelUnderCap(starLab.levels, 'builderHallRequired', bh) : 0;
-  if (starLabMax <= 0) return null;
-  const max = maxLevelUnderCap(item.levels, 'starLabRequired', starLabMax);
+  if (!item || item.base !== 'builder' || item.category !== 'hero') return null;
+  const max = maxLevelUnderCap(item.levels, 'builderHallLevelRequired', bh);
   return max > 0 ? max : null;
 }
 
@@ -286,6 +303,25 @@ export function getAllItemsAtTH(th: number): { name: string; type: UnlockableTyp
   for (const item of homeSpells) addItem(item, 'spell');
   for (const item of homeHeroes) addItem(item, 'hero');
   for (const item of homeSiege) addItem(item, 'siege');
+  return result;
+}
+
+/** All Builder Base troops and heroes unlockable at a Builder Hall, for progress tracking. */
+export function getAllBuilderItemsAtBH(bh: number): { name: string; type: 'troop' | 'hero'; maxLevel: number }[] {
+  indexItems();
+  const starLabMax = starLabMaxLevel(bh);
+  const result: { name: string; type: 'troop' | 'hero'; maxLevel: number }[] = [];
+  const seen = new Set<string>();
+  const add = (item: PackageItem, type: 'troop' | 'hero') => {
+    if (item.base !== 'builder' || seen.has(item.name)) return;
+    const maxLevel = type === 'troop' ? builderTroopMaxAt(item.name, starLabMax) : getBuilderHeroMaxLevel(item.name, bh);
+    if (maxLevel != null && maxLevel > 0) {
+      result.push({ name: item.name, type, maxLevel });
+      seen.add(item.name);
+    }
+  };
+  for (const item of builderTroops) add(item, 'troop');
+  for (const item of builderHeroes) add(item, 'hero');
   return result;
 }
 
