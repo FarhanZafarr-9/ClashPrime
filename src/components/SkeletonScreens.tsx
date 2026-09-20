@@ -209,7 +209,7 @@ export function HomeScreenSkeleton() {
             { borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius },
           ]}>
             <Skeleton width={32} height={32} borderRadius={Radius.md} />
-            <View style={{ flex: 1, gap: 5 }}>
+            <View style={{ flex: 1, alignSelf: 'stretch', justifyContent: 'space-between' }}>
               <Skeleton width="50%" height={13} borderRadius={4} />
               <Skeleton width="70%" height={4} borderRadius={2} />
             </View>
@@ -220,7 +220,7 @@ export function HomeScreenSkeleton() {
           </View>
           <View style={[styles.homeSectionRowSkeleton, { backgroundColor: colors.bgCard }]}>
             <Skeleton width={32} height={32} borderRadius={Radius.md} />
-            <View style={{ flex: 1, gap: 5 }}>
+            <View style={{ flex: 1, alignSelf: 'stretch', justifyContent: 'space-between' }}>
               <Skeleton width="40%" height={13} borderRadius={4} />
               <Skeleton width="70%" height={4} borderRadius={2} />
             </View>
@@ -235,7 +235,7 @@ export function HomeScreenSkeleton() {
             { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius },
           ]}>
             <Skeleton width={32} height={32} borderRadius={Radius.md} />
-            <View style={{ flex: 1, gap: 5 }}>
+            <View style={{ flex: 1, alignSelf: 'stretch', justifyContent: 'space-between' }}>
               <Skeleton width="45%" height={13} borderRadius={4} />
               <Skeleton width="60%" height={10} borderRadius={3} />
             </View>
@@ -619,7 +619,7 @@ export function HeroJourneyScreenSkeleton() {
           {/* Expanded section header (isFirst — top rounding) */}
           <View style={[styles.heroJourneySection, styles.heroJourneySectionFirst, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <Skeleton width={32} height={32} borderRadius={Radius.sm} />
-            <View style={{ flex: 1, gap: 4 }}>
+            <View style={{ flex: 1, alignSelf: 'stretch', justifyContent: 'space-between' }}>
               <Skeleton width={90} height={14} borderRadius={3} />
               <Skeleton width={130} height={12} borderRadius={3} />
             </View>
@@ -642,7 +642,7 @@ export function HeroJourneyScreenSkeleton() {
               <View style={styles.heroJourneyMilestoneIcon}>
                 <Skeleton width={22} height={22} borderRadius={5} />
               </View>
-              <View style={{ flex: 1, gap: 4 }}>
+              <View style={{ flex: 1, alignSelf: 'stretch', justifyContent: 'space-between' }}>
                 <Skeleton width="60%" height={12} borderRadius={3} />
                 <Skeleton width="42%" height={10} borderRadius={3} />
               </View>
