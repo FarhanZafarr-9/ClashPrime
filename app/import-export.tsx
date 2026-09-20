@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -125,13 +125,15 @@ export default function ImportExportScreen() {
       const count = getCountAtTH(item.storeName, th);
       // Timer rows describe copies that are mid-upgrade at `lvl`. When the user
       // opts to treat them as done, those copies import at `lvl + 1` instead.
-      let importedLevels = [...item.levels].map((l) => Math.min(l, effectiveMax));
+      // Sort desc so the copied levels always line up with the app's per-copy
+      // list (also sorted desc) — otherwise re-pasting the same export would
+      // keep proposing the same upgrades for buildings without a timer row.
+      let importedLevels = [...item.levels].map((l) => Math.min(l, effectiveMax)).sort((a, b) => b - a);
       if (markInProgressDone && item.timerRows.length > 0) {
         const bump = new Map<number, number>();
         for (const t of item.timerRows) bump.set(t.level, (bump.get(t.level) ?? 0) + 1);
         const remaining = new Map(bump);
         importedLevels = importedLevels
-          .sort((a, b) => b - a)
           .map((lvl) => {
             const need = remaining.get(lvl);
             if (need && need > 0) {
@@ -257,16 +259,28 @@ export default function ImportExportScreen() {
   }, [upgradeRows]);
 
   // Copies with an in-progress upgrade (timer rows in the export), showing the
-  // current level, the upcoming level and time left.
+  // current level, the upcoming level and time left. Rows that the account has
+  // already absorbed are dropped — e.g. a copy that the last import bumped to
+  // lvl + 1 should never be re-offered when the same export is pasted again.
   const upgradingRows = useMemo(() => {
-    if (!result) return [];
+    if (!result || !player) return [];
+    const th = player.townHallLevel ?? 0;
     const byKey = new Map<string, { storeName: string; displayName: string; level: number; remainingSec: number; copies: number }>();
     for (const item of result.resolved) {
+      const effectiveMax = getBuildingEffectiveMax(item.storeName, th);
+      if (effectiveMax <= 0) continue;
+      const count = getCountAtTH(item.storeName, th);
+      const copiesInfo = getBuildingCopies(item.storeName, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
+      const currentArr = copiesInfo.levels
+        .map((l) => (l > 0 ? Math.min(l, effectiveMax) : 1))
+        .sort((a, b) => b - a);
       for (const t of item.timerRows) {
+        const doneAt = Math.min(t.level + 1, effectiveMax);
+        const alreadyDone = currentArr.filter((l) => l >= doneAt).length;
         const key = `${item.storeName}|${t.level}`;
         const prev = byKey.get(key);
         if (prev) {
-          prev.copies += 1;
+          prev.copies = Math.max(0, prev.copies + 1 - alreadyDone);
           prev.remainingSec = Math.min(prev.remainingSec, t.remainingSec);
         } else {
           byKey.set(key, {
@@ -274,13 +288,15 @@ export default function ImportExportScreen() {
             displayName: item.displayName,
             level: t.level,
             remainingSec: t.remainingSec,
-            copies: 1,
+            copies: Math.max(0, 1 - alreadyDone),
           });
         }
       }
     }
-    return [...byKey.values()].sort((a, b) => b.remainingSec - a.remainingSec);
-  }, [result]);
+    return [...byKey.values()]
+      .filter((u) => u.copies > 0)
+      .sort((a, b) => b.remainingSec - a.remainingSec);
+  }, [result, player]);
   const canApply = applyCount > 0 && totalChanged > 0 && !!player;
 
   const doApply = async (tag: string) => {
@@ -386,13 +402,15 @@ export default function ImportExportScreen() {
                 <Ionicons name="clipboard-outline" size={16} color={Colors.textSecondary} />
                 <Text style={styles.ghostBtnText}>Paste from clipboard</Text>
               </PressableRipple>
-              <PressableRipple
-                style={styles.parseBtn}
-                onPress={() => handleParse(text)}
-                disabled={!text.trim()}
-              >
-                <Text style={styles.parseBtnText}>Parse</Text>
-              </PressableRipple>
+              {text.trim() ? (
+                <PressableRipple
+                  style={styles.parseBtn}
+                  onPress={() => handleParse(text)}
+                  disabled={!text.trim()}
+                >
+                  <Text style={styles.parseBtnText}>Parse</Text>
+                </PressableRipple>
+              ) : null}
             </View>
 
             {error ? (
@@ -574,7 +592,7 @@ export default function ImportExportScreen() {
                 <>
                   <Text style={styles.sectionTitle}>Unknown building IDs</Text>
                   <Text style={styles.sectionHint}>
-                    These IDs are not in the app's data package and will be ignored.
+                    These IDs are not in the app{"'"}s data package and will be ignored.
                   </Text>
                   <View style={styles.list}>
                     {result.unresolved.map((u, i) => (
@@ -741,7 +759,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 0.75,
     borderColor: Colors.border,
@@ -755,7 +773,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     backgroundColor: Colors.textPrimary,
   },
