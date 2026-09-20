@@ -61,6 +61,8 @@ export interface MaxTimeInput {
   builderCount: number;
   /** Pre-fetched package details keyed by display name (armyData.getArmyTroopDetail). */
   armyDetails: Record<string, TroopDetail | null>;
+  /** Buildings the player does not plan to max — all copies are skipped. */
+  excludedBuildings?: ReadonlySet<string>;
 }
 
 export interface MaxTimeResult {
@@ -174,6 +176,7 @@ function buildBuildersPipeline(
   th: number,
   builderCount: number,
   armyDetails: Record<string, TroopDetail | null>,
+  excludedBuildings?: ReadonlySet<string>,
 ): PipelineResult {
   const rows: PipelineItemRow[] = [];
   const buildingChains: number[] = [];
@@ -182,6 +185,7 @@ function buildBuildersPipeline(
   const cats = getBuildingCategories(th);
   for (const items of Object.values(cats)) {
     for (const [name, thData] of Object.entries(items)) {
+      if (excludedBuildings?.has(name)) continue;
       const entry = thData[String(th)];
       if (!entry || (entry.level ?? 0) <= 0) continue;
       const effectiveMax = getBuildingEffectiveMax(name, th);
@@ -263,7 +267,7 @@ function buildEquipmentPipeline(player: ClashPlayer, th: number): PipelineResult
 }
 
 export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
-  const { player, th, builderCount, armyDetails } = input;
+  const { player, th, builderCount, armyDetails, excludedBuildings } = input;
   // Locked (not yet unlocked) troops/spells/heroes still count toward max: the
   // player must research and upgrade them too, so they start from level 0.
   const labItems = mergeLeveled(
@@ -273,7 +277,7 @@ export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
   const heroItems = mergeLeveled(player.heroes ?? [], lockedItemsAtTH(th, ['hero']));
   const lab = buildSerialPipeline('lab', labItems, th, armyDetails);
   const pets = buildSerialPipeline('pets', player.pets ?? [], th, armyDetails);
-  const builders = buildBuildersPipeline(player, heroItems, th, builderCount, armyDetails);
+  const builders = buildBuildersPipeline(player, heroItems, th, builderCount, armyDetails, excludedBuildings);
   const equipment = buildEquipmentPipeline(player, th);
 
   const totalTimeSec = Math.max(lab.timeSec, builders.timeSec, pets.timeSec, equipment.timeSec);

@@ -344,6 +344,28 @@ function buildTimeToSeconds(t?: BuildTimeLike): number {
   return (t.days ?? 0) * 86400 + (t.hours ?? 0) * 3600 + (t.minutes ?? 0) * 60 + (t.seconds ?? 0);
 }
 
+let townHallUpgradesCache: PackageLevel[] | null = null;
+
+/** Upgrade cost/time to reach `targetLevel` Town Hall (the TH{target-1} → TH{target} upgrade). */
+export function getTownHallUpgrade(targetLevel: number): { cost: number; timeSec: number; byResource: Record<string, number> } | null {
+  if (targetLevel <= 1) return null;
+  if (!townHallUpgradesCache) {
+    townHallUpgradesCache = safeLoad(() => {
+      const g = home().townHall().get();
+      const row = Array.isArray(g) ? g[0] : (Object.values(g ?? {}) as unknown[])[0] as PackageBuilding | undefined;
+      return (row?.levels ?? []) as PackageLevel[];
+    }, []);
+  }
+  const lvl = townHallUpgradesCache.find((l) => l.level === targetLevel);
+  if (!lvl) return null;
+  const cost = lvl.buildCost ?? 0;
+  return {
+    cost,
+    timeSec: buildTimeToSeconds(lvl.buildTime),
+    byResource: cost > 0 ? { [lvl.buildCostResource ?? 'Gold']: cost } : {},
+  };
+}
+
 /** Per-level build time as the scraped-style string ("5s", "30m", "1d 12h"). */
 function formatBuildTime(t?: BuildTimeLike): string {
   const total = buildTimeToSeconds(t);

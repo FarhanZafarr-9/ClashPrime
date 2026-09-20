@@ -3,16 +3,20 @@ import { View, Text, ScrollView, StyleSheet, Image, Pressable } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
-import { Chip } from '../../src/components/Chip';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
+import PressableRipple from '../../src/components/PressableRipple';
 import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
+import { useBuildingExclusions } from '../../src/hooks/useBuildingExclusions';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
 import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
-import { getBuildingItemImage, getBuildingMaxLevelAtTH, getMaxTownHall, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getBuildingItemImage, getBuildingMaxLevelAtTH, getMaxTownHall, getBuildingCategories, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getBuildingCopies, getCountAtTH } from '../../src/utils/buildingCopies';
+import { getBuildingEffectiveMax } from '../../src/utils/buildingImages';
+import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
 import { computeThReadiness } from '../../src/utils/thReadiness';
@@ -55,14 +59,11 @@ function rowScope(row: PipelineItemRow, heroNames: Set<string>, discounts: Disco
   return heroNames.has(row.name) ? discounts.army : discounts.buildings;
 }
 
-function fmtDelta(sec: number): string {
-  return sec > 0 ? `+${formatTimeShort(sec)}` : '—';
-}
-
 export default function MaxTimeScreen() {
   const { player, loading } = usePlayer();
   const { colors } = useTheme();
   const { count: builderCount, setBuilderCount, loaded: builderLoaded } = useBuilderCount();
+  const { excluded, toggleExcluded, setExcludedMany, clearExcluded, loaded: exclusionsLoaded } = useBuildingExclusions();
   const { discounts } = useDiscounts();
   const [details, setDetails] = useState<Record<string, TroopDetail | null> | null>(null);
   const [expanded, setExpanded] = useState<Record<PipelineKey, boolean>>({ lab: false, builders: false, pets: false, equipment: false });
@@ -70,6 +71,7 @@ export default function MaxTimeScreen() {
   const [buildersExpanded, setBuildersExpanded] = useState(false);
   const [labExpanded, setLabExpanded] = useState(false);
   const [rushExpanded, setRushExpanded] = useState(false);
+  const [excludeOpen, setExcludeOpen] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
   const maxTh = getMaxTownHall();
@@ -90,12 +92,16 @@ export default function MaxTimeScreen() {
 
   useEffect(() => {
     let active = true;
-    setDetails(null);
-    if (!player || armyNames.length === 0) {
-      setDetails({});
-      return;
-    }
     (async () => {
+      // Reset, then re-fetch — cleared in the async continuation so we never
+      // set state synchronously within the effect (react-hooks/set-state-in-effect).
+      await Promise.resolve();
+      if (!active) return;
+      setDetails(null);
+      if (!player || armyNames.length === 0) {
+        setDetails({});
+        return;
+      }
       const fetched = await Promise.all(armyNames.map((n) => getArmyTroopDetail(n).catch(() => null)));
       if (!active) return;
       const next: Record<string, TroopDetail | null> = {};
@@ -107,13 +113,13 @@ export default function MaxTimeScreen() {
 
   const result = useMemo(() => {
     if (!player || !details) return null;
-    return computeMaxTime({ player, th, builderCount, armyDetails: details });
-  }, [player, th, builderCount, details]);
+    return computeMaxTime({ player, th, builderCount, armyDetails: details, excludedBuildings: excluded });
+  }, [player, th, builderCount, details, excluded]);
 
   const readiness = useMemo(() => {
     if (!player) return null;
-    return computeThReadiness(player, th);
-  }, [player, th]);
+    return computeThReadiness(player, th, excluded);
+  }, [player, th, excluded]);
 
   const discounted = useMemo(() => {
     if (!result) return null;
@@ -137,8 +143,8 @@ export default function MaxTimeScreen() {
 
   const nextResult = useMemo(() => {
     if (!player || !details) return null;
-    return computeMaxTime({ player, th: th + 1, builderCount, armyDetails: details });
-  }, [player, th, builderCount, details]);
+    return computeMaxTime({ player, th: th + 1, builderCount, armyDetails: details, excludedBuildings: excluded });
+  }, [player, th, builderCount, details, excluded]);
 
   const nextDiscounted = useMemo(() => {
     if (!nextResult) return null;
@@ -146,16 +152,57 @@ export default function MaxTimeScreen() {
     const pets = applyScope(nextResult.pets.timeSec, nextResult.pets.cost, nextResult.pets.byResource, discounts.army);
     const equipment = applyScope(nextResult.equipment.timeSec, nextResult.equipment.cost, nextResult.equipment.byResource, discounts.army);
     const builders = applyScope(nextResult.builders.timeSec, nextResult.builders.cost, nextResult.builders.byResource, discounts.buildings);
+    const totalByResource: Record<string, number> = {};
+    for (const p of [lab, builders, pets, equipment]) {
+      for (const [r, v] of Object.entries(p.byResource)) totalByResource[r] = (totalByResource[r] ?? 0) + v;
+    }
     return {
       lab,
       builders,
       pets,
       equipment,
       headlineTime: Math.max(lab.timeSec, builders.timeSec, pets.timeSec, equipment.timeSec),
+      totalByResource,
     };
   }, [nextResult, discounts]);
 
-  if (loading || !player || !builderLoaded || !result || !discounted) {
+  const thUpgrade = useMemo(() => {
+    if (!player || isMaxTh) return null;
+    const data = getTownHallUpgrade(th + 1);
+    if (!data) return null;
+    const scope = discounts.buildings;
+    const cost = Math.max(0, Math.round(data.cost * (1 - scope.costPercent / 100)));
+    const timeSec = Math.max(0, Math.round(data.timeSec * (1 - scope.timePercent / 100)));
+    const byResource: Record<string, number> = {};
+    for (const [r, v] of Object.entries(data.byResource)) byResource[r] = Math.max(0, Math.round(v * (1 - scope.costPercent / 100)));
+    return { cost, timeSec, byResource };
+  }, [player, th, isMaxTh, discounts]);
+
+  const exclusionGroups = useMemo(() => {
+    if (!player) return [] as { category: string; buildings: { name: string; iconLevel: number; current: number; max: number }[] }[];
+    const cats = getBuildingCategories(th);
+    const groups: { category: string; buildings: { name: string; iconLevel: number; current: number; max: number }[] }[] = [];
+    for (const [cat, buildings] of Object.entries(cats)) {
+      const rows: { name: string; iconLevel: number; current: number; max: number }[] = [];
+      for (const [name, thData] of Object.entries(buildings)) {
+        const entry = thData[String(th)];
+        if (!entry || (entry.level ?? 0) <= 0) continue;
+        const effectiveMax = getBuildingEffectiveMax(name, th);
+        if (effectiveMax <= 0) continue;
+        const count = getCountAtTH(name, th);
+        const copies = getBuildingCopies(name, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
+        const current = copies.levels.reduce((s, l) => s + l, 0);
+        const max = count * effectiveMax;
+        if (current >= max) continue;
+        const iconLevel = copies.levels.length > 0 ? Math.max(...copies.levels) : 1;
+        rows.push({ name, iconLevel, current, max });
+      }
+      if (rows.length > 0) groups.push({ category: cat, buildings: rows });
+    }
+    return groups;
+  }, [player, th]);
+
+  if (loading || !player || !builderLoaded || !exclusionsLoaded || !result || !discounted) {
     return (
       <MaxTimeScreenSkeleton />
     );
@@ -219,16 +266,9 @@ export default function MaxTimeScreen() {
       </View>
     );
     const withIcon = entries.filter(([r]) => PACKAGE_RESOURCE_IMAGES[r]);
-    const fallback = entries.filter(([r]) => !PACKAGE_RESOURCE_IMAGES[r]);
     return (
       <>
         {withIcon.map(([r, v]) => renderResourceRow(r, v))}
-        {fallback.length > 0 && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Resources</Text>
-            <Text style={styles.summaryValue}>{formatCostBreakdown(byResource)}</Text>
-          </View>
-        )}
       </>
     );
   };
@@ -263,12 +303,11 @@ export default function MaxTimeScreen() {
           isFirst={isOpen}
           isLast={isLast && !isOpen}
           onPress={() => setExpanded((prev) => ({ ...prev, [p.key]: !prev[p.key] }))}
-          children={
-            <View style={styles.pipelineBadge}>
-              <Text style={styles.pipelineTime}>{isEquipment ? 'Instant' : d ? formatTimeShort(d.timeSec) : '…'}</Text>
-            </View>
-          }
-        />
+        >
+          <View style={styles.pipelineBadge}>
+            <Text style={styles.pipelineTime}>{isEquipment ? 'Instant' : d ? formatTimeShort(d.timeSec) : '…'}</Text>
+          </View>
+        </SettingRow>
         {isOpen && (
           <View style={styles.pipelineBody}>
             {p.items.length > 0 ? (
@@ -472,6 +511,112 @@ export default function MaxTimeScreen() {
         </View>
 
         <View style={styles.sectionHeaderWrap}>
+          <SectionHeader title="Strategic Exclusions" />
+        </View>
+        <View style={styles.exclusionSection}>
+          <SettingRow
+            icon="ban-outline"
+            title="Excluded buildings"
+            desc={
+              excluded.size > 0
+                ? `${excluded.size} skipped from the maxing timeline`
+                : 'None — full max timeline'
+            }
+            compact
+            isFirst
+            isLast={!excludeOpen}
+            onPress={() => setExcludeOpen((o) => !o)}
+          >
+            <View style={styles.readinessChildren}>
+              <View style={styles.pipelineBadge}>
+                <Text style={styles.pipelineTime}>{excluded.size}</Text>
+              </View>
+              <Ionicons
+                name={excludeOpen ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={colors.textSecondary}
+              />
+            </View>
+          </SettingRow>
+          {excludeOpen && (
+            <View style={styles.exclusionBody}>
+              {exclusionGroups.map((g) => {
+                const names = g.buildings.map((b) => b.name);
+                const allExcluded = names.every((n) => excluded.has(n));
+                return (
+                  <View key={g.category} style={styles.exclusionGroup}>
+                    <View style={styles.exclusionCatHeader}>
+                      <Text style={styles.exclusionCatTitle}>{g.category}</Text>
+                      <PressableRipple
+                        onPress={() => setExcludedMany(names, !allExcluded)}
+                        hitSlop={8}
+                        style={styles.exclusionCatActionBtn}
+                        accessibilityRole="button"
+                      >
+                        <Text style={[styles.exclusionCatAction, { color: allExcluded ? Colors.textTertiary : colors.textSecondary }]}>
+                          {allExcluded ? 'Restore all' : 'Exclude all'}
+                        </Text>
+                      </PressableRipple>
+                    </View>
+                    <View style={styles.exclusionRows}>
+                      {g.buildings.map((b, i) => {
+                        const isExcluded = excluded.has(b.name);
+                        return (
+                          <PressableRipple
+                            key={b.name}
+                            onPress={() => toggleExcluded(b.name)}
+                            style={[
+                              styles.exclusionRow,
+                              { backgroundColor: colors.bgCardHover },
+                              i === 0 && styles.exclusionRowFirst,
+                              i === g.buildings.length - 1 && styles.exclusionRowLast,
+                            ]}
+                            accessibilityRole="button"
+                          >
+                            <Image
+                              source={getBuildingItemImage(b.name, b.iconLevel) ?? undefined}
+                              style={[styles.exclusionRowIcon, { opacity: isExcluded ? 0.45 : 1 }]}
+                              resizeMode="contain"
+                            />
+                            <View style={styles.exclusionRowText}>
+                              <Text style={[styles.exclusionRowName, { color: isExcluded ? colors.textTertiary : colors.textPrimary }]} numberOfLines={1}>
+                                {b.name}
+                              </Text>
+                              <Text style={styles.exclusionRowSub}>
+                                Lv {b.current}/{b.max}
+                                {isExcluded ? ' · skipped' : ''}
+                              </Text>
+                            </View>
+                            <Ionicons
+                              name={isExcluded ? 'close-circle' : 'checkmark-circle-outline'}
+                              size={22}
+                              color={isExcluded ? Colors.textTertiary : colors.textMuted}
+                            />
+                          </PressableRipple>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+              {exclusionGroups.length === 0 && (
+                <Text style={styles.exclusionEmpty}>Everything is already maxed</Text>
+              )}
+              {excluded.size > 0 && (
+                <PressableRipple
+                  onPress={clearExcluded}
+                  hitSlop={8}
+                  style={styles.exclusionResetBtn}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.exclusionResetText}>Reset all exclusions</Text>
+                </PressableRipple>
+              )}
+            </View>
+          )}
+        </View>
+
+        <View style={styles.sectionHeaderWrap}>
           <SectionHeader title="Pipelines" />
         </View>
         <View style={styles.pipelineSections}>
@@ -493,14 +638,13 @@ export default function MaxTimeScreen() {
             isFirst
             isLast={!readinessOpen}
             onPress={() => setReadinessOpen((o) => !o)}
-            children={
-              readiness && (
-                <View style={styles.pipelineBadge}>
-                  <Text style={styles.pipelineTime}>{Math.round(readiness.score)}%</Text>
-                </View>
-              )
-            }
-          />
+          >
+            {readiness && (
+              <View style={styles.pipelineBadge}>
+                <Text style={styles.pipelineTime}>{Math.round(readiness.score)}%</Text>
+              </View>
+            )}
+          </SettingRow>
           {readinessOpen && readiness && (
             <View style={styles.readinessBody}>
               <View style={styles.readinessTop}>
@@ -542,14 +686,13 @@ export default function MaxTimeScreen() {
                       isFirst={i === 0}
                       isLast={isOpen ? false : i === readiness.pipelines.length - 1}
                       onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
-                      children={
+                      >
                         <View style={styles.readinessChildren}>
                           <View style={styles.pipelineBadge}>
                             <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
                           </View>
                         </View>
-                      }
-                    />
+                      </SettingRow>
                     {isExpandable && isOpen && (
                       <View style={styles.pipelineExpandBody}>
                         {p.children.map((c) => (
@@ -578,16 +721,28 @@ export default function MaxTimeScreen() {
                 isFirst
                 isLast={!rushExpanded}
                 onPress={() => setRushExpanded((o) => !o)}
-                children={
+                >
                   <View style={styles.readinessChildren}>
                     <View style={styles.pipelineBadge}>
                       <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
                     </View>
                   </View>
-                }
-              />
+                </SettingRow>
               {rushExpanded && (
                 <View style={styles.rushExpandBody}>
+                  {thUpgrade && (
+                    <ItemCard
+                      name="Town Hall"
+                      level={th}
+                      maxLevel={readiness.nextTh}
+                      thMaxLevel={readiness.nextTh}
+                      icon={getTownHallImageUrl(readiness.nextTh) ?? undefined}
+                      costResources={thUpgrade.byResource}
+                      timeLabel={thUpgrade.timeSec > 0 ? formatTimeShort(thUpgrade.timeSec) : ''}
+                      isFirst
+                    />
+                  )}
+                  <Text style={styles.rushSectionLabel}>Time to finish</Text>
                   <View style={styles.rushCompareHeader}>
                     <Text style={styles.rushCompareCol}>Pipeline</Text>
                     <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
@@ -607,6 +762,33 @@ export default function MaxTimeScreen() {
                       <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
                     </View>
                   ))}
+                  <View style={styles.rushDivider} />
+                  <Text style={styles.rushSectionLabel}>Cost to finish</Text>
+                  <View style={styles.rushCompareHeader}>
+                    <Text style={styles.rushCompareCol}>Pipeline</Text>
+                    <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
+                    <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
+                    <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+                  </View>
+                  {[
+                    { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
+                    { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
+                    { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
+                    { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
+                  ].map((p) => (
+                    <View key={p.key} style={styles.rushCompareRow}>
+                      <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                      <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
+                      <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
+                      <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
+                    </View>
+                  ))}
+                  {Object.keys(nextDiscounted.totalByResource).length > 0 && (
+                    <View style={styles.rushCostResources}>
+                      <Text style={styles.rushNewItemsTitle}>Resources needed by TH{readiness.nextTh}</Text>
+                      {renderResourceRows(nextDiscounted.totalByResource)}
+                    </View>
+                  )}
                   <View style={styles.rushDivider} />
                   <Text style={styles.rushNewItemsTitle}>New at TH{readiness.nextTh}</Text>
                   {newGroups.length > 0 ? (
@@ -655,7 +837,7 @@ export default function MaxTimeScreen() {
               <Text style={styles.maxThTitle}>Maximum Town Hall Reached!</Text>
               <Text style={styles.maxThSubtitle}>Congratulations, Chief! 🎉</Text>
               <Text style={styles.maxThBody}>
-                You've maxed out every building, troop, spell, hero, and pet.
+                {"You've maxed out every building, troop, spell, hero, and pet."}
                 Your village stands complete — a testament to your dedication.
               </Text>
               <Text style={styles.maxThBody}>
@@ -919,6 +1101,108 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.md,
   },
+  exclusionSection: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
+    borderRadius: Radius.xl * 1.25,
+    overflow: 'hidden',
+  },
+  exclusionBody: {
+    backgroundColor: Colors.bgCard,
+    borderTopLeftRadius: Radius.md,
+    borderTopRightRadius: Radius.md,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+  },
+  exclusionGroup: {
+    marginBottom: Spacing.sm,
+  },
+  exclusionCatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    marginBottom: Spacing.xs,
+  },
+  exclusionCatTitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  exclusionCatActionBtn: {
+    paddingVertical: 2,
+  },
+  exclusionCatAction: {
+    ...Typography.caption,
+    fontWeight: '700',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  exclusionRows: {
+    overflow: 'hidden',
+  },
+  exclusionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+    marginBottom: Spacing.xs,
+  },
+  exclusionRowFirst: {
+    borderTopLeftRadius: Radius.xl * 1.25,
+    borderTopRightRadius: Radius.xl * 1.25,
+  },
+  exclusionRowLast: {
+    borderBottomLeftRadius: Radius.xl * 1.25,
+    borderBottomRightRadius: Radius.xl * 1.25,
+  },
+  exclusionRowIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+  },
+  exclusionRowText: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  exclusionRowName: {
+    ...Typography.subhead,
+    fontWeight: '600',
+  },
+  exclusionRowSub: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    marginTop: 1,
+    fontVariant: ['tabular-nums'],
+  },
+  exclusionEmpty: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: Spacing.md,
+  },
+  exclusionResetBtn: {
+    alignSelf: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  exclusionResetText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   stepperBtn: {
     width: 36,
     height: 36,
@@ -1042,6 +1326,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
+  },
+  rushSectionLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  rushCostResources: {
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   rushCompareCol: {
     flex: 1,

@@ -2,7 +2,6 @@ import type { ClashPlayer } from '../types/clash';
 import { getBuildingCategories, HOME_CATEGORIES } from './buildingData';
 import { getBuildingCopies, getCountAtTH } from './buildingCopies';
 import { getAllItemsAtTH, getPetNames, getMaxLevelAtTH, getSuperTroopNames } from './armyData';
-import { computeMaxTime, type MaxTimeInput } from './maxTime';
 
 export interface CategoryReadiness {
   key: string;
@@ -75,10 +74,12 @@ function buildingCategory(
   names: string[],
   th: number,
   player: ClashPlayer,
+  excludedBuildings?: ReadonlySet<string>,
 ): { done: number; total: number } {
   let done = 0;
   let total = 0;
   for (const name of names) {
+    if (excludedBuildings?.has(name)) continue;
     const effectiveMax = getBuildingMaxLevelAtTHLocal(name, th);
     if (effectiveMax <= 0) continue;
     const count = getCountAtTH(name, th);
@@ -123,7 +124,7 @@ function getBuildingMaxLevelAtTHLocal(name: string, th: number): number {
   return 0;
 }
 
-export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness {
+export function computeThReadiness(player: ClashPlayer, th: number, excludedBuildings?: ReadonlySet<string>): ThReadiness {
   const nextTh = th + 1;
   const cats: CategoryReadiness[] = [];
 
@@ -132,7 +133,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
     if (key === 'Resources') {
       for (const rc of RESOURCE_CATS) {
         const namesAtTh = rc.names.filter((n) => categories[key]?.[n]?.[String(th)]?.level != null);
-        const { done, total } = buildingCategory(key, namesAtTh, th, player);
+        const { done, total } = buildingCategory(key, namesAtTh, th, player, excludedBuildings);
         if (total <= 0) continue;
         cats.push({
           key: rc.key,
@@ -146,7 +147,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
       continue;
     }
     const namesAtTh = names.filter((n) => categories[key]?.[n]?.[String(th)]?.level != null);
-    const { done, total } = buildingCategory(key, namesAtTh, th, player);
+    const { done, total } = buildingCategory(key, namesAtTh, th, player, excludedBuildings);
     if (total <= 0) continue;
     cats.push({
       key,
@@ -295,6 +296,7 @@ export function computeThReadiness(player: ClashPlayer, th: number): ThReadiness
   const extraLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   for (const [cat, buildings] of Object.entries(catsNext)) {
     for (const [name, thData] of Object.entries(buildings)) {
+      if (excludedBuildings?.has(name)) continue;
       const nextMax = thData[String(nextTh)]?.level ?? 0;
       const curMax = catsNow[cat]?.[name]?.[String(th)]?.level ?? 0;
       const count = getCountAtTH(name, nextTh);
