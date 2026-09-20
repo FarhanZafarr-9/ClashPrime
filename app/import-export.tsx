@@ -17,6 +17,7 @@ import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../src/hooks/useBuilderCount';
+import { useBuilderBaseCount } from '../src/hooks/useBuilderBaseCount';
 import { parseCocExport, cocExportToBuildingLevels, normalizeTag, CocImportResult } from '../src/utils/cocExport';
 import { getBuildingEffectiveMax, getBuildingLevelImageSource } from '../src/utils/buildingImages';
 import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildingCopies';
@@ -27,6 +28,7 @@ import { getTownHallImageUrl } from '../src/utils/thImages';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
+const goldElixirImg = require('../assets/package-images/images/other/goldelxir.png') as number;
 
 const RESOURCE_ORDER: BuildingCostResource[] = [
   'Gold',
@@ -37,6 +39,12 @@ const RESOURCE_ORDER: BuildingCostResource[] = [
   'Gold or Elixir',
   'Builder Gold or Builder Elixir',
 ];
+
+/** Compound costs (walls) have no single sprite; render the bundled gold/elixir icon. */
+const COMPOUND_RESOURCE_ICONS: Record<string, boolean> = {
+  'Gold or Elixir': true,
+  'Builder Gold or Builder Elixir': true,
+};
 
 /** Cap level that gates a building's upgrades: Builder Base buildings are gated
  * by the Builder Hall level, Home Village buildings by the Town Hall level. */
@@ -61,6 +69,7 @@ export default function ImportExportScreen() {
   const { show, Dialog } = useDialog();
   const { colors } = useTheme();
   const { count: builderCount } = useBuilderCount();
+  const { count: builderBaseCount } = useBuilderBaseCount(player?.builderHallLevel);
 
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -206,27 +215,37 @@ export default function ImportExportScreen() {
     return rows.sort((a, b) => b.timeSec - a.timeSec);
   }, [player, result, markInProgressDone]);
 
-  // Builders pipeline for the upgrades: chain-scheduled time + per-resource costs.
+  // Builders pipeline for the upgrades. Home Village and Builder Base upgrades
+  // are scheduled independently against their own builder counts — the two
+  // builders pools run in parallel, so the combined wall-clock time is the
+  // larger of the two schedules.
   const upgradePipeline = useMemo(() => {
     if (upgradeRows.length === 0) return null;
     const ct = sumCosts(
       upgradeRows.map((r) => ({ cost: r.cost, time: r.timeSec, hasData: true, byResource: r.byResource })),
     );
-    const chains = upgradeRows.flatMap((r) => {
-      const chainsForRow: number[] = [];
-      for (let i = 0; i < r.currentLevels.length; i++) {
-        if (r.targetLevels[i] > r.currentLevels[i]) {
-          chainsForRow.push(...buildingUpgradeChainTimes(r.storeName, [r.currentLevels[i]], r.targetLevels[i]));
+    const scheduleRows = (rows: typeof upgradeRows, builders: number): number => {
+      if (rows.length === 0) return 0;
+      const chains: number[] = [];
+      for (const r of rows) {
+        for (let i = 0; i < r.currentLevels.length; i++) {
+          if (r.targetLevels[i] > r.currentLevels[i]) {
+            chains.push(...buildingUpgradeChainTimes(r.storeName, [r.currentLevels[i]], r.targetLevels[i]));
+          }
         }
       }
-      return chainsForRow;
-    });
+      return scheduleChains(chains, builders);
+    };
+    const homeTime = scheduleRows(upgradeRows.filter((r) => !r.builderBase), builderCount);
+    const bbTime = scheduleRows(upgradeRows.filter((r) => r.builderBase), builderBaseCount);
     return {
-      timeSec: scheduleChains(chains, builderCount),
+      timeSec: Math.max(homeTime, bbTime),
+      homeTime,
+      bbTime,
       cost: ct.cost,
       byResource: ct.byResource ?? {},
     };
-  }, [upgradeRows, builderCount]);
+  }, [upgradeRows, builderCount, builderBaseCount]);
 
   const applyCount = upgradeRows.length;
   const totalChanged = upgradeRows.reduce((s, r) => s + r.changed, 0);
@@ -424,6 +443,118 @@ export default function ImportExportScreen() {
     </View>
   );
 
+  // Rows-based pipeline breakdown: a time row per village, then a 2-column
+  // grid of resource chips like the top card on the maxtime screen. Every row
+  // is its own card (xs gaps, sm radius); the first header row and the last
+  // resource row get extra outer rounding. Resources reuse the bundled
+  // gold/elixir images; compound costs use the goldelxir sprite.
+  const renderPipelineSummary = () => {
+    const entries = (Object.entries(upgradePipeline!.byResource).filter(([, v]) => v > 0) as [string, number][])
+      .filter(([r]) => r !== 'Unknown')
+      .sort((a, b) => {
+        const ia = RESOURCE_ORDER.indexOf(a[0] as BuildingCostResource);
+        const ib = RESOURCE_ORDER.indexOf(b[0] as BuildingCostResource);
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      });
+    type SummaryRow = {
+      key: string;
+      icon?: 'header' | 'home' | 'builder';
+      label: string;
+      desc?: string;
+      value: string;
+      badge?: boolean;
+    };
+    const renderTimeChip = (row: SummaryRow, isFirst: boolean) => (
+      <View style={[styles.psumCard, isFirst && styles.psumCardFirst]}>
+        <View style={[styles.psumIcon, isFirst && styles.psumIconFirst]}>
+          {row.icon === 'header' || row.icon === 'builder' ? (
+            <Ionicons name="hammer-outline" size={15} color={Colors.textPrimary} />
+          ) : (
+            <Ionicons name="home-outline" size={15} color={Colors.textPrimary} />
+          )}
+        </View>
+        {row.desc ? (
+          <View style={styles.pipelineText}>
+            <Text style={styles.pipelineTitle}>{row.label}</Text>
+            <Text style={styles.pipelineDesc}>{row.desc}</Text>
+          </View>
+        ) : (
+          <Text style={styles.psumLabel} numberOfLines={1}>{row.label}</Text>
+        )}
+        {row.badge ? (
+          <View style={styles.pipelineBadge}>
+            <Text style={styles.pipelineBadgeText}>{row.value}</Text>
+          </View>
+        ) : (
+          <Text style={styles.psumValue}>{row.value}</Text>
+        )}
+      </View>
+    );
+    const renderResourceGrid = () => {
+      if (entries.length === 0) {
+        return (
+          <View style={[styles.psumCard, styles.psumCardLast]}>
+            <View style={[styles.psumIcon, styles.psumIconLast]}>
+              <Ionicons name="cube-outline" size={15} color={Colors.textPrimary} />
+            </View>
+            <Text style={styles.psumLabel}>Cost</Text>
+            <Text style={styles.psumValue}>{formatCost(upgradePipeline!.cost)}</Text>
+          </View>
+        );
+      }
+      return (
+        <View style={styles.psumGrid}>
+          {entries.map(([r, v], index, arr) => {
+            const meta = BUILDING_RESOURCE_META[r as BuildingCostResource];
+            return (
+              <View
+                key={r}
+                style={[
+                  styles.psumCell,
+                  ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl },
+                  index === arr.length - 1 && { borderBottomRightRadius: Radius.xl },
+                ]}
+              >
+                {COMPOUND_RESOURCE_ICONS[r] ? (
+                  <Image source={goldElixirImg} style={styles.psumCellIcon} resizeMode="contain" />
+                ) : PACKAGE_RESOURCE_IMAGES[r] ? (
+                  <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.psumCellIcon} resizeMode="contain" />
+                ) : (
+                  <Text style={styles.psumIconText} numberOfLines={1}>{meta?.short ?? r}</Text>
+                )}
+                <Text style={[styles.psumCellValue, { color: meta?.color ?? Colors.textSecondary }]} numberOfLines={1}>
+                  {formatCost(v)}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      );
+    };
+    return (
+      <View style={styles.psumList}>
+        {renderTimeChip(
+          {
+            key: 'header',
+            icon: 'header',
+            label: 'Builders',
+            desc: 'Buildings upgraded by this import',
+            value: formatTime(upgradePipeline!.timeSec),
+            badge: true,
+          },
+          true,
+        )}
+        {homeVariants.length > 0
+          ? renderTimeChip({ key: 'home', icon: 'home', label: `Home Village · ${builderCount} builders`, value: formatTime(upgradePipeline!.homeTime) }, false)
+          : null}
+        {builderVariants.length > 0
+          ? renderTimeChip({ key: 'builder', icon: 'builder', label: `Builder Base · ${builderBaseCount} builders`, value: formatTime(upgradePipeline!.bbTime) }, false)
+          : null}
+        {renderResourceGrid()}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
@@ -548,7 +679,6 @@ export default function ImportExportScreen() {
                           styles.upgradeRow,
                           { backgroundColor: colors.bgCard },
                           i === 0 && styles.upgradeRowFirst,
-                          i === upgradingRows.length - 1 && styles.upgradeRowLast,
                         ]}
                       >
                         <BuildingRowIcon storeName={u.storeName} level={u.level + 1} />
@@ -565,7 +695,7 @@ export default function ImportExportScreen() {
                     ))}
                   </View>
                   <PressableRipple
-                    style={[styles.doneRow, { backgroundColor: colors.bgCard }]}
+                    style={[styles.doneRow, styles.upgradeRowLast, { backgroundColor: colors.bgCard }]}
                     onPress={() => setMarkInProgressDone((v) => !v)}
                   >
                     <View style={[styles.doneCheck, { borderColor: colors.border }]}>
@@ -579,58 +709,7 @@ export default function ImportExportScreen() {
               {upgradePipeline ? (
                 <>
                   <Text style={styles.sectionTitle}>Builders pipeline</Text>
-                  <View style={[styles.pipelineCard, { backgroundColor: colors.bgCard }]}>
-                    <View style={styles.pipelineHeader}>
-                      <View style={styles.pipelineIcon}>
-                        <Ionicons name="hammer-outline" size={16} color={Colors.textPrimary} />
-                      </View>
-                      <View style={styles.pipelineText}>
-                        <Text style={styles.pipelineTitle}>Builders</Text>
-                        <Text style={styles.pipelineDesc}>Buildings upgraded by this import</Text>
-                      </View>
-                      <View style={styles.pipelineBadge}>
-                        <Text style={styles.pipelineBadgeText}>{formatTime(upgradePipeline.timeSec)}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.summaryCard}>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Time with {builderCount} builders</Text>
-                        <Text style={styles.summaryValue}>{formatTime(upgradePipeline.timeSec)}</Text>
-                      </View>
-                      <View style={styles.summaryDivider} />
-                      {(() => {
-                        const entries = (Object.entries(upgradePipeline.byResource).filter(([, v]) => v > 0) as [string, number][])
-                          .filter(([r]) => r !== 'Unknown')
-                          .sort((a, b) => {
-                            const ia = RESOURCE_ORDER.indexOf(a[0] as BuildingCostResource);
-                            const ib = RESOURCE_ORDER.indexOf(b[0] as BuildingCostResource);
-                            return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-                          });
-                        if (entries.length === 0) {
-                          return (
-                            <View style={styles.summaryRow}>
-                              <Text style={styles.summaryLabel}>Cost</Text>
-                              <Text style={styles.summaryValue}>{formatCost(upgradePipeline.cost)}</Text>
-                            </View>
-                          );
-                        }
-                        return entries.map(([r, v]) => (
-                          <View key={r} style={styles.oreRow}>
-                            <Image
-                              source={PACKAGE_RESOURCE_IMAGES[r]}
-                              style={styles.oreIcon}
-                              resizeMode="contain"
-                            />
-                            <Text style={[styles.oreLabel, { color: BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8' }]}>
-                              {BUILDING_RESOURCE_META[r as BuildingCostResource]?.label ?? r}
-                            </Text>
-                            <Text style={styles.oreValue}>{formatCost(v)}</Text>
-                          </View>
-                        ));
-                      })()}
-                    </View>
-                  </View>
-
+                  {renderPipelineSummary()}
                   <Text style={styles.sectionTitle}>Upgrades</Text>
                   {homeVariants.length > 0 ? (
                     <>
@@ -928,27 +1007,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  pipelineCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  pipelineHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
-  },
-  pipelineIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pipelineText: {
     flex: 1,
   },
@@ -976,56 +1034,91 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
-  summaryCard: {
-    backgroundColor: Colors.bgSubtle,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    paddingHorizontal: Spacing.base,
+  psumList: {
+    gap: Spacing.xs,
   },
-  summaryRow: {
+  psumCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
     paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
   },
-  summaryDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+  psumCardFirst: {
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
   },
-  summaryLabel: {
-    ...Typography.caption,
+  psumCardLast: {
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
+  },
+  psumIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+    overflow: 'hidden',
+  },
+  psumIconFirst: {
+    borderTopLeftRadius: Radius.lg,
+  },
+  psumIconLast: {
+    borderBottomLeftRadius: Radius.lg,
+  },
+  psumResImg: {
+    width: 22,
+    height: 22,
+  },
+  psumIconText: {
+    fontSize: 9,
+    fontWeight: '700',
     color: Colors.textTertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    paddingHorizontal: 2,
   },
-  summaryValue: {
+  psumLabel: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  psumValue: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
     flexShrink: 1,
     textAlign: 'right',
-    marginLeft: Spacing.md,
     fontVariant: ['tabular-nums'],
   },
-  oreRow: {
+  psumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    justifyContent: 'space-between',
+  },
+  psumCell: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  oreIcon: {
-    width: 18,
-    height: 18,
-  },
-  oreLabel: {
-    ...Typography.footnote,
+    paddingVertical: Spacing.sm + Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+    minWidth: '48%',
     flex: 1,
-    fontWeight: '600',
   },
-  oreValue: {
-    ...Typography.subhead,
+  psumCellIcon: {
+    width: 22,
+    height: 22,
+    marginRight: Spacing.md,
+  },
+  psumCellValue: {
+    ...Typography.body,
     color: Colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   upgradeText: {
@@ -1067,6 +1160,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: Spacing.base,
     borderRadius: Radius.sm,
+    marginTop: -2,
   },
   doneCheck: {
     width: 20,
