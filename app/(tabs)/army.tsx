@@ -44,6 +44,10 @@ const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
 
 type Tab = 'heroes' | 'bhHeroes' | 'troops' | 'bhTroops' | 'spells' | 'pets' | 'siege' | 'equipment';
 
+// Cached troop details are keyed by name, but Home and Builder Base share names
+// (e.g. "Baby Dragon"). Disambiguate the cache key with the village.
+const detailCacheKey = (name: string, isBB: boolean) => (isBB ? `${name}__builder` : name);
+
 const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
   heroes: { set: 'ion', name: 'shield-half-outline' },
   bhHeroes: { set: 'ion', name: 'shield-outline' },
@@ -160,11 +164,9 @@ export default function PlayerProfileScreen() {
   const toggleDetail = useCallback(async (name: string) => {
     // Open the bottom sheet for this item and fetch its details if needed.
     setSheetName(name);
-    if (details[name] === undefined) {
-      const isBB = player
-        ? player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
-          player.heroes.some((h) => h.name === name && h.village === 'builderBase')
-        : false;
+    const isBB = activeTab === 'bhTroops' || activeTab === 'bhHeroes';
+    const key = detailCacheKey(name, isBB);
+    if (details[key] === undefined) {
       let detail = await getArmyTroopDetail(name, { builderBase: isBB });
       if (detail) {
         const allItems = player
@@ -176,7 +178,7 @@ export default function PlayerProfileScreen() {
             ...(player.pets ?? []),
           ]
           : [];
-        const match = allItems.find((i) => i.name === name);
+        const match = allItems.find((i) => i.name === name && (isBB ? i.village === 'builderBase' : i.village !== 'builderBase'));
         if (match) {
           detail.currentLevel = match.level;
           detail.maxLevel = match.maxLevel;
@@ -194,7 +196,7 @@ export default function PlayerProfileScreen() {
             ...player.heroEquipment,
             ...(player.pets ?? []),
           ];
-          const match = allItems.find((i) => i.name === name);
+          const match = allItems.find((i) => i.name === name && (isBB ? i.village === 'builderBase' : i.village !== 'builderBase'));
           detail = {
             name, slug: '', description: '', imageUrl,
             currentLevel: match?.level,
@@ -204,7 +206,7 @@ export default function PlayerProfileScreen() {
           };
         }
       }
-      setDetails((prev) => ({ ...prev, [name]: detail ?? null }));
+      setDetails((prev) => ({ ...prev, [key]: detail ?? null }));
 
       // Prefetch images for caching
       const urls = [
@@ -216,7 +218,7 @@ export default function PlayerProfileScreen() {
       ].filter((u): u is string => !!u);
       urls.forEach((url) => Image.prefetch(url).catch(() => { }));
     }
-  }, [details, player]);
+  }, [details, player, activeTab]);
 
   // When the equipment tab is opened, prefetch every hero-equipment detail so
   // the Blacksmith-capped max level is known immediately (without waiting for
@@ -270,12 +272,15 @@ export default function PlayerProfileScreen() {
         ...(player.pets ?? []),
       ];
       const fetched = await Promise.all(
-        allItems.map((item) => getArmyTroopDetail(item.name).catch(() => null))
+        allItems.map((item) => getArmyTroopDetail(item.name, { builderBase: item.village === 'builderBase' }).catch(() => null))
       );
       const nextDetails: Record<string, TroopDetail | null> = {};
-      fetched.forEach((detail) => {
+      fetched.forEach((detail, i) => {
         if (detail) {
-          nextDetails[detail.name] = detail;
+          const item = allItems[i];
+          detail.currentLevel = item.level;
+          detail.maxLevel = item.maxLevel;
+          nextDetails[detailCacheKey(item.name, item.village === 'builderBase')] = detail;
           // Prefetch images for caching
           const urls = [
             detail.imageUrl,
@@ -387,9 +392,8 @@ export default function PlayerProfileScreen() {
     return 0;
   };
 
-  const isBuilderBaseName = (name: string) =>
-    player.troops.some((t) => t.name === name && t.village === 'builderBase') ||
-    player.heroes.some((h) => h.name === name && h.village === 'builderBase');
+  const isBuilderBaseName = () =>
+    activeTab === 'bhTroops' || activeTab === 'bhHeroes';
 
   const getLabBuilding = (name: string, tab: Tab): string => {
     switch (tab) {
@@ -411,7 +415,7 @@ export default function PlayerProfileScreen() {
   // player's Blacksmith; Builder Base units by their Star Lab at the BH.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
     const isHero = !!getHeroSlug(detail.name);
-    const isBB = isBuilderBaseName(detail.name);
+    const isBB = isBuilderBaseName();
     if (isBB) {
       if (isHero) return detail.levels;
       const bbCap = getBuilderTroopMaxLevel(detail.name, bhLevel) ?? bhLevel * 2;
@@ -430,7 +434,7 @@ export default function PlayerProfileScreen() {
   // old modal). Because it lives in the page's own ScrollView, the stats table
   // scrolls naturally with the page — no nested-scroll quirks.
   const renderDetailPanel = (name: string) => {
-    const detail = details[name];
+    const detail = details[detailCacheKey(name, isBuilderBaseName())];
 
     if (detail === undefined) {
       return (
@@ -479,9 +483,13 @@ export default function PlayerProfileScreen() {
     }
 
     const isHero = !!getHeroSlug(detail.name);
-    const isBB = isBuilderBaseName(detail.name);
+    const isBB = isBuilderBaseName();
     const isEquip = isEquipmentName(detail.name);
-    const maxReachable = isEquip ? getEquipmentMaxLevel(detail.name) || null : getMaxLevelAtTH(detail.name, player.townHallLevel);
+    // Builder Base units are already capped by their Star Lab (getVisibleLevels);
+    // never apply the Home Village Town Hall cap — getMaxLevelAtTH resolves the
+    // name's home copy, so a shared name like "Baby Dragon" would apply the wrong
+    // ceiling to a Builder Base troop.
+    const maxReachable = isEquip ? getEquipmentMaxLevel(detail.name) || null : isBB ? null : getMaxLevelAtTH(detail.name, player.townHallLevel);
     const visibleDetailLevels = getVisibleLevels(detail);
 
     const currentLevel = detail.currentLevel ?? 0;
@@ -618,13 +626,14 @@ export default function PlayerProfileScreen() {
             if (lvl.upgradeTime) totalTime += parseTime(lvl.upgradeTime);
           }
           const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
-          // Home-base units with per-level cosmetic sprites show their visual
-          // progression (current + upcoming levels) until they're maxed.
+          // Units with per-level cosmetic sprites show their visual progression
+          // (current + upcoming levels) until they're maxed — including Builder
+          // Base troops, which use their own village sprites.
           const showAppearance =
-            !isBB && !isHero && !isEquip && isTroopLike &&
+            !isHero && !isEquip && isTroopLike &&
             entityRef(detail.name)?.levelSuffix === true &&
             remainingLevels.length > 0;
-          const appearanceLevels = showAppearance ? [currentLevel, ...remainingLevels.map((l) => l.level)] : [];
+          const appearanceLevels = showAppearance ? displayLevels.map((l) => l.level) : [];
           return (
           <>
             {showAppearance && (
@@ -634,7 +643,7 @@ export default function PlayerProfileScreen() {
                   <View style={styles.troopLevelGrid}>
                     {appearanceLevels.map((lvl) => {
                       const isCurrent = lvl === currentLevel;
-                      const localImg = getArmyItemImage(detail.name, lvl);
+                      const localImg = getArmyItemImage(detail.name, lvl, isBB);
                       const img = localImg ? null : getTroopImageUrl(detail.name, lvl);
                       return (
                         <View key={lvl} style={[styles.troopLevelCell, { borderColor: colors.border }, isCurrent && styles.troopLevelCellCurrent]}>
@@ -879,7 +888,7 @@ export default function PlayerProfileScreen() {
     const progress = maxLevel > 0 ? level / maxLevel : 0;
     const isMaxed = maxLevel > 0 && level >= maxLevel;
     const iconSource = cardIconProps(name, level).iconSource;
-    const lockedDesc = details[name]?.description;
+    const lockedDesc = details[detailCacheKey(name, isBuilderBaseName())]?.description;
     return (
       <View style={styles.sheetHeaderRow}>
         <View style={styles.sheetHeaderIcon}>

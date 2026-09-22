@@ -4,7 +4,7 @@ import { home, builder } from 'clash-of-clans-data';
 import type { TroopDetail, TroopDetailLevel } from '../api/troopDetail';
 import type { UnlockableType } from './thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from './troopImages';
-import { PACKAGE_IMAGES } from '../data/packageImages';
+import { PACKAGE_IMAGES, PACKAGE_BUILDER_TROOP_IMAGES } from '../data/packageImages';
 
 export type { UnlockableType };
 
@@ -357,10 +357,15 @@ export function getSuperTroopNames(): string[] {
 /**
  * Bundled package image (require'd asset) for an army item. Returns the
  * level-specific sprite when `level` matches one, otherwise the item icon.
- * Returns null when the package ships no image (callers keep the network fallback).
+ * Builder Base units use their own village sprites when `builderBase` is set
+ * (shared display names, e.g. "Baby Dragon", are otherwise overridden by the
+ * Home Village copy). Returns null when the package ships no image (callers
+ * keep the network fallback).
  */
-export function getArmyItemImage(name: string, level?: number | null): number | null {
-  const entry = PACKAGE_IMAGES[name];
+export function getArmyItemImage(name: string, level?: number | null, builderBase = false): number | null {
+  const entry =
+    (builderBase ? PACKAGE_BUILDER_TROOP_IMAGES[name] : undefined) ??
+    PACKAGE_IMAGES[name];
   if (!entry) return null;
   if (level != null) {
     const sprite = entry.levels[String(level)];
