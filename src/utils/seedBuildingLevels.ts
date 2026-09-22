@@ -33,6 +33,11 @@ export function seedBuildingLevelsForTH(
 
   for (const names of Object.values(HOME_CATEGORIES)) {
     for (const display of names) {
+      if (display === 'Town Hall') {
+        // The Town Hall's own level always equals the Town Hall level.
+        levels[display] = selectedTh;
+        continue;
+      }
       const unlockTh = homeUnlockTH(display);
       const effectiveMax = getBuildingMaxLevelAtTH(display, selectedTh) ?? 0;
 

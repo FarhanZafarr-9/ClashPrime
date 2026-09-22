@@ -53,6 +53,7 @@ export const HOME_CATEGORIES: Record<string, string[]> = {
     'Hidden Tesla', 'Bomb Tower', 'X-Bow', 'Inferno Tower', 'Eagle Artillery',
     'Scattershot', 'Builder Hut', 'Monolith', 'Spell Tower', 'Multi-Archer Tower',
     'Ricochet Cannon', 'Firespitter', 'Multi-Gear Tower', 'Revenge Tower', 'Super Wizard Tower',
+    'Town Hall',
   ],
   Resources: [
     'Gold Mine', 'Elixir Collector', 'Gold Storage', 'Elixir Storage',
@@ -79,6 +80,25 @@ export const BB_BUILDINGS: string[] = [
   'Battle Machine Altar', 'Reinforcement Camp', 'Healing Hut', 'Battle Copter Altar',
   'Clock Tower',
 ];
+
+export const BB_CATEGORIES: Record<string, string[]> = {
+  Defenses: [
+    'BB Cannon', 'Double Cannon', 'BB Archer Tower', 'BB Hidden Tesla', 'Firecrackers',
+    'Crusher', 'Guard Post', 'BB Air Bombs', 'Multi Mortar', "O.T.T.O's Outpost",
+    'BB Roaster', 'Giant Cannon', 'Mega Tesla', 'BB Lava Launcher', 'BB X-Bow',
+    'Builder Hall',
+  ],
+  Traps: ['BB Spring Trap', 'Mine', 'Mega Mine', 'Push Trap'],
+  Army: [
+    'Builder Barracks', 'BB Army Camp', 'Star Laboratory', 'Reinforcement Camp',
+    'Healing Hut', 'Battle Machine Altar', 'Battle Copter Altar',
+  ],
+  Resources: [
+    'BB Gold Mine', 'BB Elixir Collector', 'BB Gold Storage', 'BB Elixir Storage',
+    'Gem Mine', 'B.O.B Control', 'Clock Tower',
+  ],
+  Walls: ['BB Walls'],
+};
 
 // --- Package item shapes (subset we consume) ---
 
@@ -176,6 +196,7 @@ function load(): void {
     ...h.armyBuildings().petHouse().get(),
     ...h.traps().get(),
     ...h.walls().get(),
+    ...h.townHall().get(),
   ] as unknown as PackageBuilding[], []);
   builderBuildings = safeLoad(() => [
     ...b.defenses().get(),
@@ -269,8 +290,13 @@ export function getBuildingMaxLevelAtTH(name: string, th: number): number | null
   const item = getHomeItem(pkg);
   let result: number | null = null;
   if (item?.levels?.length) {
-    const max = maxLevelUnderCap(item.levels, 'townHallRequired', th);
-    result = max > 0 ? max : null;
+    if (pkg === 'Town Hall') {
+      // The Town Hall gates itself: at TH n the building is at level n.
+      result = Math.min(normalLevels(item.levels).length, Math.max(1, th));
+    } else {
+      const max = maxLevelUnderCap(item.levels, 'townHallRequired', th);
+      result = max > 0 ? max : null;
+    }
   }
   maxTHCache.set(cacheKey, result ?? -1);
   return result;
@@ -530,6 +556,32 @@ export function getBuildingCategories(th: number): BuildingCategories {
     result[cat] = catData;
   }
   categoriesCache.set(th, result);
+  return result;
+}
+
+const bbCategoriesCache = new Map<number, BuildingCategories>();
+
+/** Category → building → { bh → { level, isMaxLevel } } for the current Builder Hall. */
+export function getBBCategories(bh: number): BuildingCategories {
+  const cached = bbCategoriesCache.get(bh);
+  if (cached) return cached;
+  const result: BuildingCategories = {};
+  for (const [cat, names] of Object.entries(BB_CATEGORIES)) {
+    const catData: Record<string, Record<string, ThLevelEntry>> = {};
+    for (const display of names) {
+      const item = getBuilderItem(toPackageName(display));
+      const globalMax = item?.levels.length ? normalLevels(item.levels).length : 0;
+      const max = getBuildingMaxLevelAtBH(display, bh);
+      catData[display] = {
+        [String(bh)]: {
+          level: max,
+          isMaxLevel: max != null && globalMax > 0 && max >= globalMax,
+        },
+      };
+    }
+    result[cat] = catData;
+  }
+  bbCategoriesCache.set(bh, result);
   return result;
 }
 

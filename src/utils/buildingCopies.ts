@@ -71,6 +71,12 @@ export function getBuildingCopies(
     .filter((l) => l > 0);
 
   const representative = buildingLevels?.[toStoreName(name)] ?? buildingLevels?.[name] ?? 0;
+  // The Town Hall is self-gated: its level always equals the player's Town Hall
+  // level, regardless of what (if anything) buildingLevels/API recorded.
+  const isTownHall = toStoreName(name) === 'Town Hall' || jsonName === 'town hall';
+  if (isTownHall && th) {
+    return { count: 1, levels: [Math.min(th, maxLevel)], maxLevel, locked: false };
+  }
   // How many copies were already available at the last fully maxed TH.
   const maxedCount =
     lastMaxedTH && th && lastMaxedTH < th

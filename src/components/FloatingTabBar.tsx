@@ -12,7 +12,7 @@ type IconDef = { set: 'ion' | 'mc'; name: string };
 /** Pages of tabs, in display order. Arrows cycle through these.
  * 'search' is a pseudo-entry: it pushes the /player route instead of switching tabs. */
 const TAB_GROUPS: string[][] = [
-  ['index', 'army', 'buildings', 'maxtime'],
+  ['index', 'buildings', 'army', 'maxtime'],
   ['events', 'hero-journey', 'bases', 'armies'],
   ['war', 'search', 'achievements', 'saved'],
   ['settings'],

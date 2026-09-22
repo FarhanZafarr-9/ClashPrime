@@ -6,11 +6,17 @@ import {
   getBuildingMaxLevelAtTH,
   isBuilderName,
 } from './buildingData';
+import { getTownHallImageUrl } from './thImages';
 
 const images = buildingImagesData.images;
 const nameToEntry = new Map(images.map((img) => [img.name.toLowerCase(), img]));
 
 export function getBuildingImageSource(name: string) {
+  if (name === 'Town Hall') {
+    // Town Hall art is stored per-level on the wiki (the package ships no sprite).
+    const thImg = getTownHallImageUrl(1);
+    if (thImg) return { uri: thImg };
+  }
   const pkg = getBuildingItemImage(name, null, isBuilderName(name));
   if (pkg) return pkg;
   const entry = nameToEntry.get(name.toLowerCase());
@@ -19,6 +25,11 @@ export function getBuildingImageSource(name: string) {
 }
 
 export function getBuildingLevelImageSource(name: string, level: number) {
+  if (name === 'Town Hall') {
+    // Town Hall art is stored per-level on the wiki (the package ships no sprite).
+    const thImg = getTownHallImageUrl(level);
+    if (thImg) return { uri: thImg };
+  }
   const pkg = getBuildingItemImage(name, level, isBuilderName(name));
   if (pkg) return pkg;
   const entry = nameToEntry.get(name.toLowerCase());
