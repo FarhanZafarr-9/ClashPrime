@@ -56,8 +56,10 @@ const levelSprite = (p, level) => {
 
 const homeEntries = [];
 const builderEntries = [];
+const builderTroopEntries = [];
 const homeByName = new Map();
 const builderByName = new Map();
+const builderTroopByName = new Map();
 
 const collect = (items) => {
   for (const it of items) {
@@ -75,6 +77,17 @@ const collect = (items) => {
       }
       addTo(homeByName, homeEntries, it.superTroop.name, it.superTroop.images.icon ?? null, sl);
     }
+  }
+};
+
+const collectBuilderTroops = (items) => {
+  for (const it of items) {
+    const levels = {};
+    for (const l of it.levels ?? []) {
+      const p = l.images?.normal;
+      if (p && !levels[String(l.level)]) levels[String(l.level)] = levelSprite(p, l.level);
+    }
+    addTo(builderTroopByName, builderTroopEntries, it.name, it.images?.icon ?? null, levels);
   }
 };
 
@@ -138,6 +151,12 @@ collectBuilderBuilding(bb.traps().get());
 collectBuilderBuilding(bb.walls().get());
 collectBuilderBuilding(bb.builderHall().get());
 
+// Builder troops/heroes keep their own village sprites (separate from the
+// name-merged home map) so shared display names like "Baby Dragon" still show
+// their Builder Base visuals.
+collectBuilderTroops(bb.troops().get());
+collectBuilderTroops(bb.heroes().get());
+
 // Resource icons live outside the item APIs (images/other/*.png and images/other/ore/*.png).
 const resourceFiles = [
   ['Gold', 'gold'],
@@ -179,7 +198,7 @@ async function generate() {
   lines.push('  levels: Record<string, number>;');
   lines.push('}');
   lines.push('');
-  for (const [constName, entries] of [['PACKAGE_IMAGES', homeEntries], ['PACKAGE_BUILDER_IMAGES', builderEntries]]) {
+  for (const [constName, entries] of [['PACKAGE_IMAGES', homeEntries], ['PACKAGE_BUILDER_IMAGES', builderEntries], ['PACKAGE_BUILDER_TROOP_IMAGES', builderTroopEntries]]) {
     lines.push(`export const ${constName}: Record<string, PackageItemImages> = {`);
     for (const e of entries) {
       lines.push(`  ${JSON.stringify(e.name)}: {`);
