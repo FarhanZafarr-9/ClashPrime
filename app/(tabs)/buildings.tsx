@@ -378,7 +378,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
     ]}>
-      <View style={styles.itemRow}>
+      <View style={[styles.itemRow, inSheet && !inSection && styles.itemCardRowInSheet]}>
         <PressableRipple onPress={toggleExpanded} style={[styles.itemCardTouchable, { paddingLeft: Spacing.md }]}>
           <View style={styles.itemRowInner}>
             {mainImgSource ? (
@@ -783,10 +783,12 @@ function BuildingCollapsibleSection({
             style={[
               styles.itemCard,
               inSheet && styles.itemCardInSheet,
+              inSheet && styles.itemCardCopyInSheet,
+              inSheet && styles.itemCardLevelGroupInSheet,
               isLastGroup && { borderBottomLeftRadius: Radius.lg, borderBottomRightRadius: Radius.lg },
             ]}
           >
-            <View style={styles.itemRow}>
+<View style={styles.itemRow}>
               <View style={[styles.itemCardTouchable, { paddingLeft: Spacing.md }]}>
                 <View style={styles.itemRowInner}>
                   {imgSource ? (
@@ -1765,6 +1767,14 @@ const styles = StyleSheet.create({
   },
   itemCardCopyInSheet: {
     backgroundColor: Colors.bgCardHover,
+  },
+  itemCardLevelGroupInSheet: {
+    paddingRight: Spacing.md,
+  },
+  itemCardRowInSheet: {
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    marginBottom: Spacing.sm,
   },
   itemCardInSection: {
     marginHorizontal: 0,
