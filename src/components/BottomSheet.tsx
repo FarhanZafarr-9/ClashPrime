@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    maxHeight: '92%',
+    maxHeight: '72%',
     borderTopLeftRadius: Radius.xl * 1.25,
     borderTopRightRadius: Radius.xl * 1.25,
     overflow: 'hidden',
