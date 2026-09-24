@@ -922,6 +922,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    
   },
   heroJourneySummaryLevelGroup: {
     flexDirection: 'row',
@@ -964,7 +965,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
+    marginBottom: Spacing.xs,
+    borderRadius: Radius.sm,
   },
   heroJourneySectionFirst: {
     borderTopLeftRadius: Radius.xl * 1.25,
@@ -980,7 +982,8 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing.xs,
+    borderRadius: Radius.sm,
   },
   heroJourneyMilestoneRowLast: {
     borderBottomLeftRadius: Radius.xl * 1.25,
