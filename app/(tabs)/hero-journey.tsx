@@ -29,8 +29,19 @@ import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import { HeroJourneyScreenSkeleton } from '../../src/components/SkeletonScreens';
 
 const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
+const chestImage = require('../../assets/images/chiefs-journey/chest.webp');
+const heroJourneyImage = require('../../assets/images/chiefs-journey/hero.png');
 
 type FilterKey = 'all' | 'ores' | 'quests' | 'equipment' | 'skins' | 'items';
+
+type JourneyGroup = { section: HeroJourneyTHSection; rows: { ms: HeroJourneyMilestone; index: number }[] };
+type TimelineItem =
+  | JourneyGroup
+  | { parentGroups: JourneyGroup[]; kind: 'done' }
+  | { parentGroups: JourneyGroup[]; kind: 'tail' };
+
+const DONE_KEY = 0;
+const TAIL_KEY = -1;
 
 const FILTER_GROUPS: Record<Exclude<FilterKey, 'all'>, HeroJourneyRewardKind[]> = {
   ores: ['shinyOre', 'glowyOre', 'starryOre'],
@@ -38,15 +49,6 @@ const FILTER_GROUPS: Record<Exclude<FilterKey, 'all'>, HeroJourneyRewardKind[]> 
   equipment: ['equipment'],
   skins: ['skin'],
   items: ['elixir', 'darkElixir', 'heroPotion', 'mightyMorsel', 'petPotion', 'bookHeroes', 'runeElixir', 'runeDarkElixir'],
-};
-
-const HERO_SHORT_NAMES: Record<string, string> = {
-  'Barbarian King': 'BK',
-  'Archer Queen': 'AQ',
-  'Minion Prince': 'MP',
-  'Grand Warden': 'GW',
-  'Royal Champion': 'RC',
-  'Dragon Duke': 'DD',
 };
 
 const FILTER_OPTIONS: { key: FilterKey; label: string }[] = [
@@ -91,6 +93,15 @@ const MAGIC_ITEM_PACK: Partial<Record<HeroJourneyRewardKind, string>> = {
 function isSpecial(m: HeroJourneyMilestone): boolean {
   return m.kind === 'equipment' || m.kind === 'skin';
 }
+
+const HERO_IMAGES: Record<string, number> = {
+  'Barbarian King': require('../../assets/package-images/images/home/heroes/barbarian-king/icon.webp'),
+  'Archer Queen': require('../../assets/package-images/images/home/heroes/archer-queen/icon.webp'),
+  'Minion Prince': require('../../assets/package-images/images/home/heroes/minion-prince/icon.webp'),
+  'Grand Warden': require('../../assets/package-images/images/home/heroes/grand-warden/icon.webp'),
+  'Royal Champion': require('../../assets/package-images/images/home/heroes/royal-champion/icon.webp'),
+  'Dragon Duke': require('../../assets/package-images/images/home/heroes/dragon-duke/icon.webp'),
+};
 
 function isQuest(m: HeroJourneyMilestone): boolean {
   return m.kind === 'quest';
@@ -152,11 +163,41 @@ function milestoneLabel(m: HeroJourneyMilestone): string {
     case 'equipment':
       return m.rewardEquip ?? `${m.hero} Equipment`;
     case 'skin':
-      return `Majestic ${m.hero} Skin`;
+      return 'Majestic Skin';
     case 'quest':
       return m.equip ? `Quest — ${m.equip}` : `Quest — ${m.hero}`;
     default:
       return 'Reward';
+  }
+}
+
+function milestoneDesc(m: HeroJourneyMilestone): string | undefined {
+  switch (m.kind) {
+    case 'equipment':
+      return m.hero ? `For ${m.hero}` : undefined;
+    case 'skin':
+      return m.hero ?? undefined;
+    case 'heroPotion':
+      return 'Boosts Heroes & Pets to max level for 1h.';
+    case 'petPotion':
+      return 'Pets upgrade 24x faster for 1h.';
+    case 'mightyMorsel':
+      return 'Max boost for Heroes, Pets & Equipment.';
+    case 'bookHeroes':
+      return 'Instantly finishes any hero or pet upgrade.';
+    case 'runeElixir':
+      return 'Fills your Elixir Storage to full.';
+    case 'runeDarkElixir':
+      return 'Fills your Dark Elixir Storage to full.';
+    case 'shinyOre':
+    case 'glowyOre':
+    case 'starryOre':
+      return 'Upgrade equipment';
+    case 'elixir':
+    case 'darkElixir':
+      return 'Upgrade resource';
+    default:
+      return undefined;
   }
 }
 
@@ -204,8 +245,8 @@ export default function HeroJourneyScreen() {
   }, [journey, filter]);
 
   const sectionGroups = useMemo(() => {
-    if (!journey || filtered.length === 0) return [] as { section: HeroJourneyTHSection; rows: { ms: HeroJourneyMilestone; index: number }[] }[];
-    const groups: { section: HeroJourneyTHSection; rows: { ms: HeroJourneyMilestone; index: number }[] }[] = [];
+    if (!journey || filtered.length === 0) return [] as JourneyGroup[];
+    const groups: JourneyGroup[] = [];
     let last: (typeof groups)[number] | null = null;
     filtered.forEach((ms, index) => {
       const section = journey.sections.find((s) => ms.level <= s.maxLevel);
@@ -218,6 +259,35 @@ export default function HeroJourneyScreen() {
     });
     return groups;
   }, [journey, filtered]);
+
+  // Fully-claimed TH sections collapse under a single parent header (only when
+  // more than 3 are done), and the far-future tail collapses under a second
+  // parent (only when more than 3 remain), so the frontier stays visible while a
+  // long track doesn't render as a tall wall of identical "Town Hall N" cards.
+  // The individual sections stay inside both parents, fully expandable as before.
+  const completedGroups = useMemo(
+    () => sectionGroups.filter((g) => g.rows.length > 0 && g.rows.every((r) => r.ms.claimState === 'claimed')),
+    [sectionGroups],
+  );
+
+  const timelineItems = useMemo(() => {
+    const done = new Set(completedGroups.map((g) => g.section.th));
+    const remaining = sectionGroups.filter((g) => !done.has(g.section.th));
+    const items: TimelineItem[] = [];
+    if (completedGroups.length > 3) {
+      items.push({ parentGroups: completedGroups, kind: 'done' });
+    }
+    const keepVisible = 3;
+    const keep = remaining.slice(0, keepVisible);
+    const tail = remaining.slice(keepVisible);
+    items.push(...keep);
+    if (tail.length > 1) {
+      items.push({ parentGroups: tail, kind: 'tail' });
+    } else {
+      items.push(...tail);
+    }
+    return items;
+  }, [sectionGroups, completedGroups]);
 
   const currentFilteredIndex = useMemo(() => {
     if (!journey?.currentMilestone) return -1;
@@ -346,18 +416,38 @@ export default function HeroJourneyScreen() {
           <Text style={styles.noResults}>No rewards of this type yet.</Text>
         ) : (
           <View style={styles.timeline}>
-            {sectionGroups.map((group, si) => (
-              <JourneySection
-                key={`sec-${group.section.th}`}
-                group={group}
-                first={si === 0}
-                last={si === sectionGroups.length - 1}
-                expanded={expandedSections.has(group.section.th)}
-                reachable={group.section.th <= journey!.townHallLevel}
-                onToggle={() => toggleSection(group.section.th)}
-                onRowLayout={onRowLayout}
-              />
-            ))}
+            {timelineItems.map((item, si) => {
+              if ('parentGroups' in item) {
+                const isDone = item.kind === 'done';
+                return (
+                  <ParentSections
+                    key={isDone ? 'sec-done' : 'sec-tail'}
+                    groups={item.parentGroups}
+                    kind={item.kind}
+                    first={si === 0}
+                    last={si === timelineItems.length - 1}
+                    expanded={expandedSections.has(isDone ? DONE_KEY : TAIL_KEY)}
+                    expandedThs={expandedSections}
+                    onToggle={() => toggleSection(isDone ? DONE_KEY : TAIL_KEY)}
+                    onToggleSection={toggleSection}
+                    onRowLayout={onRowLayout}
+                    townHallLevel={journey!.townHallLevel}
+                  />
+                );
+              }
+              return (
+                <JourneySection
+                  key={`sec-${item.section.th}`}
+                  group={item}
+                  first={si === 0}
+                  last={si === timelineItems.length - 1}
+                  expanded={expandedSections.has(item.section.th)}
+                  reachable={item.section.th <= journey!.townHallLevel}
+                  onToggle={() => toggleSection(item.section.th)}
+                  onRowLayout={onRowLayout}
+                />
+              );
+            })}
           </View>
         )}
 
@@ -450,7 +540,7 @@ function JourneySummary({ journey }: { journey: HeroJourneyData }) {
 }
 
 interface JourneySectionProps {
-  group: { section: HeroJourneyTHSection; rows: { ms: HeroJourneyMilestone; index: number }[] };
+  group: JourneyGroup;
   first: boolean;
   last: boolean;
   expanded: boolean;
@@ -466,9 +556,7 @@ function JourneySection({ group, first, last, expanded, reachable, onToggle, onR
   const claimed = rows.filter((r) => r.ms.claimState === 'claimed').length;
   const allClaimed = rows.length > 0 && claimed === rows.length;
   const thUri = getTownHallImageUrl(section.th);
-  const newHeroes = section.newHeroes.map((name) => HERO_SHORT_NAMES[name] ?? name).join(', ');
-
-  const desc = `Levels ${section.minLevel}–${section.maxLevel}${newHeroes ? ` · +${newHeroes}` : ''}`;
+  const desc = `Levels ${section.minLevel}-${section.maxLevel}`;
 
   return (
     <>
@@ -482,7 +570,18 @@ function JourneySection({ group, first, last, expanded, reachable, onToggle, onR
         compact
       >
         <View style={styles.sectionBadges}>
-          <View style={[styles.sectionBadge, allClaimed && styles.sectionBadgeMaxed]}>
+          {section.newHeroes.map((name) => (
+            <View key={name} style={styles.sectionNewHeroBadge}>
+              <Image source={HERO_IMAGES[name]} style={styles.sectionNewHeroImg} resizeMode="contain" />
+            </View>
+          ))}
+          <View style={[
+            styles.sectionBadge,
+            allClaimed && styles.sectionBadgeMaxed,
+            (last && !expanded) && { borderBottomRightRadius: Radius.xl },
+            (first || expanded) && { borderTopRightRadius: Radius.xl }
+
+          ]}>
             {locked ? (
               <Image source={lockedImage} style={styles.sectionBadgeLockedImg} resizeMode="contain" />
             ) : allClaimed ? (
@@ -494,11 +593,11 @@ function JourneySection({ group, first, last, expanded, reachable, onToggle, onR
               </>
             )}
           </View>
-          <Ionicons
+          {false && <Ionicons
             name={expanded ? 'chevron-up' : 'chevron-down'}
             size={16}
             color={reachable ? colors.textSecondary : Colors.warning}
-          />
+          />}
         </View>
       </SettingRow>
       {expanded && (
@@ -514,6 +613,83 @@ function JourneySection({ group, first, last, expanded, reachable, onToggle, onR
             />
           ))}
           {!last && <View style={styles.sectionSeparator} />}
+        </View>
+      )}
+    </>
+  );
+}
+
+function ParentSections({
+  groups,
+  kind,
+  first,
+  last,
+  expanded,
+  expandedThs,
+  onToggle,
+  onToggleSection,
+  onRowLayout,
+  townHallLevel,
+}: {
+  groups: JourneyGroup[];
+  kind: 'done' | 'tail';
+  first: boolean;
+  last: boolean;
+  expanded: boolean;
+  expandedThs: ReadonlySet<number>;
+  onToggle: () => void;
+  onToggleSection: (th: number) => void;
+  onRowLayout: (index: number) => (e: LayoutChangeEvent) => void;
+  townHallLevel: number;
+}) {
+  const done = kind === 'done';
+  const total = groups.reduce((n, g) => n + g.rows.length, 0);
+  const minTh = groups[0].section.th;
+  const maxTh = groups[groups.length - 1].section.th;
+  const title = maxTh > minTh ? `Town Hall ${minTh}–${maxTh}` : `Town Hall ${minTh}`;
+  const desc = done
+    ? `${groups.length} section${groups.length > 1 ? 's' : ''} completed · ${total} rewards`
+    : `${groups.length} sections ahead`;
+  return (
+    <>
+      <SettingRow
+        title={title}
+        desc={desc}
+        iconSource={done ? heroJourneyImage : lockedImage}
+        isFirst={first || expanded}
+        isLast={last && !expanded}
+        onPress={onToggle}
+        compact
+      >
+        <View style={styles.sectionBadges}>
+          <View style={[
+            styles.sectionBadge,
+            done && styles.sectionBadgeMaxed,
+            (last && !expanded) && { borderBottomRightRadius: Radius.xl },
+            (first || expanded) && { borderTopRightRadius: Radius.xl },
+          ]}>
+            {done ? (
+              <Ionicons name="checkmark-done" size={18} color={Colors.bg} />
+            ) : (
+              <Image source={lockedImage} style={styles.sectionBadgeLockedImg} resizeMode="contain" />
+            )}
+          </View>
+        </View>
+      </SettingRow>
+      {expanded && (
+        <View style={styles.parentBody}>
+          {groups.map((group, gi) => (
+            <JourneySection
+              key={`sec-${group.section.th}`}
+              group={group}
+              first={gi === 0}
+              last={gi === groups.length - 1}
+              expanded={expandedThs.has(group.section.th)}
+              reachable={group.section.th <= townHallLevel}
+              onToggle={() => onToggleSection(group.section.th)}
+              onRowLayout={onRowLayout}
+            />
+          ))}
         </View>
       )}
     </>
@@ -541,6 +717,7 @@ function MilestoneRow({
   const specialColored = special && unlocked;
   const titleColor = specialColored ? Colors.warning : unlocked ? colors.textPrimary : colors.textTertiary;
   const equipmentClaimed = ms.kind === 'equipment' && ms.claimState === 'claimed';
+  const extraDesc = milestoneDesc(ms);
 
   const equipLocal =
     ms.kind === 'equipment' && ms.rewardEquip ? getArmyItemImage(ms.rewardEquip) ?? null : null;
@@ -548,8 +725,8 @@ function MilestoneRow({
     ms.kind === 'equipment' && ms.rewardEquip && !equipLocal ? getEquipmentImageUrl(ms.rewardEquip) ?? null : null;
   const equipIcon =
     equipLocal != null ? <Image source={equipLocal} style={styles.milestoneImg} resizeMode="contain" />
-    : equipUrl != null ? <Image source={{ uri: equipUrl }} style={styles.milestoneImg} resizeMode="contain" />
-    : null;
+      : equipUrl != null ? <Image source={{ uri: equipUrl }} style={styles.milestoneImg} resizeMode="contain" />
+        : null;
 
   return (
     <View
@@ -564,7 +741,6 @@ function MilestoneRow({
       <View
         style={[
           styles.milestonePill,
-          first && styles.milestonePillFirst,
           last && styles.milestonePillLast,
           { backgroundColor: ms.isCurrent ? Colors.warning : colors.bgCardHover },
         ]}
@@ -579,8 +755,15 @@ function MilestoneRow({
         </Text>
       </View>
 
-      <View style={styles.milestoneIcon}>
-        {ms.kind === 'equipment' && !ms.rewardEquip ? (
+      <View
+        style={[
+          styles.milestoneIcon,
+          { backgroundColor: ms.isCurrent ? Colors.warning : colors.bgCardHover },
+        ]}
+      >
+        {quest ? (
+          <Image source={chestImage} style={styles.milestoneImg} resizeMode="contain" />
+        ) : ms.kind === 'equipment' && !ms.rewardEquip ? (
           <RewardIcon kind="starryOre" size={18} color={Colors.warning} />
         ) : (
           equipIcon ?? <RewardIcon kind={ms.kind} size={17} color={special ? Colors.warning : colors.textSecondary} hero={ms.hero} />
@@ -592,29 +775,65 @@ function MilestoneRow({
           <Text style={[styles.milestoneTitle, { color: titleColor }]} numberOfLines={2}>
             {milestoneLabel(ms)}
           </Text>
-          {ms.isCurrent && (
-            <Ionicons name="flag" size={12} color={special && unlocked ? Colors.warning : colors.textSecondary} />
-          )}
-          {!unlocked && <MaterialCommunityIcons name="lock" size={12} color={colors.textTertiary} />}
         </View>
 
-        {(quest || equipmentClaimed) && (
-          <View style={styles.milestonePillsRow}>
-            {equipmentClaimed && (
-              <View style={[styles.milestoneTypePill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Ionicons name="checkmark-circle" size={11} color={Colors.success} />
-                <Text style={[styles.milestoneTypePillText, { color: Colors.success }]}>Claimed</Text>
-              </View>
-            )}
-            {quest && (
-              <View style={[styles.milestoneTypePill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <MaterialCommunityIcons name="sword-cross" size={11} color={colors.textSecondary} />
-                <Text style={[styles.milestoneTypePillText, { color: colors.textSecondary }]}>15★ · 14d</Text>
-              </View>
-            )}
+        {quest && (
+          <Text style={[styles.milestoneQuestDesc, { color: colors.textTertiary }]}>
+            15★ · 14d
+          </Text>
+        )}
+
+        {extraDesc && (
+          <Text style={[styles.milestoneQuestDesc, { color: colors.textTertiary }]}>
+            {extraDesc}
+          </Text>
+        )}
+
+        {equipmentClaimed && (
+          <View style={styles.milestoneClaimedRow}>
+            <Ionicons name="checkmark-circle" size={11} color={Colors.success} />
+            <Text style={[styles.milestoneQuestDesc, { color: Colors.success }]}>Claimed</Text>
           </View>
         )}
       </View>
+
+      {!unlocked &&
+        <View style={[styles.sectionBadge, last && {
+          borderBottomRightRadius: Radius.lg,
+        }]}>
+          <Image source={lockedImage} style={styles.sectionBadgeLockedImg} resizeMode="contain" />
+
+        </View>
+      }
+
+      {ms.isCurrent &&
+        <View style={
+          [
+            styles.sectionBadge,
+            { backgroundColor: Colors.warning + '20' },
+            last && {
+              borderBottomRightRadius: Radius.lg,
+            }
+          ]
+        }>
+          <Ionicons name="flag" size={12} color={special && unlocked ? Colors.warning : colors.textSecondary} />
+        </View>
+      }
+
+      {(!ms.isCurrent && unlocked) &&
+        <View style={
+          [
+            styles.sectionBadge,
+            { backgroundColor: Colors.successGhost },
+            last && {
+              borderBottomRightRadius: Radius.lg,
+            }
+          ]
+        }>
+          <Ionicons name="checkmark" size={14} color={special && unlocked ? Colors.warning : colors.textSecondary} />
+        </View>
+      }
+
     </View>
   );
 }
@@ -797,9 +1016,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
+  sectionNewHeroBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionNewHeroImg: {
+    width: 32,
+    height: 32,
+  },
   sectionBadge: {
     minWidth: 36,
-    height: 34,
+    height: 36,
     borderRadius: Radius.sm,
     backgroundColor: Colors.border,
     alignItems: 'center',
@@ -832,6 +1063,9 @@ const styles = StyleSheet.create({
   sectionBody: {
     paddingTop: 0,
   },
+  parentBody: {
+    gap: Spacing.xs,
+  },
   sectionSeparator: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
@@ -843,8 +1077,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+    marginBottom: Spacing.xs,
     backgroundColor: Colors.bgCard,
     overflow: 'hidden',
   },
@@ -863,7 +1096,7 @@ const styles = StyleSheet.create({
   milestonePill: {
     width: 34,
     height: 34,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -880,8 +1113,10 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   milestoneIcon: {
-    width: 24,
-    height: 24,
+    width: 34,
+    height: 34,
+    padding: 5,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -904,25 +1139,15 @@ const styles = StyleSheet.create({
     ...Typography.footnote,
     fontWeight: '700',
   },
-  milestonePillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    rowGap: Spacing.sm,
+  milestoneQuestDesc: {
     marginTop: 2,
+    ...Typography.caption,
+    fontWeight: '600',
   },
-  milestoneTypePill: {
+  milestoneClaimedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-    borderWidth: 0.75,
-  },
-  milestoneTypePillText: {
-    ...Typography.caption,
-    fontWeight: '600',
-    fontSize: 10,
+    marginTop: 2,
   },
 });
