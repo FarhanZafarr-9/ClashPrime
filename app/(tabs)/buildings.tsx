@@ -788,7 +788,7 @@ function BuildingCollapsibleSection({
               isLastGroup && { borderBottomLeftRadius: Radius.lg, borderBottomRightRadius: Radius.lg },
             ]}
           >
-<View style={styles.itemRow}>
+            <View style={styles.itemRow}>
               <View style={[styles.itemCardTouchable, { paddingLeft: Spacing.md }]}>
                 <View style={styles.itemRowInner}>
                   {imgSource ? (
@@ -1465,7 +1465,7 @@ export default function BuildingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
