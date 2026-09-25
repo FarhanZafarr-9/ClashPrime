@@ -161,19 +161,43 @@ export function buildingUpgradeChainTimes(
  * total/builderCount is not: a single long chain (e.g. a 21-day hero) can't be
  * split across builders, so it always bounds the result.
  */
-export function scheduleChains(chainTimes: number[], builderCount: number): number {
-  if (chainTimes.length === 0) return 0;
-  if (builderCount <= 1) return chainTimes.reduce((a, b) => a + b, 0);
-  const sorted = [...chainTimes].sort((a, b) => b - a);
+export interface ScheduledChain {
+  index: number;
+  worker: number;
+  start: number;
+  finish: number;
+}
+
+export function scheduleChainsDetailed(
+  chainTimes: number[],
+  builderCount: number,
+): { makespan: number; items: ScheduledChain[] } {
+  if (chainTimes.length === 0) return { makespan: 0, items: [] };
+  if (builderCount <= 1) {
+    let acc = 0;
+    const items = chainTimes.map((t, i) => {
+      const item = { index: i, worker: 0, start: acc, finish: acc + t };
+      acc += t;
+      return item;
+    });
+    return { makespan: acc, items };
+  }
+  const order = chainTimes.map((t, i) => ({ t, i })).sort((a, b) => b.t - a.t);
   const loads = new Array<number>(builderCount).fill(0);
-  for (const t of sorted) {
+  const items: ScheduledChain[] = [];
+  for (const { t, i } of order) {
     let minIdx = 0;
-    for (let i = 1; i < builderCount; i++) {
-      if (loads[i] < loads[minIdx]) minIdx = i;
+    for (let wi = 1; wi < builderCount; wi++) {
+      if (loads[wi] < loads[minIdx]) minIdx = wi;
     }
+    items.push({ index: i, worker: minIdx, start: loads[minIdx], finish: loads[minIdx] + t });
     loads[minIdx] += t;
   }
-  return Math.max(...loads);
+  return { makespan: Math.max(...loads), items };
+}
+
+export function scheduleChains(chainTimes: number[], builderCount: number): number {
+  return scheduleChainsDetailed(chainTimes, builderCount).makespan;
 }
 
 /**
