@@ -89,7 +89,7 @@ export default function RootLayout() {
       <PlayerProvider>
         <GameDataProvider>
           <TimerProvider>
-            <StatusBar style={isDark ? 'light' : 'dark'} hidden />
+            <StatusBar hidden />
             <Stack
               key={`${isDark ? 'dark' : 'light'}-${fontPref}`}
               screenOptions={{
