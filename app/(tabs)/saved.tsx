@@ -220,7 +220,7 @@ export default function SavedScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <View style={styles.header}>
         <Text style={styles.title}>Saved & Favorites</Text>
       </View>
