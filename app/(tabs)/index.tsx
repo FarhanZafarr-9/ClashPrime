@@ -241,9 +241,9 @@ function CollapsibleSection({
     ? badges
     : maxed
       ? [
-          { key: 'done', icon: 'checkmark', tone: 'maxed' },
-          { key: 'level', value: formatCompact(totalLevel), label: `/ ${formatCompact(totalMax)}`, tone: 'maxed' },
-        ]
+        { key: 'done', icon: 'checkmark', tone: 'maxed' },
+        { key: 'level', value: formatCompact(totalLevel), label: `/ ${formatCompact(totalMax)}`, tone: 'maxed' },
+      ]
       : totalMax > 0
         ? [{ key: 'level', value: formatCompact(totalLevel), label: `/ ${formatCompact(totalMax)}`, tone: isSectionMaxed ? 'maxed' : 'default' }]
         : [{ key: 'count', value: count, tone: 'default' }];
@@ -775,21 +775,21 @@ export default function HomeScreen() {
   // ── Builder split calculation (for Builders pipeline) ──
   const builderSplit = useMemo(() => {
     if (!player) return null;
-    
+
     // Compute building chains directly (same logic as buildingGroups creation)
     const buildingChains: number[] = [];
     const heroChains: number[] = [];
-    
+
     // Building chains from player's building data
     const SHOW_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
-    
+
     for (const cat of SHOW_BUILDING_CATS) {
       const items = getBuildingCategories(th)[cat] ?? {};
       const entries = Object.entries(items).filter(([, thData]) => {
         const thEntry = thData[String(th)];
         return thEntry != null && (thEntry.level ?? 0) > 0;
       });
-      
+
       for (const [name] of entries) {
         const effectiveMax = getBuildingEffectiveMax(name, th);
         const count = getCountAtTH(name, th);
@@ -801,12 +801,12 @@ export default function HomeScreen() {
         if (times.length > 0) buildingChains.push(...times);
       }
     }
-    
+
     // Hero chains from player's hero data
     const allHeroesAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
     const homeHeroes = (player.heroes ?? []).filter((h: any) => h.village === 'home');
     const heroMap = new Map(homeHeroes.map((h: any) => [h.name.toLowerCase(), h.level]));
-    
+
     for (const hero of allHeroesAtTH) {
       const currentLevel = heroMap.get(hero.name.toLowerCase()) ?? 0;
       if (currentLevel >= hero.maxLevel) continue;
@@ -815,17 +815,17 @@ export default function HomeScreen() {
       const ct = remainingArmyCosts(detail, currentLevel, hero.maxLevel);
       if (ct.time > 0) heroChains.push(ct.time);
     }
-    
+
     if (builderCount <= 1 || (buildingChains.length === 0 && heroChains.length === 0)) {
       return null;
     }
-    
+
     // Calculate times
     const buildingsOnlySec = scheduleChains(buildingChains, builderCount);
     const heroesOnlySec = scheduleChains(heroChains, builderCount);
     const buildingsSerialSec = buildingChains.reduce((a, b) => a + b, 0);
     const heroesSerialSec = heroChains.reduce((a, b) => a + b, 0);
-    
+
     // Find optimal split
     let optimalHeroBuilders = -1;
     let optimalSec = Infinity;
@@ -839,9 +839,9 @@ export default function HomeScreen() {
         }
       }
     }
-    
+
     if (optimalHeroBuilders === -1) return null;
-    
+
     return {
       buildingsOnlySec,
       heroesOnlySec,
@@ -922,70 +922,70 @@ export default function HomeScreen() {
     pushTo: string;
     rows: { name: string; level: number; maxLevel: number; icon?: string }[];
   }[] = [
-    {
-      key: 'heroes',
-      title: 'Heroes',
-      icon: 'shield-half-outline',
-      progress: heroesProgress,
-      pushTo: '/(tabs)/army?tab=heroes',
-      rows: allHeroesAtTH.map((h) => {
-        const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
-        return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel, icon: getHeroImageUrl(h.name) || undefined };
-      }),
-    },
-    {
-      key: 'troops',
-      title: 'Troops',
-      icon: 'bonfire-outline',
-      iconUrl: getTroopImageUrl('Barbarian', 1) || undefined,
-      progress: troopsProgress,
-      pushTo: '/(tabs)/army?tab=troops',
-      rows: allTroopsAtTH.map((t) => {
-        const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
-        const level = owned?.level ?? 0;
-        return { name: t.name, level, maxLevel: t.maxLevel, icon: getTroopImageUrl(t.name, level) || undefined };
-      }),
-    },
-    {
-      key: 'spells',
-      title: 'Spells',
-      icon: 'flash-outline',
-      iconUrl: getTroopImageUrl('Lightning Spell', 1) || undefined,
-      progress: spellsProgress,
-      pushTo: '/(tabs)/army?tab=spells',
-      rows: allSpellsAtTH.map((s) => {
-        const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
-        const level = owned?.level ?? 0;
-        return { name: s.name, level, maxLevel: s.maxLevel, icon: getTroopImageUrl(s.name, level) || undefined };
-      }),
-    },
-    {
-      key: 'pets',
-      title: 'Pets',
-      icon: 'paw',
-      iconUrl: getPetImageUrl('L.A.S.S.I') || undefined,
-      progress: petsProgress,
-      pushTo: '/(tabs)/army?tab=pets',
-      rows: homePetList.map((p) => {
-        const maxLevel = petMaxAt(p.name);
-        return { name: p.name, level: p.level, maxLevel, icon: getPetImageUrl(p.name) || undefined };
-      }),
-    },
-    {
-      key: 'equipment',
-      title: 'Equipment',
-      icon: 'hammer-outline',
-      iconUrl: getEquipmentImageUrl('Barbarian Puppet') || undefined,
-      progress: equipProgress,
-      pushTo: '/(tabs)/army?tab=equipment',
-      rows: player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
-        name: e.name,
-        level: e.level,
-        maxLevel: getEquipFullMax(e.name, e.maxLevel),
-        icon: getEquipmentImageUrl(e.name) || undefined,
-      })),
-    },
-  ];
+      {
+        key: 'heroes',
+        title: 'Heroes',
+        icon: 'shield-half-outline',
+        progress: heroesProgress,
+        pushTo: '/(tabs)/army?tab=heroes',
+        rows: allHeroesAtTH.map((h) => {
+          const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
+          return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel, icon: getHeroImageUrl(h.name) || undefined };
+        }),
+      },
+      {
+        key: 'troops',
+        title: 'Troops',
+        icon: 'bonfire-outline',
+        iconUrl: getTroopImageUrl('Barbarian', 1) || undefined,
+        progress: troopsProgress,
+        pushTo: '/(tabs)/army?tab=troops',
+        rows: allTroopsAtTH.map((t) => {
+          const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
+          const level = owned?.level ?? 0;
+          return { name: t.name, level, maxLevel: t.maxLevel, icon: getTroopImageUrl(t.name, level) || undefined };
+        }),
+      },
+      {
+        key: 'spells',
+        title: 'Spells',
+        icon: 'flash-outline',
+        iconUrl: getTroopImageUrl('Lightning Spell', 1) || undefined,
+        progress: spellsProgress,
+        pushTo: '/(tabs)/army?tab=spells',
+        rows: allSpellsAtTH.map((s) => {
+          const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
+          const level = owned?.level ?? 0;
+          return { name: s.name, level, maxLevel: s.maxLevel, icon: getTroopImageUrl(s.name, level) || undefined };
+        }),
+      },
+      {
+        key: 'pets',
+        title: 'Pets',
+        icon: 'paw',
+        iconUrl: getPetImageUrl('L.A.S.S.I') || undefined,
+        progress: petsProgress,
+        pushTo: '/(tabs)/army?tab=pets',
+        rows: homePetList.map((p) => {
+          const maxLevel = petMaxAt(p.name);
+          return { name: p.name, level: p.level, maxLevel, icon: getPetImageUrl(p.name) || undefined };
+        }),
+      },
+      {
+        key: 'equipment',
+        title: 'Equipment',
+        icon: 'hammer-outline',
+        iconUrl: getEquipmentImageUrl('Barbarian Puppet') || undefined,
+        progress: equipProgress,
+        pushTo: '/(tabs)/army?tab=equipment',
+        rows: player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
+          name: e.name,
+          level: e.level,
+          maxLevel: getEquipFullMax(e.name, e.maxLevel),
+          icon: getEquipmentImageUrl(e.name) || undefined,
+        })),
+      },
+    ];
 
   const BUILDING_CAT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
     'Defenses': 'shield-half-outline',
@@ -1116,33 +1116,33 @@ export default function HomeScreen() {
     },
     ...(leagueInfo
       ? [{
-          title: 'League',
-          icon: 'ribbon-outline' as const,
-          iconUrl: playerLeague?.iconUrls?.small,
-          desc: 'Ranked battles league details',
-          rows: [
-            {
-              label: 'League',
-              desc: leagueInfo.underfloor
-                ? `Below your TH floor (${leagueInfo.floor})`
-                : leagueInfo.floor
-                  ? `League floor: ${leagueInfo.floor}`
-                  : 'Ranked battles league',
-              value: leagueInfo.leagueName,
-              icon: 'ribbon-outline' as const,
-              iconUrl: playerLeague?.iconUrls?.small,
-            },
-            { label: 'League Bonus', desc: 'Max bonus per win', value: '—', icon: 'trophy-outline' as const, valueNode: <LeagueAmountValue amount={leagueInfo.bonus} /> },
-            { label: 'Per-Attack Loot', desc: 'Max stealable from a base', value: '—', icon: 'cash-outline' as const, valueNode: <LeagueAmountValue amount={leagueInfo.loot} /> },
-            { label: 'Star Bonus', desc: 'Weekly · 8 stars', value: '—', icon: 'star-outline' as const, valueNode: <StarBonusValue star={leagueInfo.star} /> },
-            ...(leagueInfo.attacksPerWeek
-              ? [{ label: 'Attacks/Week', desc: 'League tournament schedule', value: leagueInfo.attacksPerWeek, icon: 'flame-outline' as const }]
-              : []),
-            ...(leagueInfo.next
-              ? [{ label: 'Next League', desc: leagueInfo.next.star ? `Star bonus: ${fmtAmount(leagueInfo.next.star)}` : 'One step up', value: leagueInfo.next.name, icon: 'arrow-up-circle-outline' as const }]
-              : []),
-          ],
-        }]
+        title: 'League',
+        icon: 'ribbon-outline' as const,
+        iconUrl: playerLeague?.iconUrls?.small,
+        desc: 'Ranked battles league details',
+        rows: [
+          {
+            label: 'League',
+            desc: leagueInfo.underfloor
+              ? `Below your TH floor (${leagueInfo.floor})`
+              : leagueInfo.floor
+                ? `League floor: ${leagueInfo.floor}`
+                : 'Ranked battles league',
+            value: leagueInfo.leagueName,
+            icon: 'ribbon-outline' as const,
+            iconUrl: playerLeague?.iconUrls?.small,
+          },
+          { label: 'League Bonus', desc: 'Max bonus per win', value: '—', icon: 'trophy-outline' as const, valueNode: <LeagueAmountValue amount={leagueInfo.bonus} /> },
+          { label: 'Per-Attack Loot', desc: 'Max stealable from a base', value: '—', icon: 'cash-outline' as const, valueNode: <LeagueAmountValue amount={leagueInfo.loot} /> },
+          { label: 'Star Bonus', desc: 'Weekly · 8 stars', value: '—', icon: 'star-outline' as const, valueNode: <StarBonusValue star={leagueInfo.star} /> },
+          ...(leagueInfo.attacksPerWeek
+            ? [{ label: 'Attacks/Week', desc: 'League tournament schedule', value: leagueInfo.attacksPerWeek, icon: 'flame-outline' as const }]
+            : []),
+          ...(leagueInfo.next
+            ? [{ label: 'Next League', desc: leagueInfo.next.star ? `Star bonus: ${fmtAmount(leagueInfo.next.star)}` : 'One step up', value: leagueInfo.next.name, icon: 'arrow-up-circle-outline' as const }]
+            : []),
+        ],
+      }]
       : []),
     {
       title: 'Clan',
@@ -1166,7 +1166,7 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <View style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -1251,195 +1251,50 @@ export default function HomeScreen() {
                   <Text style={styles.thLevel}>{showBH ? (player.builderHallLevel ?? 1) : (player.townHallLevel ?? 0)}</Text>
                   <Text style={styles.thLabel}>{showBH ? 'BH' : 'TH'}</Text>
                 </View>
-</View>
+              </View>
               <PressableRipple onPress={() => setShowBH(!showBH)} style={styles.swapBtnFloating} hitSlop={6}>
                 <Ionicons name="swap-horizontal" size={14} color={Colors.bgCard} />
               </PressableRipple>
             </View>
           </Card>
 
-<View style={styles.progressSections}>
-             {/* ── Lab ── */}
-             {(() => {
-               const labKeys = ['troops', 'spells'];
-               const labGroups = progressGroups.filter((g) => labKeys.includes(g.key) && g.rows.some((r) => r.level < r.maxLevel));
-               const labTl = labKeys.reduce((s, k) => {
-                 const g = progressGroups.find(x => x.key === k);
-                 return s + (g ? g.rows.reduce((s2, r) => s2 + r.level, 0) : 0);
-               }, 0);
-               const labTm = labKeys.reduce((s, k) => {
-                 const g = progressGroups.find(x => x.key === k);
-                 return s + (g ? g.rows.reduce((s2, r) => s2 + r.maxLevel, 0) : 0);
-               }, 0);
-               const labCost = sumCosts(labKeys.map(k => progressCosts[k]).filter(Boolean));
-               const labProgress = labTm > 0 ? labTl / labTm : 0;
-               if (labGroups.length === 0) return null;
-               return (
-<CollapsibleSection
+          <View style={styles.progressSections}>
+            {/* ── Lab ── */}
+            {(() => {
+              const labKeys = ['troops', 'spells'];
+              const labGroups = progressGroups.filter((g) => labKeys.includes(g.key) && g.rows.some((r) => r.level < r.maxLevel));
+              const labTl = labKeys.reduce((s, k) => {
+                const g = progressGroups.find(x => x.key === k);
+                return s + (g ? g.rows.reduce((s2, r) => s2 + r.level, 0) : 0);
+              }, 0);
+              const labTm = labKeys.reduce((s, k) => {
+                const g = progressGroups.find(x => x.key === k);
+                return s + (g ? g.rows.reduce((s2, r) => s2 + r.maxLevel, 0) : 0);
+              }, 0);
+              const labCost = sumCosts(labKeys.map(k => progressCosts[k]).filter(Boolean));
+              const labProgress = labTm > 0 ? labTl / labTm : 0;
+              if (labGroups.length === 0) return null;
+              return (
+                <CollapsibleSection
                   isFirst
                   isLast={false}
                   icon="flask-outline"
                   iconSource={pipelineHeaderImage('Lab')}
                   title="Laboratory"
-                   compact
-                   count={labKeys.reduce((s, k) => {
-                     const g = progressGroups.find(x => x.key === k);
-                     return s + (g ? g.rows.length : 0);
-                   }, 0)}
-                   totalLevel={labTl}
-                   totalMax={labTm}
-                   description={renderProgressHeader(labProgress, labCost)}
-                 >
-                   <View style={styles.progressInner}>
-                   {labGroups.map((group, gi, groups) => {
-                     const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-                     const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
-                     const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-                     const navigateInstead = displayRows.length >= 5;
-                     return (
-                       <CollapsibleSection
-                         key={group.key}
-                         isLast={gi === groups.length - 1}
-                         icon={group.icon}
-                         iconUrl={group.iconUrl}
-                         title={group.title}
-                         compact
-                         onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                         description={renderProgressHeader(group.progress, progressCosts[group.key])}
-                         count={displayRows.length}
-                         totalLevel={totalLevel}
-                         totalMax={totalMax}
-                       >
-                         {displayRows.map((row, ri) => {
-                           const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
-                           return (
-                             <ItemCard
-                               key={`${group.key}-${ri}`}
-                               name={row.name}
-                               level={row.level}
-                               maxLevel={row.maxLevel}
-                               icon={row.icon}
-                               costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                               costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                               timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                               locked={row.level === 0}
-                               isLast={ri === displayRows.length - 1}
-                               onPress={() => router.push(group!.pushTo)}
-                             />
-                           );
-                         })}
-                       </CollapsibleSection>
-                     );
-                   })}
-                   </View>
-                 </CollapsibleSection>
-               );
-             })()}
-
-{/* ── Builders ── */}
-             {(() => {
-               const countedGroups = buildingGroups.filter((g) => g.key !== 'Walls');
-               const heroGroup = progressGroups.find((g) => g.key === 'heroes');
-               const builderGroups = heroGroup ? [heroGroup, ...countedGroups] : countedGroups;
-               const builderTl = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
-               const builderTm = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
-               const builderProgress = builderTm > 0 ? builderTl / builderTm : 0;
-const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progressCosts.heroes : buildingCosts[g.key]).filter(Boolean));
-                // Builder split info
-                const splitInfo = builderSplit ? (
-                  <>
-                    <View style={styles.splitInfoRow}>
-                      <Text style={styles.splitInfoLabel}>Buildings only: </Text>
-                      <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.buildingsOnlySec)}</Text>
-                    </View>
-                    <View style={styles.splitInfoRow}>
-                      <Text style={styles.splitInfoLabel}>Heroes only: </Text>
-                      <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.heroesOnlySec)}</Text>
-                    </View>
-                    <View style={styles.splitInfoRow}>
-                      <Text style={styles.splitInfoLabel}>Optimal split: </Text>
-                      <Text style={styles.splitInfoValue}>
-                        {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
-                      </Text>
-                    </View>
-                  </>
-                ) : null;
-
-                return (
-                  <CollapsibleSection
-                     isLast={false}
-                     icon="business-outline"
-                     iconSource={pipelineHeaderImage('Builder Hut')}
-                     title="Builders"
-                      compact
-                     count={builderGroups.reduce((s, g) => s + g.rows.length, 0)}
-                     totalLevel={builderTl}
-                     totalMax={builderTm}
-                     description={
-                    <>
-                      {builderSplit && (
-                        <Text style={{ ...styles.splitInfoLabel, marginBottom: -Spacing.xs }}>
-                          Build: {formatTimeShort(builderSplit.buildingsOnlySec)} · Hero: {formatTimeShort(builderSplit.heroesOnlySec)} · Opt: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
-                        </Text>
-                      )}
-                      {renderProgressHeader(builderProgress, builderCost)}
-                    </>
-                  }
->
+                  compact
+                  count={labKeys.reduce((s, k) => {
+                    const g = progressGroups.find(x => x.key === k);
+                    return s + (g ? g.rows.length : 0);
+                  }, 0)}
+                  totalLevel={labTl}
+                  totalMax={labTm}
+                  description={renderProgressHeader(labProgress, labCost)}
+                >
                   <View style={styles.progressInner}>
-                  {(() => {
-                    const heroGroup = progressGroups.find((g) => g.key === 'heroes');
-                    type BuilderCatRow = {
-                      name: string;
-                      level: number;
-                      maxLevel: number;
-                      icon?: string;
-                      copies?: number[];
-                      effectiveMax?: number;
-                      iconSource?: ImageSourcePropType;
-                    };
-                    type BuilderCat = {
-                      key: string;
-                      title: string;
-                      icon: keyof typeof Ionicons.glyphMap;
-                      iconUrl?: string;
-                      iconSource?: ImageSourcePropType;
-                      maxed?: boolean;
-                      pushTo: string;
-                      progress: number;
-                      isHero: boolean;
-                      rows: BuilderCatRow[];
-                    };
-                    const builderCategoryGroups: BuilderCat[] = [
-                      ...(heroGroup
-                        ? [{
-                            key: heroGroup.key,
-                            title: heroGroup.title,
-                            icon: heroGroup.icon,
-                            iconSource: pipelineHeaderImage('Hero Hall'),
-                            pushTo: heroGroup.pushTo,
-                            progress: heroGroup.progress,
-                            isHero: true,
-                            rows: heroGroup.rows,
-                          }]
-                        : []),
-                      ...buildingGroups
-                        .filter((g) => g.key !== 'Walls')
-                        .map((g) => ({
-                          key: g.key,
-                          title: g.title,
-                          icon: g.icon,
-                          iconSource: g.iconSource,
-                          maxed: g.maxed,
-                          pushTo: g.pushTo,
-                          progress: g.progress,
-                          isHero: false,
-                          rows: g.rows,
-                        })),
-                    ];
-                    return builderCategoryGroups.map((group, gi, groups) => {
-                      const isHero = group.isHero;
-                      const displayRows = group.rows.filter((r) => (isHero || r.maxLevel > 0) && r.level < r.maxLevel);
+                    {labGroups.map((group, gi, groups) => {
+                      const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+                      const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
+                      const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
                       const navigateInstead = displayRows.length >= 5;
                       return (
                         <CollapsibleSection
@@ -1447,20 +1302,16 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                           isLast={gi === groups.length - 1}
                           icon={group.icon}
                           iconUrl={group.iconUrl}
-                          iconSource={group.iconSource}
                           title={group.title}
                           compact
-                          maxed={group.maxed}
                           onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                          description={renderProgressHeader(group.progress, isHero ? progressCosts.heroes : buildingCosts[group.key])}
+                          description={renderProgressHeader(group.progress, progressCosts[group.key])}
                           count={displayRows.length}
-                          totalLevel={group.rows.reduce((s, r) => s + r.level, 0)}
-                          totalMax={group.rows.reduce((s, r) => s + r.maxLevel, 0)}
+                          totalLevel={totalLevel}
+                          totalMax={totalMax}
                         >
                           {displayRows.map((row, ri) => {
-                            const rowCost = isHero
-                              ? remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel)
-                              : remainingBuildingCosts(row.name, row.copies ?? [], row.effectiveMax ?? 0);
+                            const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
                             return (
                               <ItemCard
                                 key={`${group.key}-${ri}`}
@@ -1468,7 +1319,6 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                                 level={row.level}
                                 maxLevel={row.maxLevel}
                                 icon={row.icon}
-                                iconSource={row.iconSource}
                                 costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                                 costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                                 timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
@@ -1480,236 +1330,386 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                           })}
                         </CollapsibleSection>
                       );
-                    });
-                  })()}
+                    })}
                   </View>
                 </CollapsibleSection>
               );
             })()}
 
-{/* ── Pets ── */}
-{(() => {
-                  const group = progressGroups.find(g => g.key === 'pets');
-                  if (!group) return null;
-                  const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-                  const navigateInstead = displayRows.length >= 5;
-                  return (
-                    <CollapsibleSection
-                      isLast={false}
-                      icon="paw"
-                      iconSource={pipelineHeaderImage('Pet House')}
-                      title="Pets"
-                      compact
-                      count={group?.rows.length ?? 0}
-                      totalLevel={group?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
-                      totalMax={group?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
-                      description={renderProgressHeader(group?.progress ?? 0, progressCosts.pets)}
-                      onPressOverride={navigateInstead ? () => router.push(group?.pushTo ?? '/(tabs)/army?tab=pets') : undefined}
-                    >
-                      <View style={styles.progressInner}>
-                        {navigateInstead ? null : displayRows.map((row, ri) => {
-                          const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
-                          return (
-                            <ItemCard
-                              key={`${group.key}-${ri}`}
-                              name={row.name}
-                              level={row.level}
-                              maxLevel={row.maxLevel}
-                              icon={row.icon}
-                              costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                              costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                              timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                              locked={row.level === 0}
-                              isLast={ri === displayRows.length - 1}
-                              onPress={() => router.push(group!.pushTo)}
-                            />
-                          );
-                        })}
-                      </View>
-                    </CollapsibleSection>
-                  );
-                })()}
+            {/* ── Builders ── */}
+            {(() => {
+              const countedGroups = buildingGroups.filter((g) => g.key !== 'Walls');
+              const heroGroup = progressGroups.find((g) => g.key === 'heroes');
+              const builderGroups = heroGroup ? [heroGroup, ...countedGroups] : countedGroups;
+              const builderTl = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
+              const builderTm = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
+              const builderProgress = builderTm > 0 ? builderTl / builderTm : 0;
+              const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progressCosts.heroes : buildingCosts[g.key]).filter(Boolean));
+              // Builder split info
+              const splitInfo = builderSplit ? (
+                <>
+                  <View style={styles.splitInfoRow}>
+                    <Text style={styles.splitInfoLabel}>Buildings only: </Text>
+                    <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.buildingsOnlySec)}</Text>
+                  </View>
+                  <View style={styles.splitInfoRow}>
+                    <Text style={styles.splitInfoLabel}>Heroes only: </Text>
+                    <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.heroesOnlySec)}</Text>
+                  </View>
+                  <View style={styles.splitInfoRow}>
+                    <Text style={styles.splitInfoLabel}>Optimal split: </Text>
+                    <Text style={styles.splitInfoValue}>
+                      {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
+                    </Text>
+                  </View>
+                </>
+              ) : null;
 
-{/* ── Equipment ── */}
-              {(() => {
-                const group = progressGroups.find(g => g.key === 'equipment');
-                if (!group) return null;
-                const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-                const navigateInstead = displayRows.length >= 5;
-                return (
-                  <CollapsibleSection
-                    isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
-                    icon="hammer-outline"
-                    iconSource={pipelineHeaderImage('Blacksmith')}
-                    title="Equipment"
-                    compact
-                    count={group?.rows.length ?? 0}
-                    totalLevel={group?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
-                    totalMax={group?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
-                    description={renderProgressHeader(group?.progress ?? 0, progressCosts.equipment)}
-                    onPressOverride={navigateInstead ? () => router.push(group?.pushTo ?? '/(tabs)/army?tab=equipment') : undefined}
-                  >
-                    <View style={styles.progressInner}>
-                      {navigateInstead ? null : displayRows.map((row, ri) => {
-                        const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+              return (
+                <CollapsibleSection
+                  isLast={false}
+                  icon="business-outline"
+                  iconSource={pipelineHeaderImage('Builder Hut')}
+                  title="Builders"
+                  compact
+                  count={builderGroups.reduce((s, g) => s + g.rows.length, 0)}
+                  totalLevel={builderTl}
+                  totalMax={builderTm}
+                  description={
+                    <>
+                      {builderSplit && (
+                        <Text style={{ ...styles.splitInfoLabel, marginBottom: -Spacing.xs }}>
+                          Build: {formatTimeShort(builderSplit.buildingsOnlySec)} · Hero: {formatTimeShort(builderSplit.heroesOnlySec)} · Opt: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
+                        </Text>
+                      )}
+                      {renderProgressHeader(builderProgress, builderCost)}
+                    </>
+                  }
+                >
+                  <View style={styles.progressInner}>
+                    {(() => {
+                      const heroGroup = progressGroups.find((g) => g.key === 'heroes');
+                      type BuilderCatRow = {
+                        name: string;
+                        level: number;
+                        maxLevel: number;
+                        icon?: string;
+                        copies?: number[];
+                        effectiveMax?: number;
+                        iconSource?: ImageSourcePropType;
+                      };
+                      type BuilderCat = {
+                        key: string;
+                        title: string;
+                        icon: keyof typeof Ionicons.glyphMap;
+                        iconUrl?: string;
+                        iconSource?: ImageSourcePropType;
+                        maxed?: boolean;
+                        pushTo: string;
+                        progress: number;
+                        isHero: boolean;
+                        rows: BuilderCatRow[];
+                      };
+                      const builderCategoryGroups: BuilderCat[] = [
+                        ...(heroGroup
+                          ? [{
+                            key: heroGroup.key,
+                            title: heroGroup.title,
+                            icon: heroGroup.icon,
+                            iconSource: pipelineHeaderImage('Hero Hall'),
+                            pushTo: heroGroup.pushTo,
+                            progress: heroGroup.progress,
+                            isHero: true,
+                            rows: heroGroup.rows,
+                          }]
+                          : []),
+                        ...buildingGroups
+                          .filter((g) => g.key !== 'Walls')
+                          .map((g) => ({
+                            key: g.key,
+                            title: g.title,
+                            icon: g.icon,
+                            iconSource: g.iconSource,
+                            maxed: g.maxed,
+                            pushTo: g.pushTo,
+                            progress: g.progress,
+                            isHero: false,
+                            rows: g.rows,
+                          })),
+                      ];
+                      return builderCategoryGroups.map((group, gi, groups) => {
+                        const isHero = group.isHero;
+                        const displayRows = group.rows.filter((r) => (isHero || r.maxLevel > 0) && r.level < r.maxLevel);
+                        const navigateInstead = displayRows.length >= 5;
                         return (
-                          <ItemCard
-                            key={`${group.key}-${ri}`}
-                            name={row.name}
-                            level={row.level}
-                            maxLevel={row.maxLevel}
-                            icon={row.icon}
-                            costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                            costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                            timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                            locked={row.level === 0}
-                            isLast={ri === displayRows.length - 1}
-                            onPress={() => router.push(group!.pushTo)}
-                          />
+                          <CollapsibleSection
+                            key={group.key}
+                            isLast={gi === groups.length - 1}
+                            icon={group.icon}
+                            iconUrl={group.iconUrl}
+                            iconSource={group.iconSource}
+                            title={group.title}
+                            compact
+                            maxed={group.maxed}
+                            onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
+                            description={renderProgressHeader(group.progress, isHero ? progressCosts.heroes : buildingCosts[group.key])}
+                            count={displayRows.length}
+                            totalLevel={group.rows.reduce((s, r) => s + r.level, 0)}
+                            totalMax={group.rows.reduce((s, r) => s + r.maxLevel, 0)}
+                          >
+                            {displayRows.map((row, ri) => {
+                              const rowCost = isHero
+                                ? remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel)
+                                : remainingBuildingCosts(row.name, row.copies ?? [], row.effectiveMax ?? 0);
+                              return (
+                                <ItemCard
+                                  key={`${group.key}-${ri}`}
+                                  name={row.name}
+                                  level={row.level}
+                                  maxLevel={row.maxLevel}
+                                  icon={row.icon}
+                                  iconSource={row.iconSource}
+                                  costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                                  costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                                  timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                                  locked={row.level === 0}
+                                  isLast={ri === displayRows.length - 1}
+                                  onPress={() => router.push(group!.pushTo)}
+                                />
+                              );
+                            })}
+                          </CollapsibleSection>
                         );
-                      })}
-                    </View>
-                  </CollapsibleSection>
-                );
-              })()}
+                      });
+                    })()}
+                  </View>
+                </CollapsibleSection>
+              );
+            })()}
 
-{(unlockableItems.length > 0 || rushedItems.length > 0) && (
-               <CollapsibleSection
-                 isLast
-                 iconSource={require('../../assets/images/chiefs-journey/icon.png')}
-                 title="Backlog"
-                 compact
+            {/* ── Pets ── */}
+            {(() => {
+              const group = progressGroups.find(g => g.key === 'pets');
+              if (!group) return null;
+              const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+              const navigateInstead = displayRows.length >= 5;
+              return (
+                <CollapsibleSection
+                  isLast={false}
+                  icon="paw"
+                  iconSource={pipelineHeaderImage('Pet House')}
+                  title="Pets"
+                  compact
+                  count={group?.rows.length ?? 0}
+                  totalLevel={group?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
+                  totalMax={group?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
+                  description={renderProgressHeader(group?.progress ?? 0, progressCosts.pets)}
+                  onPressOverride={navigateInstead ? () => router.push(group?.pushTo ?? '/(tabs)/army?tab=pets') : undefined}
+                >
+                  <View style={styles.progressInner}>
+                    {navigateInstead ? null : displayRows.map((row, ri) => {
+                      const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                      return (
+                        <ItemCard
+                          key={`${group.key}-${ri}`}
+                          name={row.name}
+                          level={row.level}
+                          maxLevel={row.maxLevel}
+                          icon={row.icon}
+                          costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                          costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                          timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                          locked={row.level === 0}
+                          isLast={ri === displayRows.length - 1}
+                          onPress={() => router.push(group!.pushTo)}
+                        />
+                      );
+                    })}
+                  </View>
+                </CollapsibleSection>
+              );
+            })()}
+
+            {/* ── Equipment ── */}
+            {(() => {
+              const group = progressGroups.find(g => g.key === 'equipment');
+              if (!group) return null;
+              const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
+              const navigateInstead = displayRows.length >= 5;
+              return (
+                <CollapsibleSection
+                  isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
+                  icon="hammer-outline"
+                  iconSource={pipelineHeaderImage('Blacksmith')}
+                  title="Equipment"
+                  compact
+                  count={group?.rows.length ?? 0}
+                  totalLevel={group?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
+                  totalMax={group?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
+                  description={renderProgressHeader(group?.progress ?? 0, progressCosts.equipment)}
+                  onPressOverride={navigateInstead ? () => router.push(group?.pushTo ?? '/(tabs)/army?tab=equipment') : undefined}
+                >
+                  <View style={styles.progressInner}>
+                    {navigateInstead ? null : displayRows.map((row, ri) => {
+                      const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
+                      return (
+                        <ItemCard
+                          key={`${group.key}-${ri}`}
+                          name={row.name}
+                          level={row.level}
+                          maxLevel={row.maxLevel}
+                          icon={row.icon}
+                          costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
+                          costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
+                          timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
+                          locked={row.level === 0}
+                          isLast={ri === displayRows.length - 1}
+                          onPress={() => router.push(group!.pushTo)}
+                        />
+                      );
+                    })}
+                  </View>
+                </CollapsibleSection>
+              );
+            })()}
+
+            {(unlockableItems.length > 0 || rushedItems.length > 0) && (
+              <CollapsibleSection
+                isLast
+                iconSource={require('../../assets/images/chiefs-journey/icon.png')}
+                title="Backlog"
+                compact
                 count={unlockableItems.length + rushedItems.length}
                 totalLevel={0}
                 totalMax={0}
                 description="Items waiting to be upgraded / unlocked"
               >
-              <View style={styles.progressInner}>
-              {unlockableItems.length > 0 && (
-              <CollapsibleSection
-                isLast={rushedItems.length === 0}
-                iconSource={require('../../assets/images/chiefs-journey/locked.png')}
-                title={`${unlockableItems.length} locked`}
-                destructive
-                compact
-                description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateTime > 0 ? formatTimeShort(aggregateTime) : 'Items locked at your Town Hall')}
-                count={unlockableItems.length}
-                totalLevel={0}
-                totalMax={0}
-                badges={[{ key: 'locked', value: unlockableItems.length, tone: 'danger' }]}
-              >
-                {(() => {
-                  let lastTh = -1;
-                  return unlockableItems.flatMap((item, i) => {
-                    const isNewTh = item.unlockTh !== lastTh;
-                    lastTh = item.unlockTh;
-                    const thUrl = getTownHallImageUrl(item.unlockTh);
-                    const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
-                    const levelsAtTH = getMaxLevelAtTH(item.name, th);
-                    const itemCost = upgradeCosts[item.name];
-                    return (
-                      <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
-                        <View style={styles.statRowIcon}>
-                          {imageUrl ? (
-                            <Image source={{ uri: imageUrl }} style={styles.statRowIconImage} resizeMode="contain" />
-                          ) : (
-                            <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
-                          )}
-                        </View>
-                        <View style={styles.statRowText}>
-                          <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
-                          <Text style={styles.statRowSub}>
-                            {levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'}
-                            {itemCost && itemCost.timeSeconds > 0 ? ` · ${fmtTime(itemCost.timeSeconds)}` : ''}
-                          </Text>
-                        </View>
-                        <View style={styles.statRowRightRow}>
-                          <View style={styles.statRowRightBadge}>
-                            {itemCost ? (
-                              <>
-                                <ResourceCostChips byResource={itemCost.byResource ?? {}} compact />
-                                {formatCostBreakdown(itemCost.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>}
-                              </>
-                            ) : lockedCostsPending ? (
-                              <Text style={styles.statRowValue}>…</Text>
-                            ) : null}
-                            {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
-                          </View>
-                          {isNewTh && thUrl ? (
-                            <View style={styles.thImageBadge}>
-                              <Image source={{ uri: thUrl }} style={styles.thImageBadgeImg} resizeMode="contain" />
+                <View style={styles.progressInner}>
+                  {unlockableItems.length > 0 && (
+                    <CollapsibleSection
+                      isLast={rushedItems.length === 0}
+                      iconSource={require('../../assets/images/chiefs-journey/locked.png')}
+                      title={`${unlockableItems.length} locked`}
+                      destructive
+                      compact
+                      description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateTime > 0 ? formatTimeShort(aggregateTime) : 'Items locked at your Town Hall')}
+                      count={unlockableItems.length}
+                      totalLevel={0}
+                      totalMax={0}
+                      badges={[{ key: 'locked', value: unlockableItems.length, tone: 'danger' }]}
+                    >
+                      {(() => {
+                        let lastTh = -1;
+                        return unlockableItems.flatMap((item, i) => {
+                          const isNewTh = item.unlockTh !== lastTh;
+                          lastTh = item.unlockTh;
+                          const thUrl = getTownHallImageUrl(item.unlockTh);
+                          const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
+                          const levelsAtTH = getMaxLevelAtTH(item.name, th);
+                          const itemCost = upgradeCosts[item.name];
+                          return (
+                            <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
+                              <View style={styles.statRowIcon}>
+                                {imageUrl ? (
+                                  <Image source={{ uri: imageUrl }} style={styles.statRowIconImage} resizeMode="contain" />
+                                ) : (
+                                  <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
+                                )}
+                              </View>
+                              <View style={styles.statRowText}>
+                                <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
+                                <Text style={styles.statRowSub}>
+                                  {levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'}
+                                  {itemCost && itemCost.timeSeconds > 0 ? ` · ${fmtTime(itemCost.timeSeconds)}` : ''}
+                                </Text>
+                              </View>
+                              <View style={styles.statRowRightRow}>
+                                <View style={styles.statRowRightBadge}>
+                                  {itemCost ? (
+                                    <>
+                                      <ResourceCostChips byResource={itemCost.byResource ?? {}} compact />
+                                      {formatCostBreakdown(itemCost.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>}
+                                    </>
+                                  ) : lockedCostsPending ? (
+                                    <Text style={styles.statRowValue}>…</Text>
+                                  ) : null}
+                                  {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
+                                </View>
+                                {isNewTh && thUrl ? (
+                                  <View style={styles.thImageBadge}>
+                                    <Image source={{ uri: thUrl }} style={styles.thImageBadgeImg} resizeMode="contain" />
+                                  </View>
+                                ) : null}
+                              </View>
                             </View>
-                          ) : null}
-                        </View>
-                      </View>
-                    );
-                  });
-                })()}
-              </CollapsibleSection>
-              )}
+                          );
+                        });
+                      })()}
+                    </CollapsibleSection>
+                  )}
 
-              {rushedItems.length > 0 && (
-              <CollapsibleSection
-                isLast
-                iconSource={require('../../assets/images/chiefs-journey/rushed.png')}
-                title={`${rushedItems.length} rushed`}
-                accentColor={RUSHED_ACCENT}
-                compact
-                description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedTime > 0 ? formatTimeShort(aggregateRushedTime) : 'Items below the previous Town Hall max')}
-                count={rushedItems.length}
-                totalLevel={0}
-                totalMax={0}
-                badges={[{ key: 'rushed', value: rushedItems.length, tone: 'warning' }]}
-              >
-                {(() => {
-                  const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
-                    { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
-                    { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
-                    { label: 'Spells', key: 'spell', icon: { set: 'ion', name: 'flask-outline' }, items: [] },
-                    { label: 'Equipment', key: 'equipment', icon: { set: 'ion', name: 'trophy-outline' }, items: [] },
-                  ];
-                  for (const item of rushedItems) {
-                    const g = groups.find((g) => g.key === item.type);
-                    if (g) g.items.push(item);
-                  }
-                  const visible = groups.filter((g) => g.items.length > 0);
-                  const allItems = visible.flatMap((g) => g.items);
-                  return allItems.map((item, i) => {
-                    const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
-                    const costData = rushedCosts[item.name];
-                    return (
-                      <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
-                        <View style={styles.statRowIcon}>
-                          {iconUrl ? (
-                            <Image source={{ uri: iconUrl }} style={styles.statRowIconImage} resizeMode="contain" />
-                          ) : (
-                            <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
-                          )}
-                        </View>
-                        <View style={styles.statRowText}>
-                          <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
-                          <Text style={styles.statRowSub}>Lv{item.currentLevel} → Lv{item.maxLevelAtPrevTH}</Text>
-                        </View>
-                        <View style={styles.statRowRight}>
-                          {costData ? (
-                            <>
-                              <ResourceCostChips byResource={costData.byResource ?? {}} compact />
-                              {formatCostBreakdown(costData.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>}
-                              {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
-                            </>
-                          ) : rushedCostsPending ? (
-                            <Text style={styles.statRowValue}>…</Text>
-                          ) : null}
-                        </View>
-                      </View>
-                    );
-                  });
-                })()}
+                  {rushedItems.length > 0 && (
+                    <CollapsibleSection
+                      isLast
+                      iconSource={require('../../assets/images/chiefs-journey/rushed.png')}
+                      title={`${rushedItems.length} rushed`}
+                      accentColor={RUSHED_ACCENT}
+                      compact
+                      description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedTime > 0 ? formatTimeShort(aggregateRushedTime) : 'Items below the previous Town Hall max')}
+                      count={rushedItems.length}
+                      totalLevel={0}
+                      totalMax={0}
+                      badges={[{ key: 'rushed', value: rushedItems.length, tone: 'warning' }]}
+                    >
+                      {(() => {
+                        const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
+                          { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
+                          { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
+                          { label: 'Spells', key: 'spell', icon: { set: 'ion', name: 'flask-outline' }, items: [] },
+                          { label: 'Equipment', key: 'equipment', icon: { set: 'ion', name: 'trophy-outline' }, items: [] },
+                        ];
+                        for (const item of rushedItems) {
+                          const g = groups.find((g) => g.key === item.type);
+                          if (g) g.items.push(item);
+                        }
+                        const visible = groups.filter((g) => g.items.length > 0);
+                        const allItems = visible.flatMap((g) => g.items);
+                        return allItems.map((item, i) => {
+                          const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
+                          const costData = rushedCosts[item.name];
+                          return (
+                            <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
+                              <View style={styles.statRowIcon}>
+                                {iconUrl ? (
+                                  <Image source={{ uri: iconUrl }} style={styles.statRowIconImage} resizeMode="contain" />
+                                ) : (
+                                  <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
+                                )}
+                              </View>
+                              <View style={styles.statRowText}>
+                                <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
+                                <Text style={styles.statRowSub}>Lv{item.currentLevel} → Lv{item.maxLevelAtPrevTH}</Text>
+                              </View>
+                              <View style={styles.statRowRight}>
+                                {costData ? (
+                                  <>
+                                    <ResourceCostChips byResource={costData.byResource ?? {}} compact />
+                                    {formatCostBreakdown(costData.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>}
+                                    {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
+                                  </>
+                                ) : rushedCostsPending ? (
+                                  <Text style={styles.statRowValue}>…</Text>
+                                ) : null}
+                              </View>
+                            </View>
+                          );
+                        });
+                      })()}
+                    </CollapsibleSection>
+                  )}
+                </View>
               </CollapsibleSection>
-              )}
-              </View>
-              </CollapsibleSection>
-          )}
+            )}
           </View>
 
           <View style={styles.sectionLabel}>
@@ -1817,40 +1817,40 @@ const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progres
                 {[...reminders]
                   .sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime())
                   .map((r) => {
-                  const remaining = Math.max(0, new Date(r.targetDate).getTime() - nowTick);
-                  const expired = r.status === 'expired' || remaining <= 0;
-                  const days = Math.floor(remaining / 86400000);
-                  const hours = Math.floor((remaining % 86400000) / 3600000);
-                  const minutes = Math.floor((remaining % 3600000) / 60000);
-                  const seconds = Math.floor((remaining % 60000) / 1000);
-                  const pad = (n: number) => String(n).padStart(2, '0');
-                  const timeStr = days > 0
-                    ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-                    : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-                  const fmtClock = (iso: string) =>
-                    new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                  return (
-                    <View key={r.id} style={styles.statRow}>
-                      <View style={styles.statRowIcon}>
-                        <Ionicons name="time-outline" size={16} color={Colors.textPrimary} />
+                    const remaining = Math.max(0, new Date(r.targetDate).getTime() - nowTick);
+                    const expired = r.status === 'expired' || remaining <= 0;
+                    const days = Math.floor(remaining / 86400000);
+                    const hours = Math.floor((remaining % 86400000) / 3600000);
+                    const minutes = Math.floor((remaining % 3600000) / 60000);
+                    const seconds = Math.floor((remaining % 60000) / 1000);
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    const timeStr = days > 0
+                      ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                      : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+                    const fmtClock = (iso: string) =>
+                      new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <View key={r.id} style={styles.statRow}>
+                        <View style={styles.statRowIcon}>
+                          <Ionicons name="time-outline" size={16} color={Colors.textPrimary} />
+                        </View>
+                        <View style={styles.statRowText}>
+                          <Text style={styles.statRowLabel} numberOfLines={1}>{r.label}</Text>
+                          <Text style={[styles.statRowSub, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
+                        </View>
+                        <View style={styles.timerTimes}>
+                          <Text style={styles.timerTimeStart} numberOfLines={1}>{fmtClock(r.createdAt)}</Text>
+                          <Text style={styles.timerTimeEnd} numberOfLines={1}>{fmtClock(r.targetDate)}</Text>
+                        </View>
+                        <PressableRipple style={[styles.timerEditBadge, expired && styles.timerExpiredBtn]} onPress={() => { setEditingTimer(r); setTimerLabel(r.label); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }} hitSlop={6}>
+                          <Ionicons name="pencil" size={15} color={expired ? Colors.success : Colors.textPrimary} />
+                        </PressableRipple>
+                        <PressableRipple style={styles.timerDismissBadge} onPress={() => dismissTimer(r.id)} hitSlop={6}>
+                          <Ionicons name="close" size={16} color={Colors.textPrimary} />
+                        </PressableRipple>
                       </View>
-                      <View style={styles.statRowText}>
-                        <Text style={styles.statRowLabel} numberOfLines={1}>{r.label}</Text>
-                        <Text style={[styles.statRowSub, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
-                      </View>
-                      <View style={styles.timerTimes}>
-                        <Text style={styles.timerTimeStart} numberOfLines={1}>{fmtClock(r.createdAt)}</Text>
-                        <Text style={styles.timerTimeEnd} numberOfLines={1}>{fmtClock(r.targetDate)}</Text>
-                      </View>
-                      <PressableRipple style={[styles.timerEditBadge, expired && styles.timerExpiredBtn]} onPress={() => { setEditingTimer(r); setTimerLabel(r.label); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }} hitSlop={6}>
-                        <Ionicons name="pencil" size={15} color={expired ? Colors.success : Colors.textPrimary} />
-                      </PressableRipple>
-                      <PressableRipple style={styles.timerDismissBadge} onPress={() => dismissTimer(r.id)} hitSlop={6}>
-                        <Ionicons name="close" size={16} color={Colors.textPrimary} />
-                      </PressableRipple>
-                    </View>
-                  );
-                })}
+                    );
+                  })}
                 <PressableRipple style={[styles.statRow, styles.statRowLast, styles.addTimerRow]} onPress={() => { setEditingTimer(null); setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
                   <View style={[styles.statRowIcon, styles.addTimerRowIcon]}>
                     <Ionicons name="alarm-outline" size={16} color={Colors.textPrimary} />
