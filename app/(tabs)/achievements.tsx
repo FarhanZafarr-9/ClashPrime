@@ -26,7 +26,7 @@ export default function AchievementsScreen() {
 
   if (loading || !player) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
         <View style={styles.center}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
@@ -47,7 +47,7 @@ export default function AchievementsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Awards</Text>
