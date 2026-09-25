@@ -85,6 +85,25 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Events | clash.ninja | Runtime HTML scraper |
 | TH max levels (fallback) | clash.ninja | Runtime HTML scraper with section-hash caching |
 
+## Credits & Attribution
+
+ClashPrime is an unofficial fan project. It gathers reference data and content from the following public sources — please support them:
+
+| Project / Site | Used for | Homepage |
+|----------------|----------|----------|
+| Clash of Clans API | Player stats & progress | [developer.clashofclans.com](https://developer.clashofclans.com) |
+| RoyaleAPI proxy | Stable API access for dynamic-IP setups | [docs.royaleapi.com/proxy.html](https://docs.royaleapi.com/proxy.html) |
+| ClashLy | Base layout library & ratings | [clashly.com](https://clashly.com) |
+| ClashArmies | Community army compositions & sharing | [clasharmies.com](https://clasharmies.com) |
+| clash-of-clans-data (npm) | Troop/hero/spell/pet/equipment/siege machine & building data (levels, costs, stats, images) | [npmjs.com/package/clash-of-clans-data](https://www.npmjs.com/package/clash-of-clans-data) |
+| clash.ninja | In-game events & TH max level fallback | [clash.ninja](https://clash.ninja) |
+| Zapquaker | Inspiration for the Zapquaker tab (Zap & Quake combo calculator) | [zapquaker.netlify.app](https://zapquaker.netlify.app/) |
+| Otaku Planner | Inspiration for the Giant Arrow tab (Giant Arrow path planner) | [otakuplanner.com/tools/coc-arrow-path](https://otakuplanner.com/tools/coc-arrow-path) |
+
+These credits are also shown in-app under **Settings → Credits**, where each source is tappable.
+
+> **Supercell fan-content notice:** This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell and Supercell is not responsible for it. For more information see Supercell's Fan Content Policy: [supercell.com/fan-content-policy](https://supercell.com/en/fan-content-policy/).
+
 ## Project Structure
 
 ```

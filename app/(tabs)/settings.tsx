@@ -67,13 +67,19 @@ interface ContentAction {
   primary?: boolean;
 }
 
-const DATA_SOURCES: { name: string; use: string }[] = [
-  { name: 'Clash of Clans API', use: 'Player stats & progress' },
-  { name: 'ClashLy', use: 'Base layout library & ratings' },
-  { name: 'ClashArmies', use: 'Community army compositions & sharing' },
-  { name: 'clash-of-clans-data (npm)', use: 'Troop, hero, spell, pet, equipment, siege machine & building data (levels, costs, stats, images)' },
-  { name: 'clash.ninja', use: 'In-game events & TH max levels (fallback)' },
+const DATA_SOURCES: { name: string; use: string; url: string }[] = [
+  { name: 'Clash of Clans API', use: 'Player stats & progress', url: 'https://developer.clashofclans.com' },
+  { name: 'RoyaleAPI', use: 'Developer proxy for dynamic-IP setups', url: 'https://docs.royaleapi.com/proxy.html' },
+  { name: 'ClashLy', use: 'Base layout library & ratings', url: 'https://clashly.com' },
+  { name: 'ClashArmies', use: 'Community army compositions & sharing', url: 'https://clasharmies.com' },
+  { name: 'clash-of-clans-data (npm)', use: 'Troop, hero, spell, pet, equipment, siege machine & building data (levels, costs, stats, images)', url: 'https://www.npmjs.com/package/clash-of-clans-data' },
+  { name: 'clash.ninja', use: 'In-game events & TH max levels (fallback)', url: 'https://clash.ninja' },
+  { name: 'Zapquaker', use: 'Zap & Quake combo calculator (inspiration for the Zapquaker tab)', url: 'https://zapquaker.netlify.app/' },
+  { name: 'Otaku Planner', use: 'Giant Arrow path planner (inspiration for the Giant Arrow tab)', url: 'https://otakuplanner.com/tools/coc-arrow-path' },
 ];
+
+const SUPERCELL_NOTICE =
+  'This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell and Supercell is not responsible for it. For more information see Supercell\u2019s Fan Content Policy: www.supercell.com/fan-content-policy.';
 
 const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   {
@@ -724,14 +730,16 @@ export default function SettingsScreen() {
           </Text>
           <Text style={styles.creditSectionTitle}>Data Sources</Text>
           {DATA_SOURCES.map((s) => (
-            <View style={styles.creditSourceRow} key={s.name}>
+            <PressableRipple key={s.name} onPress={() => openURL(s.url)} style={styles.creditSourceRow} hitSlop={4}>
               <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
               <View style={styles.creditSourceText}>
                 <Text style={styles.creditSourceName}>{s.name}</Text>
                 <Text style={styles.creditSourceUse}>{s.use}</Text>
               </View>
-            </View>
+              <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} style={styles.creditSourceIcon} />
+            </PressableRipple>
           ))}
+          <Text style={styles.creditNotice}>{SUPERCELL_NOTICE}</Text>
           <View style={styles.creditMadeRow}>
             <Text style={styles.creditMadeText}>Made with </Text>
             <Image source={heartImg} style={styles.creditHeart} />
@@ -2291,6 +2299,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+    paddingVertical: 4,
+  },
+  creditNotice: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    lineHeight: 16,
+    marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
   },
   aboutFeatureRow: {
