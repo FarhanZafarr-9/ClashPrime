@@ -635,191 +635,192 @@ export default function PlayerProfileScreen() {
             remainingLevels.length > 0;
           const appearanceLevels = showAppearance ? displayLevels.map((l) => l.level) : [];
           return (
-          <>
-            {showAppearance && (
-              <>
-                <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Appearance</Text>
-                <View style={[styles.troopLevelGridBorder, { borderColor: colors.border }]}>
-                  <View style={styles.troopLevelGrid}>
-                    {appearanceLevels.map((lvl) => {
-                      const isCurrent = lvl === currentLevel;
-                      const localImg = getArmyItemImage(detail.name, lvl, isBB);
-                      const img = localImg ? null : getTroopImageUrl(detail.name, lvl);
-                      return (
-                        <View key={lvl} style={[styles.troopLevelCell, { borderColor: colors.border }, isCurrent && styles.troopLevelCellCurrent]}>
-                          <View style={styles.troopLevelImgWrap}>
-                            {localImg ? (
-                              <Image source={localImg} style={styles.troopLevelImg} resizeMode="contain" />
-                            ) : img ? (
-                              <Image source={{ uri: img }} style={styles.troopLevelImg} resizeMode="contain" />
-                            ) : (
-                              <View style={[styles.troopLevelImg, styles.troopLevelImgFallback]}>
-                                <Text style={styles.troopLevelFallbackText}>{detail.name.charAt(0)}</Text>
+            <>
+              {showAppearance && (
+                <>
+                  <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Appearance</Text>
+                  <View style={[styles.troopLevelGridBorder, { borderColor: colors.border }]}>
+                    <View style={styles.troopLevelGrid}>
+                      {appearanceLevels.map((lvl) => {
+                        const isCurrent = lvl === currentLevel;
+                        const localImg = getArmyItemImage(detail.name, lvl, isBB);
+                        const img = localImg ? null : getTroopImageUrl(detail.name, lvl);
+                        return (
+                          <View key={lvl} style={[styles.troopLevelCell, { borderColor: colors.border }, isCurrent && styles.troopLevelCellCurrent]}>
+                            <View style={styles.troopLevelImgWrap}>
+                              {localImg ? (
+                                <Image source={localImg} style={styles.troopLevelImg} resizeMode="contain" />
+                              ) : img ? (
+                                <Image source={{ uri: img }} style={styles.troopLevelImg} resizeMode="contain" />
+                              ) : (
+                                <View style={[styles.troopLevelImg, styles.troopLevelImgFallback]}>
+                                  <Text style={styles.troopLevelFallbackText}>{detail.name.charAt(0)}</Text>
+                                </View>
+                              )}
+                              <View style={[styles.troopLevelBadge, isCurrent && styles.troopLevelBadgeCurrent]}>
+                                <Text style={[styles.troopLevelBadgeText, isCurrent && styles.troopLevelBadgeTextCurrent]}>
+                                  {lvl}
+                                </Text>
                               </View>
-                            )}
-                            <View style={[styles.troopLevelBadge, isCurrent && styles.troopLevelBadgeCurrent]}>
-                              <Text style={[styles.troopLevelBadgeText, isCurrent && styles.troopLevelBadgeTextCurrent]}>
-                                {lvl}
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </>
+              )}
+              {hasRemaining && (
+                <View style={[styles.panelTable, { borderColor: colors.border, marginBottom: Spacing.md }]}>
+                  <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, flex: 1 }]}>Remaining ({remainingLevels.length} lvls)</Text>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
+                  </View>
+                  {resourceSums.length > 0 ? (
+                    resourceSums.map((s, ri) => {
+                      const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
+                      return (
+                        <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
+                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
+                            {ri === 0
+                              ? `Lv${currentLevel} → Lv${maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}`
+                              : ''}
+                          </Text>
+                          <View style={[styles.panelTableCell, { alignItems: 'center', justifyContent: 'center' }]}>
+                            <View style={styles.resourceSumRow}>
+                              {icon ? (
+                                <Image source={icon} style={styles.resourceSumIcon} resizeMode="contain" />
+                              ) : (
+                                <View style={[styles.resourceSumDot, { backgroundColor: RESOURCE_META[s.resource].color }]} />
+                              )}
+                              <Text
+                                style={{
+                                  color: showDiscounted ? colors.warning : RESOURCE_META[s.resource].color,
+                                  fontWeight: '600',
+                                  fontSize: 10,
+                                  fontFamily: clashFontFamily(600, 10),
+                                }}
+                              >
+                                {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)}
                               </Text>
                             </View>
                           </View>
+                          <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                            {ri === 0
+                              ? (showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime))
+                              : ''}
+                          </Text>
                         </View>
                       );
-                    })}
+                    })
+                  ) : (
+                    <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
+                        Lv{currentLevel} → Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                      </Text>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>—</Text>
+                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                        {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
+              {legendEntries.length > 0 && (
+                <View style={{ marginBottom: Spacing.sm }}>
+                  {legendEntries.map((e, li) => (
+                    <Text key={`${e.acronym}-${li}`} style={[styles.panelLegend, { color: colors.textTertiary }]}>
+                      <Text style={{ fontWeight: '700', fontFamily: clashFontFamily(700) }}>{e.acronym}</Text> = {e.full}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.base }} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
+                <View style={[styles.panelTable, { borderColor: colors.border, minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
+                  <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 28 }]}>Lvl</Text>
+                    {isTroopLike ? (
+                      <>
+                        <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>DPS</Text>
+                        <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>HP</Text>
+                      </>
+                    ) : (
+                      (headerLabels.length ? headerLabels : ['Val']).map((lbl, i) => (
+                        <Text key={i} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 54 }]}>{lbl}</Text>
+                      ))
+                    )}
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 56 }]}>Cost</Text>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>Time</Text>
+                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 72 }]}>
+                      {getLabBuilding(detail.name, activeTab)}
+                    </Text>
                   </View>
-                </View>
-              </>
-            )}
-            {hasRemaining && (
-              <View style={[styles.panelTable, { borderColor: colors.border, marginBottom: Spacing.md }]}>
-                <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, flex: 1 }]}>Remaining ({remainingLevels.length} lvls)</Text>
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
-                </View>
-                {resourceSums.length > 0 ? (
-                  resourceSums.map((s, ri) => {
-                    const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
+                  {displayLevels.map((l) => {
+                    const isCurrentRow = l.level === currentLevel;
                     return (
-                      <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
-                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                          {ri === 0
-                            ? `Lv${currentLevel} → Lv${maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}`
-                            : ''}
-                        </Text>
-                        <View style={[styles.panelTableCell, { alignItems: 'center', justifyContent: 'center' }]}>
-                          <View style={styles.resourceSumRow}>
-                            {icon ? (
-                              <Image source={icon} style={styles.resourceSumIcon} resizeMode="contain" />
-                            ) : (
-                              <View style={[styles.resourceSumDot, { backgroundColor: RESOURCE_META[s.resource].color }]} />
-                            )}
-                            <Text
-                              style={{
-                                color: showDiscounted ? colors.warning : RESOURCE_META[s.resource].color,
-                                fontWeight: '600',
-                                fontSize: 10,
-                                fontFamily: clashFontFamily(600, 10),
-                              }}
-                            >
-                              {showDiscounted ? applyCostDiscount(fmtCost(s.amount), discounts.army) : fmtCost(s.amount)}
+                      <View key={l.level} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle, borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
+                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 28 }]}>{l.level}</Text>
+                        {isTroopLike ? (
+                          <>
+                            <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.dps}</Text>
+                            <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.hitpoints}</Text>
+                          </>
+                        ) : (
+                          (extraLabels.length ? extraLabels : ['Value']).map((lbl, i) => (
+                            <Text key={i} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 54 }]}>
+                              {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
                             </Text>
-                          </View>
-                        </View>
-                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
-                          {ri === 0
-                            ? (showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime))
-                            : ''}
+                          ))
+                        )}
+                        <Text
+                          style={[
+                            styles.panelTableCell,
+                            {
+                              color: showDiscounted
+                                ? colors.warning
+                                : l.costResource
+                                  ? RESOURCE_META[l.costResource as CostResource].color
+                                  : colors.textSecondary,
+                              minWidth: 56,
+                            },
+                          ]}
+                        >
+                          {showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}
                         </Text>
+                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}</Text>
+                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
                       </View>
                     );
-                  })
-                ) : (
-                  <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
-                    <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                      Lv{currentLevel} → Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
-                    </Text>
-                    <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>—</Text>
-                    <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
-                      {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-            <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
-            {legendEntries.length > 0 && (
-              <View style={{ marginBottom: Spacing.sm }}>
-                {legendEntries.map((e, li) => (
-                  <Text key={`${e.acronym}-${li}`} style={[styles.panelLegend, { color: colors.textTertiary }]}>
-                    <Text style={{ fontWeight: '700', fontFamily: clashFontFamily(700) }}>{e.acronym}</Text> = {e.full}
-                  </Text>
-                ))}
-              </View>
-            )}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.base }} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
-              <View style={[styles.panelTable, { borderColor: colors.border, minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
-                <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 28 }]}>Lvl</Text>
-                  {isTroopLike ? (
-                    <>
-                      <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>DPS</Text>
-                      <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>HP</Text>
-                    </>
-                  ) : (
-                    (headerLabels.length ? headerLabels : ['Val']).map((lbl, i) => (
-                      <Text key={i} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 54 }]}>{lbl}</Text>
-                    ))
-                  )}
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 56 }]}>Cost</Text>
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>Time</Text>
-                  <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 72 }]}>
-                    {getLabBuilding(detail.name, activeTab)}
-                  </Text>
+                  })}
                 </View>
-                {displayLevels.map((l) => {
-                  const isCurrentRow = l.level === currentLevel;
-                  return (
-                    <View key={l.level} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle, borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 28 }]}>{l.level}</Text>
-                      {isTroopLike ? (
-                        <>
-                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.dps}</Text>
-                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.hitpoints}</Text>
-                        </>
-                      ) : (
-                        (extraLabels.length ? extraLabels : ['Value']).map((lbl, i) => (
-                          <Text key={i} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 54 }]}>
-                            {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
-                          </Text>
-                        ))
-                      )}
-                      <Text
-                        style={[
-                          styles.panelTableCell,
-                          {
-                            color: showDiscounted
-                              ? colors.warning
-                              : l.costResource
-                                ? RESOURCE_META[l.costResource as CostResource].color
-                                : colors.textSecondary,
-                            minWidth: 56,
-                          },
-                        ]}
-                      >
-                        {showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}
-                      </Text>
-                      <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}</Text>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            {visibleDetailLevels.length > 3 && (
-              <PressableRipple
-                style={styles.expandTableBtn}
-                onPress={() => setShowFullLevels((prev) => ({ ...prev, [name]: !showFull }))}
-              >
-                <Ionicons name={showFull ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
-                <Text style={styles.expandTableText}>
-                  {showFull ? 'Show fewer' : `Show all ${visibleDetailLevels.length} levels`}
-                </Text>
-              </PressableRipple>
-            )}
-            <Text style={[styles.panelNote, { color: colors.textMuted }]}>
-              {isBB
-                ? isHero
-                  ? `Showing all Builder Base levels for ${detail.name}`
-                  : `Showing all Builder Base levels reachable at BH ${bhLevel} (Max Lv${getBuilderTroopMaxLevel(detail.name, bhLevel) ?? bhLevel * 2})`
-                : isEquip
-                  ? `Showing all levels reachable with your Blacksmith at Lv${blacksmithLevel}`
-                  : maxReachable != null
-                    ? `Showing all levels reachable at TH ${player.townHallLevel} (Max Lv${maxReachable})`
-                    : `Showing all levels for ${detail.name}`}
-            </Text>
-          </>
-        );})()}
+              </ScrollView>
+              {visibleDetailLevels.length > 3 && (
+                <PressableRipple
+                  style={styles.expandTableBtn}
+                  onPress={() => setShowFullLevels((prev) => ({ ...prev, [name]: !showFull }))}
+                >
+                  <Ionicons name={showFull ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
+                  <Text style={styles.expandTableText}>
+                    {showFull ? 'Show fewer' : `Show all ${visibleDetailLevels.length} levels`}
+                  </Text>
+                </PressableRipple>
+              )}
+              <Text style={[styles.panelNote, { color: colors.textMuted }]}>
+                {isBB
+                  ? isHero
+                    ? `Showing all Builder Base levels for ${detail.name}`
+                    : `Showing all Builder Base levels reachable at BH ${bhLevel} (Max Lv${getBuilderTroopMaxLevel(detail.name, bhLevel) ?? bhLevel * 2})`
+                  : isEquip
+                    ? `Showing all levels reachable with your Blacksmith at Lv${blacksmithLevel}`
+                    : maxReachable != null
+                      ? `Showing all levels reachable at TH ${player.townHallLevel} (Max Lv${maxReachable})`
+                      : `Showing all levels for ${detail.name}`}
+              </Text>
+            </>
+          );
+        })()}
       </View>
     );
   };
@@ -940,7 +941,7 @@ export default function PlayerProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -1002,7 +1003,7 @@ export default function PlayerProfileScreen() {
         </View>
 
         <View style={styles.tabContent}>
-              {activeTab === 'heroes' && (
+          {activeTab === 'heroes' && (
             <>
               {homeHeroesSplit.leveling.length > 0 && (
                 <>
@@ -1034,7 +1035,7 @@ export default function PlayerProfileScreen() {
                       level={0}
                       maxLevel={h.maxLevel}
                       thMaxLevel={h.maxLevel}
-                        {...cardIconProps(h.name)}
+                      {...cardIconProps(h.name)}
                       locked
                       onPress={() => toggleDetail(h.name)}
                       isFirst={i == 0}
@@ -1155,7 +1156,7 @@ export default function PlayerProfileScreen() {
                       level={0}
                       maxLevel={t.maxLevel}
                       thMaxLevel={t.maxLevel}
-                            {...cardIconProps(t.name, 1)}
+                      {...cardIconProps(t.name, 1)}
                       locked
                       onPress={() => toggleDetail(t.name)}
                       isFirst={i == 0}
@@ -1261,7 +1262,7 @@ export default function PlayerProfileScreen() {
                         level={s.level}
                         maxLevel={s.maxLevel}
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                            {...cardIconProps(s.name, s.level)}
+                        {...cardIconProps(s.name, s.level)}
                         onPress={() => toggleDetail(s.name)}
                         isFirst={i == 0}
                         isLast={i == siegeMachines.length - 1}
@@ -1406,10 +1407,10 @@ export default function PlayerProfileScreen() {
               ) : (
                 <>
                   <View style={{ paddingHorizontal: Spacing.base, paddingBottom: Spacing.sm }}>
-                <Text style={{ fontSize: 12, color: Colors.textTertiary, fontStyle: 'italic', fontFamily: clashFontFamily(400, 12) }}>
-                  Levels shown reflect your Blacksmith (Lv {blacksmithLevel}).
-                </Text>
-              </View>
+                    <Text style={{ fontSize: 12, color: Colors.textTertiary, fontStyle: 'italic', fontFamily: clashFontFamily(400, 12) }}>
+                      Levels shown reflect your Blacksmith (Lv {blacksmithLevel}).
+                    </Text>
+                  </View>
                   {sortedHeroEquipment.map((e, i) => (
                     <React.Fragment key={e.name}>
                       <ItemCard
