@@ -17,7 +17,13 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.clashprime.app",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "edgeToEdgeEnabled": true
+    },
+    "androidStatusBar": {
+      "hidden": true,
+      "barStyle": "light-content",
+      "backgroundColor": "#0A0A0A"
     },
     "web": {
       "favicon": "./images/favicon.png",
