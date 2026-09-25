@@ -252,18 +252,18 @@ export default function GiantArrowScreen() {
           setEnd(plan.end ?? null);
           if (plan.pathColor && PATH_COLORS.includes(plan.pathColor)) setPathColor(plan.pathColor);
         }
-      } catch {}
+      } catch { }
     })();
   }, []);
 
   const shareRef = useRef<View>(null);
 
   useEffect(() => {
-    if (uri) Image.getSize(uri, (w, h) => setAspect(w / h), () => {});
+    if (uri) Image.getSize(uri, (w, h) => setAspect(w / h), () => { });
   }, [uri]);
 
   useEffect(() => {
-    if (uri) AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ uri, mode, center, start, end: visualEnd, pathColor } as SavedPlan)).catch(() => {});
+    if (uri) AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ uri, mode, center, start, end: visualEnd, pathColor } as SavedPlan)).catch(() => { });
   }, [uri, mode, center, start, visualEnd, pathColor]);
 
   const [shareSize, setShareSize] = useState<{ width: number; height: number } | null>(null);
@@ -313,12 +313,12 @@ export default function GiantArrowScreen() {
       title: 'Remove screenshot?',
       message: 'This clears the image and the arrow plan drawn on it.',
       actions: [
-        { label: 'Cancel', onPress: () => {} },
+        { label: 'Cancel', onPress: () => { } },
         {
           label: 'Remove',
           destructive: true,
           onPress: () => {
-            AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+            AsyncStorage.removeItem(STORAGE_KEY).catch(() => { });
             setUri(null);
             setAspect(null);
             setCenter(null);
@@ -388,210 +388,210 @@ export default function GiantArrowScreen() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.container} edges={['top']}>
-      {uri && aspect != null ? (
-        <View style={styles.editor}>
-          <View style={styles.editorHeader}>
-            <View style={styles.header}>
-              <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
-              <Text style={styles.subtitle}>{PLAN_MODES[mode].subtitle}</Text>
-            </View>
-            <View style={styles.toolIconRow}>
-              <PressableRipple
-                onPress={clearMarkers}
-                disabled={!hasPins}
-                style={[styles.iconBtn, !hasPins && styles.iconBtnDisabled]}
-                hitSlop={8}
-              >
-                <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
-              </PressableRipple>
-              <PressableRipple onPress={clearImage} style={[styles.iconBtn, styles.iconBtnDanger]} hitSlop={8}>
-                <Ionicons name="close-circle-outline" size={17} color={ERROR_COLOR} />
-              </PressableRipple>
-              <Pressable onPress={() => setFull(true)} hitSlop={8} style={styles.iconBtn}>
-                <Ionicons name="expand-outline" size={16} color={Colors.textPrimary} />
-              </Pressable>
-            </View>
-          </View>
-          <ModeSwitch mode={mode} onSwitch={switchMode} />
-          <Text style={styles.hintText}>{hint}</Text>
-          <View style={styles.paletteCard}>
-            <PressableRipple onPress={() => setPaletteOpen((v) => !v)} hitSlop={6} style={styles.paletteHeader}>
-              <Text style={styles.swatchLabel}>PATH COLOR</Text>
-              <View style={styles.paletteHeaderEnd}>
-                <Text style={styles.swatchHex}>{pathColor.toUpperCase()}</Text>
-                <Ionicons
-                  name={paletteOpen ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={Colors.textTertiary}
-                />
+      <SafeAreaView style={styles.container} >
+        {uri && aspect != null ? (
+          <View style={styles.editor}>
+            <View style={styles.editorHeader}>
+              <View style={styles.header}>
+                <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
+                <Text style={styles.subtitle}>{PLAN_MODES[mode].subtitle}</Text>
               </View>
-            </PressableRipple>
-            {paletteOpen && (
-              <View style={styles.palette}>
-                {PATH_COLORS.map((c) => {
-                  const active = pathColor === c;
-                  return (
-                    <Pressable
-                      key={c}
-                      onPress={() => setPathColor(c)}
-                      hitSlop={5}
-                      style={[styles.swatchOption, active && styles.swatchOptionActive]}
-                    >
-                      <View style={[styles.swatch, { backgroundColor: c }]} />
-                      {active && <Ionicons name="checkmark" size={14} color={Colors.bg} />}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-          </View>
-          <View
-            style={[styles.canvas, !aspect && styles.canvasPending, aspect ? { aspectRatio: aspect } : null]}
-            ref={shareRef}
-            onLayout={(e) => setShareSize(e.nativeEvent.layout)}
-          >
-            <PlanCanvas
-              uri={uri}
-              aspect={aspect}
-              center={mode === 'rocket-backpack' ? center : null}
-              centered={mode === 'rocket-backpack'}
-              start={start}
-              end={visualEnd}
-              pathColor={pathColor}
-              startIcon={PLAN_MODES[mode].heroIcon}
-              onResetCenter={handleResetPivot}
-              onSetStart={setStart}
-              onSetEnd={setEnd}
-              onPlace={handlePlace}
-              onDoubleTap={() => setFull(true)}
-              style={styles.canvasInner}
-            />
-          </View>
-          <View style={styles.bottomToolbar}>
-            <PressableRipple onPress={onPick} style={styles.toolBtn} hitSlop={6}>
-              <Ionicons name="images-outline" size={15} color={Colors.bg} />
-              <Text style={styles.toolText}>Replace</Text>
-            </PressableRipple>
-            <PressableRipple onPress={handleShare} style={[styles.toolBtn, styles.toolBtnGhost]} hitSlop={6}>
-              <Ionicons name="share-outline" size={15} color={Colors.textPrimary} />
-              <Text style={[styles.toolText, styles.toolTextGhost]}>Share</Text>
-            </PressableRipple>
-          </View>
-          <View style={styles.noteCard}>
-            <Text style={styles.tipsKicker}>{PLAN_MODES[mode].kicker}</Text>
-            {PLAN_MODES[mode].tips.map((tip) => (
-              <View key={tip.title} style={styles.tipRow}>
-                <View style={styles.tipIcon}>
-                  <Ionicons name={tip.icon} size={16} color={Colors.warning} />
-                </View>
-                <View style={styles.tipInfo}>
-                  <Text style={styles.tipTitle}>{tip.title}</Text>
-                  <Text style={styles.tipText}>{tip.text}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      ) : (
-        <View style={styles.scroll}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
-            <Text style={styles.subtitle}>{PLAN_MODES[mode].emptySubtitle}</Text>
-          </View>
-          <ModeSwitch mode={mode} onSwitch={switchMode} />
-          <PressableRipple onPress={onPick} style={styles.uploadZone}>
-            <View style={styles.uploadIcon}>
-              <Ionicons name="images-outline" size={32} color={Colors.textSecondary} />
-            </View>
-            <Text style={styles.uploadTitle}>Choose a base screenshot</Text>
-            <Text style={styles.uploadHint}>
-              Pick a screenshot from your photo library to start plotting the arrow path from the
-              Queen.
-            </Text>
-            <View style={styles.uploadChip}>
-              <Text style={styles.uploadChipText}>Open photo library</Text>
-              <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-            </View>
-          </PressableRipple>
-          <View style={styles.noteCard}>
-            <Text style={styles.noteTitle}>How it works</Text>
-            {PLAN_MODES[mode].howItWorks.map((line) => (
-              <View key={line} style={styles.noteLine}>
-                <Text style={styles.noteBullet}>•</Text>
-                <Text style={styles.noteBody}>{line}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={{ flex: 1 }} />
-          <PressableRipple onPress={onPick} style={[styles.primaryBtn, styles.bottomBtn]}>
-            <Ionicons name="images-outline" size={18} color={Colors.bg} />
-            <Text style={styles.primaryBtnText}>Choose screenshot</Text>
-          </PressableRipple>
-        </View>
-      )}
-
-      {uri && aspect != null && (
-        <Modal
-          animationType="fade"
-          presentationStyle="fullScreen"
-          visible={full}
-          onRequestClose={() => setFull(false)}
-          statusBarTranslucent
-          navigationBarTranslucent
-        >
-          <GestureHandlerRootView style={styles.fullContainer}>
-            <View style={styles.fullCenter}>
-              <View style={{ width: fullW, height: fullH, transform: [{ rotate: '90deg' }] }}>
-                <PlanCanvas
-                  uri={uri}
-                  aspect={aspect}
-                  center={mode === 'rocket-backpack' ? center : null}
-                  centered={mode === 'rocket-backpack'}
-                  start={start}
-                  end={visualEnd}
-                  pathColor={pathColor}
-                  startIcon={PLAN_MODES[mode].heroIcon}
-                  rotated
-                  onResetCenter={handleResetPivot}
-                  onSetStart={setStart}
-                  onSetEnd={setEnd}
-                  onPlace={handlePlace}
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </View>
-            <SafeAreaView style={styles.fullBottomBar} edges={['bottom']}>
-              <View style={styles.fullHintRow}>
-                <Text style={styles.fullHintKicker}>HINT</Text>
-                <Text style={styles.fullHint} numberOfLines={2}>
-                  {hint}
-                </Text>
-              </View>
-              <View style={styles.fullBtnRow}>
-                <Pressable
+              <View style={styles.toolIconRow}>
+                <PressableRipple
                   onPress={clearMarkers}
                   disabled={!hasPins}
-                  hitSlop={4}
-                  style={[styles.fullControlBtn, !hasPins && styles.fullBtnDisabled]}
+                  style={[styles.iconBtn, !hasPins && styles.iconBtnDisabled]}
+                  hitSlop={8}
                 >
-                  <Ionicons
-                    name="refresh-outline"
-                    size={16}
-                    color={Colors.textPrimary}
-                  />
-                  <Text style={styles.fullBtnText}>Reset pins</Text>
-                </Pressable>
-                <Pressable onPress={() => setFull(false)} hitSlop={4} style={[styles.fullControlBtn, styles.fullControlBtnPrimary]}>
-                  <Ionicons name="checkmark" size={16} color={Colors.bg} />
-                  <Text style={[styles.fullBtnText, styles.fullBtnTextPrimary]}>Done</Text>
+                  <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
+                </PressableRipple>
+                <PressableRipple onPress={clearImage} style={[styles.iconBtn, styles.iconBtnDanger]} hitSlop={8}>
+                  <Ionicons name="close-circle-outline" size={17} color={ERROR_COLOR} />
+                </PressableRipple>
+                <Pressable onPress={() => setFull(true)} hitSlop={8} style={styles.iconBtn}>
+                  <Ionicons name="expand-outline" size={16} color={Colors.textPrimary} />
                 </Pressable>
               </View>
-            </SafeAreaView>
-          </GestureHandlerRootView>
-        </Modal>
-      )}
-      <Dialog />
+            </View>
+            <ModeSwitch mode={mode} onSwitch={switchMode} />
+            <Text style={styles.hintText}>{hint}</Text>
+            <View style={styles.paletteCard}>
+              <PressableRipple onPress={() => setPaletteOpen((v) => !v)} hitSlop={6} style={styles.paletteHeader}>
+                <Text style={styles.swatchLabel}>PATH COLOR</Text>
+                <View style={styles.paletteHeaderEnd}>
+                  <Text style={styles.swatchHex}>{pathColor.toUpperCase()}</Text>
+                  <Ionicons
+                    name={paletteOpen ? 'chevron-up' : 'chevron-down'}
+                    size={14}
+                    color={Colors.textTertiary}
+                  />
+                </View>
+              </PressableRipple>
+              {paletteOpen && (
+                <View style={styles.palette}>
+                  {PATH_COLORS.map((c) => {
+                    const active = pathColor === c;
+                    return (
+                      <Pressable
+                        key={c}
+                        onPress={() => setPathColor(c)}
+                        hitSlop={5}
+                        style={[styles.swatchOption, active && styles.swatchOptionActive]}
+                      >
+                        <View style={[styles.swatch, { backgroundColor: c }]} />
+                        {active && <Ionicons name="checkmark" size={14} color={Colors.bg} />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+            <View
+              style={[styles.canvas, !aspect && styles.canvasPending, aspect ? { aspectRatio: aspect } : null]}
+              ref={shareRef}
+              onLayout={(e) => setShareSize(e.nativeEvent.layout)}
+            >
+              <PlanCanvas
+                uri={uri}
+                aspect={aspect}
+                center={mode === 'rocket-backpack' ? center : null}
+                centered={mode === 'rocket-backpack'}
+                start={start}
+                end={visualEnd}
+                pathColor={pathColor}
+                startIcon={PLAN_MODES[mode].heroIcon}
+                onResetCenter={handleResetPivot}
+                onSetStart={setStart}
+                onSetEnd={setEnd}
+                onPlace={handlePlace}
+                onDoubleTap={() => setFull(true)}
+                style={styles.canvasInner}
+              />
+            </View>
+            <View style={styles.bottomToolbar}>
+              <PressableRipple onPress={onPick} style={styles.toolBtn} hitSlop={6}>
+                <Ionicons name="images-outline" size={15} color={Colors.bg} />
+                <Text style={styles.toolText}>Replace</Text>
+              </PressableRipple>
+              <PressableRipple onPress={handleShare} style={[styles.toolBtn, styles.toolBtnGhost]} hitSlop={6}>
+                <Ionicons name="share-outline" size={15} color={Colors.textPrimary} />
+                <Text style={[styles.toolText, styles.toolTextGhost]}>Share</Text>
+              </PressableRipple>
+            </View>
+            <View style={styles.noteCard}>
+              <Text style={styles.tipsKicker}>{PLAN_MODES[mode].kicker}</Text>
+              {PLAN_MODES[mode].tips.map((tip) => (
+                <View key={tip.title} style={styles.tipRow}>
+                  <View style={styles.tipIcon}>
+                    <Ionicons name={tip.icon} size={16} color={Colors.warning} />
+                  </View>
+                  <View style={styles.tipInfo}>
+                    <Text style={styles.tipTitle}>{tip.title}</Text>
+                    <Text style={styles.tipText}>{tip.text}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.scroll}>
+            <View style={styles.header}>
+              <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
+              <Text style={styles.subtitle}>{PLAN_MODES[mode].emptySubtitle}</Text>
+            </View>
+            <ModeSwitch mode={mode} onSwitch={switchMode} />
+            <PressableRipple onPress={onPick} style={styles.uploadZone}>
+              <View style={styles.uploadIcon}>
+                <Ionicons name="images-outline" size={32} color={Colors.textSecondary} />
+              </View>
+              <Text style={styles.uploadTitle}>Choose a base screenshot</Text>
+              <Text style={styles.uploadHint}>
+                Pick a screenshot from your photo library to start plotting the arrow path from the
+                Queen.
+              </Text>
+              <View style={styles.uploadChip}>
+                <Text style={styles.uploadChipText}>Open photo library</Text>
+                <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+              </View>
+            </PressableRipple>
+            <View style={styles.noteCard}>
+              <Text style={styles.noteTitle}>How it works</Text>
+              {PLAN_MODES[mode].howItWorks.map((line) => (
+                <View key={line} style={styles.noteLine}>
+                  <Text style={styles.noteBullet}>•</Text>
+                  <Text style={styles.noteBody}>{line}</Text>
+                </View>
+              ))}
+            </View>
+            <View style={{ flex: 1 }} />
+            <PressableRipple onPress={onPick} style={[styles.primaryBtn, styles.bottomBtn]}>
+              <Ionicons name="images-outline" size={18} color={Colors.bg} />
+              <Text style={styles.primaryBtnText}>Choose screenshot</Text>
+            </PressableRipple>
+          </View>
+        )}
+
+        {uri && aspect != null && (
+          <Modal
+            animationType="fade"
+            presentationStyle="fullScreen"
+            visible={full}
+            onRequestClose={() => setFull(false)}
+            statusBarTranslucent
+            navigationBarTranslucent
+          >
+            <GestureHandlerRootView style={styles.fullContainer}>
+              <View style={styles.fullCenter}>
+                <View style={{ width: fullW, height: fullH, transform: [{ rotate: '90deg' }] }}>
+                  <PlanCanvas
+                    uri={uri}
+                    aspect={aspect}
+                    center={mode === 'rocket-backpack' ? center : null}
+                    centered={mode === 'rocket-backpack'}
+                    start={start}
+                    end={visualEnd}
+                    pathColor={pathColor}
+                    startIcon={PLAN_MODES[mode].heroIcon}
+                    rotated
+                    onResetCenter={handleResetPivot}
+                    onSetStart={setStart}
+                    onSetEnd={setEnd}
+                    onPlace={handlePlace}
+                    style={{ flex: 1 }}
+                  />
+                </View>
+              </View>
+              <SafeAreaView style={styles.fullBottomBar} edges={['bottom']}>
+                <View style={styles.fullHintRow}>
+                  <Text style={styles.fullHintKicker}>HINT</Text>
+                  <Text style={styles.fullHint} numberOfLines={2}>
+                    {hint}
+                  </Text>
+                </View>
+                <View style={styles.fullBtnRow}>
+                  <Pressable
+                    onPress={clearMarkers}
+                    disabled={!hasPins}
+                    hitSlop={4}
+                    style={[styles.fullControlBtn, !hasPins && styles.fullBtnDisabled]}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={16}
+                      color={Colors.textPrimary}
+                    />
+                    <Text style={styles.fullBtnText}>Reset pins</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setFull(false)} hitSlop={4} style={[styles.fullControlBtn, styles.fullControlBtnPrimary]}>
+                    <Ionicons name="checkmark" size={16} color={Colors.bg} />
+                    <Text style={[styles.fullBtnText, styles.fullBtnTextPrimary]}>Done</Text>
+                  </Pressable>
+                </View>
+              </SafeAreaView>
+            </GestureHandlerRootView>
+          </Modal>
+        )}
+        <Dialog />
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -712,7 +712,7 @@ function PlanCanvas({
       }).panHandlers,
     [onResetCenter],
   );
-/* eslint-enable react-hooks/refs */
+  /* eslint-enable react-hooks/refs */
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     setWidth(e.nativeEvent.layout.width);
@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     borderColor: Colors.accent,
   },
-modeOptionIconWrap: {
+  modeOptionIconWrap: {
     width: 26,
     height: 26,
     alignItems: 'center',
