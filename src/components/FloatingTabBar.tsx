@@ -15,7 +15,7 @@ const TAB_GROUPS: string[][] = [
   ['index', 'buildings', 'army', 'maxtime'],
   ['events', 'hero-journey', 'bases', 'armies'],
   ['war', 'search', 'achievements', 'saved'],
-  ['zapquaker', 'giantarrow', 'settings'],
+  ['zapquaker', 'giantarrow', 'bob', 'settings'],
 ];
 
 const TAB_ICONS: Record<string, IconDef> = {
@@ -24,6 +24,7 @@ const TAB_ICONS: Record<string, IconDef> = {
   'hero-journey': { set: 'mc', name: 'shield-crown' },
   zapquaker: { set: 'ion', name: 'flash-outline' },
   giantarrow: { set: 'ion', name: 'locate-outline' },
+  bob: { set: 'mc', name: 'robot-excited-outline' },
   buildings: { set: 'mc', name: 'castle' },
   maxtime: { set: 'ion', name: 'analytics-outline' },
   events: { set: 'ion', name: 'calendar-outline' },
