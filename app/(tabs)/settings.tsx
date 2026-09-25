@@ -112,6 +112,16 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '6.1.0',
+    date: 'September 25, 2026',
+    items: [
+      'New Zapquaker tab: per-building Lightning + Earthquake combo calculator — pick target buildings from game data (Town Hall, Clan Castle and storages are excluded), tune spell levels and spell capacity, flip each spell On/Off, and enable Fireball (Warden) or Giant Arrow (Queen) equipment with their own level steppers. Combos show the cheapest kill by spell slots with spell-only and equipment-lean variants and overkill %.',
+      'New Giant Arrow tab: plan the Archer Queen skill on a base screenshot — tap and drag start/end pins, pick a path color from a collapsible swatch row, open a fullscreen viewer with pinch-zoom and two-finger pan, and share the finished plan as a high-res PNG.',
+      'Giant Arrow plans auto-save on this device and restore on next launch (screenshot, pins, color and arrow path).',
+      'Credits: data sources are now tappable with links; RoyaleAPI, Zapquaker and Otaku Planner are credited as reference sites for the new tools, with the Supercell fan-content notice.',
+    ],
+  },
+  {
     version: '6.0.0',
     date: 'September 20, 2026',
     items: [
