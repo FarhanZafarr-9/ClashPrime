@@ -54,22 +54,25 @@ Beyond the original scope, the tab now also supports:
 
 ## Feature 2 — 6th builder (B.O.B.) planner
 
-**Status:** Not started. **Effort:** ~4–6 days (largest).
+**Status:** Done — shipped in v6.1.0 as the **6th Builder** tab. **Effort:** ~4–6 days (largest).
 
-**Scope:** From village export, produce an ordered, resource-feasible schedule for all seven unlock requirements (3 gear-ups, troop lvl 18, defence lvl 9, BM+Copter 45 combined, B.O.B Control lvl 5). Deeper than ClashClock: resources, storage caps, lab/builder parallelism, Clock Tower impact.
+**Scope v1 (shipped):** From the attached player profile (Skills reads `heroes`/`troops`/`buildingLevels`/`buildings` and `builderHallLevel` from the API + import merge — no new export UI), produce an ordered, resource-feasible plan for all seven unlock requirements:
 
-**Inputs:** existing CoC JSON export (Import/Export tab already parses HV + BB buildings incl. per-copy levels — reuse verbatim; B.O.B Control level comes from there). Optional: TH/BH targets, gem budget, income-rate sliders.
-**Data:** `clash-of-clans-data` per-level costs/durations for all involved buildings, troops, hero, B.O.B Control, gear-up recipes, storage caps, Star Lab/BH prerequisites. Verify post-2.0 requirement names/levels against current client.
+1. Cannon gear-up (build Cannon Lv7 + Double Cannon Lv4 in BB, pay 1M HV Gold / 2d on a BB builder) — **manual checkbox** (gear-up status is not in the API);
+2. Archer Tower gear-up (AT Lv10 + BB Archer Tower Lv6, 3M HV Gold / 7d) — **manual checkbox**;
+3. Mortar gear-up (Mortar Lv8 + Multi Mortar Lv8, 6M HV Gold / 14d) — **manual checkbox**;
+4. Troop research to lvl 18 (Star Lab Lv9 gate; lab deadline gates the plan);
+5. Defence lvl 9 across the base;
+6. Battle Machine + Battle Copter combined **45**;
+7. B.O.B Control Lv5.
 
-**Algorithm:**
-1. Dependency graph: node = one upgrade step; edges = prerequisites (level chains, TH/BH/Star Lab gates, gear-up chains); weights = cost + duration + resource type + owning machine.
-2. Four parallel machines: HV builders (N), HV lab, BB builder (auto 2 at BH6, max 3), BB Star Lab. Multi-machine list scheduling on top of generalized `upgradeCosts` chain scheduler.
-3. Resource layer: HV gold/elixir/dark and BB gold/elixir as separate currencies; income model (tunable sliders) vs storage caps → detect resource-starved waits, insert storage upgrades; gear-ups pull HV gold but occupy a BB builder slot → cross-village contention (the gap vs ClashClock).
-4. Clock Tower: periodic boost multiplier during boost window per level applied to BB durations → total days saved per level surfaced as a "Clock Tower value" line.
-5. Output: Gantt per machine + start/end day, total days, resource timeline, bottleneck annotations.
+**Algorithm:** a `computeBobPlan(input)` pure function. Requirement steps resolved against `clash-of-clans-data` (gear-up recipes, building upgrade chains w/ floating + fixed costs + durations via `buildingUpgradeChainTimes`, per-copy BB store levels via `getBuildingCopies`, troop/hero level lists, `minBHallFor` gates). Two **active** machines modelled — **bb-builder** (auto count = 2@BH6, max 3) and **star-lab** — scheduled with the shared `scheduleChains` LPT list scheduler; `totalEtaSec = max(bb, lab)`. Resource layer: HV Gold / HV Elixir / BB Gold / BB Elixir totals + **storage-feasibility cascades**: total cost per BB currency must fit inside its storages (per-copy caps from `resourceBuildings()`, e.g. lvl-7 storage 1.2M ×2 at BH7); when a currency overflows, storage upgrades are auto-inserted into the builder chain **and each upgrade costs the alternating currency** (Gold Storage costs Builder Elixir, Elixir Storage costs Builder Gold), so the fixpoint keeps upgrading until the whole plan is affordable; storage-driven Builder-Hall demand feeds the BH gate too, and unreachable gaps surface as blocking callouts. **Clock Tower value** line = BB time × (max-cycle boost − current). A truncated schedule (top N) reduces noise for "fully maxed" profiles. Builder Hall gate chain inserted when steps demand a higher BH (only real buildings can gate — hero/troop steps were the source of a phantom "BH 7→11" chain).
 
-**UI:** requirement checklist (current → needed, cost, owner), timeline grouped by machine, resource curves, "what's blocking you" callouts.
-**Risks:** requirement rework/version drift; income modeling is guesswork (tunable, never hardcoded); BB2.0 builder-count rules; exact scheduling is NP-hard — list scheduling is fine for ~40 nodes, don't over-engineer; export JSON schema drift (validate).
+**Constraints honoured from the plan:** HV builder slots are explicitly **not** consumed (gear-ups pull HV *gold*, not a Homie worker). Income curves / HV labour contention / storage-upgrade insertion are intentionally out of v1 (greedy callout notes instead).
+
+**UI (shipped):** profile-gated EmptyState → requirement checklist (auto rows from player data + 3 manual gear-up toggles persisted to AsyncStorage), machine timeline grouped by bb-builder / star-lab with per-chain ETA + costs badges, resource chips, Clock Tower value card, "what is blocking you" (storage-cap + BH gates + builder-count + gear-up-pending callouts), footnotes (verify vs game version).
+
+**Risks:** requirement set is **post-2.0** and unverified — checklist pinned to current data package, flags "verify post-2.0 requirements against the current client" in the footnotes; gear-up done-state is user-maintained (checkbox, local only); income modeling still unknown (v1 uses totals + storage caps, not curves); mixed-resource building upgrades (elixir/gold alternatives) resolved greedily.
 
 ---
 
@@ -118,6 +121,6 @@ Rough effort estimates; recommended sequence (value/dependency aware, not just c
 | 2 | Path planner (F3) | ~1–2d | **Done** — Giant Arrow tab, both modes (v6.1.0 + follow-up). Standalone, zero backend. |
 | 3 | Clan snapshot collector (F4) | ~1d | **Next.** Start accumulating history now; UI later. |
 | 4 | Clan analysis UI (F4) | ~2–3d | Builds on collector. |
-| 5 | B.O.B. planner (F2) | ~4–6d | Reuses gameData + generalized scheduler + export importer. Last by design. |
+| 5 | B.O.B. planner (F2) | ~4–6d | **Done** — 6th Builder tab (v6.1.0). Reused `gameData` + shared chain scheduler + per-copy building reader. |
 
 **Open items to verify before building:** exact EQ damage %/stack values per current game level (structure confirmed; values from data, not wiki copy-paste) and Rocket Backpack dash width/center rule if mode 2 is wanted.
