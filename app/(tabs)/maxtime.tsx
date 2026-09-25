@@ -389,12 +389,12 @@ export default function MaxTimeScreen() {
         const category = isArmy ? getArmyItem(name)?.category : undefined;
         const kind =
           category === 'spell' ? 'Spell'
-          : category === 'siege-machine' ? 'Siege Machine'
-          : category === 'hero' ? 'Hero'
-          : category === 'pet' ? 'Pet'
-          : category === 'hero-equipment' ? 'Equipment'
-          : category ? 'Troop'
-          : undefined;
+            : category === 'siege-machine' ? 'Siege Machine'
+              : category === 'hero' ? 'Hero'
+                : category === 'pet' ? 'Pet'
+                  : category === 'hero-equipment' ? 'Equipment'
+                    : category ? 'Troop'
+                      : undefined;
         const typeLabel = kind === 'Spell'
           ? `${costResource ?? 'Elixir'} Spell`
           : kind === 'Troop' && costResource
@@ -431,7 +431,7 @@ export default function MaxTimeScreen() {
     .filter((g) => g.rows.length > 0);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Time to Max</Text>
@@ -462,7 +462,7 @@ export default function MaxTimeScreen() {
                         styles.heroResourceCell,
                         index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
                         index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
-                        ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0))  && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                        ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
                         index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                       ]}
                     >
@@ -686,13 +686,13 @@ export default function MaxTimeScreen() {
                       isFirst={i === 0}
                       isLast={isOpen ? false : i === readiness.pipelines.length - 1}
                       onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
-                      >
-                        <View style={styles.readinessChildren}>
-                          <View style={styles.pipelineBadge}>
-                            <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
-                          </View>
+                    >
+                      <View style={styles.readinessChildren}>
+                        <View style={styles.pipelineBadge}>
+                          <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
                         </View>
-                      </SettingRow>
+                      </View>
+                    </SettingRow>
                     {isExpandable && isOpen && (
                       <View style={styles.pipelineExpandBody}>
                         {p.children.map((c) => (
@@ -721,13 +721,13 @@ export default function MaxTimeScreen() {
                 isFirst
                 isLast={!rushExpanded}
                 onPress={() => setRushExpanded((o) => !o)}
-                >
-                  <View style={styles.readinessChildren}>
-                    <View style={styles.pipelineBadge}>
-                      <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
-                    </View>
+              >
+                <View style={styles.readinessChildren}>
+                  <View style={styles.pipelineBadge}>
+                    <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
                   </View>
-                </SettingRow>
+                </View>
+              </SettingRow>
               {rushExpanded && (
                 <View style={styles.rushExpandBody}>
                   {thUpgrade && (
