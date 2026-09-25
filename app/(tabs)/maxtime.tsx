@@ -10,15 +10,16 @@ import PressableRipple from '../../src/components/PressableRipple';
 import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
+import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import { useBuildingExclusions } from '../../src/hooks/useBuildingExclusions';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
-import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
-import { getBuildingItemImage, getBuildingMaxLevelAtTH, getMaxTownHall, getBuildingCategories, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
+import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getBuildingCategories, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { getBuildingCopies, getCountAtTH } from '../../src/utils/buildingCopies';
 import { getBuildingEffectiveMax } from '../../src/utils/buildingImages';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
-import { computeMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
+import { computeMaxTime, computeBuilderBaseMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
 import { computeThReadiness } from '../../src/utils/thReadiness';
 import { formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../../src/utils/upgradeCosts';
 import type { TroopDetail } from '../../src/api/troopDetail';
@@ -28,6 +29,8 @@ const PIPELINE_META: Record<PipelineKey, { title: string; icon: keyof typeof Ion
   builders: { title: 'Builders', icon: 'hammer-outline', desc: 'Buildings & heroes — scheduled across your builders' },
   pets: { title: 'Pet House', icon: 'paw-outline', desc: 'Pets — one upgrade at a time' },
   equipment: { title: 'Equipment', icon: 'diamond-outline', desc: 'Blacksmith — instant, ores only' },
+  'bb-builders': { title: 'BB Builders', icon: 'hammer-outline', desc: 'BB buildings & heroes — scheduled across BB builders' },
+  'bb-lab': { title: 'Star Laboratory', icon: 'flask-outline', desc: 'BB troops — one research at a time' },
 };
 
 const READINESS_PIPELINE_DESC: Record<string, string> = {
@@ -42,6 +45,8 @@ const RESOURCE_ORDER: (CostResource | BuildingCostResource)[] = [
   'Dark Elixir',
   'Builder Gold',
   'Builder Elixir',
+  'Gold or Elixir',
+  'Builder Gold or Builder Elixir',
   'Shiny Ore',
   'Glowing Ore',
   'Starry Ore',
@@ -66,7 +71,8 @@ export default function MaxTimeScreen() {
   const { excluded, toggleExcluded, setExcludedMany, clearExcluded, loaded: exclusionsLoaded } = useBuildingExclusions();
   const { discounts } = useDiscounts();
   const [details, setDetails] = useState<Record<string, TroopDetail | null> | null>(null);
-  const [expanded, setExpanded] = useState<Record<PipelineKey, boolean>>({ lab: false, builders: false, pets: false, equipment: false });
+  const [bbDetails, setBbDetails] = useState<Record<string, TroopDetail | null> | null>(null);
+  const [expanded, setExpanded] = useState<Record<PipelineKey, boolean>>({ lab: false, builders: false, pets: false, equipment: false, 'bb-builders': false, 'bb-lab': false });
   const [readinessOpen, setReadinessOpen] = useState(false);
   const [buildersExpanded, setBuildersExpanded] = useState(false);
   const [labExpanded, setLabExpanded] = useState(false);
@@ -74,8 +80,10 @@ export default function MaxTimeScreen() {
   const [excludeOpen, setExcludeOpen] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
+  const bh = player?.builderHallLevel ?? 1;
   const maxTh = getMaxTownHall();
   const isMaxTh = th >= maxTh;
+  const { count: bbBuilderCount, setBuilderBaseCount, loaded: bbBuilderLoaded } = useBuilderBaseCount(bh);
 
   const armyNames = useMemo(() => {
     if (!player) return [] as string[];
@@ -89,6 +97,13 @@ export default function MaxTimeScreen() {
   }, [player, th]);
 
   const heroNames = useMemo(() => new Set((player?.heroes ?? []).map((h) => h.name)), [player]);
+
+  const bbArmyNames = useMemo(() => {
+    if (!player) return [] as string[];
+    const names = new Set<string>();
+    for (const item of getAllBuilderItemsAtBH(bh)) names.add(item.name);
+    return [...names];
+  }, [player, bh]);
 
   useEffect(() => {
     let active = true;
@@ -111,10 +126,34 @@ export default function MaxTimeScreen() {
     return () => { active = false; };
   }, [player, armyNames]);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      await Promise.resolve();
+      if (!active) return;
+      setBbDetails(null);
+      if (!player || bbArmyNames.length === 0) {
+        setBbDetails({});
+        return;
+      }
+      const fetched = await Promise.all(bbArmyNames.map((n) => getArmyTroopDetail(n, { builderBase: true }).catch(() => null)));
+      if (!active) return;
+      const next: Record<string, TroopDetail | null> = {};
+      fetched.forEach((d, i) => { next[bbArmyNames[i]] = d; });
+      setBbDetails(next);
+    })();
+    return () => { active = false; };
+  }, [player, bbArmyNames]);
+
   const result = useMemo(() => {
     if (!player || !details) return null;
     return computeMaxTime({ player, th, builderCount, armyDetails: details, excludedBuildings: excluded });
   }, [player, th, builderCount, details, excluded]);
+
+  const bbResult = useMemo(() => {
+    if (!player || !bbDetails) return null;
+    return computeBuilderBaseMaxTime({ player, bh, builderCount: bbBuilderCount, armyDetails: bbDetails, excludedBuildings: excluded });
+  }, [player, bh, bbBuilderCount, bbDetails, excluded]);
 
   const readiness = useMemo(() => {
     if (!player) return null;
@@ -140,6 +179,34 @@ export default function MaxTimeScreen() {
       totalByResource,
     };
   }, [result, discounts]);
+
+  const bbDiscounted = useMemo(() => {
+    if (!bbResult) return null;
+    const bbBuilders = applyScope(bbResult.bbBuilders.timeSec, bbResult.bbBuilders.cost, bbResult.bbBuilders.byResource, discounts.buildings);
+    const bbLab = applyScope(bbResult.bbLab.timeSec, bbResult.bbLab.cost, bbResult.bbLab.byResource, discounts.army);
+    const totalByResource: Record<string, number> = {};
+    for (const p of [bbBuilders, bbLab]) {
+      for (const [r, v] of Object.entries(p.byResource)) totalByResource[r] = (totalByResource[r] ?? 0) + v;
+    }
+    return {
+      bbBuilders,
+      bbLab,
+      headlineTime: Math.max(bbBuilders.timeSec, bbLab.timeSec),
+      totalByResource,
+    };
+  }, [bbResult, discounts]);
+
+  const pipelineDiscounted = useMemo(() => {
+    if (!discounted || !bbDiscounted) return null;
+    return {
+      lab: discounted.lab,
+      builders: discounted.builders,
+      pets: discounted.pets,
+      equipment: discounted.equipment,
+      'bb-builders': bbDiscounted.bbBuilders,
+      'bb-lab': bbDiscounted.bbLab,
+    } as Record<PipelineKey, { timeSec: number; cost: number; byResource: Record<string, number> }>;
+  }, [discounted, bbDiscounted]);
 
   const nextResult = useMemo(() => {
     if (!player || !details) return null;
@@ -202,7 +269,7 @@ export default function MaxTimeScreen() {
     return groups;
   }, [player, th]);
 
-  if (loading || !player || !builderLoaded || !exclusionsLoaded || !result || !discounted) {
+  if (loading || !player || !builderLoaded || !bbBuilderLoaded || !exclusionsLoaded || !result || !discounted || !bbResult || !bbDiscounted || !pipelineDiscounted) {
     return (
       <MaxTimeScreenSkeleton />
     );
@@ -211,7 +278,7 @@ export default function MaxTimeScreen() {
   const summaryTime = discounted ? formatTime(discounted.headlineTime) : '…';
 
   const rowTimeSec = (row: PipelineItemRow, key: PipelineKey, scope: ScopeDiscount) => {
-    const itemScope = key === 'builders' ? rowScope(row, heroNames, discounts) : scope;
+    const itemScope = key === 'builders' || key === 'bb-builders' ? rowScope(row, heroNames, discounts) : scope;
     return Math.max(0, Math.round(row.timeSec * (1 - itemScope.timePercent / 100)));
   };
 
@@ -223,15 +290,16 @@ export default function MaxTimeScreen() {
         return ta - tb;
       })
       .map((row, i) => {
-        const itemScope = key === 'builders' ? rowScope(row, heroNames, discounts) : scope;
+        const itemScope = key === 'builders' || key === 'bb-builders' ? rowScope(row, heroNames, discounts) : scope;
         const timeSec = rowTimeSec(row, key, scope);
         const cost = Math.max(0, Math.round(row.cost * (1 - itemScope.costPercent / 100)));
         const byResource: Record<string, number> = {};
         for (const [r, v] of Object.entries(row.byResource)) byResource[r] = Math.max(0, Math.round(v * (1 - itemScope.costPercent / 100)));
-        const isBuilding = key === 'builders' && !heroNames.has(row.name);
+        const isBuilding = (key === 'builders' || key === 'bb-builders') && !heroNames.has(row.name);
+        const isBB = key === 'bb-builders' || key === 'bb-lab';
         const iconSource = isBuilding
-          ? getBuildingItemImage(row.name, row.iconLevel)
-          : getArmyItemImage(row.name);
+          ? getBuildingItemImage(row.name, row.iconLevel, isBB)
+          : getArmyItemImage(row.name, null, isBB);
         return (
           <ItemCard
             key={row.name}
@@ -276,7 +344,7 @@ export default function MaxTimeScreen() {
   const renderPipeline = (p: PipelineResult, scope: ScopeDiscount, isLast: boolean) => {
     const meta = PIPELINE_META[p.key];
     const isOpen = expanded[p.key];
-    const d = discounted ? discounted[p.key] : null;
+    const d = pipelineDiscounted ? pipelineDiscounted[p.key] : null;
     const isEquipment = p.key === 'equipment';
     const buildingSplitSec = (sec: number, isHero = false) => {
       const pct = isHero ? discounts.army.timePercent : discounts.buildings.timePercent;
@@ -285,13 +353,19 @@ export default function MaxTimeScreen() {
     // Highest-level sprite available at this TH; falls back to base icon when the building is locked here.
     const pipelineHeaderImage = (name: string) =>
       getBuildingItemImage(name, getBuildingMaxLevelAtTH(name, th) ?? 1) ?? undefined;
+    const pipelineBBHeaderImage = (name: string) =>
+      getBuildingItemImage(name, getBuildingMaxLevelAtBH(name, bh) ?? 1, true) ?? undefined;
     const headerIconSource = p.key === 'lab'
       ? pipelineHeaderImage('Lab')
       : p.key === 'builders'
         ? pipelineHeaderImage('Builder Hut')
-        : isEquipment
-          ? pipelineHeaderImage('Blacksmith')
-          : pipelineHeaderImage('Pet House');
+        : p.key === 'bb-builders'
+          ? pipelineBBHeaderImage('Builder Hall')
+          : p.key === 'bb-lab'
+            ? pipelineBBHeaderImage('Star Laboratory')
+            : isEquipment
+              ? pipelineHeaderImage('Blacksmith')
+              : pipelineHeaderImage('Pet House');
     return (
       <React.Fragment key={p.key}>
         <SettingRow
@@ -430,6 +504,39 @@ export default function MaxTimeScreen() {
     })
     .filter((g) => g.rows.length > 0);
 
+  const renderHeroResourceGrid = (byResource: Record<string, number>) => {
+    const entries = (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
+      .filter(([r]) => r !== 'Unknown')
+      .sort((a, b) => {
+        const ia = RESOURCE_ORDER.indexOf(a[0] as (CostResource | BuildingCostResource));
+        const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      });
+    if (entries.length === 0) return null;
+    return (
+      <View style={styles.heroResourcesGrid}>
+        {entries.map(([r, v], index, arr) => {
+          const color = RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8';
+          return (
+            <View
+              key={r}
+              style={[
+                styles.heroResourceCell,
+                index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+              ]}
+            >
+              <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
+              <Text style={[styles.heroResourceValue, { color }]}>{formatCost(v)}</Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -444,35 +551,7 @@ export default function MaxTimeScreen() {
           <Text style={styles.heroNote}>
             Laboratory, builders & pets run in parallel — this is the longest pipeline
           </Text>
-          {discounted && Object.keys(discounted.totalByResource).length > 0 && (
-            <View style={styles.heroResourcesGrid}>
-              {(Object.entries(discounted.totalByResource).filter(([, v]) => v > 0) as [string, number][])
-                .filter(([r]) => r !== 'Unknown')
-                .sort((a, b) => {
-                  const ia = RESOURCE_ORDER.indexOf(a[0] as (CostResource | BuildingCostResource));
-                  const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
-                  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-                })
-                .map(([r, v], index, arr) => {
-                  const color = RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8';
-                  return (
-                    <View
-                      key={r}
-                      style={[
-                        styles.heroResourceCell,
-                        index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
-                        index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
-                        ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
-                        index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
-                      ]}
-                    >
-                      <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
-                      <Text style={[styles.heroResourceValue, { color }]}>{formatCost(v)}</Text>
-                    </View>
-                  );
-                })}
-            </View>
-          )}
+          {renderHeroResourceGrid(discounted.totalByResource)}
         </View>
 
         <View style={styles.sectionHeaderWrap}>
@@ -845,6 +924,53 @@ export default function MaxTimeScreen() {
               </Text>
             </View>
           )}
+        </View>
+
+        <View style={styles.sectionHeaderWrap}>
+          <SectionHeader title="Builder Base" />
+        </View>
+        <View style={styles.heroCard}>
+          <Text style={styles.heroLabel}>Builder Base time to max</Text>
+          <Text style={styles.heroTime}>{formatTime(bbDiscounted.headlineTime)}</Text>
+          <Text style={styles.heroNote}>
+            BB builders & Star Laboratory run in parallel — this is the longest pipeline
+          </Text>
+          {renderHeroResourceGrid(bbDiscounted.totalByResource)}
+        </View>
+        <View style={styles.builderCard}>
+          <View style={styles.builderTextBlock}>
+            <Text style={styles.builderTitle}>BB Builders</Text>
+            <Text style={styles.builderDesc}>BB building & hero time is divided across these</Text>
+          </View>
+          <View style={styles.builderStepper}>
+            <Pressable
+              onPress={() => setBuilderBaseCount(Math.max(1, bbBuilderCount - 1))}
+              disabled={bbBuilderCount <= 1}
+              style={[
+                styles.stepperBtn,
+                bbBuilderCount <= 1 && styles.stepperBtnDisabled,
+              ]}
+            >
+              <Ionicons name="remove" size={18} color={bbBuilderCount <= 1 ? Colors.textMuted : Colors.textPrimary} />
+            </Pressable>
+            <View style={styles.builderCountPill}>
+              <Text style={styles.builderCountText}>{bbBuilderCount}</Text>
+            </View>
+            <Pressable
+              onPress={() => setBuilderBaseCount(Math.min(3, bbBuilderCount + 1))}
+              disabled={bbBuilderCount >= 3}
+              style={[
+                styles.stepperBtn,
+                bbBuilderCount >= 3 && styles.stepperBtnDisabled,
+              ]}
+            >
+              <Ionicons name="add" size={18} color={bbBuilderCount >= 3 ? Colors.textMuted : Colors.textPrimary} />
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.pipelineSections}>
+          {renderPipeline(bbResult.bbBuilders, discounts.buildings, false)}
+          {renderPipeline(bbResult.bbLab, discounts.army, true)}
         </View>
       </ScrollView>
     </SafeAreaView>

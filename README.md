@@ -9,7 +9,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 ## Features
 
 - **Home Dashboard** — overview of your village with progress cards, quick actions, **League section** (badge, bonus, loot, star bonus, ore), quick stats, and a **Progress Achieved dialog** that also tracks Builder Base troop and hero progress
-- **Time to Max** — dedicated tab with four parallel pipelines (**Lab**, **Builders**, **Pets**, **Equipment**) showing remaining upgrade time & resources per category; **chain-scheduled builder time** (LPT bin-packing of serial upgrade chains) so a single long hero upgrade correctly bounds the result
+- **Time to Max** — dedicated tab with four parallel Home Village pipelines (**Lab**, **Builders**, **Pets**, **Equipment**) showing remaining upgrade time & resources per category, plus a **Builder Base section** (headline time to max, BB builder count stepper, and **BB Builders** / **Star Lab** pipelines); **chain-scheduled builder time** (LPT bin-packing of serial upgrade chains) so a single long hero upgrade correctly bounds the result, with a combined Builder Gold/Elixir chip and combined wall cost chips
 - **Import / Export** — bulk import building levels from a CoC JSON export covering **Home Village and Builder Base**; shows **only real upgrades** (skips buildings already at target), per-copy current levels, a builders pipeline with chain-scheduled time & resource breakdown (Builder Base upgrades timed against their own builders — auto 2 at Builder Hall 6, max 3), spaced upgrade cards with proper corner rounding, and in-game resource icons on upgrade rows
 - **Multi-Account** — add and switch between multiple player tags from Settings or the Home dashboard. Each account keeps its own building levels, saved bases, and favorites. Shared data (events, troop details) is fetched once.
 - **Army** — troops, heroes, spells, pets, equipment (including Builder Base items) with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns
@@ -132,7 +132,7 @@ ClashPrime/
 │       ├── events.tsx      # Events
 │       ├── bases.tsx       # Base Library
 │       ├── armies.tsx      # Army Library (ClashArmies)
-│       ├── maxtime.tsx     # Time to Max (4 pipelines: Lab/Builders/Pets/Equipment)
+│       ├── maxtime.tsx     # Time to Max (4 Home pipelines + Builder Base: headings, stepper, BB pipelines)
 │       ├── saved.tsx       # Saved & Favorites
 │       ├── war.tsx         # War & CWL
 │       ├── achievements.tsx# Awards

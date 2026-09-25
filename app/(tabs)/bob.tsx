@@ -82,6 +82,7 @@ function chainIcon(label: string): number | { uri: string } | null {
 const RESOURCE_ORDER: BuildingCostResource[] = [
   'Builder Gold',
   'Builder Elixir',
+  'Builder Gold or Builder Elixir',
   'Gold',
   'Elixir',
 ];

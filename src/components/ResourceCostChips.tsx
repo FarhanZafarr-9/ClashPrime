@@ -12,6 +12,8 @@ const RESOURCE_ORDER: (CostResource | BuildingCostResource)[] = [
   'Dark Elixir',
   'Builder Gold',
   'Builder Elixir',
+  'Gold or Elixir',
+  'Builder Gold or Builder Elixir',
   'Shiny Ore',
   'Glowing Ore',
   'Starry Ore',

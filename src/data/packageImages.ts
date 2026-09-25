@@ -2775,6 +2775,8 @@ export const PACKAGE_RESOURCE_IMAGES: Record<string, number> = {
   "Dark Elixir": require('../../assets/package-images/images/other/dark-elixir.webp'),
   "Builder Gold": require('../../assets/package-images/images/other/gold-b.webp'),
   "Builder Elixir": require('../../assets/package-images/images/other/elixir-b.webp'),
+  "Gold or Elixir": require('../../assets/package-images/images/other/goldelxir.png'),
+  "Builder Gold or Builder Elixir": require('../../assets/package-images/images/other/goldelxir_b.webp'),
   "Shiny Ore": require('../../assets/package-images/images/other/ore/shiny-ore.webp'),
   "Glowing Ore": require('../../assets/package-images/images/other/ore/glowy-ore.webp'),
   "Starry Ore": require('../../assets/package-images/images/other/ore/starry-ore.webp'),

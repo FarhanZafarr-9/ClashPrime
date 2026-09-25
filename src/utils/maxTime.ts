@@ -1,9 +1,18 @@
 import type { ClashPlayer } from '../types/clash';
 import type { TroopDetail } from '../api/troopDetail';
-import { getMaxLevelAtTH, getSuperTroopNames, getArmyItem, getBuildingMaxLevelAtTH, getAllItemsAtTH } from './armyData';
+import {
+  getMaxLevelAtTH,
+  getSuperTroopNames,
+  getArmyItem,
+  getBuildingMaxLevelAtTH,
+  getAllItemsAtTH,
+  getBuilderHeroMaxLevel,
+  getBuilderTroopMaxLevel,
+  getAllBuilderItemsAtBH,
+} from './armyData';
 import { getBuildingEffectiveMax } from './buildingImages';
-import { getBuildingCopies, getCountAtTH } from './buildingCopies';
-import { getBuildingCategories } from './buildingData';
+import { getBuildingCopies, getCountAtTH, getCountAtBH } from './buildingCopies';
+import { getBuildingCategories, getBBCategories, getBuildingMaxLevelAtBH } from './buildingData';
 import {
   remainingArmyCosts,
   remainingBuildingCosts,
@@ -13,7 +22,7 @@ import {
   type CostTime,
 } from './upgradeCosts';
 
-export type PipelineKey = 'lab' | 'builders' | 'pets' | 'equipment';
+export type PipelineKey = 'lab' | 'builders' | 'pets' | 'equipment' | 'bb-builders' | 'bb-lab';
 
 export interface PipelineItemRow {
   name: string;
@@ -294,6 +303,149 @@ export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
     builders,
     pets,
     equipment,
+    totalTimeSec,
+    totalCost,
+    totalByResource,
+    builderCount,
+  };
+}
+
+// --- Builder Base ---
+
+export interface BuilderBaseMaxTimeInput {
+  player: ClashPlayer;
+  /** Builder Hall level the plan targets. */
+  bh: number;
+  /** Number of Builder Base builder heads (1–3). */
+  builderCount: number;
+  /** Pre-fetched package details keyed by display name (armyData.getArmyTroopDetail with builderBase). */
+  armyDetails: Record<string, TroopDetail | null>;
+  /** Buildings the player does not plan to max — all copies are skipped. */
+  excludedBuildings?: ReadonlySet<string>;
+}
+
+export interface BuilderBaseMaxTimeResult {
+  /** BB buildings + heroes scheduled across the BB builder heads. */
+  bbBuilders: PipelineResult;
+  /** BB troops researched serially at the Star Laboratory. */
+  bbLab: PipelineResult;
+  /** Pipelines run in parallel, so the headline number is the longest one. */
+  totalTimeSec: number;
+  totalCost: number;
+  totalByResource: Record<string, number>;
+  builderCount: number;
+}
+
+/** Locked (not yet unlocked) Builder Base troops/heroes at this BH, from level 0. */
+function lockedBuilderItems(bh: number, types: ('troop' | 'hero')[]): LeveledItem[] {
+  return getAllBuilderItemsAtBH(bh)
+    .filter((i) => types.includes(i.type))
+    .map((i) => ({ name: i.name, level: 0 }));
+}
+
+/** Merge player-owned Builder Base items (real level) over the locked set (level 0). */
+function mergeBuilderLeveled(playerItems: LeveledItem[], locked: LeveledItem[]): LeveledItem[] {
+  const byName = new Map<string, LeveledItem>();
+  for (const it of locked) byName.set(it.name, it);
+  for (const it of playerItems) {
+    if (it.village !== 'builderBase') continue;
+    byName.set(it.name, { name: it.name, level: it.level });
+  }
+  return [...byName.values()];
+}
+
+/** BB buildings + heroes compete for the same builder pool (bin-packed chains). */
+function buildBBBuildersPipeline(
+  player: ClashPlayer,
+  heroItems: LeveledItem[],
+  bh: number,
+  builderCount: number,
+  armyDetails: Record<string, TroopDetail | null>,
+  excludedBuildings?: ReadonlySet<string>,
+): PipelineResult {
+  const rows: PipelineItemRow[] = [];
+  const buildingChains: number[] = [];
+  const heroChains: number[] = [];
+
+  const cats = getBBCategories(bh);
+  for (const items of Object.values(cats)) {
+    for (const [name, bhData] of Object.entries(items)) {
+      if (excludedBuildings?.has(name)) continue;
+      const entry = bhData[String(bh)];
+      if (!entry || (entry.level ?? 0) <= 0) continue;
+      const effectiveMax = getBuildingMaxLevelAtBH(name, bh) ?? 0;
+      if (effectiveMax <= 0) continue;
+      const count = getCountAtBH(name, bh);
+      const copies = getBuildingCopies(name, player.buildingLevels, player.buildings, effectiveMax, count, undefined);
+      const ct = remainingBuildingCosts(name, copies.levels, effectiveMax);
+      if (ct.time <= 0 && ct.cost <= 0) continue;
+      const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
+      const copyLevel = copies.levels.length > 0 ? Math.max(...copies.levels) : 1;
+      rows.push({ ...toRow(name, totalLevel, count * effectiveMax, ct), iconLevel: copyLevel });
+      buildingChains.push(...buildingUpgradeChainTimes(name, copies.levels, effectiveMax));
+    }
+  }
+
+  for (const hero of heroItems) {
+    const maxLevel = getBuilderHeroMaxLevel(hero.name, bh) ?? 0;
+    if (maxLevel <= 0) continue;
+    const ct = remainingArmyCosts(armyDetails[hero.name], hero.level, maxLevel);
+    if (ct.time <= 0 && ct.cost <= 0) continue;
+    rows.push(toRow(hero.name, hero.level, maxLevel, ct));
+    if (ct.time > 0) heroChains.push(ct.time);
+  }
+
+  const chains = [...buildingChains, ...heroChains];
+  const total = aggregate('bb-builders', rows);
+  const optimal = optimalBuilderSplit(buildingChains, heroChains, builderCount);
+  const split: BuilderSplit = {
+    buildingChains: buildingChains.length,
+    heroChains: heroChains.length,
+    buildingsOnlySec: scheduleChains(buildingChains, builderCount),
+    heroesOnlySec: scheduleChains(heroChains, builderCount),
+    buildingsSerialSec: buildingChains.reduce((a, b) => a + b, 0),
+    heroesSerialSec: heroChains.reduce((a, b) => a + b, 0),
+    ...optimal,
+  };
+  return { ...total, timeSec: scheduleChains(chains, builderCount), split };
+}
+
+/** BB troops share one serial research building (the Star Laboratory). */
+function buildBBLabPipeline(
+  troopItems: LeveledItem[],
+  bh: number,
+  armyDetails: Record<string, TroopDetail | null>,
+): PipelineResult {
+  const rows: PipelineItemRow[] = [];
+  for (const item of troopItems) {
+    const maxLevel = getBuilderTroopMaxLevel(item.name, bh) ?? 0;
+    if (maxLevel <= 0) continue;
+    const ct = remainingArmyCosts(armyDetails[item.name], item.level, maxLevel);
+    if (ct.time <= 0 && ct.cost <= 0) continue;
+    rows.push(toRow(item.name, item.level, maxLevel, ct));
+  }
+  return aggregate('bb-lab', rows);
+}
+
+export function computeBuilderBaseMaxTime(input: BuilderBaseMaxTimeInput): BuilderBaseMaxTimeResult {
+  const { player, bh, builderCount, armyDetails, excludedBuildings } = input;
+  const heroItems = mergeBuilderLeveled(player.heroes ?? [], lockedBuilderItems(bh, ['hero']));
+  const troopItems = mergeBuilderLeveled(player.troops ?? [], lockedBuilderItems(bh, ['troop']));
+  const bbBuilders = buildBBBuildersPipeline(player, heroItems, bh, builderCount, armyDetails, excludedBuildings);
+  const bbLab = buildBBLabPipeline(troopItems, bh, armyDetails);
+
+  const totalTimeSec = Math.max(bbBuilders.timeSec, bbLab.timeSec);
+  const totalCost = bbBuilders.cost + bbLab.cost;
+  const totalByResource: Record<string, number> = {};
+  for (const p of [bbBuilders, bbLab]) {
+    for (const [res, v] of Object.entries(p.byResource)) {
+      totalByResource[res] = (totalByResource[res] ?? 0) + v;
+    }
+  }
+
+  return {
+    bbBuilders,
+    bbLab,
     totalTimeSec,
     totalCost,
     totalByResource,
