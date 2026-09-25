@@ -21,6 +21,7 @@ export default ({ config }) => {
       ...config.ios,
       bundleIdentifier: isDev ? 'com.clashprime.app.dev' : 'com.clashprime.app',
     },
+    plugins: [...(config.plugins ?? []), ['expo-sharing', {}]],
     android: {
       ...config.android,
       package: isDev ? 'com.clashprime.app.dev' : 'com.clashprime.app',

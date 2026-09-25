@@ -28,6 +28,12 @@
       "expo-status-bar",
       "expo-updates",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow ClashPrime to access your photos so you can plan Giant Arrow paths."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/notification_icon.png",
