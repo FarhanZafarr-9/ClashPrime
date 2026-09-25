@@ -1,15 +1,15 @@
 # Features Plan
 
-High-level plans for four planned utility features. No implementation yet — this file decides **what** to build and **in what order**. Reference sites (fan content) are behavior references only; no code/text/assets copied.
+High-level plans for four planned utility features. This file decides **what** to build and **in what order**. Reference sites (fan content) are behavior references only; no code/text/assets copied.
 
-Status legend: **Not started** for all four.
+Status legend: **Done** (shipped to the app), **Not started** (pending).
 
 ---
 
 ## Resolved questions (from research)
 
 - **Earthquake stacking** — confirmed structure. EQ damage is a % of the building's **maximum** HP (not current), so spell order is irrelevant. 1st EQ = base `D%`; k-th (k≥2) = `D/(2k−1)` of max HP (2nd = 1/3, 3rd = 1/5, 4th = 1/7). m EQs deal `D% × Σ 1/(2k−1)`, a bounded series → EQ alone can **never** destroy a building (matches game behavior). Exact current `D` per level must come from data, not hardcoded.
-- **"Dragon backpack"** = **Rocket Backpack**, Dragon Duke's first epic equipment (Apr 2026 Medal Event). Mechanic: choose a direction, Duke dashes in a straight line through the base center, breathing fire. Community-described as "a controllable Giant Arrow". Same path-planner tool applies as a second mode with different params. Params unverified (band width, center rule).
+- **"Dragon backpack"** = **Rocket Backpack**, Dragon Duke's first epic equipment (Apr 2026 Medal Event). Mechanic: choose a direction, Duke dashes in a straight line through the base center, breathing fire. Community-described as "a controllable Giant Arrow". **Shipped** as a second mode inside the Giant Arrow planner tab (mode selector). The dash is rendered as a line that always passes through a user-placed center pivot: place the Duke (entry), then the pivot (base center); the exit is the Duke mirrored across the pivot; dragging the Duke re-aims the line, touching the pivot clears it for re-placing. Band width still unverified (not rendered).
 - **Clan IP binding** — no new backend strictly required: the app already routes CoC API through the RoyaleAPI proxy (dynamic-IP safe, `src/api/clash.ts`).
 
 ---
@@ -26,7 +26,12 @@ Status legend: **Not started** for all four.
 
 ## Feature 1 — Zapquake calculator
 
-**Status:** Not started. **Effort:** ~1 day.
+**Status:** Done — shipped in v6.1.0 as the **Zapquaker** tab. **Effort:** ~1 day.
+
+Beyond the original scope, the tab now also supports:
+- Fireball (Warden) and Giant Arrow (Queen) equipment as once-per-raid, no-slot hits with their own level steppers;
+- the only double-damage pairing in the game: **Giant Arrow ×2 vs Air Defenses** (applied when the combo is sized against an Air Defense);
+- multiple selected targets — the combo is sized against the highest-HP one, each building gets its own level stepper.
 
 **Scope:** Given a target building (type + level, or raw HP) and spell levels, list every (Lightning×n, EQ×m) combination that destroys it, with housing cost. Pure function + screen.
 
@@ -70,19 +75,19 @@ Status legend: **Not started** for all four.
 
 ## Feature 3 — Path planner (Giant Arrow / Rocket Backpack)
 
-**Status:** Not started. **Effort:** ~1–2 days.
+**Status:** Done — both modes shipped as the **Giant Arrow** planner tab (v6.1.0 + follow-up). **Effort:** ~1–2 days.
 
-**Scope:** Upload a base screenshot, place origin + direction markers, render the effect's tile-wide path with scale calibration. Visualizer, not pathfinder (screenshot exposes no layout). Image stays on-device.
+**Scope:** Upload a base screenshot, place markers, render the effect's straight-line path. Visualizer, not pathfinder (screenshot exposes no layout). Image stays on-device. **Shipped** without scale calibration or the tile-wide band — a center line + dashed arrow only.
 
-**Inputs:** image; two draggable markers (origin, direction/endpoint); scale calibration (mark a known footprint — TH is 4×4 → tiles-per-pixel); effect mode selector.
+**Inputs:** image; draggable markers; effect mode selector (Giant Arrow / Rocket Backpack).
 **Data:** none external. Equipment params (band width, origin rule) as constants:
-- Giant Arrow (AQ): from Queen, ~2 tiles wide, straight line.
-- Rocket Backpack (Dragon Duke): user picks entry direction, line passes through base center (params unverified).
+- Giant Arrow (AQ): from Queen, ~2 tiles wide, straight line (band not rendered).
+- Rocket Backpack (Dragon Duke): dash passes through the base center — implemented as a **center pivot**: the exit is the Duke mirrored across the pivot, so the line always runs through the center. Band width + exact center rule unverified.
 
-**Algorithm:** pointer-driven canvas overlay via `react-native-gesture-handler` + `react-native-svg` (both in stack). Vector origin→direction; center line + perpendicular half-width band using calibrated tiles-per-pixel. No layout inference — visual guide only.
+**Algorithm (shipped):** `PanResponder`-dragged pins over a `react-native-svg` overlay: vector origin→endpoint, center line + dashed stroke + arrowhead at the end. Rocket Backpack mode derives the exit from center+entry. No layout inference — visual guide only.
 
-**UI:** image canvas, two draggable pins, direction indicator, calibrated band, stale-calibration warning, export/screenshot overlay.
-**Risks:** crop/zoom skew the band width (scale calibration mitigates — the reference site's known flaw); rotation/perspective distort tile counts; Rocket Backpack mechanics unverified — ship Giant Arrow first, add mode 2 as cheap param later.
+**UI (shipped):** image canvas, two draggable pins, an optional amber center pivot (Rocket Backpack), frozen mode icons in a mode selector, path color palette, fullscreen viewer, share as 3x PNG, auto-save/restore. Tap order in Rocket Backpack mode: place the Duke, then the pivot (exit auto-placed); a later tap resets both.
+**Risks (carry-over):** crop/zoom skew a hypothetical band width (scale calibration would mitigate — not implemented); rotation/perspective distort tile counts; Rocket Backpack band width and exact center rule remain unverified.
 
 ---
 
@@ -109,9 +114,9 @@ Rough effort estimates; recommended sequence (value/dependency aware, not just c
 | # | Step | Effort | Why now |
 |---|------|--------|---------|
 | 0 | `gameData` module | ~0.5d | Prerequisite for features 1 and 4. |
-| 1 | Zapquake (F1) | ~1d | Pure logic, tests the data layer, low risk, fast win. |
-| 2 | Path planner (F3) | ~1–2d | Standalone, zero backend. Giant Arrow mode first. |
-| 3 | Clan snapshot collector (F4) | ~1d | Start accumulating history now; UI later. |
+| 1 | Zapquake (F1) | ~1d | **Done** — Zapquaker tab (v6.1.0). Logic + data layer. |
+| 2 | Path planner (F3) | ~1–2d | **Done** — Giant Arrow tab, both modes (v6.1.0 + follow-up). Standalone, zero backend. |
+| 3 | Clan snapshot collector (F4) | ~1d | **Next.** Start accumulating history now; UI later. |
 | 4 | Clan analysis UI (F4) | ~2–3d | Builds on collector. |
 | 5 | B.O.B. planner (F2) | ~4–6d | Reuses gameData + generalized scheduler + export importer. Last by design. |
 

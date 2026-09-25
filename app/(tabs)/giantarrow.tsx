@@ -15,14 +15,12 @@ import {
   Modal,
   PanResponder,
   Pressable,
-  Animated,
   useWindowDimensions,
   type LayoutChangeEvent,
   type GestureResponderEvent,
-  type StyleProp,
-  type ViewStyle,
+  type ImageSourcePropType,
 } from 'react-native';
-import { GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, State } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -48,9 +46,109 @@ const PATH_COLORS = [
 const START_COLOR = '#FF8A3D';
 const ERROR_COLOR = '#FF3B30';
 const END_COLOR = '#4DC9F6';
+const PIVOT_COLOR = '#FFB300';
 const MARKER = 20;
 const DRAG = 44;
 const QUEEN_ICON = PACKAGE_IMAGES['Archer Queen']?.icon;
+const DUKE_ICON = PACKAGE_IMAGES['Dragon Duke']?.icon;
+const GA_EQUIP_ICON = PACKAGE_IMAGES['Giant Arrow']?.icon;
+const RB_EQUIP_ICON = PACKAGE_IMAGES['Rocket Backpack']?.icon;
+
+type PlanMode = 'giant-arrow' | 'rocket-backpack';
+type IoniconName = keyof typeof Ionicons.glyphMap;
+
+const MODE_KEYS: PlanMode[] = ['giant-arrow', 'rocket-backpack'];
+
+interface ModeConfig {
+  title: string;
+  subtitle: string;
+  emptySubtitle: string;
+  shareTitle: string;
+  heroIcon?: ImageSourcePropType;
+  equipIcon?: ImageSourcePropType;
+  emptyHint: string;
+  firstPinHint: string;
+  secondPinHint: string;
+  dragHint: string;
+  kicker: string;
+  tips: { icon: IoniconName; title: string; text: string }[];
+  howItWorks: string[];
+}
+
+const PLAN_MODES: Record<PlanMode, ModeConfig> = {
+  'giant-arrow': {
+    title: 'Giant Arrow',
+    subtitle: 'Queen start → arrow target',
+    emptySubtitle: 'Plan the Archer Queen skill on a base screenshot',
+    shareTitle: 'Share Giant Arrow plan',
+    heroIcon: QUEEN_ICON,
+    equipIcon: GA_EQUIP_ICON,
+    emptyHint: 'Pick a base screenshot to plan your Giant Arrow.',
+    firstPinHint: 'Tap the Queen position (start).',
+    secondPinHint: 'Tap where the arrow should end, then drag the pins to fine-tune.',
+    dragHint: 'Drag either pin to adjust the path.',
+    kicker: 'GIANT ARROW TIPS',
+    tips: [
+      {
+        icon: 'return-down-forward-outline',
+        title: 'Straight-line damage',
+        text: 'The arrow flies in a line between the two pins and damages everything along its ~2-tile-wide path.',
+      },
+      {
+        icon: 'pin-outline',
+        title: 'Pin the Queen, aim the tip',
+        text: 'Place the start pin on your Queen and drag the end pin toward the buildings you want to soften.',
+      },
+      {
+        icon: 'flash-outline',
+        title: 'Fewer targets, bigger hits',
+        text: 'Damage is split across everything the arrow passes over — a single building on the line takes the full hit, a crowd splits it.',
+      },
+    ],
+    howItWorks: [
+      'Tap to place the start pin where the Archer Queen stands.',
+      'Tap again to set where the arrow ends — the path is a straight line between the two pins.',
+      'Drag either pin to fine-tune. The arrow hits buildings along a ~2 tile wide line.',
+      'Your plan is saved on this device automatically.',
+    ],
+  },
+  'rocket-backpack': {
+    title: 'Rocket Backpack',
+    subtitle: "Dragon Duke's dash — through the base center",
+    emptySubtitle: 'Plan Dragon Duke\u2019s Rocket Backpack dash on a base screenshot',
+    shareTitle: 'Share Rocket Backpack plan',
+    heroIcon: DUKE_ICON,
+    equipIcon: RB_EQUIP_ICON,
+    emptyHint: 'Pick a base screenshot to plan a Rocket Backpack dash.',
+    firstPinHint: 'Tap where Dragon Duke enters (start).',
+    secondPinHint: 'Tap the base center (pivot) — the exit is placed automatically.',
+    dragHint: 'Drag the Duke to aim — the line stays through the center.',
+    kicker: 'ROCKET BACKPACK TIPS',
+    tips: [
+      {
+        icon: 'rocket-outline',
+        title: 'Straight-line dash',
+        text: 'Dragon Duke rockets in a straight line between the two pins, scorching buildings along the path.',
+      },
+      {
+        icon: 'locate-outline',
+        title: 'Aim through the base',
+        text: 'Pick the entry pin so the dash rakes across the defenses you want to burn — the line is what matters.',
+      },
+      {
+        icon: 'flame-outline',
+        title: 'Focus the fire',
+        text: 'Keep the dash line narrow to concentrate the fire breath on a handful of buildings instead of splitting it.',
+      },
+    ],
+    howItWorks: [
+      'Tap to place the pivot on the base center — the dash always runs through it.',
+      'Tap again to place Dragon Duke where he enters; the dash exits on the far side, mirroring across the pivot.',
+      'Drag the Duke to re-aim the line, or drag the pivot to slide it while keeping its direction.',
+      'Your plan is saved on this device automatically.',
+    ],
+  },
+};
 
 interface Point {
   x: number;
@@ -59,6 +157,8 @@ interface Point {
 
 interface SavedPlan {
   uri: string;
+  mode?: PlanMode;
+  center?: Point | null;
   start?: Point | null;
   end?: Point | null;
   pathColor?: string;
@@ -79,6 +179,37 @@ function arrowHeadPoints(ex: number, ey: number, angle: number): Point[] {
   ];
 }
 
+function ModeSwitch({ mode, onSwitch }: { mode: PlanMode; onSwitch: (m: PlanMode) => void }) {
+  return (
+    <View style={styles.modeSwitch}>
+      {MODE_KEYS.map((k) => {
+        const active = mode === k;
+        const cfg = PLAN_MODES[k];
+        return (
+          <PressableRipple
+            key={k}
+            onPress={() => onSwitch(k)}
+            style={[styles.modeOption, active && styles.modeOptionActive]}
+            accessibilityRole="button"
+            accessibilityLabel={cfg.title}
+          >
+            <View style={styles.modeOptionIconWrap}>
+              {cfg.heroIcon && <Image source={cfg.heroIcon} style={styles.modeOptionIcon} resizeMode="cover" />}
+              {cfg.equipIcon && <Image source={cfg.equipIcon} style={styles.modeOptionBadge} resizeMode="cover" />}
+            </View>
+            <Text
+              style={[styles.modeOptionText, !active && styles.modeOptionTextInactive]}
+              numberOfLines={1}
+            >
+              {cfg.title}
+            </Text>
+          </PressableRipple>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function GiantArrowScreen() {
   const { width: winW, height: winH } = useWindowDimensions();
   const { show, Dialog } = useDialog();
@@ -86,10 +217,21 @@ export default function GiantArrowScreen() {
   const [aspect, setAspect] = useState<number | null>(null);
   const [start, setStart] = useState<Point | null>(null);
   const [end, setEnd] = useState<Point | null>(null);
+  const [center, setCenter] = useState<Point | null>(null);
   const [full, setFull] = useState(false);
-  const [hint, setHint] = useState('Pick a base screenshot to plan your Giant Arrow.');
+  const [hint, setHint] = useState(PLAN_MODES['giant-arrow'].emptyHint);
   const [pathColor, setPathColor] = useState(PATH_COLORS[0]);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mode, setMode] = useState<PlanMode>('giant-arrow');
+
+  // Rocket Backpack: the dash is a line through the base center, so the exit is
+  // the Duke's position mirrored across the pivot — derived here, never user-set.
+  const derivedEnd =
+    mode === 'rocket-backpack' && center && start
+      ? { x: 2 * center.x - start.x, y: 2 * center.y - start.y }
+      : null;
+  const visualEnd = mode === 'rocket-backpack' ? derivedEnd : end;
+  const hasPins = mode === 'rocket-backpack' ? Boolean(center && start) : Boolean(start && end);
 
   useEffect(() => {
     (async () => {
@@ -99,6 +241,13 @@ export default function GiantArrowScreen() {
         const plan: SavedPlan = JSON.parse(raw);
         if (plan?.uri) {
           setUri(plan.uri);
+          const restoredMode = plan.mode === 'giant-arrow' || plan.mode === 'rocket-backpack' ? plan.mode : 'giant-arrow';
+          if (restoredMode !== 'giant-arrow') setMode(restoredMode);
+          const hasStart = restoredMode === 'rocket-backpack'
+            ? Boolean(plan.center) && Boolean(plan.start)
+            : Boolean(plan.start) && Boolean(plan.end);
+          setHint(hasStart ? PLAN_MODES[restoredMode].dragHint : PLAN_MODES[restoredMode].firstPinHint);
+          setCenter(plan.center ?? null);
           setStart(plan.start ?? null);
           setEnd(plan.end ?? null);
           if (plan.pathColor && PATH_COLORS.includes(plan.pathColor)) setPathColor(plan.pathColor);
@@ -114,8 +263,8 @@ export default function GiantArrowScreen() {
   }, [uri]);
 
   useEffect(() => {
-    if (uri) AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ uri, start, end, pathColor } as SavedPlan)).catch(() => {});
-  }, [uri, start, end, pathColor]);
+    if (uri) AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ uri, mode, center, start, end: visualEnd, pathColor } as SavedPlan)).catch(() => {});
+  }, [uri, mode, center, start, visualEnd, pathColor]);
 
   const [shareSize, setShareSize] = useState<{ width: number; height: number } | null>(null);
 
@@ -129,12 +278,12 @@ export default function GiantArrowScreen() {
       }
       await Sharing.shareAsync(snapshot, {
         mimeType: 'image/png',
-        dialogTitle: 'Share Giant Arrow plan',
+        dialogTitle: PLAN_MODES[mode].shareTitle,
       });
     } catch {
       setHint('Could not share the plan right now.');
     }
-  }, [shareSize]);
+  }, [shareSize, mode]);
 
   const onPick = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -145,17 +294,19 @@ export default function GiantArrowScreen() {
     if (result.canceled || !result.assets?.[0]) return;
     setUri(result.assets[0].uri);
     setAspect(null);
+    setCenter(null);
     setStart(null);
     setEnd(null);
     setFull(false);
-    setHint('Tap the Queen position (start).');
-  }, []);
+    setHint(PLAN_MODES[mode].firstPinHint);
+  }, [mode]);
 
   const clearMarkers = useCallback(() => {
+    setCenter(null);
     setStart(null);
     setEnd(null);
-    setHint('Tap the Queen position (start).');
-  }, []);
+    setHint(PLAN_MODES[mode].firstPinHint);
+  }, [mode]);
 
   const clearImage = useCallback(() => {
     show({
@@ -167,31 +318,66 @@ export default function GiantArrowScreen() {
           label: 'Remove',
           destructive: true,
           onPress: () => {
+            AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
             setUri(null);
             setAspect(null);
+            setCenter(null);
             setStart(null);
             setEnd(null);
             setFull(false);
-            setHint('Pick a base screenshot to plan your Giant Arrow.');
+            setHint(PLAN_MODES[mode].emptyHint);
           },
         },
       ],
     });
-  }, [show]);
+  }, [show, mode]);
 
   const handlePlace = useCallback(
     (p: Point) => {
+      if (mode === 'rocket-backpack') {
+        if (!start) {
+          setStart(p);
+          setCenter(null);
+          setEnd(null);
+          setHint(PLAN_MODES[mode].secondPinHint);
+        } else if (!center) {
+          setCenter(p);
+          setHint(PLAN_MODES[mode].dragHint);
+        } else {
+          // Both placed: tap again to reset and place fresh.
+          setCenter(null);
+          setStart(null);
+          setEnd(null);
+          setHint(PLAN_MODES[mode].firstPinHint);
+        }
+        return;
+      }
       if (!start) {
         setStart(p);
         setEnd(null);
-        setHint('Tap where the arrow should end, then drag the pins to fine-tune.');
+        setHint(PLAN_MODES[mode].secondPinHint);
       } else if (!end) {
         setEnd(p);
-        setHint('Drag either pin to adjust the path.');
+        setHint(PLAN_MODES[mode].dragHint);
       }
     },
-    [start, end],
+    [start, end, center, mode],
   );
+
+  const handleResetPivot = useCallback(() => {
+    setCenter(null);
+    setEnd(null);
+    setHint(PLAN_MODES[mode].secondPinHint);
+  }, [mode]);
+
+  const switchMode = (next: PlanMode) => {
+    if (next === mode) return;
+    setMode(next);
+    setCenter(null);
+    setStart(null);
+    setEnd(null);
+    setHint(uri ? PLAN_MODES[next].firstPinHint : PLAN_MODES[next].emptyHint);
+  };
 
   let fullW = winH;
   let fullH = fullW / (aspect ?? 1);
@@ -207,26 +393,27 @@ export default function GiantArrowScreen() {
         <View style={styles.editor}>
           <View style={styles.editorHeader}>
             <View style={styles.header}>
-              <Text style={styles.title}>Giant Arrow</Text>
-              <Text style={styles.subtitle}>Queen start → arrow target</Text>
+              <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
+              <Text style={styles.subtitle}>{PLAN_MODES[mode].subtitle}</Text>
             </View>
             <View style={styles.toolIconRow}>
               <PressableRipple
                 onPress={clearMarkers}
-                disabled={!start && !end}
-                style={[styles.iconBtn, !start && !end && styles.iconBtnDisabled]}
+                disabled={!hasPins}
+                style={[styles.iconBtn, !hasPins && styles.iconBtnDisabled]}
                 hitSlop={8}
               >
                 <Ionicons name="refresh-outline" size={16} color={Colors.textPrimary} />
               </PressableRipple>
               <PressableRipple onPress={clearImage} style={[styles.iconBtn, styles.iconBtnDanger]} hitSlop={8}>
-                <Ionicons name="trash-outline" size={16} color={ERROR_COLOR} />
+                <Ionicons name="close-circle-outline" size={17} color={ERROR_COLOR} />
               </PressableRipple>
               <Pressable onPress={() => setFull(true)} hitSlop={8} style={styles.iconBtn}>
                 <Ionicons name="expand-outline" size={16} color={Colors.textPrimary} />
               </Pressable>
             </View>
           </View>
+          <ModeSwitch mode={mode} onSwitch={switchMode} />
           <Text style={styles.hintText}>{hint}</Text>
           <View style={styles.paletteCard}>
             <PressableRipple onPress={() => setPaletteOpen((v) => !v)} hitSlop={6} style={styles.paletteHeader}>
@@ -267,9 +454,13 @@ export default function GiantArrowScreen() {
             <PlanCanvas
               uri={uri}
               aspect={aspect}
+              center={mode === 'rocket-backpack' ? center : null}
+              centered={mode === 'rocket-backpack'}
               start={start}
-              end={end}
+              end={visualEnd}
               pathColor={pathColor}
+              startIcon={PLAN_MODES[mode].heroIcon}
+              onResetCenter={handleResetPivot}
               onSetStart={setStart}
               onSetEnd={setEnd}
               onPlace={handlePlace}
@@ -288,63 +479,27 @@ export default function GiantArrowScreen() {
             </PressableRipple>
           </View>
           <View style={styles.noteCard}>
-            <Text style={styles.tipsKicker}>GIANT ARROW TIPS</Text>
-            <View style={styles.tipRow}>
-              <View style={styles.tipIcon}>
-                <Ionicons name="return-down-forward-outline" size={16} color={Colors.warning} />
+            <Text style={styles.tipsKicker}>{PLAN_MODES[mode].kicker}</Text>
+            {PLAN_MODES[mode].tips.map((tip) => (
+              <View key={tip.title} style={styles.tipRow}>
+                <View style={styles.tipIcon}>
+                  <Ionicons name={tip.icon} size={16} color={Colors.warning} />
+                </View>
+                <View style={styles.tipInfo}>
+                  <Text style={styles.tipTitle}>{tip.title}</Text>
+                  <Text style={styles.tipText}>{tip.text}</Text>
+                </View>
               </View>
-              <View style={styles.tipInfo}>
-                <Text style={styles.tipTitle}>Straight-line damage</Text>
-                <Text style={styles.tipText}>
-                  The arrow flies in a line between the two pins and damages everything along its
-                  ~2-tile-wide path.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.tipRow}>
-              <View style={styles.tipIcon}>
-                <Ionicons name="pin-outline" size={16} color={Colors.warning} />
-              </View>
-              <View style={styles.tipInfo}>
-                <Text style={styles.tipTitle}>Pin the Queen, aim the tip</Text>
-                <Text style={styles.tipText}>
-                  Place the start pin on your Queen and drag the end pin toward the buildings you
-                  want to soften.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.tipRow}>
-              <View style={styles.tipIcon}>
-                <Ionicons name="flash-outline" size={16} color={Colors.warning} />
-              </View>
-              <View style={styles.tipInfo}>
-                <Text style={styles.tipTitle}>Fewer targets, bigger hits</Text>
-                <Text style={styles.tipText}>
-                  Damage is split across everything the arrow passes over — a single building on the
-                  line takes the full hit, a crowd splits it.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.tipRow}>
-              <View style={styles.tipIcon}>
-                <Ionicons name="color-palette-outline" size={16} color={Colors.warning} />
-              </View>
-              <View style={styles.tipInfo}>
-                <Text style={styles.tipTitle}>Make it readable</Text>
-                <Text style={styles.tipText}>
-                  Pick a path color that stands out on the base theme, then share the finished plan
-                  from the buttons below.
-                </Text>
-              </View>
-            </View>
+            ))}
           </View>
         </View>
       ) : (
         <View style={styles.scroll}>
           <View style={styles.header}>
-            <Text style={styles.title}>Giant Arrow</Text>
-            <Text style={styles.subtitle}>Plan the Archer Queen skill on a base screenshot</Text>
+            <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
+            <Text style={styles.subtitle}>{PLAN_MODES[mode].emptySubtitle}</Text>
           </View>
+          <ModeSwitch mode={mode} onSwitch={switchMode} />
           <PressableRipple onPress={onPick} style={styles.uploadZone}>
             <View style={styles.uploadIcon}>
               <Ionicons name="images-outline" size={32} color={Colors.textSecondary} />
@@ -361,29 +516,12 @@ export default function GiantArrowScreen() {
           </PressableRipple>
           <View style={styles.noteCard}>
             <Text style={styles.noteTitle}>How it works</Text>
-            <View style={styles.noteLine}>
-              <Text style={styles.noteBullet}>•</Text>
-              <Text style={styles.noteBody}>
-                Tap to place the start pin where the Archer Queen stands.
-              </Text>
-            </View>
-            <View style={styles.noteLine}>
-              <Text style={styles.noteBullet}>•</Text>
-              <Text style={styles.noteBody}>
-                Tap again to set where the arrow ends — the path is a straight line between the
-                two pins.
-              </Text>
-            </View>
-            <View style={styles.noteLine}>
-              <Text style={styles.noteBullet}>•</Text>
-              <Text style={styles.noteBody}>
-                Drag either pin to fine-tune. The arrow hits buildings along a ~2 tile wide line.
-              </Text>
-            </View>
-            <View style={styles.noteLine}>
-              <Text style={styles.noteBullet}>•</Text>
-              <Text style={styles.noteBody}>Your plan is saved on this device automatically.</Text>
-            </View>
+            {PLAN_MODES[mode].howItWorks.map((line) => (
+              <View key={line} style={styles.noteLine}>
+                <Text style={styles.noteBullet}>•</Text>
+                <Text style={styles.noteBody}>{line}</Text>
+              </View>
+            ))}
           </View>
           <View style={{ flex: 1 }} />
           <PressableRipple onPress={onPick} style={[styles.primaryBtn, styles.bottomBtn]}>
@@ -405,20 +543,22 @@ export default function GiantArrowScreen() {
           <GestureHandlerRootView style={styles.fullContainer}>
             <View style={styles.fullCenter}>
               <View style={{ width: fullW, height: fullH, transform: [{ rotate: '90deg' }] }}>
-                <ZoomableCanvas>
-                  <PlanCanvas
-                    uri={uri}
-                    aspect={aspect}
-                    start={start}
-                    end={end}
-                    pathColor={pathColor}
-                    rotated
-                    onSetStart={setStart}
-                    onSetEnd={setEnd}
-                    onPlace={handlePlace}
-                    style={{ flex: 1 }}
-                  />
-                </ZoomableCanvas>
+                <PlanCanvas
+                  uri={uri}
+                  aspect={aspect}
+                  center={mode === 'rocket-backpack' ? center : null}
+                  centered={mode === 'rocket-backpack'}
+                  start={start}
+                  end={visualEnd}
+                  pathColor={pathColor}
+                  startIcon={PLAN_MODES[mode].heroIcon}
+                  rotated
+                  onResetCenter={handleResetPivot}
+                  onSetStart={setStart}
+                  onSetEnd={setEnd}
+                  onPlace={handlePlace}
+                  style={{ flex: 1 }}
+                />
               </View>
             </View>
             <SafeAreaView style={styles.fullBottomBar} edges={['bottom']}>
@@ -431,9 +571,9 @@ export default function GiantArrowScreen() {
               <View style={styles.fullBtnRow}>
                 <Pressable
                   onPress={clearMarkers}
-                  disabled={!start && !end}
+                  disabled={!hasPins}
                   hitSlop={4}
-                  style={[styles.fullControlBtn, !start && !end && styles.fullBtnDisabled]}
+                  style={[styles.fullControlBtn, !hasPins && styles.fullBtnDisabled]}
                 >
                   <Ionicons
                     name="refresh-outline"
@@ -457,97 +597,17 @@ export default function GiantArrowScreen() {
   );
 }
 
-function ZoomableCanvas({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  const pinchRef = useRef<PinchGestureHandler>(null);
-  const panRef = useRef<PanGestureHandler>(null);
-  const [scaleVal] = useState(() => new Animated.Value(1));
-  const [txVal] = useState(() => new Animated.Value(0));
-  const [tyVal] = useState(() => new Animated.Value(0));
-
-  // Refs/mirrored state are read and mutated only inside gesture event callbacks
-  // (never during render), so the react-hooks/refs render heuristic is a false positive.
-  const scale = useRef(1);
-  const tx = useRef(0);
-  const ty = useRef(0);
-  const pinchStart = useRef(1);
-  const panStart = useRef({ x: 0, y: 0 });
-
-  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-
-  const onPinchBegan = useCallback(() => {
-    pinchStart.current = scale.current;
-  }, []);
-
-  const onPinch = useCallback(
-    (e: { nativeEvent: { scale: number; focalX: number; focalY: number } }) => {
-      const newScale = clamp(pinchStart.current * e.nativeEvent.scale, 1, 4);
-      const ratio = newScale / scale.current;
-      const bound = (newScale - 1) * 240;
-      tx.current = clamp(e.nativeEvent.focalX - (e.nativeEvent.focalX - tx.current) * ratio, -bound, bound);
-      ty.current = clamp(e.nativeEvent.focalY - (e.nativeEvent.focalY - ty.current) * ratio, -bound, bound);
-      scale.current = newScale;
-      scaleVal.setValue(newScale);
-      txVal.setValue(tx.current);
-      tyVal.setValue(ty.current);
-    },
-    [scaleVal, txVal, tyVal],
-  );
-
-  const onPanBegan = useCallback(() => {
-    panStart.current = { x: tx.current, y: ty.current };
-  }, []);
-
-  const onPan = useCallback(
-    (e: { nativeEvent: { translationX: number; translationY: number } }) => {
-      const bound = (scale.current - 1) * 240;
-      tx.current = clamp(panStart.current.x + e.nativeEvent.translationX, -bound, bound);
-      ty.current = clamp(panStart.current.y + e.nativeEvent.translationY, -bound, bound);
-      txVal.setValue(tx.current);
-      tyVal.setValue(ty.current);
-    },
-    [txVal, tyVal],
-  );
-
-  return (
-    <PanGestureHandler
-      ref={panRef}
-      minPointers={2}
-      maxPointers={2}
-      simultaneousHandlers={pinchRef}
-      onGestureEvent={onPan}
-      onHandlerStateChange={(e) => {
-        if (e.nativeEvent.state === State.BEGAN) onPanBegan();
-      }}
-    >
-      <PinchGestureHandler
-        ref={pinchRef}
-        simultaneousHandlers={panRef}
-        onGestureEvent={onPinch}
-        onHandlerStateChange={(e) => {
-          if (e.nativeEvent.state === State.BEGAN) onPinchBegan();
-        }}
-      >
-        <Animated.View
-          style={[
-            { flex: 1 },
-            { transform: [{ translateX: txVal }, { translateY: tyVal }, { scale: scaleVal }] },
-            style,
-          ]}
-        >
-          {children}
-        </Animated.View>
-      </PinchGestureHandler>
-    </PanGestureHandler>
-  );
-}
-
 interface PlanCanvasProps {
   uri: string;
   aspect: number;
+  center?: Point | null;
+  centered?: boolean;
   start: Point | null;
   end: Point | null;
   pathColor: string;
+  startIcon?: ImageSourcePropType;
   rotated?: boolean;
+  onResetCenter: () => void;
   onSetStart: Dispatch<SetStateAction<Point | null>>;
   onSetEnd: Dispatch<SetStateAction<Point | null>>;
   onPlace: (p: Point) => void;
@@ -558,10 +618,14 @@ interface PlanCanvasProps {
 function PlanCanvas({
   uri,
   aspect,
+  center,
+  centered,
   start,
   end,
   pathColor,
+  startIcon,
   rotated,
+  onResetCenter,
   onSetStart,
   onSetEnd,
   onPlace,
@@ -631,6 +695,23 @@ function PlanCanvas({
       }).panHandlers,
     [width, height, onSetEnd, rotated],
   );
+  // The pivot is not draggable (keep it simple): touching it once clears it so it
+  // can be placed again. No translation — that was the source of the jerkiness.
+  const pivotPan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderRelease: () => {
+          onResetCenter();
+        },
+        onPanResponderTerminate: () => {
+          onResetCenter();
+        },
+      }).panHandlers,
+    [onResetCenter],
+  );
 /* eslint-enable react-hooks/refs */
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
@@ -699,14 +780,24 @@ function PlanCanvas({
         </Svg>
       )}
 
+      {centered && center && (
+        <View
+          {...pivotPan}
+          style={[styles.marker, { left: center.x * width - DRAG / 2, top: center.y * height - DRAG / 2 }]}
+        >
+          <View style={[styles.pivotPin, { borderColor: PIVOT_COLOR }]}>
+            <View style={[styles.pivotDot, { backgroundColor: PIVOT_COLOR }]} />
+          </View>
+        </View>
+      )}
       {start && (
         <View
           {...startPan}
           style={[styles.marker, { left: start.x * width - DRAG / 2, top: start.y * height - DRAG / 2 }]}
         >
-          <View style={[styles.markerPin, styles.markerPinQueen, { borderColor: START_COLOR }]}>
-            {QUEEN_ICON ? (
-              <Image source={QUEEN_ICON} style={styles.markerImage} resizeMode="cover" />
+          <View style={[styles.markerPin, styles.markerPinStart, { borderColor: START_COLOR }]}>
+            {startIcon ? (
+              <Image source={startIcon} style={styles.markerImage} resizeMode="cover" />
             ) : (
               <Ionicons name="person" size={10} color={START_COLOR} />
             )}
@@ -715,7 +806,7 @@ function PlanCanvas({
       )}
       {end && (
         <View
-          {...endPan}
+          {...(centered ? {} : endPan)}
           style={[
             styles.marker,
             {
@@ -824,6 +915,64 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
+  modeSwitch: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  modeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    maxWidth: '50%'
+  },
+  modeOptionActive: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+modeOptionIconWrap: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeOptionIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(10,10,10,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  modeOptionBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 13,
+    height: 13,
+    borderRadius: Radius.sm,
+    backgroundColor: 'rgba(10,10,10,0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  modeOptionText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  modeOptionTextInactive: {
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
   editorHeader: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -877,6 +1026,7 @@ const styles = StyleSheet.create({
   },
   iconBtnDanger: {
     backgroundColor: ERROR_COLOR + '20',
+    borderColor: ERROR_COLOR + '80',
   },
   iconBtnDisabled: {
     opacity: 0.35,
@@ -984,9 +1134,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  markerPinQueen: {
+  markerPinStart: {
     overflow: 'hidden',
     backgroundColor: 'rgba(10,10,10,0.8)',
+  },
+  pivotPin: {
+    width: 22,
+    height: 22,
+    borderRadius: Radius.full,
+    borderWidth: 2,
+    backgroundColor: 'rgba(10,10,10,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pivotDot: {
+    width: 9,
+    height: 9,
+    borderRadius: Radius.full,
   },
   markerImage: {
     width: '100%',
