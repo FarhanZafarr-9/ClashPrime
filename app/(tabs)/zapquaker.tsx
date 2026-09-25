@@ -220,9 +220,9 @@ export default function ZapquakerScreen() {
   const getTargetImage = (detail: { target: ZapquakeTarget; level: number }) =>
     detail.target.category === 'Heroes'
       ? (() => {
-          const url = getTroopImageUrl(detail.target.name, detail.level);
-          return url ? { uri: url } : undefined;
-        })()
+        const url = getTroopImageUrl(detail.target.name, detail.level);
+        return url ? { uri: url } : undefined;
+      })()
       : getBuildingLevelImageSource(detail.target.name, detail.level);
 
   const lightning = clampLevel(lightningOverride ?? defaultLightning, refs.lightningLevels.length || 1);
@@ -315,14 +315,14 @@ export default function ZapquakerScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refresh().catch(() => {});
+    await refresh().catch(() => { });
     setRefreshing(false);
   }, [refresh]);
 
   const noData = refs.lightningLevels.length === 0 || refs.eqLevels.length === 0;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
