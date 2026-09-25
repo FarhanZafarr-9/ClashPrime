@@ -319,8 +319,8 @@ function ChangelogBody({ expanded, onToggle }: ChangelogBodyProps) {
         return (
           <View key={entry.version} style={
             [styles.changelogSection,
-              isLatest && { borderTopLeftRadius: Radius.xl * 1.25, borderTopRightRadius: Radius.xl * 1.25 },
-              isLast && { borderBottomLeftRadius: Radius.xl * 1.25, borderBottomRightRadius: Radius.xl * 1.25 }]}>
+            isLatest && { borderTopLeftRadius: Radius.xl * 1.25, borderTopRightRadius: Radius.xl * 1.25 },
+            isLast && { borderBottomLeftRadius: Radius.xl * 1.25, borderBottomRightRadius: Radius.xl * 1.25 }]}>
             <PressableRipple
               style={styles.changelogSectionHeader}
               onPress={() => onToggle(entry.version)}
@@ -915,7 +915,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
