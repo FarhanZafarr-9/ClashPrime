@@ -65,7 +65,7 @@ export function BasesScreenSkeleton() {
 export function EventsScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         <View style={styles.header}>
           <View style={{ gap: 6 }}>
@@ -174,7 +174,7 @@ export function HomeScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         {/* Header: title + icon buttons + timestamp */}
         <View style={styles.header}>
@@ -310,7 +310,7 @@ export function MaxTimeScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 150 }}>
         {/* Header */}
         <View style={styles.header}>
@@ -389,7 +389,7 @@ export function MaxTimeScreenSkeleton() {
 export function ProfileScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         <View style={styles.header}>
           <Skeleton width={90} height={20} borderRadius={6} />
@@ -567,7 +567,7 @@ export function ArmiesScreenSkeleton() {
 export function HeroJourneyScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         {/* Header + refresh */}
         <View style={styles.heroJourneyHeader}>
@@ -922,7 +922,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    
+
   },
   heroJourneySummaryLevelGroup: {
     flexDirection: 'row',
