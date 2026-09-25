@@ -21,7 +21,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Discount System** — modal with per-scope (Buildings / Army) cost and time reduction sliders, preset pills, custom percentage input, and instant preview across all tabs
 - **Saved** — quick access to saved and favorited bases and armies, with full army cards and share actions
 - **Zapquaker** — per-building Zap + Quake combo calculator: pick buildings from game data, tune Lightning/Earthquake levels and spell capacity, flip each spell On/Off, and bring Fireball or Giant Arrow equipment (own level steppers) into the mix. Suggests the cheapest kill combos by spell slots with spell-only and equipment-lean variants and overkill %
-- **Giant Arrow** — plan the Archer Queen's arrow on a base screenshot: tap/drag start and end pins, pick a path color, zoom the fullscreen viewer (pinch + two-finger pan), auto-save/restore on device, and share the finished plan as a high-res PNG (3x capture)
+- **Giant Arrow** — plan the Archer Queen's arrow on a base screenshot: tap/drag start and end pins, pick a path color, auto-save/restore on device, and share the finished plan as a high-res PNG (3x capture) from the editor or fullscreen viewer
 - **Awards** — standalone tab with star summary and village-filtered achievement list
 - **Settings** — API token, dark mode, discounts, account management, plus a **What's New changelog** with a hero header and collapsible release cards (version chips, item counts, "Latest" badge), About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
 - **Onboarding** — guided first-run flow with an image-based Town Hall picker and an Add Account (Full Setup) flow
@@ -31,7 +31,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 ## What's New (v6.1.0)
 
 - **Zapquaker tab** — pick buildings from game data and find the cheapest Lightning + Earthquake combo that kills them. Tune spell levels, spell capacity, toggle each spell On/Off, and opt into **Fireball (Warden)** or **Giant Arrow (Queen)** equipment with their own level steppers. Combo suggestions are curated per family — cheapest spell-slot kill, spell-only zapquake, and equipment-lean variants — with overkill %.
-- **Giant Arrow tab** — plan the Archer Queen skill on a base screenshot: place and drag start/end pins, choose a path color from a collapsible swatch row (blueprint-style white/black + bold saturated tones), and open a **fullscreen viewer with pinch-zoom and two-finger pan**. Plans auto-save on device and restore on relaunch; **Share** exports a crisp 3x PNG snapshot.
+- **Giant Arrow tab** — plan the Archer Queen skill on a base screenshot: place and drag start/end pins, choose a path color from a collapsible swatch row (blueprint-style white/black + bold saturated tones), and open a **fullscreen viewer** with draggable pins. Plans auto-save on device and restore on relaunch; **Share** exports a crisp 3x PNG snapshot.
 - **Credits** — data sources under Settings → Credits are tappable with links, RoyaleAPI + Zapquaker + Otaku Planner are credited as reference sites for the new tools, and a Supercell fan-content notice was added.
 
 ## What's New (v6.0.0)

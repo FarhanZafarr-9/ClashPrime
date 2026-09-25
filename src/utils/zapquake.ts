@@ -296,6 +296,9 @@ export function computeZapquakeCombos(opts: {
   capacity: number;
   fireballDamage: number;
   giantArrowDamage: number;
+  /** Damage multiplier applied to the Giant Arrow. The only pairing in the game:
+   * ×2 vs Air Defenses. Defaults to 1. */
+  giantArrowMultiplier?: number;
   enabled: ZapquakeComboEnabled;
   refs: ZapquakeRefs;
 }): ZapquakeCombo[] {
@@ -308,7 +311,7 @@ export function computeZapquakeCombos(opts: {
   // Equipment is optional: enumerate all usable configurations so combos can use
   // Fireball alone, Giant Arrow alone, both, or none (spells only).
   const fbRaw = Math.max(0, opts.fireballDamage || 0);
-  const gaRaw = Math.max(0, opts.giantArrowDamage || 0);
+  const gaRaw = Math.max(0, opts.giantArrowDamage || 0) * (opts.giantArrowMultiplier ?? 1);
   const equipMasks = [{ fireball: 0, giantArrow: 0 }];
   if (enabled.fireball && fbRaw > 0) {
     equipMasks.push({ fireball: 1, giantArrow: 0 });

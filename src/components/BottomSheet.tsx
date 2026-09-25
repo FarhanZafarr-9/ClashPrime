@@ -130,12 +130,12 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     ...Typography.caption,
-    marginTop: 1,
+    marginTop: 4,
   },
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: Radius.full,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },

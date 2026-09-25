@@ -217,14 +217,13 @@ export default function ZapquakerScreen() {
   );
 
   const targetHP = binding?.hp ?? 0;
-  const targetImage = binding
-    ? binding.target.category === 'Heroes'
+  const getTargetImage = (detail: { target: ZapquakeTarget; level: number }) =>
+    detail.target.category === 'Heroes'
       ? (() => {
-          const url = getTroopImageUrl(binding.target.name, binding.level);
+          const url = getTroopImageUrl(detail.target.name, detail.level);
           return url ? { uri: url } : undefined;
         })()
-      : getBuildingLevelImageSource(binding.target.name, binding.level)
-    : undefined;
+      : getBuildingLevelImageSource(detail.target.name, detail.level);
 
   const lightning = clampLevel(lightningOverride ?? defaultLightning, refs.lightningLevels.length || 1);
   const eq = clampLevel(eqOverride ?? defaultEQ, refs.eqLevels.length || 1);
@@ -233,6 +232,11 @@ export default function ZapquakerScreen() {
   const fireballDamage = refs.fireballLevels[fireballLevel - 1]?.damage ?? 0;
   const giantArrowLevel = clampLevel(giantArrowLevelOverride ?? defaultGiantArrow, refs.giantArrowLevels.length || 1);
   const giantArrowDamage = refs.giantArrowLevels[giantArrowLevel - 1]?.damage ?? 0;
+
+  // The Giant Arrow deals double damage to Air Defenses — the only ×2 pairing.
+  // It applies to the building the combo is sized against (the highest-HP one).
+  const isAirDefense = binding?.target.name === 'Air Defense';
+  const effectiveGiantArrowDamage = isAirDefense ? giantArrowDamage * 2 : giantArrowDamage;
 
   // Page is state-aware: a spell you do not actually have is locked and contributes nothing.
   const lightningUnlocked = capacityInfo.sfLevel > 0;
@@ -264,11 +268,11 @@ export default function ZapquakerScreen() {
         eqLevel: eq,
         capacity,
         fireballDamage: fireballOn ? fireballDamage : 0,
-        giantArrowDamage: giantArrowOn ? giantArrowDamage : 0,
+        giantArrowDamage: giantArrowOn ? effectiveGiantArrowDamage : 0,
         enabled: { lightning: lightningOn, eq: eqOn, fireball: fireballOn, giantArrow: giantArrowOn },
         refs: effRefs,
       }),
-    [targetHP, lightning, eq, capacity, lightningOn, eqOn, fireballOn, fireballDamage, giantArrowOn, giantArrowDamage, effRefs],
+    [targetHP, lightning, eq, capacity, lightningOn, eqOn, fireballOn, fireballDamage, giantArrowOn, effectiveGiantArrowDamage, effRefs],
   );
 
   // Surface a varied set instead of only the single cheapest tier: the
@@ -429,7 +433,7 @@ export default function ZapquakerScreen() {
                   <Text style={styles.spellName}>Giant Arrow · Queen</Text>
                   <Text style={styles.spellStat}>
                     {giantArrowUnlocked
-                      ? `${giantArrowDamage.toLocaleString()} damage · once per raid`
+                      ? `${effectiveGiantArrowDamage.toLocaleString()} damage${isAirDefense ? ' · 2× vs Air Defenses' : ''} · once per raid`
                       : 'Not unlocked — equip Giant Arrow on the Queen first'}
                   </Text>
                 </View>
@@ -505,29 +509,33 @@ export default function ZapquakerScreen() {
                 <Ionicons name="chevron-down" size={16} color={Colors.textTertiary} />
               </PressableRipple>
 
-              {binding && (
-                <View style={styles.targetMetaRow}>
-                  {targetImage && (
-                    <View style={styles.targetImageWrap}>
-                      <Image source={targetImage} style={styles.targetImage} resizeMode="contain" />
+              {targetDetails.map(({ target: t, level, hp }) => {
+                const image = getTargetImage({ target: t, level });
+                return (
+                  <View key={t.name} style={styles.targetMetaRow}>
+                    {image && (
+                      <View style={styles.targetImageWrap}>
+                        <Image source={image} style={styles.targetImage} resizeMode="contain" />
+                      </View>
+                    )}
+                    <View style={[styles.spellInfo, styles.targetInfo]}>
+                      <Text style={styles.targetHP}>
+                        {hp.toLocaleString()} HP
+                      </Text>
+                      <Text style={styles.spellStat}>
+                        {t.name === binding?.target.name ? 'Highest · ' : 'Lv '}
+                        {t.category}
+                      </Text>
                     </View>
-                  )}
-                  <View style={[styles.spellInfo, styles.targetInfo]}>
-                    <Text style={styles.targetHP}>
-                      {targetHP.toLocaleString()} HP
-                    </Text>
-                    <Text style={styles.spellStat}>
-                      Highest: {binding.target.name} Lv {binding.level} · {binding.target.category}
-                    </Text>
+                    <Stepper
+                      value={level}
+                      min={1}
+                      max={t.levels.length}
+                      onChange={(v) => setLevelOverrides((prev) => ({ ...prev, [t.name]: v }))}
+                    />
                   </View>
-                  <Stepper
-                    value={binding.level}
-                    min={1}
-                    max={binding.target.levels.length}
-                    onChange={(v) => setLevelOverrides((prev) => ({ ...prev, [binding.target.name]: v }))}
-                  />
-                </View>
-              )}
+                );
+              })}
             </Card>
 
             <Card
@@ -582,6 +590,7 @@ export default function ZapquakerScreen() {
                   'The Town Hall and Clan Castle cannot be hit with Lightning at all.',
                   'Lightning always deals its full listed damage per spell.',
                   'Fireball (Warden) and Giant Arrow (Queen) are once-per-raid equipment hits that take no spell slot.',
+                  'The Giant Arrow deals double damage to Air Defenses — combos aimed at one already count the ×2 hit.',
                   'With several targets, these combos are sized against the highest-HP one.',
                 ].map((line, i) => (
                   <View key={i} style={styles.noteLine}>
@@ -887,14 +896,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    marginBottom: Spacing.sm
   },
   targetInfo: {
     justifyContent: 'center',
     gap: 6,
   },
   targetImageWrap: {
-    width: 52,
-    height: 52,
+    width: 42,
+    height: 42,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
@@ -903,8 +913,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   targetImage: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
   },
   targetHP: {
     ...Typography.headline,
@@ -944,7 +954,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   comboRowBest: {
     backgroundColor: Colors.accentGhost,
