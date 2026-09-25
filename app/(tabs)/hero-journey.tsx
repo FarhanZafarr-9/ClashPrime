@@ -343,7 +343,7 @@ export default function HeroJourneyScreen() {
   if (!journey) return <HeroJourneyScreenSkeleton />;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.scroll}
