@@ -364,7 +364,7 @@ export default function ImportExportScreen() {
         title: 'Account not attached',
         message: `This export is for ${exportTag}, which isn't one of your attached accounts. Levels will be applied to ${player.name} (${player.tag}) instead. Continue?`,
         actions: [
-          { label: 'Cancel', onPress: () => {} },
+          { label: 'Cancel', onPress: () => { } },
           { label: 'Import to active', primary: true, onPress: () => doApply(player.tag) },
         ],
       });
@@ -378,7 +378,7 @@ export default function ImportExportScreen() {
         ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept.`
         : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). This account is not active right now — the levels are saved to its cache.`,
       actions: [
-        { label: 'Cancel', onPress: () => {} },
+        { label: 'Cancel', onPress: () => { } },
         { label: 'Apply', primary: true, onPress: () => doApply(targetTag) },
       ],
     });
@@ -395,8 +395,8 @@ export default function ImportExportScreen() {
   const renderUpgradeCost = (byResource: Record<string, number> | undefined, total: number) => {
     const entries = byResource
       ? (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][]).filter(
-          ([r]) => r !== 'Unknown' && !!PACKAGE_RESOURCE_IMAGES[r],
-        )
+        ([r]) => r !== 'Unknown' && !!PACKAGE_RESOURCE_IMAGES[r],
+      )
       : [];
     if (entries.length === 0) {
       return (
@@ -556,7 +556,7 @@ export default function ImportExportScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
