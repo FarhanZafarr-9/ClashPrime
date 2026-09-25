@@ -117,7 +117,8 @@ function CollapsibleSection({
   );
 }
 
-export default function PlayerInspectScreen() {  const router = useRouter();
+export default function PlayerInspectScreen() {
+  const router = useRouter();
   const { refreshAccounts } = usePlayer();
   const params = useLocalSearchParams<{ tag?: string }>();
   const [query, setQuery] = useState(params.tag ?? '');
@@ -228,40 +229,40 @@ export default function PlayerInspectScreen() {  const router = useRouter();
     player == null
       ? []
       : [
-    {
-      title: 'PvP',
-      icon: 'trophy-outline',
-      desc: 'Attack & defense record',
-      rows: [
-        { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
-        { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
-        { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
-      ],
-    },
-    {
-      title: 'Clan',
-      icon: 'people-outline',
-      desc: 'Clan participation',
-      rows: [
-        { label: 'Donations', desc: 'Troops donated', value: player.donations, icon: 'heart-outline' },
-        { label: 'Received', desc: 'Troops received', value: player.donationsReceived, icon: 'arrow-down-outline' },
-        { label: 'Capital Gold', desc: 'Capital gold donated', value: player.clanCapitalContributions, icon: 'flag-outline' },
-      ],
-    },
-    {
-      title: 'Builder Base',
-      icon: 'hammer-outline',
-      desc: 'Builder village record',
-      rows: [
-        ...(player.builderHallLevel != null ? [{ label: 'Builder Hall', desc: 'Current hall level', value: player.builderHallLevel, icon: 'hammer-outline' as const }] : []),
-        ...(player.builderBaseTrophies != null ? [{ label: 'Builder Trophies', desc: 'Current trophy count', value: player.builderBaseTrophies, icon: 'hammer' as const }] : []),
-        ...(player.bestBuilderBaseTrophies != null ? [{ label: 'Best Builder', desc: 'All-time best', value: player.bestBuilderBaseTrophies, icon: 'trophy' as const, accentColor: Colors.warning }] : []),
-      ],
-    },
-  ];
+        {
+          title: 'PvP',
+          icon: 'trophy-outline',
+          desc: 'Attack & defense record',
+          rows: [
+            { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
+            { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
+            { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
+          ],
+        },
+        {
+          title: 'Clan',
+          icon: 'people-outline',
+          desc: 'Clan participation',
+          rows: [
+            { label: 'Donations', desc: 'Troops donated', value: player.donations, icon: 'heart-outline' },
+            { label: 'Received', desc: 'Troops received', value: player.donationsReceived, icon: 'arrow-down-outline' },
+            { label: 'Capital Gold', desc: 'Capital gold donated', value: player.clanCapitalContributions, icon: 'flag-outline' },
+          ],
+        },
+        {
+          title: 'Builder Base',
+          icon: 'hammer-outline',
+          desc: 'Builder village record',
+          rows: [
+            ...(player.builderHallLevel != null ? [{ label: 'Builder Hall', desc: 'Current hall level', value: player.builderHallLevel, icon: 'hammer-outline' as const }] : []),
+            ...(player.builderBaseTrophies != null ? [{ label: 'Builder Trophies', desc: 'Current trophy count', value: player.builderBaseTrophies, icon: 'hammer' as const }] : []),
+            ...(player.bestBuilderBaseTrophies != null ? [{ label: 'Best Builder', desc: 'All-time best', value: player.bestBuilderBaseTrophies, icon: 'trophy' as const, accentColor: Colors.warning }] : []),
+          ],
+        },
+      ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <View style={styles.header}>
         <PressableRipple style={styles.backBtn} onPress={() => router.back()} hitSlop={12} accessibilityLabel="Go back" accessibilityRole="button">
           <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
@@ -405,7 +406,7 @@ export default function PlayerInspectScreen() {  const router = useRouter();
               <CollapsibleSection
                 key={group.title}
                 isFirst={gi === 0}
-                isLast={gi === groups.length - 1  } //&& last section isnt open
+                isLast={gi === groups.length - 1} //&& last section isnt open
                 icon={group.icon}
                 title={group.title}
                 description={group.desc}
@@ -447,101 +448,101 @@ export default function PlayerInspectScreen() {  const router = useRouter();
           ) : (
             <View style={styles.armyCard}>
               <CollapsibleSection isFirst isLast={lastArmySectionKey === 'heroes'} compact title="Heroes" icon="shield-half-outline" description="Hero levels" count={heroRows.length} totalLevel={sumLevel(heroRows)} totalMax={sumMax(heroRows)}>
-            {heroRows.map((h, i) => (
-              <ItemCard
-                key={`${h.name}-${i}`}
-                name={h.name}
-                level={h.level}
-                maxLevel={h.maxLevel}
-                icon={getHeroImageUrl(h.name) || undefined}
-                isLast={i === heroRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Troops" icon="bonfire-outline" description="Troop levels" count={troopRows.length} totalLevel={sumLevel(troopRows)} totalMax={sumMax(troopRows)} isLast={lastArmySectionKey === 'troops'}>
-            {troopRows.map((t, i) => (
-              <ItemCard
-                key={`${t.name}-${i}`}
-                name={t.name}
-                level={t.level}
-                maxLevel={t.maxLevel}
-                icon={getTroopImageUrl(t.name, t.level) || undefined}
-                isLast={i === troopRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Dark Elixir" icon="water-outline" description="Dark troop levels" count={darkTroopRows.length} totalLevel={sumLevel(darkTroopRows)} totalMax={sumMax(darkTroopRows)} isLast={lastArmySectionKey === 'dark'}>
-            {darkTroopRows.map((t, i) => (
-              <ItemCard
-                key={`${t.name}-${i}`}
-                name={t.name}
-                level={t.level}
-                maxLevel={t.maxLevel}
-                icon={getTroopImageUrl(t.name, t.level) || undefined}
-                isLast={i === darkTroopRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Super Troops" icon="rocket-outline" description="Super troop levels" count={superTroopRows.length} totalLevel={sumLevel(superTroopRows)} totalMax={sumMax(superTroopRows)} isLast={lastArmySectionKey === 'super'}>
-            {superTroopRows.map((t, i) => (
-              <ItemCard
-                key={`${t.name}-${i}`}
-                name={t.name}
-                level={t.level}
-                maxLevel={t.maxLevel}
-                icon={getTroopImageUrl(t.name, t.level) || undefined}
-                isLast={i === superTroopRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Siege Machines" icon="build-outline" description="Siege levels" count={siegeRows.length} totalLevel={sumLevel(siegeRows)} totalMax={sumMax(siegeRows)} isLast={lastArmySectionKey === 'siege'}>
-            {siegeRows.map((s, i) => (
-              <ItemCard
-                key={`${s.name}-${i}`}
-                name={s.name}
-                level={s.level}
-                maxLevel={s.maxLevel}
-                icon={getTroopImageUrl(s.name, s.level) || undefined}
-                isLast={i === siegeRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Spells" icon="flash-outline" description="Spell levels" count={spellRows.length} totalLevel={sumLevel(spellRows)} totalMax={sumMax(spellRows)} isLast={lastArmySectionKey === 'spells'}>
-            {spellRows.map((s, i) => (
-              <ItemCard
-                key={`${s.name}-${i}`}
-                name={s.name}
-                level={s.level}
-                maxLevel={s.maxLevel}
-                icon={getTroopImageUrl(s.name, s.level) || undefined}
-                isLast={i === spellRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Pets" icon="paw-outline" description="Pet levels" count={petRows.length} totalLevel={sumLevel(petRows)} totalMax={sumMax(petRows)} isLast={lastArmySectionKey === 'pets'}>
-            {petRows.map((p, i) => (
-              <ItemCard
-                key={`${p.name}-${i}`}
-                name={p.name}
-                level={p.level}
-                maxLevel={p.maxLevel}
-                icon={getPetImageUrl(p.name) || undefined}
-                isLast={i === petRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
-          <CollapsibleSection compact title="Equipment" icon="hammer-outline" description="Equipment levels" count={equipRows.length} totalLevel={sumLevel(equipRows)} totalMax={sumMax(equipRows)} isLast={lastArmySectionKey === 'equip'}>
-            {equipRows.map((e, i) => (
-              <ItemCard
-                key={`${e.name}-${i}`}
-                name={e.name}
-                level={e.level}
-                maxLevel={e.maxLevel}
-                icon={getEquipmentImageUrl(e.name) || undefined}
-                isLast={i === equipRows.length - 1}
-              />
-            ))}
-          </CollapsibleSection>
+                {heroRows.map((h, i) => (
+                  <ItemCard
+                    key={`${h.name}-${i}`}
+                    name={h.name}
+                    level={h.level}
+                    maxLevel={h.maxLevel}
+                    icon={getHeroImageUrl(h.name) || undefined}
+                    isLast={i === heroRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Troops" icon="bonfire-outline" description="Troop levels" count={troopRows.length} totalLevel={sumLevel(troopRows)} totalMax={sumMax(troopRows)} isLast={lastArmySectionKey === 'troops'}>
+                {troopRows.map((t, i) => (
+                  <ItemCard
+                    key={`${t.name}-${i}`}
+                    name={t.name}
+                    level={t.level}
+                    maxLevel={t.maxLevel}
+                    icon={getTroopImageUrl(t.name, t.level) || undefined}
+                    isLast={i === troopRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Dark Elixir" icon="water-outline" description="Dark troop levels" count={darkTroopRows.length} totalLevel={sumLevel(darkTroopRows)} totalMax={sumMax(darkTroopRows)} isLast={lastArmySectionKey === 'dark'}>
+                {darkTroopRows.map((t, i) => (
+                  <ItemCard
+                    key={`${t.name}-${i}`}
+                    name={t.name}
+                    level={t.level}
+                    maxLevel={t.maxLevel}
+                    icon={getTroopImageUrl(t.name, t.level) || undefined}
+                    isLast={i === darkTroopRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Super Troops" icon="rocket-outline" description="Super troop levels" count={superTroopRows.length} totalLevel={sumLevel(superTroopRows)} totalMax={sumMax(superTroopRows)} isLast={lastArmySectionKey === 'super'}>
+                {superTroopRows.map((t, i) => (
+                  <ItemCard
+                    key={`${t.name}-${i}`}
+                    name={t.name}
+                    level={t.level}
+                    maxLevel={t.maxLevel}
+                    icon={getTroopImageUrl(t.name, t.level) || undefined}
+                    isLast={i === superTroopRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Siege Machines" icon="build-outline" description="Siege levels" count={siegeRows.length} totalLevel={sumLevel(siegeRows)} totalMax={sumMax(siegeRows)} isLast={lastArmySectionKey === 'siege'}>
+                {siegeRows.map((s, i) => (
+                  <ItemCard
+                    key={`${s.name}-${i}`}
+                    name={s.name}
+                    level={s.level}
+                    maxLevel={s.maxLevel}
+                    icon={getTroopImageUrl(s.name, s.level) || undefined}
+                    isLast={i === siegeRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Spells" icon="flash-outline" description="Spell levels" count={spellRows.length} totalLevel={sumLevel(spellRows)} totalMax={sumMax(spellRows)} isLast={lastArmySectionKey === 'spells'}>
+                {spellRows.map((s, i) => (
+                  <ItemCard
+                    key={`${s.name}-${i}`}
+                    name={s.name}
+                    level={s.level}
+                    maxLevel={s.maxLevel}
+                    icon={getTroopImageUrl(s.name, s.level) || undefined}
+                    isLast={i === spellRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Pets" icon="paw-outline" description="Pet levels" count={petRows.length} totalLevel={sumLevel(petRows)} totalMax={sumMax(petRows)} isLast={lastArmySectionKey === 'pets'}>
+                {petRows.map((p, i) => (
+                  <ItemCard
+                    key={`${p.name}-${i}`}
+                    name={p.name}
+                    level={p.level}
+                    maxLevel={p.maxLevel}
+                    icon={getPetImageUrl(p.name) || undefined}
+                    isLast={i === petRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
+              <CollapsibleSection compact title="Equipment" icon="hammer-outline" description="Equipment levels" count={equipRows.length} totalLevel={sumLevel(equipRows)} totalMax={sumMax(equipRows)} isLast={lastArmySectionKey === 'equip'}>
+                {equipRows.map((e, i) => (
+                  <ItemCard
+                    key={`${e.name}-${i}`}
+                    name={e.name}
+                    level={e.level}
+                    maxLevel={e.maxLevel}
+                    icon={getEquipmentImageUrl(e.name) || undefined}
+                    isLast={i === equipRows.length - 1}
+                  />
+                ))}
+              </CollapsibleSection>
             </View>
           )}
 
