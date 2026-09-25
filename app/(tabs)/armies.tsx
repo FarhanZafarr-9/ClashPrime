@@ -185,7 +185,7 @@ export default function ArmiesScreen() {
   }, [hasMore]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Army Library</Text>
