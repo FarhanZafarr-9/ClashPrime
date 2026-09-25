@@ -226,7 +226,7 @@ export default function BaseLibraryScreen() {
   const hallLabel = selectedVillage === 'home' ? 'TH' : 'BH';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} >
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
