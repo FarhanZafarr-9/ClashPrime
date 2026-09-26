@@ -40,7 +40,7 @@ async function downloadImage(url: string, dest: string, retries = 3): Promise<bo
       }
       writeFileSync(dest, buffer);
       return true;
-    } catch (err) {
+    } catch {
       if (attempt < retries - 1) await delay(1000);
     }
   }
@@ -53,7 +53,7 @@ function sanitizeName(name: string): string {
 
 async function main() {
   const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
-  const buildings: Array<{ name: string; imageUrl: string; levels?: Array<{ level: number; imageUrl: string }> }> = data.images;
+  const buildings: { name: string; imageUrl: string; levels?: { level: number; imageUrl: string }[] }[] = data.images;
   const urlMap = new Map<string, string>();
   for (const b of buildings) {
     if (b.levels) {

@@ -115,7 +115,7 @@ interface FandomImagesListResponse {
   query: {
     pages: Record<string, {
       title: string;
-      images?: Array<{ title: string }>;
+      images?: { title: string }[];
     }>;
   };
 }
@@ -124,7 +124,7 @@ interface ImageInfoResponse {
   query: {
     pages: Record<string, {
       title: string;
-      imageinfo?: Array<{ url: string; thumburl: string }>;
+      imageinfo?: { url: string; thumburl: string }[];
       missing?: string;
     }>;
   };

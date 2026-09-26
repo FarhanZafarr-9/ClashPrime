@@ -1,6 +1,5 @@
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { readFileSync } from 'fs';
 
 const DATA_PATH = join(__dirname, '..', 'src', 'data', 'building-images.json');
 const ASSETS_DIR = join(__dirname, '..', 'assets', 'buildings');
@@ -40,7 +39,7 @@ async function downloadImage(url: string, dest: string, retries = 3): Promise<bo
       }
       writeFileSync(dest, buffer);
       return true;
-    } catch (err) {
+    } catch {
       if (attempt < retries - 1) await delay(500);
     }
   }

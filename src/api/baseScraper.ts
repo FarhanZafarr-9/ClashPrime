@@ -112,8 +112,6 @@ async function scrapeBases(
   const cached = await getCached(village, level);
   if (cached) return cached;
 
-  const label = hallPrefix(village).toUpperCase();
-
   const allLayouts: ClashLyLayout[] = [];
   let skip = 0;
   const limit = 100;

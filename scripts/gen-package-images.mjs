@@ -1,6 +1,6 @@
 import { home, builder, magicItems as magicItemsApi } from 'clash-of-clans-data';
-import { writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
