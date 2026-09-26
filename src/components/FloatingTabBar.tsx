@@ -14,8 +14,8 @@ type IconDef = { set: 'ion' | 'mc'; name: string };
 const TAB_GROUPS: string[][] = [
   ['index', 'buildings', 'army', 'maxtime'],
   ['events', 'hero-journey', 'bases', 'armies'],
-  ['war', 'search', 'achievements', 'saved'],
-  ['zapquaker', 'giantarrow', 'bob', 'settings'],
+  ['war', 'search', 'zapquaker', 'bob'],
+  ['giantarrow', 'achievements', 'saved', 'settings'],
 ];
 
 const TAB_ICONS: Record<string, IconDef> = {
