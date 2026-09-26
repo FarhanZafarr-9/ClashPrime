@@ -5,22 +5,36 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
-  ActivityIndicator,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, clashFontFamily } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, clashFontFamily, useTheme } from '../../src/theme';
+import { Skeleton } from '../../src/components/Skeleton';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../../src/api/clash';
 import { getApiToken } from '../../src/hooks/usePlayer';
 import type { ClanWar, WarLogEntry, WarClanDetail, WarMember, WarState, ClashPlayer } from '../../src/types/clash';
 import { filterHomeTroops } from '../../src/types/clash';
 import { Card } from '../../src/components/Card';
+import { SettingRow } from '../../src/components/SettingRow';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getAllItemsAtTH } from '../../src/utils/thMaxLevels';
+
+const WAR_AUTO_REFRESH_KEY = 'clashprime_war_auto_refresh_ts';
+const WAR_AUTO_REFRESH_MS = 30 * 60 * 1000;
+
+async function getWarAutoRefreshTs(clanTag: string): Promise<number | null> {
+  const raw = await AsyncStorage.getItem(`${WAR_AUTO_REFRESH_KEY}_${clanTag}`);
+  return raw ? parseInt(raw, 10) : null;
+}
+
+async function setWarAutoRefreshTs(clanTag: string): Promise<void> {
+  await AsyncStorage.setItem(`${WAR_AUTO_REFRESH_KEY}_${clanTag}`, String(Date.now()));
+}
 
 interface WarScreenData {
   currentWar: ClanWar | null;
@@ -280,92 +294,112 @@ function WarResultBadge({ result }: { result: string }) {
 }
 
 function WarScreenSkeleton() {
+  const { colors } = useTheme();
+  const rowRadius = Radius.xl * 1.25;
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={{ width: 80, height: 28, borderRadius: 6, backgroundColor: Colors.bgSubtle }} />
+          <Skeleton width={80} height={28} borderRadius={6} />
+          <Skeleton width={28} height={28} borderRadius={6} />
         </View>
-        <View style={{ width: 140, height: 14, borderRadius: 6, backgroundColor: Colors.bgSubtle, marginTop: 4 }} />
+        <Skeleton width={140} height={14} borderRadius={4} style={{ marginTop: 4 }} />
       </View>
-      <View style={styles.scrollContent}>
-        {/* Two clan cards + VS */}
+
+      {/* Top tabs */}
+      <View style={styles.topTabs}>
+        <Skeleton height={40} borderRadius={Radius.md} style={{ flex: 1, borderTopRightRadius: Radius.sm, borderBottomRightRadius: Radius.sm }} />
+        <Skeleton height={40} borderRadius={Radius.md} style={{ flex: 1, borderTopLeftRadius: Radius.sm, borderBottomLeftRadius: Radius.sm }} />
+      </View>
+
+      <View style={styles.skeletonContent}>
+        {/* Legend card */}
+        <View style={[styles.skeletonCard, { backgroundColor: colors.bgCardHover }]}>
+          <Skeleton width={32} height={32} borderRadius={Radius.md} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Skeleton width={60} height={13} borderRadius={4} />
+            <Skeleton width={130} height={10} borderRadius={3} />
+          </View>
+          <Skeleton width={14} height={14} borderRadius={7} />
+        </View>
+
+        {/* Clan cards + VS */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-          <View style={{ flex: 1, alignItems: 'center', gap: Spacing.xs, backgroundColor: Colors.bgSubtle, borderRadius: Radius.md, padding: Spacing.md }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.border }} />
-            <View style={{ width: 80, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
-            <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+          <View style={[styles.skeletonClanCard, { backgroundColor: colors.bgCardHover }]}>
+            <Skeleton width={40} height={40} borderRadius={20} />
+            <Skeleton width={80} height={12} borderRadius={4} />
+            <Skeleton width={40} height={10} borderRadius={3} />
           </View>
           <View style={{ width: 56, alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 20, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
-            <View style={{ width: 32, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+            <Skeleton width={20} height={10} borderRadius={3} />
+            <Skeleton width={32} height={10} borderRadius={3} />
           </View>
-          <View style={{ flex: 1, alignItems: 'center', gap: Spacing.xs, backgroundColor: Colors.bgSubtle, borderRadius: Radius.md, padding: Spacing.md }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.border }} />
-            <View style={{ width: 100, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
-            <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+          <View style={[styles.skeletonClanCard, { backgroundColor: colors.bgCardHover }]}>
+            <Skeleton width={40} height={40} borderRadius={20} />
+            <Skeleton width={100} height={12} borderRadius={4} />
+            <Skeleton width={40} height={10} borderRadius={3} />
           </View>
         </View>
 
         {/* Stats table */}
-        <View style={{ borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm, overflow: 'hidden' }}>
+        <View style={[styles.skeletonGroup, { backgroundColor: colors.bgCardHover }]}>
           {[0, 1, 2].map((r) => (
-            <View key={r} style={{ flexDirection: 'row', borderBottomWidth: r < 2 ? StyleSheet.hairlineWidth : 0, borderBottomColor: Colors.border }}>
-              <View style={{ width: 76, paddingVertical: 6, paddingHorizontal: Spacing.xs, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: Colors.border }}>
-                <View style={{ width: 50, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+            <View key={r} style={[styles.skeletonTableRow, r < 2 && { borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+              <View style={{ width: 76, paddingHorizontal: Spacing.xs }}>
+                <Skeleton width={50} height={10} borderRadius={3} />
               </View>
-              <View style={{ flex: 1, paddingVertical: 6, alignItems: 'center' }}>
-                <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Skeleton width={40} height={10} borderRadius={3} />
               </View>
-              <View style={{ flex: 1, paddingVertical: 6, alignItems: 'center' }}>
-                <View style={{ width: 40, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Skeleton width={40} height={10} borderRadius={3} />
               </View>
             </View>
           ))}
         </View>
 
-        {/* Members section header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.sm }}>
-          <View style={{ width: 60, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+        {/* Members section */}
+        <View style={styles.skeletonLabel}>
+          <Skeleton width={60} height={14} borderRadius={4} />
         </View>
-
-        {/* Member rows */}
-        {[0, 1, 2].map((i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: Spacing.md, backgroundColor: Colors.bgSubtle, borderRadius: Radius.sm }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 }}>
-              <View style={{ width: 20, height: 20, borderRadius: 4, backgroundColor: Colors.border }} />
-              <View style={{ width: 100, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
+        <View style={styles.skeletonList}>
+          {/* members collapse row (expanded by default) */}
+          <View style={[styles.skeletonRow, { backgroundColor: colors.bgCardHover, borderTopLeftRadius: rowRadius, borderTopRightRadius: rowRadius }]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Skeleton width="45%" height={13} borderRadius={4} />
+              <Skeleton width="30%" height={10} borderRadius={3} />
             </View>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: Colors.border }} />
-              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: Colors.border }} />
-            </View>
+            <Skeleton width={16} height={16} borderRadius={8} />
           </View>
-        ))}
-
-        {/* War History section header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.md }}>
-          <View style={{ width: 80, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
-        </View>
-
-        {/* Pill row */}
-        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-          <View style={{ width: 80, height: 30, borderRadius: 15, backgroundColor: Colors.bgSubtle, borderWidth: 1, borderColor: Colors.border }} />
-          <View style={{ width: 60, height: 30, borderRadius: 15, backgroundColor: Colors.bgSubtle, borderWidth: 1, borderColor: Colors.border }} />
-        </View>
-
-        {/* Log entries */}
-        {[0, 1].map((i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, backgroundColor: Colors.bgSubtle, borderRadius: Radius.sm }}>
-            <View style={{ width: 28, height: 24, borderRadius: 6, backgroundColor: Colors.border }} />
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.border }} />
-            <View style={{ flex: 1, gap: 3 }}>
-              <View style={{ width: 120, height: 12, borderRadius: 6, backgroundColor: Colors.border }} />
-              <View style={{ width: 80, height: 10, borderRadius: 5, backgroundColor: Colors.border }} />
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={[styles.skeletonRow, { backgroundColor: colors.bgCardHover }, i === 2 && { borderBottomLeftRadius: rowRadius, borderBottomRightRadius: rowRadius }]}>
+              <Skeleton width={20} height={20} borderRadius={4} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Skeleton width="55%" height={12} borderRadius={4} />
+                <Skeleton width="25%" height={9} borderRadius={3} />
+              </View>
+              <Skeleton width={24} height={10} borderRadius={3} />
             </View>
-            <View style={{ width: 50, height: 14, borderRadius: 7, backgroundColor: Colors.border }} />
+          ))}
+        </View>
+
+        {/* Enemy members section (collapsed by default, so just the toggle row) */}
+        <View style={styles.skeletonLabel}>
+          <Skeleton width={90} height={14} borderRadius={4} />
+        </View>
+        <View style={styles.skeletonList}>
+          <View style={[styles.skeletonRow, { backgroundColor: colors.bgCardHover, borderRadius: rowRadius }]}>
+            <Skeleton width={32} height={32} borderRadius={Radius.md} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Skeleton width="45%" height={13} borderRadius={4} />
+              <Skeleton width="30%" height={10} borderRadius={3} />
+            </View>
+            <Skeleton width={16} height={16} borderRadius={8} />
           </View>
-        ))}
+        </View>
+
+        <View style={{ height: 120 }} />
       </View>
     </SafeAreaView>
   );
@@ -380,6 +414,7 @@ export default function WarScreen() {
   const [error, setError] = useState<string | null>(null);
   const [fetchIssues, setFetchIssues] = useState<WarIssue[]>([]);
   const [warLogView, setWarLogView] = useState<'regular' | 'cwl'>('regular');
+  const [screenView, setScreenView] = useState<'current' | 'history'>('current');
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -524,10 +559,28 @@ export default function WarScreen() {
 
   useEffect(() => {
     (async () => {
+      if (data) return;
       await loadWarData();
+      if (clanTag) await setWarAutoRefreshTs(clanTag);
       setLoading(false);
     })();
-  }, [loadWarData]);
+  }, [data, loadWarData, clanTag]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (data) {
+        (async () => {
+          if (clanTag) {
+            const lastTs = await getWarAutoRefreshTs(clanTag);
+            if (lastTs == null || Date.now() - lastTs >= WAR_AUTO_REFRESH_MS) {
+              await loadWarData(true);
+              if (clanTag) await setWarAutoRefreshTs(clanTag);
+            }
+          }
+        })();
+      }
+    }, [clanTag, data, loadWarData])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -568,7 +621,7 @@ export default function WarScreen() {
           ) : (
             <>
               <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
-              <Text style={styles.errorTitle}>Couldn't load war data</Text>
+              <Text style={styles.errorTitle}>Couldn&apos;t load war data</Text>
               <Text style={styles.errorText}>{error}</Text>
             </>
           )}
@@ -594,6 +647,23 @@ export default function WarScreen() {
         </Text>
       </View>
 
+      <View style={styles.topTabs}>
+        <PressableRipple
+          style={[styles.topTab, styles.topTabLeft, screenView === 'current' && styles.topTabActive]}
+          onPress={() => setScreenView('current')}
+        >
+          <Ionicons name="flame-outline" size={14} color={screenView === 'current' ? Colors.bg : Colors.textSecondary} />
+          <Text style={[styles.topTabText, screenView === 'current' && styles.topTabTextActive]}>Current War</Text>
+        </PressableRipple>
+        <PressableRipple
+          style={[styles.topTab, styles.topTabRight, screenView === 'history' && styles.topTabActive]}
+          onPress={() => setScreenView('history')}
+        >
+          <Ionicons name="time-outline" size={14} color={screenView === 'history' ? Colors.bg : Colors.textSecondary} />
+          <Text style={[styles.topTabText, screenView === 'history' && styles.topTabTextActive]}>War History</Text>
+        </PressableRipple>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -607,63 +677,66 @@ export default function WarScreen() {
       >
         <LegendCard />
 
-        {data?.currentWar && (
-          <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} />
-        )}
+        {screenView === 'current' ? (
+          <>
+            {data?.currentWar && (
+              <CurrentWarSection war={data.currentWar} now={now} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} />
+            )}
 
-        {!data?.currentWar && !cwlActive && (
-          <Card style={styles.noWarCard}>
-            <Ionicons name="flag-outline" size={32} color={Colors.textTertiary} />
-            <Text style={styles.noWarTitle}>No Active War</Text>
-            <Text style={styles.noWarSub}>
-              {warLogPrivate
-                ? 'War data is hidden because this clan has Public War Log turned off. A leader can enable it in Clan Settings, then pull to refresh.'
-                : showHistorySection
-                  ? 'Your clan isn\u2019t in a war right now. Recent results are below.'
-                  : 'Your clan isn\u2019t in a regular war or Clan War League right now. Results will appear here once a war ends.'}
-            </Text>
-          </Card>
-        )}
+            {!data?.currentWar && !cwlActive && (
+              <Card style={styles.noWarCard}>
+                <Ionicons name="flag-outline" size={32} color={Colors.textTertiary} />
+                <Text style={styles.noWarTitle}>No Active War</Text>
+                <Text style={styles.noWarSub}>
+                  {warLogPrivate
+                    ? 'War data is hidden because this clan has Public War Log turned off. A leader can enable it in Clan Settings, then pull to refresh.'
+                    : showHistorySection
+                      ? 'Your clan isn\u2019t in a war right now. Recent results are below.'
+                      : 'Your clan isn\u2019t in a regular war or Clan War League right now. Results will appear here once a war ends.'}
+                </Text>
+              </Card>
+            )}
 
-        {fetchIssues.length > 0 && (
-          <View style={styles.issueList}>
-            {fetchIssues.map((issue) => {
-              const isError = issue.severity === 'error';
-              const accent = isError ? Colors.destructive : Colors.warning;
-              return (
-                <View key={issue.key} style={[styles.issueBanner, isError && styles.issueBannerError]}>
-                  <Ionicons name={isError ? 'alert-circle-outline' : 'warning-outline'} size={16} color={accent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.issueTitle, { color: accent }]}>{issue.title}</Text>
-                    <Text style={styles.issueMessage}>{issue.message}</Text>
-                  </View>
+            {fetchIssues.length > 0 && (
+              <View style={styles.issueList}>
+                {fetchIssues.map((issue) => {
+                  const isError = issue.severity === 'error';
+                  const accent = isError ? Colors.destructive : Colors.warning;
+                  return (
+                    <View key={issue.key} style={[styles.issueBanner, isError && styles.issueBannerError]}>
+                      <Ionicons name={isError ? 'alert-circle-outline' : 'warning-outline'} size={16} color={accent} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.issueTitle, { color: accent }]}>{issue.title}</Text>
+                        <Text style={styles.issueMessage}>{issue.message}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {cwlLeague && cwlActive && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="flash-outline" size={16} color={Colors.textSecondary} />
+                  <Text style={styles.sectionTitle}>Clan War Leagues</Text>
                 </View>
-              );
-            })}
-          </View>
-        )}
-
-        {cwlLeague && cwlActive && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="flash-outline" size={16} color={Colors.textSecondary} />
-              <Text style={styles.sectionTitle}>Clan War Leagues</Text>
-            </View>
-            <Text style={styles.cwlSeasonText}>
-              {cwlLeague.season}{cwlLeague.season ? ' · ' : ''}{cwlLeague.wars.length} round{cwlLeague.wars.length === 1 ? '' : 's'}
-            </Text>
-            {cwlLeague.wars.map(({ round, war }, i) => (
-              <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
-            ))}
+                <Text style={styles.cwlSeasonText}>
+                  {cwlLeague.season}{cwlLeague.season ? ' · ' : ''}{cwlLeague.wars.length} round{cwlLeague.wars.length === 1 ? '' : 's'}
+                </Text>
+                {cwlLeague.wars.map(({ round, war }, i) => (
+                  <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+                ))}
+              </>
+            )}
           </>
-        )}
-
-        {showHistorySection && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
-              <Text style={styles.sectionTitle}>War History</Text>
-            </View>
+        ) : (
+          showHistorySection ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="time-outline" size={16} color={Colors.textSecondary} />
+                <Text style={styles.sectionTitle}>War History</Text>
+              </View>
 
             <View style={styles.pillRow}>
           <PressableRipple
@@ -734,16 +807,27 @@ export default function WarScreen() {
             </Card>
           )
         )}
-          </>
+            </>
+          ) : (
+            <Card style={styles.noWarCard}>
+              <Ionicons name="time-outline" size={24} color={Colors.textTertiary} />
+              <Text style={styles.noWarTitle}>No War History</Text>
+              <Text style={styles.noWarSub}>
+                Your clan\u2019s war log history will appear here once available.
+              </Text>
+            </Card>
+          )
         )}
 
-        <View style={{ height: 70 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, player, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; myPlayerTag?: string | null; player?: ClashPlayer | null; embedded?: boolean }) {
+  const [showEnemy, setShowEnemy] = useState(false);
+  const [showMine, setShowMine] = useState(true);
   const isPreparation = war.state === 'preparation';
   const isInWar = war.state === 'inWar';
   const isWarEnded = war.state === 'warEnded';
@@ -752,13 +836,19 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
   const opponent = swapped ? war.clan : war.opponent;
   const opponentNames = new Map(opponent.members.map(m => [m.tag, m.name]));
   const clanNames = new Map(clan.members.map(m => [m.tag, m.name]));
-  const defenderName = (tag: string) => opponentNames.get(tag) ?? clanNames.get(tag) ?? tag;
+  const opponentPos = new Map(opponent.members.map(m => [m.tag, m.mapPosition]));
+  const clanPos = new Map(clan.members.map(m => [m.tag, m.mapPosition]));
+  const defenderLabel = (tag: string) => {
+    const name = opponentNames.get(tag) ?? clanNames.get(tag) ?? tag;
+    const pos = opponentPos.get(tag) ?? clanPos.get(tag);
+    return pos ? `#${pos} ${name}` : name;
+  };
   const members = isCwl
     ? [...clan.members].sort((a, b) => b.townhallLevel - a.townhallLevel)
-    : clan.members;
+    : [...clan.members].sort((a, b) => a.mapPosition - b.mapPosition);
   const opponentMembers = isCwl
     ? [...opponent.members].sort((a, b) => b.townhallLevel - a.townhallLevel)
-    : opponent.members;
+    : [...opponent.members].sort((a, b) => a.mapPosition - b.mapPosition);
 
   const status = STATUS_CONFIG[war.state] ?? STATUS_CONFIG.notInWar;
   const clanStars = clan.stars ?? 0;
@@ -857,23 +947,42 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
 
       {!isPreparation && (
         <View style={styles.warTable}>
-          <View style={styles.warTableRow}>
-            <Text style={[styles.warTableHead, { width: 76, flex: 0 }]} />
-            <Text style={[styles.warTableCell, styles.warTableHead]}>{clan.name}</Text>
-            <Text style={[styles.warTableCell, styles.warTableHead]}>{opponent.name}</Text>
+          <View style={styles.warTableHeadRow}>
+            <View style={styles.warTableHeadBlank} />
+            <View style={styles.warTableHeadClan}>
+              {clan.badgeUrls?.medium && (
+                <Image source={{ uri: clan.badgeUrls.medium }} style={styles.warTableBadge} />
+              )}
+              <Text style={styles.warTableHead} numberOfLines={1}>{clan.name}</Text>
+            </View>
+            <View style={styles.warTableHeadClan}>
+              {opponent.badgeUrls?.medium && (
+                <Image source={{ uri: opponent.badgeUrls.medium }} style={styles.warTableBadge} />
+              )}
+              <Text style={styles.warTableHead} numberOfLines={1}>{opponent.name}</Text>
+            </View>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt]}>
-            <Text style={styles.warTableLabel}>Stars</Text>
-            <Text style={[styles.warTableCell, clanStars > oppStars && styles.warTableCellWin]}>{clan.stars}</Text>
-            <Text style={[styles.warTableCell, oppStars > clanStars && styles.warTableCellWin]}>{opponent.stars}</Text>
+            <View style={styles.warTableLabelWrap}>
+              <Ionicons name="star-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.warTableLabel}>Stars</Text>
+            </View>
+            <Text style={[styles.warTableCell, styles.warTableCellStrong, clanStars > oppStars && styles.warTableCellWin]}>{clan.stars}</Text>
+            <Text style={[styles.warTableCell, styles.warTableCellStrong, oppStars > clanStars && styles.warTableCellWin]}>{opponent.stars}</Text>
           </View>
           <View style={styles.warTableRow}>
-            <Text style={styles.warTableLabel}>Destruction</Text>
+            <View style={styles.warTableLabelWrap}>
+              <Ionicons name="flame-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.warTableLabel}>Destruction</Text>
+            </View>
             <Text style={styles.warTableCell}>{clan.destructionPercentage != null ? clan.destructionPercentage.toFixed(1) : '—'}%</Text>
             <Text style={styles.warTableCell}>{opponent.destructionPercentage != null ? opponent.destructionPercentage.toFixed(1) : '—'}%</Text>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt, { borderBottomWidth: 0 }]}>
-            <Text style={styles.warTableLabel}>Attacks</Text>
+            <View style={styles.warTableLabelWrap}>
+              <Ionicons name="flash-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.warTableLabel}>Attacks</Text>
+            </View>
             <Text style={styles.warTableCell}>{clan.attacks ?? '—'}/{isCwl ? war.teamSize : war.teamSize * 2}</Text>
             <Text style={styles.warTableCell}>{opponent.attacks ?? '—'}/{isCwl ? war.teamSize : war.teamSize * 2}</Text>
           </View>
@@ -890,21 +999,53 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
             <Ionicons name="people-outline" size={16} color={Colors.textSecondary} />
             <Text style={styles.sectionTitle}>Members</Text>
           </View>
-          <View style={styles.memberList}>
-            {members.map((m, i) => (
-              <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isFirst={i === 0} isLast={i === members.length - 1} />
-            ))}
+          <View style={{ marginBottom: Spacing.xs }}>
+            <SettingRow
+              icon="people-outline"
+              title={showMine ? 'Hide clan members' : 'Show clan members'}
+              desc={`${members.length} member${members.length === 1 ? '' : 's'}`}
+              onPress={() => setShowMine((v) => !v)}
+              compact
+              isFirst
+              isLast={!showMine}
+            >
+              <Ionicons name={showMine ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
+            </SettingRow>
           </View>
+          {showMine && (
+            <View style={styles.memberList}>
+              {members.map((m, i) => (
+                <MemberRow key={m.tag} member={m} defenderName={defenderLabel} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isLast={i === members.length - 1} />
+              ))}
+            </View>
+          )}
 
           <View style={styles.sectionHeader}>
             <Ionicons name="shield-outline" size={16} color={Colors.textSecondary} />
             <Text style={styles.sectionTitle}>Enemy Members</Text>
           </View>
-          <View style={styles.memberList}>
-            {opponentMembers.map((m, i) => (
-              <MemberRow key={m.tag} member={m} defenderName={defenderName} isCwl={isCwl} isMine={false} isFirst={i === 0} isLast={i === opponentMembers.length - 1} />
-            ))}
+          <View style={{ marginBottom: Spacing.xs }}>
+            <SettingRow
+              icon="shield-outline"
+              title={showEnemy ? 'Hide enemy members' : 'Show enemy members'}
+              desc={`${opponentMembers.length} member${opponentMembers.length === 1 ? '' : 's'}`}
+              onPress={() => setShowEnemy((v) => !v)}
+              compact
+              isFirst
+              isLast={!showEnemy}
+            >
+              <Ionicons name={showEnemy ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
+            </SettingRow>
           </View>
+          {showEnemy && (
+            <React.Fragment>
+              <View style={styles.memberList}>
+                {opponentMembers.map((m, i) => (
+                  <MemberRow key={m.tag} member={m} defenderName={defenderLabel} isCwl={isCwl} isMine={false} isLast={i === opponentMembers.length - 1} />
+                ))}
+              </View>
+            </React.Fragment>
+          )}
         </>
       )}
     </View>
@@ -1048,12 +1189,14 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
               <Text style={[styles.thBadgeText, isMine && styles.thBadgeTextMine]}>{member.townhallLevel}</Text>
             )}
           </View>
-          {isMine && (
-            <View style={styles.youPill}>
-              <Text style={styles.youPillText}>You</Text>
+          <View style={styles.memberInfo}>
+            <Text style={[styles.memberName, isMine && styles.memberNameMine]} numberOfLines={1}>{member.name}</Text>
+            <View style={styles.memberSubRow}>
+              <Text style={[styles.memberPosition, isMine && styles.memberPositionMine]}>#{member.mapPosition}</Text>
+              <View style={styles.memberSubDot} />
+              <Text style={[styles.memberTh, isMine && styles.memberThMine]}>TH{member.townhallLevel}</Text>
             </View>
-          )}
-          <Text style={[styles.memberName, isMine && styles.memberNameMine]} numberOfLines={1}>{member.name}</Text>
+          </View>
         </View>
         <View style={styles.memberRight}>
           <Ionicons
@@ -1089,12 +1232,13 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
             })}
           </View>
           <PressableRipple
-            style={styles.memberInspectBtn}
+            style={[styles.memberInspectBtn, isMine && styles.memberInspectBtnDisabled]}
             onPress={() => router.push({ pathname: '/player', params: { tag: member.tag } })}
             hitSlop={6}
+            disabled={isMine}
             accessibilityLabel={`Inspect ${member.name}`}
           >
-            <Ionicons name="search-outline" size={14} color={Colors.textTertiary} />
+            <Ionicons name="search-outline" size={14} color={isMine ? Colors.border : Colors.textTertiary} />
           </PressableRipple>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
         </View>
@@ -1299,7 +1443,7 @@ function AttackPlanCard({ plan }: { plan: AttackPlan }) {
             </View>
           ))}
           <Text style={styles.planNote}>
-            Heuristic based on TH difference and your offense — defense strength isn't available from the API.
+            Heuristic based on TH difference and your offense — defense strength isn&apos;t available from the API.
           </Text>
         </View>
       )}
@@ -1352,23 +1496,42 @@ function WarLogRow({ entry, isFirst, isLast }: { entry: WarLogEntry; isFirst?: b
       </PressableRipple>
       {expanded && (
         <View style={[styles.warTable, styles.warTableExpanded, { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }]}>
-          <View style={styles.warTableRow}>
-            <Text style={[styles.warTableHead, { width: 76, flex: 0 }]} />
-            <Text style={[styles.warTableCell, styles.warTableHead]}>{entry.clan.name}</Text>
-            <Text style={[styles.warTableCell, styles.warTableHead]}>{entry.opponent.name}</Text>
+          <View style={styles.warTableHeadRow}>
+            <View style={styles.warTableHeadBlank} />
+            <View style={styles.warTableHeadClan}>
+              {entry.clan.badgeUrls?.medium && (
+                <Image source={{ uri: entry.clan.badgeUrls.medium }} style={styles.warTableBadge} />
+              )}
+              <Text style={styles.warTableHead} numberOfLines={1}>{entry.clan.name}</Text>
+            </View>
+            <View style={styles.warTableHeadClan}>
+              {entry.opponent.badgeUrls?.medium && (
+                <Image source={{ uri: entry.opponent.badgeUrls.medium }} style={styles.warTableBadge} />
+              )}
+              <Text style={styles.warTableHead} numberOfLines={1}>{entry.opponent.name}</Text>
+            </View>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt]}>
-            <Text style={styles.warTableLabel}>Stars</Text>
-            <Text style={[styles.warTableCell, (entry.clan.stars || 0) > (entry.opponent.stars || 0) && styles.warTableCellWin]}>{entry.clan.stars ?? '—'}</Text>
-            <Text style={[styles.warTableCell, (entry.opponent.stars || 0) > (entry.clan.stars || 0) && styles.warTableCellWin]}>{entry.opponent.stars ?? '—'}</Text>
+            <View style={styles.warTableLabelWrap}>
+              <Ionicons name="star-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.warTableLabel}>Stars</Text>
+            </View>
+            <Text style={[styles.warTableCell, styles.warTableCellStrong, (entry.clan.stars || 0) > (entry.opponent.stars || 0) && styles.warTableCellWin]}>{entry.clan.stars ?? '—'}</Text>
+            <Text style={[styles.warTableCell, styles.warTableCellStrong, (entry.opponent.stars || 0) > (entry.clan.stars || 0) && styles.warTableCellWin]}>{entry.opponent.stars ?? '—'}</Text>
           </View>
           <View style={styles.warTableRow}>
-            <Text style={styles.warTableLabel}>Destruction</Text>
+            <View style={styles.warTableLabelWrap}>
+              <Ionicons name="flame-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.warTableLabel}>Destruction</Text>
+            </View>
             <Text style={styles.warTableCell}>{entry.clan.destructionPercentage?.toFixed(1) ?? '—'}%</Text>
             <Text style={styles.warTableCell}>{entry.opponent.destructionPercentage?.toFixed(1) ?? '—'}%</Text>
           </View>
           <View style={[styles.warTableRow, styles.warTableRowAlt, { borderBottomWidth: 0 }]}>
-            <Text style={styles.warTableLabel}>Attacks</Text>
+            <View style={styles.warTableLabelWrap}>
+              <Ionicons name="flash-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.warTableLabel}>Attacks</Text>
+            </View>
             <Text style={styles.warTableCell}>{entry.clan.attacks ?? '—'}</Text>
             <Text style={styles.warTableCell}>{entry.opponent.attacks ?? '—'}</Text>
           </View>
@@ -1403,6 +1566,47 @@ const styles = StyleSheet.create({
   retryText: { ...Typography.caption, color: Colors.textPrimary, fontWeight: '600' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.md, marginBottom: Spacing.sm },
   sectionTitle: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  skeletonContent: { paddingHorizontal: Spacing.base, paddingTop: Spacing.md, gap: Spacing.sm },
+  skeletonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+  },
+  skeletonClanCard: {
+    flex: 1,
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+  },
+  skeletonGroup: {
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+  },
+  skeletonTableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  skeletonLabel: {
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  skeletonList: {
+    gap: Spacing.xs,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.sm,
+  },
   emptyText: { ...Typography.body, color: Colors.textMuted, textAlign: 'center', paddingVertical: Spacing.lg },
 
   noWarCard: { alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
@@ -1411,6 +1615,47 @@ const styles = StyleSheet.create({
   pillRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
+  },
+  topTabs: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.md,
+  },
+  topTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  topTabLeft: {
+    borderTopLeftRadius: Radius.md,
+    borderBottomLeftRadius: Radius.md,
+    borderTopRightRadius: Radius.sm,
+    borderBottomRightRadius: Radius.sm,
+  },
+  topTabRight: {
+    borderTopLeftRadius: Radius.sm,
+    borderBottomLeftRadius: Radius.sm,
+    borderTopRightRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+  },
+  topTabActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  topTabText: {
+    ...Typography.subhead,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  topTabTextActive: {
+    color: Colors.bg,
   },
   pill: {
     flexDirection: 'row',
@@ -1545,15 +1790,35 @@ const styles = StyleSheet.create({
   warTableRowAlt: {
     backgroundColor: Colors.bgCard,
   },
-  warTableHead: {
+  warTableHeadRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.bgSubtle,
+  },
+  warTableHeadBlank: {
+    width: 108,
+  },
+  warTableHeadClan: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.xs,
+  },
+  warTableBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+  },
+  warTableHead: {
+    flexShrink: 1,
     ...Typography.caption,
     color: Colors.textMuted,
     fontWeight: '600',
-    paddingVertical: 6,
-    paddingHorizontal: Spacing.xs,
     textAlign: 'center',
-    backgroundColor: Colors.bgSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     fontSize: 9,
@@ -1566,18 +1831,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
   },
+  warTableCellStrong: {
+    ...Typography.body,
+    fontSize: 14,
+    fontWeight: '700',
+  },
   warTableCellWin: { color: '#4CAF50', fontWeight: '700' },
-  warTableLabel: {
-    width: 82,
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 10,
+  warTableLabelWrap: {
+    width: 108,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 4,
     paddingVertical: 6,
     paddingLeft: Spacing.md,
     paddingRight: Spacing.xs,
-    textAlign: 'left',
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: Colors.border,
+  },
+  warTableLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+    flexShrink: 0,
+    textAlign: 'left',
   },
   prepText: { ...Typography.body, color: Colors.textPrimary, fontWeight: '600', marginTop: Spacing.xs },
   prepSub: { ...Typography.caption, color: Colors.textMuted },
@@ -1616,20 +1893,15 @@ const styles = StyleSheet.create({
   },
   thBadgeText: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   thBadgeTextMine: { color: Colors.textPrimary },
-  youPill: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.bg,
-  },
-  youPillText: {
-    ...Typography.caption,
-    color: Colors.textPrimary,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  memberName: { ...Typography.subhead, color: Colors.textPrimary, flex: 1 },
+  memberName: { ...Typography.subhead, color: Colors.textPrimary, flexShrink: 1 },
   memberNameMine: { color: Colors.bg, fontWeight: '700' },
+  memberInfo: { flex: 1, gap: 2, minWidth: 0 },
+  memberSubRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  memberPosition: { ...Typography.caption, color: Colors.textTertiary, fontSize: 11 },
+  memberPositionMine: { color: Colors.bg, opacity: 0.75 },
+  memberSubDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: Colors.border },
+  memberTh: { ...Typography.caption, color: Colors.textTertiary, fontSize: 11 },
+  memberThMine: { color: Colors.bg, opacity: 0.75 },
   memberRight: { flexDirection: 'row', gap: 5, alignItems: 'center' },
   memberInspectBtn: {
     width: 26,
@@ -1638,6 +1910,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  memberInspectBtnDisabled: {
+    backgroundColor: 'transparent',
   },
   memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border },
   attackDots: { flexDirection: 'row', gap: 6 },
@@ -1741,12 +2016,13 @@ const styles = StyleSheet.create({
   memberAttackOrder: {
     width: 18,
     height: 18,
-    borderRadius: Radius.sm,
+    borderRadius: 4,
     backgroundColor: Colors.bgCardHover,
     color: Colors.textMuted,
     fontSize: 9,
     fontWeight: '700',
     textAlign: 'center',
+    textAlignVertical: 'center',
     lineHeight: 18,
     overflow: 'hidden',
   },
