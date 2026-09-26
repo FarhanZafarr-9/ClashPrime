@@ -91,8 +91,6 @@ export function useTheme() {
   useEffect(() => {
     const l = () => setDark(isDarkTheme);
     listeners.add(l);
-    // Sync initial state
-    setDark(isDarkTheme);
     return () => {
       listeners.delete(l);
     };
@@ -170,8 +168,6 @@ export function useClashFontPref() {
   useEffect(() => {
     const l = () => setPref(clashFontPref);
     listeners.add(l);
-    // Sync initial state
-    setPref(clashFontPref);
     return () => {
       listeners.delete(l);
     };
