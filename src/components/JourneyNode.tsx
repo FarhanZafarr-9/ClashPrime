@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, Animated, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../theme';
+import { Colors, Spacing, Radius } from '../theme';
 import PressableRipple from './PressableRipple';
-import { ItemCard } from './ItemCard';
 import { formatTimeShort, formatCostBreakdown } from '../utils/upgradeCosts';
 import type { ThJourneyStep, ThJourneyItem, ThJourneyLevelUp } from '../utils/thJourney';
 
@@ -28,66 +27,6 @@ const FILTER_OPTIONS = [
   { key: 'building-ups', label: 'Building Ups', icon: 'arrow-up-circle-outline' },
   { key: 'army-ups', label: 'Army Ups', icon: 'arrow-up-circle-outline' },
 ];
-
-function PipelineRing({ pct, color, size = 36 }: { pct: number; color: string; size?: number }) {
-  const circumference = Math.PI * 2 * (size / 2 - 3);
-  const strokeDashoffset = circumference * (1 - pct / 100);
-  return (
-    <View style={{ width: size, height: size }}>
-      <Animated.View
-        style={[
-          styles.ringSvg,
-          {
-            width: size,
-            height: size,
-            transform: [{ rotate: '-90deg' }],
-          },
-        ]}
-      >
-        <View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: 3,
-            borderColor: color + '33',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-          }}
-        />
-        <View
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: 3,
-            borderStyle: 'solid',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            transform: [{ rotate: '-90deg' }],
-          }}
-        >
-          <View
-            style={{
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              borderWidth: 3,
-              borderColor: 'transparent',
-              borderTopColor: color,
-              borderRightColor: color,
-              position: 'absolute',
-              top: 0,
-              left: 0,
-            }}
-          />
-        </View>
-      </Animated.View>
-    </View>
-  );
-}
 
 function CategorySection({
   title,
@@ -196,7 +135,7 @@ export function JourneyNode({ step, index, isFirst, isLast, filters, onFilterCha
     );
   };
 
-  const { summary, detail, cumulative, th, isCurrent, isMax } = step;
+  const { summary, detail, th, isCurrent, isMax } = step;
   const totalTime = summary.totalBuildTimeSec + summary.totalResearchTimeSec;
   const hasContent = totalTime > 0 || summary.totalBuildCost > 0 || summary.totalResearchCost > 0;
 
@@ -627,10 +566,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textSecondary,
     fontFamily: 'monospace',
-  },
-  ringSvg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
   },
 });

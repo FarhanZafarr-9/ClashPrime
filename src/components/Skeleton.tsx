@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function Skeleton({ width, height, borderRadius = 4, style }: Props) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
+  const [opacity] = useState(() => new Animated.Value(0.3));
   const { colors } = useTheme();
 
   useEffect(() => {

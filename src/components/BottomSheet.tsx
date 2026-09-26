@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Modal, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, useTheme } from '../theme';
+import { Typography, Spacing, Radius, useTheme } from '../theme';
 
 interface BottomSheetProps {
   visible: boolean;

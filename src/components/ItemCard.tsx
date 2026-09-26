@@ -20,7 +20,7 @@ interface Props {
   onPress?: () => void;
   locked?: boolean;
   isFirst?: boolean;
-  isLast?: Boolean;
+  isLast?: boolean;
 }
 
 export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabel, costResources, timeLabel, icon, iconSource, onPress, locked, isFirst, isLast }: Props) {

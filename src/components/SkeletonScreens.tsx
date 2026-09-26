@@ -4,18 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Skeleton } from './Skeleton';
 import { Colors, Spacing, Radius, useTheme } from '../theme';
 
-// Bottom nav skeleton — 6 icons matching the tab count
-function NavBarSkeleton({ colors }: { colors: typeof Colors }) {
-  return (
-    <View style={[styles.navBar, { backgroundColor: colors.bgElevated, borderTopColor: colors.border }]}>
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <Skeleton key={i} width={28} height={28} borderRadius={14} />
-      ))}
-    </View>
-  );
-
-}
-
 // ─── Bases tab skeleton ───────────────────────────────────────────────────────
 export function BasesScreenSkeleton() {
   const { colors } = useTheme();
@@ -773,20 +761,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     borderColor: Colors.border,
     padding: Spacing.base,
-  },
-  navBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 64,
-    backgroundColor: Colors.bgElevated,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: Spacing.base,
   },
   maxTimeHeroCard: {
     marginHorizontal: Spacing.base,

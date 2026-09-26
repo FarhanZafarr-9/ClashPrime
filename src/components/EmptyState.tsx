@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Typography, Spacing, Radius } from '../theme';
+import { Colors, Typography, Spacing } from '../theme';
 
 interface Props {
   icon: string;
