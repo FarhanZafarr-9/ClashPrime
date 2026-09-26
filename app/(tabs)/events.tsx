@@ -54,11 +54,11 @@ export default function EventsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [, setTick] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    intervalRef.current = setInterval(() => setTick((t) => t + 1), 60000);
+    intervalRef.current = setInterval(() => setNow(Date.now()), 60000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
 
@@ -202,7 +202,7 @@ export default function EventsScreen() {
                   <Text style={styles.sectionTitle}>Active Now</Text>
                 </View>
                 {activeEvents.map((event) => (
-                  <EventCard key={event.name} event={event} featured />
+                  <EventCard key={event.name} event={event} featured now={now} />
                 ))}
               </>
             )}
@@ -214,7 +214,7 @@ export default function EventsScreen() {
                   <Text style={styles.sectionTitle}>Upcoming</Text>
                 </View>
                 {upcomingEvents.map((event) => (
-                  <EventCard key={event.name} event={event} />
+                  <EventCard key={event.name} event={event} now={now} />
                 ))}
               </>
             )}
@@ -226,7 +226,7 @@ export default function EventsScreen() {
                   <Text style={styles.sectionTitle}>Recently Ended</Text>
                 </View>
                 {endedEvents.map((event) => (
-                  <EventCard key={event.name} event={event} ended />
+                  <EventCard key={event.name} event={event} ended now={now} />
                 ))}
               </>
             )}
@@ -245,7 +245,7 @@ export default function EventsScreen() {
                   <Text style={styles.sectionTitle}>Latest News</Text>
                 </View>
                 {news.slice(0, 15).map((item) => (
-                  <NewsCard key={item.link} item={item} />
+                  <NewsCard key={item.link} item={item} now={now} />
                 ))}
               </>
             )}
@@ -258,7 +258,7 @@ export default function EventsScreen() {
   );
 }
 
-function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: boolean; ended?: boolean }) {
+function EventCard({ event, featured, ended, now }: { event: ClashEvent; featured?: boolean; ended?: boolean; now: number }) {
   const icon = getEventIcon(event.name);
   const countdown = event.remainingSeconds > 0 ? formatCountdown(event.remainingSeconds) : null;
   const totalDuration = 7 * 86400;
@@ -293,7 +293,7 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
       <View style={[styles.eventFooter, featured && styles.eventFooterFeatured]}>
         <Ionicons name="time-outline" size={12} color={featured ? Colors.bg : Colors.textMuted} />
         <Text style={[styles.eventDate, featured && styles.eventDateFeatured]}>
-          {ended ? 'Ended' : featured ? 'Ends' : 'Starts'} {new Date(featured ? event.endDate : Date.now() + event.remainingSeconds * 1000).toLocaleDateString('en-US', {
+          {ended ? 'Ended' : featured ? 'Ends' : 'Starts'} {new Date(featured ? event.endDate : now + event.remainingSeconds * 1000).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -304,8 +304,8 @@ function EventCard({ event, featured, ended }: { event: ClashEvent; featured?: b
   );
 }
 
-function NewsCard({ item }: { item: NewsItem }) {
-  const daysAgo = Math.floor((Date.now() - item.pubDate) / 86400000);
+function NewsCard({ item, now }: { item: NewsItem; now: number }) {
+  const daysAgo = Math.floor((now - item.pubDate) / 86400000);
   const dateLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
 
   return (

@@ -19,7 +19,7 @@ import type { Village } from '../../src/types/clash';
 type AchievementVillageFilter = 'all' | Village;
 
 export default function AchievementsScreen() {
-  const { player, loading, refresh } = usePlayer();
+  const { player, loading } = usePlayer();
   const { colors } = useTheme();
   const [achievementVillageFilter, setAchievementVillageFilter] = useState<AchievementVillageFilter>('all');
   const [expandedAchievement, setExpandedAchievement] = useState<string | null>(null);

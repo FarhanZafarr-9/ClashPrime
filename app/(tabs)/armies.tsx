@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -119,8 +119,13 @@ export default function ArmiesScreen() {
   }, []);
 
   useEffect(() => {
-    fetchArmies();
-    loadSavedData();
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      await Promise.all([fetchArmies(), loadSavedData()]);
+    })();
+    return () => { cancelled = true; };
   }, [fetchArmies, loadSavedData]);
 
   const handleArmyFavorite = async (id: number) => {
@@ -165,10 +170,6 @@ export default function ArmiesScreen() {
       // Share sheet dismissed — no action needed.
     }
   };
-
-  React.useEffect(() => {
-    setDisplayCount(PAGE_SIZE);
-  }, []);
 
   const thArmies = armies.filter((a) => a.townHall === thLevel).sort((a, b) => b.score - a.score);
   const currentArmies = selectedTag === 'All'
@@ -302,7 +303,7 @@ export default function ArmiesScreen() {
               </View>
             )}
             {currentArmies.length > 0 && !hasMore && (
-              <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You've reached the end</Text>
+              <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You&apos;ve reached the end</Text>
             )}
             <View style={{ height: 100 }} />
           </ScrollView>

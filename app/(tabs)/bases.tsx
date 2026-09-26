@@ -23,7 +23,6 @@ import {
   getSavedBases,
   getFavorites,
   saveBase,
-  removeBase,
   toggleFavorite,
 } from '../../src/hooks/usePlayer';
 import type { SavedBase } from '../../src/hooks/usePlayer';
@@ -95,8 +94,13 @@ export default function BaseLibraryScreen() {
   }, []);
 
   useEffect(() => {
-    fetchBases();
-    loadSavedData();
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      await Promise.all([fetchBases(), loadSavedData()]);
+    })();
+    return () => { cancelled = true; };
   }, [fetchBases, loadSavedData]);
 
   const allBases = useMemo(() => {
@@ -145,11 +149,6 @@ export default function BaseLibraryScreen() {
     loadSavedData();
   };
 
-  const handleRemoveSaved = async (id: string) => {
-    await removeBase(id);
-    loadSavedData();
-  };
-
   const handleCopy = (base: ScrapedBase) => {
     if (base.game_copy_link) {
       Linking.openURL(base.game_copy_link);
@@ -168,9 +167,11 @@ export default function BaseLibraryScreen() {
     }
   };
 
-  React.useEffect(() => {
+  const [prevResetCat, setPrevResetCat] = useState(selectedCategory);
+  if (prevResetCat !== selectedCategory) {
+    setPrevResetCat(selectedCategory);
     setDisplayCount(PAGE_SIZE);
-  }, [selectedCategory]);
+  }
 
   const currentBases = filteredBases;
 
@@ -365,7 +366,7 @@ export default function BaseLibraryScreen() {
               </View>
             )}
             {totalBases > 0 && !hasMore && (
-              <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You've reached the end</Text>
+              <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You&apos;ve reached the end</Text>
             )}
             <View style={{ height: 100 }} />
           </ScrollView>

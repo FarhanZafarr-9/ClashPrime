@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -1203,42 +1203,45 @@ export default function BuildingsScreen() {
   const [selectedCat, setSelectedCat] = useState(initialCat && initialCat !== 'Builder Base' ? initialCat : '');
   const [sheetName, setSheetName] = useState<string | null>(null);
 
-  // Close any open sheet if the active category or village changes (the section
-  // may no longer exist in the list, e.g. switching between Home and Builder Base).
-  useEffect(() => {
+  const [prevSheetScope, setPrevSheetScope] = useState(`${initialCat === 'Builder Base' ? 'builder' : 'home'}|${initialCat && initialCat !== 'Builder Base' ? initialCat : ''}`);
+  const sheetScope = `${village}|${selectedCat}`;
+  if (sheetScope !== prevSheetScope) {
+    setPrevSheetScope(sheetScope);
     setSheetName(null);
-  }, [selectedCat, village]);
+  }
 
   const showBB = th >= 6;
   const isBB = village === 'builder' && showBB;
   const activeData = isBB ? bbCategories : categories;
   const levelKey = isBB ? bh : th;
 
-  const availableCats = SHOW_CATEGORIES.filter((cat) => {
+  const availableCats = useMemo(() => SHOW_CATEGORIES.filter((cat) => {
     const items = activeData[cat];
     if (!items) return false;
     return Object.entries(items).some(([, data]) => {
       const entry = data[String(levelKey)];
       return entry != null && (entry.level ?? 0) > 0;
     });
-  });
+  }), [activeData, levelKey]);
 
   const activeCat = selectedCat && availableCats.includes(selectedCat)
     ? selectedCat
     : availableCats[0] || '';
 
-  useEffect(() => {
+  const [prevInitialCat, setPrevInitialCat] = useState(initialCat);
+  if (initialCat !== prevInitialCat) {
+    setPrevInitialCat(initialCat);
     if (initialCat && initialCat !== 'Builder Base' && availableCats.includes(initialCat)) {
       setSelectedCat(initialCat);
     }
-  }, [initialCat, th]);
+  }
 
-  const entries = activeCat
+  const entries = useMemo(() => activeCat
     ? Object.entries(activeData[activeCat] ?? {}).filter(([, data]) => {
       const entry = data[String(levelKey)];
       return entry != null && (entry.level ?? 0) > 0;
     })
-    : [];
+    : [], [activeCat, activeData, levelKey]);
 
   // Flatten each building type into one card per copy, sorted so buildings with
   // fewer copies come first (higher count sinks lower in the list). Copies of the

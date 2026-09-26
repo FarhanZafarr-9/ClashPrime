@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Linking,
   Share,
-  SectionList,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -100,7 +99,12 @@ export default function SavedScreen() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve();
+      if (!cancelled) await loadData();
+    })();
+    return () => { cancelled = true; };
   }, [loadData]);
 
   useEffect(() => {
