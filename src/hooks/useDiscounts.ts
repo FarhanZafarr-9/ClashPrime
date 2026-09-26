@@ -14,7 +14,6 @@ export interface Discounts {
 }
 
 const DEFAULT_SCOPE: ScopeDiscount = { costPercent: 0, timePercent: 0 };
-const DEFAULT_DISCOUNTS: Discounts = { buildings: { ...DEFAULT_SCOPE }, army: { ...DEFAULT_SCOPE } };
 
 let cachedDiscounts: Discounts = {
   buildings: { ...DEFAULT_SCOPE },

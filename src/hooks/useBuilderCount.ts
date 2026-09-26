@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const KEY = 'clashprime_builders';
-const VERIFIED_KEY = 'clashprime_builders_verified';
 const DEFAULT_COUNT = 2;
 
 /**

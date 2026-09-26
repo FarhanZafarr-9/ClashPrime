@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
 import notifee, { AndroidCategory, AndroidImportance, AuthorizationStatus, TriggerType } from 'react-native-notify-kit';
+import * as Notifications from 'expo-notifications';
 import { TimerReminder } from '../types/clash';
 
 const LEGACY_KEY = 'clashprime_reminders';
@@ -19,21 +20,14 @@ function remindersKey(accountTag: string): string {
   return `clashprime_reminders_${accountTag.replace(/[^a-zA-Z0-9]/g, '')}`;
 }
 
-let Notifications: any = null;
-try {
-  Notifications = require('expo-notifications');
-} catch {}
-
-if (Notifications) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-}
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export async function ensureChannel(): Promise<void> {
   if (!Notifications || Platform.OS !== 'android') return;

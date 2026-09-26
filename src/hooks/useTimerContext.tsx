@@ -43,7 +43,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const permRef = useRef(false);
 
   const tag = activeAccount?.tag || '';
-  tagRef.current = tag;
+
+  useEffect(() => {
+    tagRef.current = tag;
+  }, [tag]);
 
   // Reload from storage, flip expired statuses and refresh the pinned
   // notification. Called on account change, timer changes and foreground

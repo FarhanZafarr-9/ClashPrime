@@ -14,11 +14,13 @@ import {
   ensureAccountRegistered,
   shouldAutoRefresh,
   setAutoRefreshTimestamp,
+  setBulkBuildingLevels,
+  mergeBuildingCopies,
+  type BuildingCopiesPayload,
 } from './usePlayer';
 import { ClashAPI } from '../api/clash';
 import { toJsonName, toStoreName } from '../utils/buildingCopies';
 import { seedBuildingLevelsForTH } from '../utils/seedBuildingLevels';
-import { setBulkBuildingLevels, mergeBuildingCopies, BuildingCopiesPayload } from './usePlayer';
 
 interface PlayerContextValue {
   player: ClashPlayer | null;
