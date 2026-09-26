@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography, useTheme } from '../theme';
 import { getTownHallImageUrl } from '../utils/thImages';
+import { getArmyItemImage } from '../utils/armyData';
+import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from '../utils/troopImages';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../types/armies';
 
 interface Props {
@@ -20,7 +22,33 @@ interface Props {
   onPress?: () => void;
 }
 
-function DetailTable({ rows, label }: { rows: { name: string; value: string }[]; label?: string }) {
+function iconFor(name: string, kind: 'troop' | 'spell' | 'siege' | 'hero' | 'pet' | 'equipment'): ImageSourcePropType | undefined {
+  const variants = [
+    name,
+    ...(kind === 'spell' ? [`${name} Spell`, `${name} Potion`] : []),
+    ...(kind === 'siege' ? [`${name} Machine`, `${name} Workshop`] : []),
+    ...(kind === 'equipment' ? [`${name} Equipment`, `${name} Puppet`] : []),
+  ];
+  for (const v of variants) {
+    const local = getArmyItemImage(v);
+    if (local) return local;
+  }
+  const url =
+    kind === 'hero' ? getHeroImageUrl(name) :
+    kind === 'pet' ? getPetImageUrl(name) :
+    kind === 'equipment' ? getEquipmentImageUrl(name) :
+    getTroopImageUrl(name);
+  if (url) return { uri: url };
+  return undefined;
+}
+
+function unitIcon(def?: UnitDef): ImageSourcePropType | undefined {
+  if (!def) return undefined;
+  const kind = def.type === 'Spell' ? 'spell' : def.type === 'Siege' ? 'siege' : 'troop';
+  return iconFor(def.name, kind);
+}
+
+function DetailTable({ rows, label }: { rows: { name: string; value: string; icon?: ImageSourcePropType }[]; label?: string }) {
   if (rows.length === 0) return null;
   const mid = Math.ceil(rows.length / 2);
   const left = rows.slice(0, mid);
@@ -32,7 +60,10 @@ function DetailTable({ rows, label }: { rows: { name: string; value: string }[];
         <View style={styles.detailCol}>
           {left.map((r, i) => (
             <View key={`l-${i}`} style={styles.detailRow}>
-              <Text style={styles.detailName} numberOfLines={1}>{r.name}</Text>
+              <View style={styles.detailNameWrap}>
+                {r.icon && <Image source={r.icon} style={styles.detailIcon} resizeMode="contain" />}
+                <Text style={styles.detailName} numberOfLines={1}>{r.name}</Text>
+              </View>
               <Text style={styles.detailCount}>{r.value}</Text>
             </View>
           ))}
@@ -41,7 +72,10 @@ function DetailTable({ rows, label }: { rows: { name: string; value: string }[];
         <View style={styles.detailCol}>
           {right.map((r, i) => (
             <View key={`r-${i}`} style={styles.detailRow}>
-              <Text style={styles.detailName} numberOfLines={1}>{r.name}</Text>
+              <View style={styles.detailNameWrap}>
+                {r.icon && <Image source={r.icon} style={styles.detailIcon} resizeMode="contain" />}
+                <Text style={styles.detailName} numberOfLines={1}>{r.name}</Text>
+              </View>
               <Text style={styles.detailCount}>{r.value}</Text>
             </View>
           ))}
@@ -59,36 +93,37 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
 
   const troopRows = campUnits.map((u) => {
     const def = unitsById.get(u.unitId);
-    return { name: def?.name || `#${u.unitId}`, value: `×${u.amount}` };
+    return { name: def?.name || `#${u.unitId}`, value: `×${u.amount}`, icon: unitIcon(def) };
   });
 
   const ccRows = ccUnits.map((u) => {
     const def = unitsById.get(u.unitId);
-    return { name: def?.name || `#${u.unitId}`, value: `×${u.amount}` };
+    return { name: def?.name || `#${u.unitId}`, value: `×${u.amount}`, icon: unitIcon(def) };
   });
 
   // Hero rows: hero name, equipment, pet (separate columns)
-  const heroRows: { hero: string; equipment: string; pet: string | null }[] = [];
-  const heroMap = new Map<string, { equipment: string[]; pet: string | null }>();
+  const heroRows: { hero: string; heroIcon?: ImageSourcePropType; equipment: { name: string; icon?: ImageSourcePropType }[]; pet: { name: string; icon?: ImageSourcePropType } | null }[] = [];
+  const heroMap = new Map<string, { equipment: { name: string; icon?: ImageSourcePropType }[]; pet: { name: string; icon?: ImageSourcePropType } | null }>();
   for (const eq of army.equipment) {
     const def = equipmentById.get(eq.equipmentId);
     if (def) {
       if (!heroMap.has(def.hero)) heroMap.set(def.hero, { equipment: [], pet: null });
-      heroMap.get(def.hero)!.equipment.push(def.name);
+      heroMap.get(def.hero)!.equipment.push({ name: def.name, icon: iconFor(def.name, 'equipment') });
     }
   }
   // Attach pets to heroes
   for (const p of army.pets) {
     const def = petsById.get(p.petId);
     if (def && heroMap.has(p.hero)) {
-      heroMap.get(p.hero)!.pet = def.name;
+      heroMap.get(p.hero)!.pet = { name: def.name, icon: iconFor(def.name, 'pet') };
     }
   }
   for (const [heroName, data] of heroMap) {
     heroRows.push({
       hero: heroName,
-      equipment: data.equipment.join(', ') || '—',
-      pet: data.pet ?? null,
+      heroIcon: iconFor(heroName, 'hero'),
+      equipment: data.equipment.length > 0 ? data.equipment : [{ name: '—' }],
+      pet: data.pet,
     });
   }
 
@@ -129,15 +164,28 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
             <View style={styles.heroHeader}>
               <Text style={[styles.heroHeadCell, { flex: 1.3 }]}>Hero</Text>
               <View style={styles.heroDivider} />
-              <Text style={[styles.heroHeadCell, { flex: 2 }]}>Equipment</Text>
+              <Text style={[styles.heroHeadCell, { flex: 1.5 }]}>Equipment</Text>
               {hasPet && <><View style={styles.heroDivider} /><Text style={[styles.heroHeadCell, { flex: 1 }]}>Pet</Text></>}
             </View>
             {heroRows.map((r, i) => (
               <View key={i} style={styles.heroRow}>
-                <Text style={[styles.heroCell, { flex: 1.3, fontWeight: '600' }]} numberOfLines={1}>{r.hero}</Text>
+                <View style={[styles.heroCell, styles.heroIconCell, { flex: 1.3 }]}>
+                  {r.heroIcon && <Image source={r.heroIcon} style={styles.heroCellIcon} resizeMode="contain" />}
+                  <Text style={styles.heroNameText} numberOfLines={1}>{r.hero}</Text>
+                </View>
                 <View style={styles.heroDivider} />
-                <Text style={[styles.heroCell, { flex: 2 }]} numberOfLines={1}>{r.equipment}</Text>
-                {hasPet && <><View style={styles.heroDivider} /><Text style={[styles.heroCell, { flex: 1 }]} numberOfLines={1}>{r.pet || '—'}</Text></>}
+                <View style={[styles.heroCell, styles.heroEquipCol, { flex: 1.5 }]}>
+                  {r.equipment.map((eq, j) => (
+                    <View key={j} style={[styles.heroIconCell, styles.heroEquipItem]}>
+                      {eq.icon && <Image source={eq.icon} style={styles.heroCellIcon} resizeMode="contain" />}
+                      <Text style={styles.heroEquipText} numberOfLines={1}>{eq.name}</Text>
+                    </View>
+                  ))}
+                </View>
+                {hasPet && <><View style={styles.heroDivider} /><View style={[styles.heroCell, styles.heroIconCell, { flex: 1 }]}>
+                  {r.pet?.icon && <Image source={r.pet.icon} style={styles.heroCellIcon} resizeMode="contain" />}
+                  <Text style={styles.heroNameText} numberOfLines={1}>{r.pet?.name || '—'}</Text>
+                </View></>}
               </View>
             ))}
           </View>
@@ -185,12 +233,13 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: Spacing.sm,
   },
   thImage: {
     width: 36,
     height: 36,
+    alignSelf: 'center',
   },
   thBadge: {
     paddingHorizontal: Spacing.sm,
@@ -199,6 +248,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
+    alignSelf: 'center',
   },
   thBadgeText: {
     ...Typography.caption,
@@ -208,10 +258,12 @@ const styles = StyleSheet.create({
   },
   nameSection: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   name: {
     ...Typography.headline,
     color: Colors.textPrimary,
+    fontSize: 15,
     lineHeight: 20,
   },
   author: {
@@ -223,6 +275,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
+    alignSelf: 'center',
   },
   score: {
     ...Typography.subhead,
@@ -269,6 +322,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 11,
   },
+  detailNameWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  detailIcon: {
+    width: 18,
+    height: 18,
+  },
   detailCount: {
     ...Typography.caption,
     color: Colors.textSecondary,
@@ -302,7 +365,7 @@ const styles = StyleSheet.create({
   },
   heroRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
@@ -312,12 +375,42 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
   },
   heroCell: {
-    ...Typography.caption,
     color: Colors.textSecondary,
     fontSize: 11,
-    paddingVertical: 6,
+    lineHeight: 15,
+    paddingVertical: 7,
     paddingHorizontal: Spacing.sm + 2,
-    textAlign: 'center',
+    textAlign: 'left',
+  },
+  heroIconCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 5,
+  },
+  heroNameText: {
+    flexShrink: 1,
+    fontWeight: '500',
+    fontSize: 12,
+    color: Colors.textPrimary,
+  },
+  heroEquipCol: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    gap: 6,
+  },
+  heroEquipItem: {
+    justifyContent: 'flex-start',
+  },
+  heroEquipText: {
+    flexShrink: 1,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
+  heroCellIcon: {
+    width: 15,
+    height: 15,
+    flexShrink: 0,
   },
   actionsRow: {
     flexDirection: 'row',
