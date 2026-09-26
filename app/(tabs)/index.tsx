@@ -31,19 +31,18 @@ import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl, getPetImageUrl } from '../../src/utils/troopImages';
-import { getBuildingItemImage } from '../../src/utils/buildingData';
+import { getBuildingItemImage, getBuildingCategories, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH } from '../../src/utils/buildingData';
 import { getTownHallImageUrl } from '../../src/utils/thImages';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
 import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime, buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
-import { getBuildingCategories, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH } from '../../src/utils/buildingData';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
 import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { getArmyTroopDetail, getArmyItemImage, getAllBuilderItemsAtBH } from '../../src/utils/armyData';
-import { getLeagueLootInfo, type LeagueLootInfo } from '../../src/utils/leagueData';
+import { getLeagueLootInfo } from '../../src/utils/leagueData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { useDialog } from '../../src/components/AlertDialog';
 import {
@@ -56,7 +55,6 @@ import {
 } from '../../src/hooks/useProgressSnapshot';
 import type { ClashPlayer, TimerReminder } from '../../src/types/clash';
 import { checkForUpdate, clearVersionCache, probeGitHubOnline } from '../../src/utils/versionCheck';
-import { APP_VERSION } from '../../src/constants/appVersion';
 
 const CATEGORY_META: Record<ProgressCategory, { label: string; sub: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
   heroes: { label: 'Heroes', sub: 'Hero levels', icon: { set: 'ion', name: 'shield-half-outline' } },
@@ -394,7 +392,7 @@ export default function HomeScreen() {
   const [timerCustomFocused, setTimerCustomFocused] = useState(false);
   const [addingTimer, setAddingTimer] = useState(false);
   const [timerInputFocused, setTimerInputFocused] = useState(false);
-  const timerCardAnim = useRef(new Animated.Value(0)).current;
+  const [timerCardAnim] = useState(() => new Animated.Value(0));
 
   // Custom input takes priority when valid; otherwise fall back to the presets.
   const customMinutes = parseCustomDuration(timerCustom);
@@ -431,8 +429,12 @@ export default function HomeScreen() {
 
   // Wiki details for the progress-overview army items are cached globally and
   // shared across accounts; reset the in-memory state per account.
-  useEffect(() => {
+  const [prevAccountTag, setPrevAccountTag] = useState(player?.tag ?? null);
+  if (prevAccountTag !== (player?.tag ?? null)) {
+    setPrevAccountTag(player?.tag ?? null);
     setProgressDetails({});
+  }
+  useEffect(() => {
     progressFetched.current = null;
   }, [player?.tag]);
 
@@ -608,34 +610,35 @@ export default function HomeScreen() {
 
   // ── Derived data (null-safe when player is null) ──
   const th = player?.townHallLevel ?? 0;
-  const homeHeroes = player?.heroes?.filter((h: { village: string }) => h.village === 'home') ?? [];
-  const homeTroops = player?.troops?.filter((t) => {
+  const homeHeroes = useMemo(() => player?.heroes?.filter((h: { village: string }) => h.village === 'home') ?? [], [player]);
+  const homeTroops = useMemo(() => player?.troops?.filter((t) => {
     if (t.village !== 'home') return false;
     if (superTroopNames.includes(t.name) || t.name.startsWith('Super ') || t.name.startsWith('Sneaky ') || t.name.startsWith('Rocket ')) return false;
     return true;
-  }) ?? [];
-  const homeSpells = player?.spells?.filter((s: { village?: string }) => s.village === 'home' || !s.village) ?? [];
-  const heroEquipment = player?.heroEquipment ?? [];
+  }) ?? [], [player, superTroopNames]);
+  const homeSpells = useMemo(() => player?.spells?.filter((s: { village?: string }) => s.village === 'home' || !s.village) ?? [], [player]);
+  const heroEquipment = useMemo(() => player?.heroEquipment ?? [], [player]);
 
   // Prefetch hero-equipment details (full level list) so equipment rows show the
   // item's correct max level for the Town Hall instead of the API's
   // Blacksmith-capped maxLevel.
-  const prefetchEquipDetails = useCallback(async () => {
+  useEffect(() => {
     const names = heroEquipment.map((e) => e.name);
     if (names.length === 0) return;
     const pending = names.filter((n) => equipDetails[n] === undefined);
     if (pending.length === 0) return;
-    const fetched = await Promise.all(pending.map((name) => getArmyTroopDetail(name).catch(() => null)));
-    setEquipDetails((prev) => {
-      const next = { ...prev };
-      fetched.forEach((detail, i) => { next[pending[i]] = detail; });
-      return next;
-    });
+    let cancelled = false;
+    (async () => {
+      const fetched = await Promise.all(pending.map((name) => getArmyTroopDetail(name).catch(() => null)));
+      if (cancelled) return;
+      setEquipDetails((prev) => {
+        const next = { ...prev };
+        fetched.forEach((detail, i) => { next[pending[i]] = detail; });
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
   }, [heroEquipment, equipDetails]);
-
-  useEffect(() => {
-    prefetchEquipDetails();
-  }, [prefetchEquipDetails]);
 
   // Equipment level caps aren't tied to the Town Hall directly: each level row
   // lists a "Blacksmith Level Required" gate, so the max reachable at a Town
@@ -659,29 +662,32 @@ export default function HomeScreen() {
     return thMax > 0 ? thMax : fallback;
   };
 
-  const ownedNames = new Set([
+  const ownedNames = useMemo(() => new Set([
     ...(player?.troops ?? []).filter((t: { village: string }) => t.village === 'home').map((t: { name: string }) => t.name.toLowerCase()),
     ...(player?.spells ?? []).filter((s: { village?: string }) => s.village === 'home' || !s.village).map((s: { name: string }) => s.name.toLowerCase()),
     ...(player?.heroes ?? []).filter((h: { village: string }) => h.village === 'home').map((h: { name: string }) => h.name.toLowerCase()),
-  ]);
-  const unlockableItems = th > 0 ? getUnlockableItems(th, ownedNames) : [];
+  ]), [player]);
+  const unlockableItems = useMemo(() => (th > 0 ? getUnlockableItems(th, ownedNames) : []), [th, ownedNames]);
 
   const prevTh = Math.max(1, th - 1);
-  const rushedItems: { name: string; currentLevel: number; maxLevelAtPrevTH: number; type: string }[] = [];
-  if (th > 1 && player) {
-    for (const t of homeTroops) {
-      const maxPrev = getMaxLevelAtTH(t.name, prevTh);
-      if (maxPrev !== null && t.level < maxPrev) rushedItems.push({ name: t.name, currentLevel: t.level, maxLevelAtPrevTH: maxPrev, type: 'troop' });
+  const rushedItems: { name: string; currentLevel: number; maxLevelAtPrevTH: number; type: string }[] = useMemo(() => {
+    const out: { name: string; currentLevel: number; maxLevelAtPrevTH: number; type: string }[] = [];
+    if (th > 1 && player) {
+      for (const t of homeTroops) {
+        const maxPrev = getMaxLevelAtTH(t.name, prevTh);
+        if (maxPrev !== null && t.level < maxPrev) out.push({ name: t.name, currentLevel: t.level, maxLevelAtPrevTH: maxPrev, type: 'troop' });
+      }
+      for (const h of homeHeroes) {
+        const maxPrev = getMaxLevelAtTH(h.name, prevTh);
+        if (maxPrev !== null && h.level < maxPrev) out.push({ name: h.name, currentLevel: h.level, maxLevelAtPrevTH: maxPrev, type: 'hero' });
+      }
+      for (const s of homeSpells) {
+        const maxPrev = getMaxLevelAtTH(s.name, prevTh);
+        if (maxPrev !== null && s.level < maxPrev) out.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
+      }
     }
-    for (const h of homeHeroes) {
-      const maxPrev = getMaxLevelAtTH(h.name, prevTh);
-      if (maxPrev !== null && h.level < maxPrev) rushedItems.push({ name: h.name, currentLevel: h.level, maxLevelAtPrevTH: maxPrev, type: 'hero' });
-    }
-    for (const s of homeSpells) {
-      const maxPrev = getMaxLevelAtTH(s.name, prevTh);
-      if (maxPrev !== null && s.level < maxPrev) rushedItems.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
-    }
-  }
+    return out;
+  }, [th, player, prevTh, homeTroops, homeHeroes, homeSpells]);
 
   // Names of every troop/spell/hero/equipment the progress overview (and the
   // Backlog's locked/rushed lists) can show at this Town Hall — the single
@@ -1053,26 +1059,12 @@ export default function HomeScreen() {
   for (const g of progressGroups) {
     progressCosts[g.key] = sumCosts(g.rows.map((r) => remainingArmyCosts(progressDetails[r.name], r.level, r.maxLevel)));
   }
-  const overallProgressCost = sumCosts(progressGroups.map((g) => progressCosts[g.key]));
   const buildingCosts: Record<string, CostTime> = {};
   for (const g of buildingGroups) {
     buildingCosts[g.key] = sumCosts(
       g.rows.map((r) => remainingBuildingCosts(r.name, r.copies, r.effectiveMax)),
     );
   }
-  const overallBuildingCost = sumCosts(buildingGroups.map((g) => buildingCosts[g.key]));
-
-  const overallProgress = (() => {
-    const tl = progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
-    const tm = progressGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
-    return tm > 0 ? tl / tm : 0;
-  })();
-  const overallBuildingProgress = (() => {
-    const counted = buildingGroups.filter((g) => g.key !== 'Walls');
-    const tl = counted.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.level, 0), 0);
-    const tm = counted.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
-    return tm > 0 ? tl / tm : 0;
-  })();
 
   const renderProgressHeader = (progress: number, ct: CostTime) => {
     // Categories/sub-categories show only remaining time; costs are shown per
@@ -1345,25 +1337,6 @@ export default function HomeScreen() {
               const builderTm = builderGroups.reduce((s, g) => s + g.rows.reduce((s2, r) => s2 + r.maxLevel, 0), 0);
               const builderProgress = builderTm > 0 ? builderTl / builderTm : 0;
               const builderCost = sumCosts(builderGroups.map(g => g.key === 'heroes' ? progressCosts.heroes : buildingCosts[g.key]).filter(Boolean));
-              // Builder split info
-              const splitInfo = builderSplit ? (
-                <>
-                  <View style={styles.splitInfoRow}>
-                    <Text style={styles.splitInfoLabel}>Buildings only: </Text>
-                    <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.buildingsOnlySec)}</Text>
-                  </View>
-                  <View style={styles.splitInfoRow}>
-                    <Text style={styles.splitInfoLabel}>Heroes only: </Text>
-                    <Text style={styles.splitInfoValue}>{formatTimeShort(builderSplit.heroesOnlySec)}</Text>
-                  </View>
-                  <View style={styles.splitInfoRow}>
-                    <Text style={styles.splitInfoLabel}>Optimal split: </Text>
-                    <Text style={styles.splitInfoValue}>
-                      {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
-                    </Text>
-                  </View>
-                </>
-              ) : null;
 
               return (
                 <CollapsibleSection
@@ -1599,10 +1572,7 @@ export default function HomeScreen() {
                       badges={[{ key: 'locked', value: unlockableItems.length, tone: 'danger' }]}
                     >
                       {(() => {
-                        let lastTh = -1;
                         return unlockableItems.flatMap((item, i) => {
-                          const isNewTh = item.unlockTh !== lastTh;
-                          lastTh = item.unlockTh;
                           const thUrl = getTownHallImageUrl(item.unlockTh);
                           const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
                           const levelsAtTH = getMaxLevelAtTH(item.name, th);
@@ -1635,7 +1605,7 @@ export default function HomeScreen() {
                                   ) : null}
                                   {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
                                 </View>
-                                {isNewTh && thUrl ? (
+                                {thUrl ? (
                                   <View style={styles.thImageBadge}>
                                     <Image source={{ uri: thUrl }} style={styles.thImageBadgeImg} resizeMode="contain" />
                                   </View>
@@ -1912,7 +1882,7 @@ export default function HomeScreen() {
                   <View style={styles.modalHeaderText}>
                     <Text style={styles.modalTitle}>{editingTimer ? 'Edit Timer' : 'New Timer'}</Text>
                     {editingTimer ? (
-                      <Text style={styles.modalSubtitle}>Restart the countdown for "{editingTimer.label}"</Text>
+                      <Text style={styles.modalSubtitle}>Restart the countdown for &ldquo;{editingTimer.label}&rdquo;</Text>
                     ) : (
                       <Text style={styles.modalSubtitle}>Get a reminder when the time is up</Text>
                     )}
@@ -1973,7 +1943,7 @@ export default function HomeScreen() {
                         <>
                           Ends at{' '}
                           <Text style={styles.durationSummaryTime}>
-                            {new Date(Date.now() + effectiveMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                            {new Date(nowTick + effectiveMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                           </Text>
                         </>
                       )}
@@ -1984,7 +1954,7 @@ export default function HomeScreen() {
                 {!hasPermission && (
                   <View style={styles.notifHint}>
                     <Ionicons name="notifications-off-outline" size={13} color={Colors.warning} />
-                    <Text style={styles.notifHintText}>Notifications are off — you won't get a reminder.</Text>
+                    <Text style={styles.notifHintText}>Notifications are off — you won&apos;t get a reminder.</Text>
                   </View>
                 )}
 
