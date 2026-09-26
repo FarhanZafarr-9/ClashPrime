@@ -1,6 +1,6 @@
-const FANDOM_BASE = 'https://clashofclans.fandom.com';
-
 import { entityImageUrl } from '../data/entityReference';
+
+const FANDOM_BASE = 'https://clashofclans.fandom.com';
 
 const imageUrlOverrides = new Map<string, string>();
 

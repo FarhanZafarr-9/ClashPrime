@@ -1,17 +1,14 @@
 import type { ClashPlayer } from '../types/clash';
 import type { TroopDetail } from '../api/troopDetail';
-import { getBuildingCategories, HOME_CATEGORIES, getBuildingMaxLevelAtTH, getBuildingCountAtTH, getBuildingItemImage, getMaxTownHall } from './buildingData';
+import { getBuildingCategories, HOME_CATEGORIES, getBuildingItemImage, getMaxTownHall } from './buildingData';
 import { getBuildingCopies, getCountAtTH } from './buildingCopies';
-import { getAllItemsAtTH, getMaxLevelAtTH, getSuperTroopNames, getPetNames, getArmyItemImage } from './armyData';
+import { getAllItemsAtTH, getArmyItemImage } from './armyData';
 import { getBuildingEffectiveMax } from './buildingImages';
 import {
   remainingBuildingCosts,
   remainingArmyCosts,
-  buildingUpgradeChainTimes,
-  scheduleChains,
   formatTimeShort,
   formatCostBreakdown,
-  type CostTime,
 } from './upgradeCosts';
 
 export interface ThJourneyItem {
@@ -76,83 +73,6 @@ export interface ThJourneyStep {
   summary: ThJourneySummary;
   detail: ThJourneyDetail;
   cumulative: ThJourneyCumulative;
-}
-
-function emptySummary(): ThJourneySummary {
-  return {
-    totalBuildTimeSec: 0,
-    totalResearchTimeSec: 0,
-    totalBuildCost: 0,
-    totalResearchCost: 0,
-    totalOreCost: {},
-    newBuildingsCount: 0,
-    newHeroesCount: 0,
-    newTroopsSpellsCount: 0,
-    newPetsCount: 0,
-    newSiegesCount: 0,
-    newEquipmentCount: 0,
-    buildingLevelUps: 0,
-    armyLevelUps: 0,
-  };
-}
-
-function emptyDetail(): ThJourneyDetail {
-  return {
-    newBuildings: [],
-    newHeroes: [],
-    newTroops: [],
-    newSpells: [],
-    newPets: [],
-    newSieges: [],
-    newEquipment: [],
-    buildingLevelUps: [],
-    armyLevelUps: [],
-  };
-}
-
-function emptyCumulative(): ThJourneyCumulative {
-  return { buildTimeSec: 0, researchTimeSec: 0, buildCost: 0, researchCost: 0 };
-}
-
-function addSummary(target: ThJourneySummary, source: ThJourneySummary): void {
-  target.totalBuildTimeSec += source.totalBuildTimeSec;
-  target.totalResearchTimeSec += source.totalResearchTimeSec;
-  target.totalBuildCost += source.totalBuildCost;
-  target.totalResearchCost += source.totalResearchCost;
-  for (const [res, val] of Object.entries(source.totalOreCost)) {
-    target.totalOreCost[res] = (target.totalOreCost[res] ?? 0) + val;
-  }
-  target.newBuildingsCount += source.newBuildingsCount;
-  target.newHeroesCount += source.newHeroesCount;
-  target.newTroopsSpellsCount += source.newTroopsSpellsCount;
-  target.newPetsCount += source.newPetsCount;
-  target.newSiegesCount += source.newSiegesCount;
-  target.newEquipmentCount += source.newEquipmentCount;
-  target.buildingLevelUps += source.buildingLevelUps;
-  target.armyLevelUps += source.armyLevelUps;
-}
-
-function addCumulative(target: ThJourneyCumulative, source: ThJourneyCumulative): void {
-  target.buildTimeSec += source.buildTimeSec;
-  target.researchTimeSec += source.researchTimeSec;
-  target.buildCost += source.buildCost;
-  target.researchCost += source.researchCost;
-}
-
-function sumCostTime(items: CostTime[]): CostTime {
-  let cost = 0;
-  let time = 0;
-  const byResource: Record<string, number> = {};
-  for (const it of items) {
-    cost += it.cost;
-    time += it.time;
-    if (it.byResource) {
-      for (const [res, v] of Object.entries(it.byResource)) {
-        byResource[res] = (byResource[res] ?? 0) + v;
-      }
-    }
-  }
-  return { cost, time, hasData: true, byResource };
 }
 
 function computeBuildingItems(
@@ -250,7 +170,6 @@ function computeArmyItems(
   const totalByResource: Record<string, number> = {};
   const totalOreCost: Record<string, number> = {};
 
-  const superTroops = new Set(getSuperTroopNames());
   const prevItems = getAllItemsAtTH(prevTh);
   const currItems = getAllItemsAtTH(th);
 
@@ -359,7 +278,7 @@ export function computeThJourney(
 ): ThJourneyStep[] {
   const maxTh = getMaxTownHall();
   const steps: ThJourneyStep[] = [];
-  let cumulative = emptyCumulative();
+  let cumulative: ThJourneyCumulative = { buildTimeSec: 0, researchTimeSec: 0, buildCost: 0, researchCost: 0 };
 
   for (let th = currentTh; th <= maxTh; th++) {
     const prevTh = th === 1 ? 1 : th - 1;
