@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
+import { useBuilderCount } from '../src/hooks/useBuilderCount';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,10 +25,10 @@ import {
   getApiToken,
   saveAccount,
   setActiveAccountTag,
+  cachePlayer,
 } from '../src/hooks/usePlayer';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
-import { cachePlayer } from '../src/hooks/usePlayer';
 import { getTownHallImageUrl } from '../src/utils/thImages';
 import { seedBuildingLevelsForTH } from '../src/utils/seedBuildingLevels';
 import type { ClashPlayer } from '../src/types/clash';
@@ -88,8 +89,6 @@ function StepCard({
     </View>
   );
 }
-
-import { useBuilderCount } from '../src/hooks/useBuilderCount';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -182,9 +181,12 @@ export default function OnboardingScreen() {
     if (mode === 'reset') {
       router.back();
     } else {
-      playerData!.buildingLevels = levels;
-      playerData!.lastMaxedTH = selectedTh;
-      await cachePlayer(playerData!);
+      const updated: ClashPlayer = {
+        ...playerData!,
+        buildingLevels: levels,
+        lastMaxedTH: selectedTh,
+      };
+      await cachePlayer(updated);
       try { await refresh(); } catch { /* proceed even if API is unreachable */ }
     }
     setLoading(false);
@@ -411,7 +413,7 @@ export default function OnboardingScreen() {
                   })}
                 </View>
                 <Text style={styles.thHint}>
-                  You're on TH{currentTh}. Pick the last Town Hall you've fully maxed.
+                  You&apos;re on TH{currentTh}. Pick the last Town Hall you&apos;ve fully maxed.
                 </Text>
                 <View style={styles.thPickerActions}>
                   <PressableRipple

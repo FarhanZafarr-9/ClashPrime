@@ -24,7 +24,7 @@ import { groupAchievementsByStars, getTotalStars, type StarGroup } from '../src/
 import { getApiToken, getAccounts, ensureAccountRegistered, cachePlayer, getActiveAccountTag, setPlayerTag, setActiveAccountTag } from '../src/hooks/usePlayer';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../src/api/clash';
-import type { ClashPlayer, Hero, Pet, HeroEquipment, Achievement } from '../src/types/clash';
+import type { ClashPlayer, Hero, Pet, HeroEquipment } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
 import { getTownHallImageUrl } from '../src/utils/thImages';
 import { getBuildingLevelImageSource, formatCompact } from '../src/utils/buildingImages';
@@ -157,7 +157,14 @@ export default function PlayerInspectScreen() {
   }, []);
 
   useEffect(() => {
-    if (params.tag) load(params.tag);
+    if (!params.tag) return;
+    const tag = params.tag;
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve();
+      if (!cancelled) await load(tag);
+    })();
+    return () => { cancelled = true; };
   }, [params.tag, load]);
 
   const addToAccounts = useCallback(async () => {
@@ -220,7 +227,7 @@ export default function PlayerInspectScreen() {
   const sumLevel = (rows: { level: number }[]) => rows.reduce((a, r) => a + r.level, 0);
   const sumMax = (rows: { maxLevel: number }[]) => rows.reduce((a, r) => a + r.maxLevel, 0);
 
-  const achievements = player?.achievements ?? [];
+  const achievements = useMemo(() => player?.achievements ?? [], [player?.achievements]);
   const achievementGroups = useMemo(() => groupAchievementsByStars(achievements), [achievements]);
   const starTotals = useMemo(() => getTotalStars(achievements), [achievements]);
   const allAchievementsComplete = starTotals.max > 0 && starTotals.earned >= starTotals.max;

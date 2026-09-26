@@ -38,7 +38,7 @@ export default function RootLayout() {
       }
       setChecked(true);
     })();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     setClashFontLoaded(fontsLoaded);
