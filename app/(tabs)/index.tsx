@@ -2158,7 +2158,7 @@ export default function HomeScreen() {
                         style={[
                           styles.progressLevelCell,
                           index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
-                          index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                          (index === 1 || progressDiff?.levelUps?.length === 1) && { borderTopRightRadius: Radius.xl * 1.25 },
                           ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
                           index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                         ]}
