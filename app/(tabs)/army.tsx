@@ -87,7 +87,7 @@ export default function PlayerProfileScreen() {
   const siegeNames = siegeMachineNames;
   const petNameList = petNames;
   const superNameList = superTroopNames;
-  const { isDark, colors } = useTheme();
+  const { colors } = useTheme();
   const { discounts } = useDiscounts();
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -95,11 +95,13 @@ export default function PlayerProfileScreen() {
     return 'heroes';
   });
 
-  React.useEffect(() => {
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab);
     if (['troops', 'spells', 'equipment', 'heroes', 'pets', 'siege'].includes(initialTab ?? '')) {
       setActiveTab(initialTab as Tab);
     }
-  }, [initialTab]);
+  }
   const [refreshing, setRefreshing] = useState(false);
   const [sheetName, setSheetName] = useState<string | null>(null);
 
@@ -129,9 +131,9 @@ export default function PlayerProfileScreen() {
 
       if (info.targetType) {
         const tt = info.targetType.toLowerCase();
-        if (tt.includes('ground') && tt.includes('air')) label += ' · All';
-        else if (tt.includes('ground')) label += ' · Ground';
-        else if (tt.includes('air')) label += ' · Air';
+        if (tt.includes('ground') && tt.includes('air')) label += ' Â· All';
+        else if (tt.includes('ground')) label += ' Â· Ground';
+        else if (tt.includes('air')) label += ' Â· Air';
       }
       pills.push({ icon, value: label });
     }
@@ -220,41 +222,38 @@ export default function PlayerProfileScreen() {
     }
   }, [details, player, activeTab]);
 
-  // When the equipment tab is opened, prefetch every hero-equipment detail so
-  // the Blacksmith-capped max level is known immediately (without waiting for
-  // each card to be expanded). Populating `details` powers getEquipmentMaxLevel.
-  const prefetchEquipment = useCallback(async () => {
+  React.useEffect(() => {
+    if (activeTab !== 'equipment') return;
     if (!player || player.heroEquipment.length === 0) return;
     const names = player.heroEquipment.map((e) => e.name);
     if (names.every((n) => details[n] !== undefined)) return;
-    const fetched = await Promise.all(
-      names.map((name) => getArmyTroopDetail(name).catch(() => null))
-    );
-    const next: Record<string, TroopDetail | null> = {};
-    fetched.forEach((detail, i) => {
-      const name = names[i];
-      if (!detail) return;
-      const match = player.heroEquipment.find((e) => e.name === name);
-      if (match) {
-        detail.currentLevel = match.level;
-        detail.maxLevel = match.maxLevel;
-      }
-      next[name] = detail;
-      const urls = [
-        detail.imageUrl,
-        getEquipmentImageUrl(name),
-        getTroopImageUrl(name),
-      ].filter((u): u is string => !!u);
-      urls.forEach((url) => Image.prefetch(url).catch(() => { }));
-    });
-    setDetails((prev) => ({ ...prev, ...next }));
-  }, [player, details]);
-
-  React.useEffect(() => {
-    if (activeTab === 'equipment') {
-      prefetchEquipment();
-    }
-  }, [activeTab, prefetchEquipment]);
+    let cancelled = false;
+    (async () => {
+      const fetched = await Promise.all(
+        names.map((name) => getArmyTroopDetail(name).catch(() => null))
+      );
+      if (cancelled) return;
+      const next: Record<string, TroopDetail | null> = {};
+      fetched.forEach((detail, i) => {
+        const name = names[i];
+        if (!detail) return;
+        const match = player.heroEquipment.find((e) => e.name === name);
+        if (match) {
+          detail.currentLevel = match.level;
+          detail.maxLevel = match.maxLevel;
+        }
+        next[name] = detail;
+        const urls = [
+          detail.imageUrl,
+          getEquipmentImageUrl(name),
+          getTroopImageUrl(name),
+        ].filter((u): u is string => !!u);
+        urls.forEach((url) => Image.prefetch(url).catch(() => { }));
+      });
+      if (!cancelled) setDetails((prev) => ({ ...prev, ...next }));
+    })();
+    return () => { cancelled = true; };
+  }, [activeTab, player, details]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -298,16 +297,10 @@ export default function PlayerProfileScreen() {
     setRefreshing(false);
   }, [refresh, player]);
 
-  if (loading && !player) {
-    return <ProfileScreenSkeleton />;
-  }
-
-  if (!player) return null;
-
-  const th = player.townHallLevel;
-  const bhLevel = player.builderHallLevel ?? 1;
-  const homeHeroes = player.heroes.filter((h) => h.village === 'home');
-  const builderHeroes = th >= 6 ? player.heroes.filter((h) => h.village === 'builderBase') : [];
+  const th = player?.townHallLevel ?? 0;
+  const bhLevel = player?.builderHallLevel ?? 1;
+  const homeHeroes = player ? player.heroes.filter((h) => h.village === 'home') : [];
+  const builderHeroes = th >= 6 ? (player ? player.heroes.filter((h) => h.village === 'builderBase') : []) : [];
 
   const SIEGE_MACHINE_NAMES = new Set(siegeNames);
   const SUPER_TROOP_NAMES = new Set(superNameList);
@@ -315,11 +308,68 @@ export default function PlayerProfileScreen() {
   const isSuperTroop = (name: string) =>
     SUPER_TROOP_NAMES.has(name) || name.startsWith('Super ') || name.startsWith('Sneaky ') || name.startsWith('Rocket ');
 
-  const homeTroops = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && !isSiegeMachine(t.name) && !petNameList.includes(t.name));
-  const builderTroops = th >= 6 ? player.troops.filter((t) => t.village === 'builderBase') : [];
-  const siegeMachines = player.troops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && isSiegeMachine(t.name));
-  const homePets = player.troops.filter((t) => (t.village === 'home' || !t.village) && petNameList.includes(t.name));
-  const homeSpells = player.spells.filter((s) => s.village === 'home' || !s.village);
+  const playerTroops = player?.troops ?? [];
+  const homeTroops = playerTroops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && !isSiegeMachine(t.name) && !petNameList.includes(t.name));
+  const builderTroops = th >= 6 ? playerTroops.filter((t) => t.village === 'builderBase') : [];
+  const siegeMachines = playerTroops.filter((t) => t.village === 'home' && !isSuperTroop(t.name) && isSiegeMachine(t.name));
+  const homePets = playerTroops.filter((t) => (t.village === 'home' || !t.village) && petNameList.includes(t.name));
+  const homeSpells = (player?.spells ?? []).filter((s) => s.village === 'home' || !s.village);
+
+  const TABS: { key: Tab; label: string }[] = [
+    { key: 'heroes', label: 'Heroes' },
+    { key: 'bhHeroes', label: 'BH Heroes' },
+    { key: 'troops', label: 'Troops' },
+    { key: 'bhTroops', label: 'BH Troops' },
+    { key: 'spells', label: 'Spells' },
+    { key: 'pets', label: 'Pets' },
+    { key: 'siege', label: 'Siege' },
+    { key: 'equipment', label: 'Gear' },
+  ];
+
+  const hasHeroes = homeTroops.length >= 0 && homeHeroes.length > 0;
+  const hasBhHeroes = builderHeroes.length > 0;
+  const hasTroops = homeTroops.length > 0;
+  const hasBhTroops = builderTroops.length > 0;
+  const hasSpells = homeSpells.length > 0;
+  const hasPets = homePets.length > 0;
+  const hasSiege = siegeMachines.length > 0;
+  const hasEquipment = (player?.heroEquipment.length ?? 0) > 0;
+
+  // Maxed-out equipment goes last in the Gear tab so upgrades are easy to spot.
+  const sortedHeroEquipment = useMemo(() => {
+    return [...(player?.heroEquipment ?? [])].sort((a, b) => {
+      const aMaxed = a.level >= a.maxLevel;
+      const bMaxed = b.level >= b.maxLevel;
+      return (aMaxed ? 1 : 0) - (bMaxed ? 1 : 0);
+    });
+  }, [player?.heroEquipment]);
+
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab.key === 'heroes') return hasHeroes;
+    if (tab.key === 'bhHeroes') return hasBhHeroes;
+    if (tab.key === 'troops') return hasTroops;
+    if (tab.key === 'bhTroops') return hasBhTroops;
+    if (tab.key === 'spells') return hasSpells;
+    if (tab.key === 'pets') return hasPets;
+    if (tab.key === 'siege') return hasSiege;
+    if (tab.key === 'equipment') return hasEquipment;
+    return true;
+  });
+
+  const [prevVisibleTabKeys, setPrevVisibleTabKeys] = useState('');
+  const visibleTabKeys = visibleTabs.map((t) => t.key).join(',');
+  if (prevVisibleTabKeys !== visibleTabKeys) {
+    setPrevVisibleTabKeys(visibleTabKeys);
+    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.key === activeTab)) {
+      setActiveTab(visibleTabs[0].key);
+    }
+  }
+
+  if (loading && !player) {
+    return <ProfileScreenSkeleton />;
+  }
+
+  if (!player) return null;
 
   const allTroopsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'troop');
   const allSpellsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'spell');
@@ -411,7 +461,7 @@ export default function PlayerProfileScreen() {
   // Returns the level rows to show for an expanded item, applying the right
   // gating per village. Home troops/spells/pets/heroes are capped by the max
   // reachable at the player's Town Hall (via their gating building's max level
-  // at that TH — never the player's own building level); equipment by the
+  // at that TH â€” never the player's own building level); equipment by the
   // player's Blacksmith; Builder Base units by their Star Lab at the BH.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
     const isHero = !!getHeroSlug(detail.name);
@@ -432,7 +482,7 @@ export default function PlayerProfileScreen() {
 
   // Inline expansion panel rendered directly under a tapped card (replaces the
   // old modal). Because it lives in the page's own ScrollView, the stats table
-  // scrolls naturally with the page — no nested-scroll quirks.
+  // scrolls naturally with the page â€” no nested-scroll quirks.
   const renderDetailPanel = (name: string) => {
     const detail = details[detailCacheKey(name, isBuilderBaseName())];
 
@@ -486,7 +536,7 @@ export default function PlayerProfileScreen() {
     const isBB = isBuilderBaseName();
     const isEquip = isEquipmentName(detail.name);
     // Builder Base units are already capped by their Star Lab (getVisibleLevels);
-    // never apply the Home Village Town Hall cap — getMaxLevelAtTH resolves the
+    // never apply the Home Village Town Hall cap â€” getMaxLevelAtTH resolves the
     // name's home copy, so a shared name like "Baby Dragon" would apply the wrong
     // ceiling to a Builder Base troop.
     const maxReachable = isEquip ? getEquipmentMaxLevel(detail.name) || null : isBB ? null : getMaxLevelAtTH(detail.name, player.townHallLevel);
@@ -510,7 +560,6 @@ export default function PlayerProfileScreen() {
     }
 
     const pills = formatStatPills(detail.info);
-    const infoItems = pills.length ? pills : (detail.infoPairs ?? []).map((p) => ({ icon: 'information-circle-outline' as const, value: `${p.label}: ${p.value}` }));
     const unlockReq = detail.infoPairs?.find((i) => i.label === 'Unlock Requirement');
     const unlockReqItems = unlockReq ? parseUnlockRequirements(unlockReq.value) : [];
     const unlockHasCost = unlockReqItems.some((r) => r.cost);
@@ -597,7 +646,7 @@ export default function PlayerProfileScreen() {
 
         {visibleDetailLevels.length > 0 && (() => {
           const parseTime = (s: string): number => {
-            if (!s || /[—\-]/.test(s)) return 0;
+            if (!s || /[â€”\-]/.test(s)) return 0;
             const d = s.match(/(\d+)\s*d/);
             const h = s.match(/(\d+)\s*h/);
             const m = s.match(/(\d+)\s*m/);
@@ -627,7 +676,7 @@ export default function PlayerProfileScreen() {
           }
           const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
           // Units with per-level cosmetic sprites show their visual progression
-          // (current + upcoming levels) until they're maxed — including Builder
+          // (current + upcoming levels) until they're maxed â€” including Builder
           // Base troops, which use their own village sprites.
           const showAppearance =
             !isHero && !isEquip && isTroopLike &&
@@ -684,7 +733,7 @@ export default function PlayerProfileScreen() {
                         <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
                           <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
                             {ri === 0
-                              ? `Lv${currentLevel} → Lv${maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}`
+                              ? `Lv${currentLevel} â†’ Lv${maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}`
                               : ''}
                           </Text>
                           <View style={[styles.panelTableCell, { alignItems: 'center', justifyContent: 'center' }]}>
@@ -717,9 +766,9 @@ export default function PlayerProfileScreen() {
                   ) : (
                     <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
                       <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                        Lv{currentLevel} → Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                        Lv{currentLevel} â†’ Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
                       </Text>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>—</Text>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>â€”</Text>
                       <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
                         {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
                       </Text>
@@ -770,7 +819,7 @@ export default function PlayerProfileScreen() {
                         ) : (
                           (extraLabels.length ? extraLabels : ['Value']).map((lbl, i) => (
                             <Text key={i} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 54 }]}>
-                              {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
+                              {l.extra?.find((e) => e.label === lbl)?.value ?? 'â€”'}
                             </Text>
                           ))
                         )}
@@ -787,10 +836,10 @@ export default function PlayerProfileScreen() {
                             },
                           ]}
                         >
-                          {showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}
+                          {showDiscounted ? applyCostDiscount(l.upgradeCost || 'â€”', discounts.army) : (l.upgradeCost || 'â€”')}
                         </Text>
-                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}</Text>
-                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
+                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || 'â€”', discounts.army) : (l.upgradeTime || 'â€”')}</Text>
+                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? 'â€”'}</Text>
                       </View>
                     );
                   })}
@@ -824,53 +873,6 @@ export default function PlayerProfileScreen() {
       </View>
     );
   };
-
-  const TABS: { key: Tab; label: string }[] = [
-    { key: 'heroes', label: 'Heroes' },
-    { key: 'bhHeroes', label: 'BH Heroes' },
-    { key: 'troops', label: 'Troops' },
-    { key: 'bhTroops', label: 'BH Troops' },
-    { key: 'spells', label: 'Spells' },
-    { key: 'pets', label: 'Pets' },
-    { key: 'siege', label: 'Siege' },
-    { key: 'equipment', label: 'Gear' },
-  ];
-
-  const hasHeroes = homeHeroes.length > 0;
-  const hasBhHeroes = builderHeroes.length > 0;
-  const hasTroops = homeTroops.length > 0;
-  const hasBhTroops = builderTroops.length > 0;
-  const hasSpells = player.spells.filter((s) => s.village === 'home' || !s.village).length > 0;
-  const hasPets = homePets.length > 0;
-  const hasSiege = siegeMachines.length > 0;
-  const hasEquipment = player.heroEquipment.length > 0;
-
-  // Maxed-out equipment goes last in the Gear tab so upgrades are easy to spot.
-  const sortedHeroEquipment = useMemo(() => {
-    return [...player.heroEquipment].sort((a, b) => {
-      const aMaxed = a.level >= a.maxLevel;
-      const bMaxed = b.level >= b.maxLevel;
-      return (aMaxed ? 1 : 0) - (bMaxed ? 1 : 0);
-    });
-  }, [player.heroEquipment]);
-
-  const visibleTabs = TABS.filter((tab) => {
-    if (tab.key === 'heroes') return hasHeroes;
-    if (tab.key === 'bhHeroes') return hasBhHeroes;
-    if (tab.key === 'troops') return hasTroops;
-    if (tab.key === 'bhTroops') return hasBhTroops;
-    if (tab.key === 'spells') return hasSpells;
-    if (tab.key === 'pets') return hasPets;
-    if (tab.key === 'siege') return hasSiege;
-    if (tab.key === 'equipment') return hasEquipment;
-    return true;
-  });
-
-  React.useEffect(() => {
-    if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.key === activeTab)) {
-      setActiveTab(visibleTabs[0].key);
-    }
-  }, [visibleTabs, activeTab]);
 
   const renderSheetHeader = (name: string) => {
     const allItems = player
@@ -1018,8 +1020,8 @@ export default function PlayerProfileScreen() {
                         subtitle={h.equipment?.map((e) => e.name).join(', ')}
                         {...cardIconProps(h.name)}
                         onPress={() => toggleDetail(h.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeHeroesSplit?.leveling?.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === homeHeroesSplit?.leveling?.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1038,8 +1040,8 @@ export default function PlayerProfileScreen() {
                       {...cardIconProps(h.name)}
                       locked
                       onPress={() => toggleDetail(h.name)}
-                      isFirst={i == 0}
-                      isLast={i == lockedHeroes?.length - 1}
+                      isFirst={i === 0}
+                      isLast={i === lockedHeroes?.length - 1}
                     />
                   ))}
                 </>
@@ -1057,8 +1059,8 @@ export default function PlayerProfileScreen() {
                         subtitle={h.equipment?.map((e) => e.name).join(', ')}
                         {...cardIconProps(h.name)}
                         onPress={() => toggleDetail(h.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeHeroesSplit?.maxed?.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === homeHeroesSplit?.maxed?.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1066,7 +1068,7 @@ export default function PlayerProfileScreen() {
               )}
               {homeHeroes.length === 0 && lockedHeroes.length === 0 && (
                 <EmptyState
-                  icon="👑"
+                  icon="ðŸ‘‘"
                   title="No heroes yet"
                   description="Heroes unlock at higher Town Hall levels. Your first hero, the Barbarian King, is available at TH7."
                 />
@@ -1078,7 +1080,7 @@ export default function PlayerProfileScreen() {
             <>
               {builderHeroes.length === 0 ? (
                 <EmptyState
-                  icon="🛡️"
+                  icon="ðŸ›¡ï¸"
                   title="No Builder Base heroes"
                   description="Builder Base heroes unlock at BH6. The Battle Machine is your first Builder Base hero."
                 />
@@ -1095,8 +1097,8 @@ export default function PlayerProfileScreen() {
                             maxLevel={h.maxLevel}
                             {...cardIconProps(h.name)}
                             onPress={() => toggleDetail(h.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderHeroesSplit?.leveling?.length - 1}
+                            isFirst={i === 0}
+                            isLast={i === builderHeroesSplit?.leveling?.length - 1}
                           />
                         </React.Fragment>
                       ))}
@@ -1113,8 +1115,8 @@ export default function PlayerProfileScreen() {
                             maxLevel={h.maxLevel}
                             {...cardIconProps(h.name)}
                             onPress={() => toggleDetail(h.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderHeroesSplit?.maxed?.length - 1}
+                            isFirst={i === 0}
+                            isLast={i === builderHeroesSplit?.maxed?.length - 1}
                           />
                         </React.Fragment>
                       ))}
@@ -1139,8 +1141,8 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(t.name, th)}
                         {...cardIconProps(t.name, t.level)}
                         onPress={() => toggleDetail(t.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeTroopsSplit?.leveling?.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === homeTroopsSplit?.leveling?.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1159,8 +1161,8 @@ export default function PlayerProfileScreen() {
                       {...cardIconProps(t.name, 1)}
                       locked
                       onPress={() => toggleDetail(t.name)}
-                      isFirst={i == 0}
-                      isLast={i == lockedTroops.length - 1}
+                      isFirst={i === 0}
+                      isLast={i === lockedTroops.length - 1}
                     />
                   ))}
                 </>
@@ -1177,8 +1179,8 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(t.name, th)}
                         {...cardIconProps(t.name, t.level)}
                         onPress={() => toggleDetail(t.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeTroopsSplit?.maxed?.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === homeTroopsSplit?.maxed?.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1186,7 +1188,7 @@ export default function PlayerProfileScreen() {
               )}
               {homeTroops.length === 0 && lockedTroops.length === 0 && (
                 <EmptyState
-                  icon="⚔️"
+                  icon="âš”ï¸"
                   title="No troops yet"
                   description="Troops unlock as you progress. Your first troop, the Barbarian, is available from TH1."
                 />
@@ -1198,7 +1200,7 @@ export default function PlayerProfileScreen() {
             <>
               {builderTroops.length === 0 ? (
                 <EmptyState
-                  icon="🔨"
+                  icon="ðŸ”¨"
                   title="No Builder Base troops"
                   description="Builder Base troops are unlocked as you progress through the Builder Base."
                 />
@@ -1215,8 +1217,8 @@ export default function PlayerProfileScreen() {
                             maxLevel={getBuilderTroopMaxLevel(t.name, bhLevel) ?? t.maxLevel}
                             {...cardIconProps(t.name, t.level)}
                             onPress={() => toggleDetail(t.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderTroopsSplit?.leveling?.length - 1}
+                            isFirst={i === 0}
+                            isLast={i === builderTroopsSplit?.leveling?.length - 1}
                           />
                         </React.Fragment>
                       ))}
@@ -1233,8 +1235,8 @@ export default function PlayerProfileScreen() {
                             maxLevel={getBuilderTroopMaxLevel(t.name, bhLevel) ?? t.maxLevel}
                             {...cardIconProps(t.name, t.level)}
                             onPress={() => toggleDetail(t.name)}
-                            isFirst={i == 0}
-                            isLast={i == builderTroopsSplit?.maxed?.length - 1}
+                            isFirst={i === 0}
+                            isLast={i === builderTroopsSplit?.maxed?.length - 1}
                           />
                         </React.Fragment>
                       ))}
@@ -1249,7 +1251,7 @@ export default function PlayerProfileScreen() {
             <>
               {siegeMachines.length === 0 ? (
                 <EmptyState
-                  icon="🚀"
+                  icon="ðŸš€"
                   title="No siege machines"
                   description="Siege Machines unlock at TH12 with the Workshop. You can request them from your clanmates."
                 />
@@ -1264,8 +1266,8 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
                         {...cardIconProps(s.name, s.level)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0}
-                        isLast={i == siegeMachines.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === siegeMachines.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1288,8 +1290,8 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
                         {...cardIconProps(s.name)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeSpellsSplit?.leveling?.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === homeSpellsSplit?.leveling?.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1308,8 +1310,8 @@ export default function PlayerProfileScreen() {
                       {...cardIconProps(s.name)}
                       locked
                       onPress={() => toggleDetail(s.name)}
-                      isFirst={i == 0}
-                      isLast={i == lockedSpells.length - 1}
+                      isFirst={i === 0}
+                      isLast={i === lockedSpells.length - 1}
                     />
                   ))}
                 </>
@@ -1326,8 +1328,8 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getMaxLevelAtTH(s.name, th)}
                         {...cardIconProps(s.name)}
                         onPress={() => toggleDetail(s.name)}
-                        isFirst={i == 0}
-                        isLast={i == homeSpellsSplit?.maxed?.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === homeSpellsSplit?.maxed?.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1335,7 +1337,7 @@ export default function PlayerProfileScreen() {
               )}
               {homeSpells.length === 0 && lockedSpells.length === 0 && (
                 <EmptyState
-                  icon="✨"
+                  icon="âœ¨"
                   title="No spells yet"
                   description="Spells unlock at TH5. Your first spell, the Lightning Spell, is available at TH5."
                 />
@@ -1347,7 +1349,7 @@ export default function PlayerProfileScreen() {
             <>
               {homePets.length === 0 ? (
                 <EmptyState
-                  icon="🐾"
+                  icon="ðŸ¾"
                   title="No pets yet"
                   description="Pets unlock at TH14 with the Pet House. They follow and fight alongside your heroes in battle."
                 />
@@ -1365,8 +1367,8 @@ export default function PlayerProfileScreen() {
                             thMaxLevel={getMaxLevelAtTH(p.name, th)}
                             {...cardIconProps(p.name)}
                             onPress={() => toggleDetail(p.name)}
-                            isFirst={i == 0}
-                            isLast={i == homePetsSplit?.leveling?.length - 1}
+                            isFirst={i === 0}
+                            isLast={i === homePetsSplit?.leveling?.length - 1}
                           />
                         </React.Fragment>
                       ))}
@@ -1384,8 +1386,8 @@ export default function PlayerProfileScreen() {
                             thMaxLevel={getMaxLevelAtTH(p.name, th)}
                             {...cardIconProps(p.name)}
                             onPress={() => toggleDetail(p.name)}
-                            isFirst={i == 0}
-                            isLast={i == homePetsSplit?.maxed?.length - 1}
+                            isFirst={i === 0}
+                            isLast={i === homePetsSplit?.maxed?.length - 1}
                           />
                         </React.Fragment>
                       ))}
@@ -1400,7 +1402,7 @@ export default function PlayerProfileScreen() {
             <>
               {player.heroEquipment.length === 0 ? (
                 <EmptyState
-                  icon="🛡️"
+                  icon="ðŸ›¡ï¸"
                   title="No equipment yet"
                   description="Hero equipment unlocks at TH8 with the Blacksmith. Equip your heroes with special abilities."
                 />
@@ -1420,8 +1422,8 @@ export default function PlayerProfileScreen() {
                         thMaxLevel={getEquipmentMaxLevel(e.name) || undefined}
                         {...cardIconProps(e.name)}
                         onPress={() => toggleDetail(e.name)}
-                        isFirst={i == 0}
-                        isLast={i == sortedHeroEquipment.length - 1}
+                        isFirst={i === 0}
+                        isLast={i === sortedHeroEquipment.length - 1}
                       />
                     </React.Fragment>
                   ))}
@@ -1529,7 +1531,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
   },
 
-  // ── Inline detail panel (expands below a tapped card) ──
+  // â”€â”€ Inline detail panel (expands below a tapped card) â”€â”€
   panel: {
     marginTop: 2,
     marginBottom: Spacing.sm,
@@ -1562,7 +1564,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     flex: 1,
   },
-  // ── Stat pills (icon + concise tag) ──
+  // â”€â”€ Stat pills (icon + concise tag) â”€â”€
   panelPillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
