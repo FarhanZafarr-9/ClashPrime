@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
 import notifee, { AndroidCategory, AndroidImportance, AuthorizationStatus, TriggerType } from 'react-native-notify-kit';
-import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { TimerReminder } from '../types/clash';
 
 const LEGACY_KEY = 'clashprime_reminders';
@@ -15,21 +15,48 @@ try {
   );
 } catch {}
 
+// Remote/local notifications were removed from Expo Go in SDK 53+, so the
+// expo-notifications module throws there. Load it lazily and only outside Expo
+// Go; in Expo Go the Notifee (dev-build) path is skipped and reminders simply
+// aren't posted as notifications.
+type ExpoNotifications = typeof import('expo-notifications');
+let expoNotificationsModule: ExpoNotifications | null | undefined;
+
+function isExpoGo(): boolean {
+  return (
+    (Constants?.executionEnvironment as string) === 'storeClient' ||
+    (Constants?.appOwnership as string) === 'expo'
+  );
+}
+
+async function getExpoNotifications(): Promise<ExpoNotifications | null> {
+  if (expoNotificationsModule !== undefined) return expoNotificationsModule;
+  expoNotificationsModule = null;
+  if (isExpoGo()) return null;
+  try {
+    const mod = await import('expo-notifications');
+    mod.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+    expoNotificationsModule = mod;
+  } catch {
+    expoNotificationsModule = null;
+  }
+  return expoNotificationsModule;
+}
+
 function remindersKey(accountTag: string): string {
   if (!accountTag) return LEGACY_KEY;
   return `clashprime_reminders_${accountTag.replace(/[^a-zA-Z0-9]/g, '')}`;
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 export async function ensureChannel(): Promise<void> {
+  const Notifications = await getExpoNotifications();
   if (!Notifications || Platform.OS !== 'android') return;
   try {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
@@ -207,6 +234,7 @@ export async function requestPermission(): Promise<boolean> {
     } catch {}
     return false;
   }
+  const Notifications = await getExpoNotifications();
   if (!Notifications) return false;
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
