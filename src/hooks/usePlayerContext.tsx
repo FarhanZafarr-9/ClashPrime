@@ -269,6 +269,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
   }, []);
 
+  const prevActiveTagRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentTag = activeAccount?.tag ?? null;
+    if (prevActiveTagRef.current !== null && prevActiveTagRef.current !== currentTag) {
+      playerRef.current = null;
+      setPlayer(null);
+      fetchPlayer(true).catch(() => {});
+    }
+    prevActiveTagRef.current = currentTag;
+  }, [activeAccount?.tag, fetchPlayer]);
+
   const refresh = useCallback(async () => {
     return await fetchPlayer(true);
   }, [fetchPlayer]);
