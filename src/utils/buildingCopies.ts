@@ -1,7 +1,7 @@
 import type { PlayerBuilding } from '../types/clash';
 import { getBuildingCountAtBH, getBuildingCountAtTH, isBuilderName } from './buildingData';
 
-// Store keys (th-levels.json / buildingLevels) → building-levels.json names.
+// Store keys (player.buildingLevels) → building-levels.json names.
 const STORE_TO_JSON: Record<string, string> = {
   'Walls': 'Wall',
   'Lab': 'Laboratory',

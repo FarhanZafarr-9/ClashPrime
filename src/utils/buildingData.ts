@@ -499,7 +499,7 @@ function columnValue(col: string, l: PackageLevel): any {
 }
 
 /**
- * Stats-table data for a building, shaped like the legacy building-levels.json
+ * Stats-table data for a building, shaped like the historical stat-table
  * entries so the existing table renderers work unchanged. Every row also carries
  * a non-column `Build Cost Resource` key for resource-coloured costs.
  */

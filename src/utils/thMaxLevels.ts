@@ -1,5 +1,5 @@
 // Army max levels per Town Hall, backed by the clash-of-clans-data package
-// (via armyData.ts). No legacy th-levels.json.
+// (via armyData.ts).
 
 import {
   getMaxLevelAtTH as getArmyMaxLevelAtTH,
