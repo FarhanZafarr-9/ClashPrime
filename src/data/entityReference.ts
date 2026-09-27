@@ -1,5 +1,6 @@
 // clash.ninja entity reference — manual mapping (provided by user, Aug 2026)
-// Image URL: https://www.clash.ninja/images/entities/{id}{levelSuffix ? `_${level}` : ''}.png
+// Images come from the bundled clash-of-clans-data sprites (see armyData.getArmyItemImage);
+// this table only classifies entities and records which ones have per-level cosmetics.
 // levelSuffix = true: unit has per-level cosmetic sprites (troops, dark troops, siege machines, plus a few exceptions)
 // levelSuffix = false: static image, level-independent
 
@@ -182,13 +183,6 @@ export const ENTITY_REFERENCE: EntityRef[] = [
 ];
 
 const byName = new Map<string, EntityRef>(ENTITY_REFERENCE.map((ref) => [ref.name, ref]));
-
-export function entityImageUrl(name: string, level?: number): string | null {
-  const ref = byName.get(name);
-  if (!ref) return null;
-  const suffix = ref.levelSuffix && level ? `_${level}` : '';
-  return `https://www.clash.ninja/images/entities/${ref.id}${suffix}.png`;
-}
 
 export function entityRef(name: string): EntityRef | undefined {
   return byName.get(name);

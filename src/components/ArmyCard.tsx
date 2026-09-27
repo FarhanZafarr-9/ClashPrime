@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-n
 import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography, useTheme } from '../theme';
-import { getTownHallImageUrl } from '../utils/thImages';
+import { getTownHallImageSource } from '../utils/buildingImages';
 import { getArmyItemImage } from '../utils/armyData';
-import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from '../utils/troopImages';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../types/armies';
 
 interface Props {
@@ -33,12 +32,6 @@ function iconFor(name: string, kind: 'troop' | 'spell' | 'siege' | 'hero' | 'pet
     const local = getArmyItemImage(v);
     if (local) return local;
   }
-  const url =
-    kind === 'hero' ? getHeroImageUrl(name) :
-    kind === 'pet' ? getPetImageUrl(name) :
-    kind === 'equipment' ? getEquipmentImageUrl(name) :
-    getTroopImageUrl(name);
-  if (url) return { uri: url };
   return undefined;
 }
 
@@ -128,12 +121,13 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
   }
 
   const hasPet = heroRows.some((r) => r.pet);
+  const armyThImage = getTownHallImageSource(army.townHall);
 
   return (
     <PressableRipple onPress={onPress} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
       <View style={styles.topRow}>
-        {getTownHallImageUrl(army.townHall) ? (
-          <Image source={{ uri: getTownHallImageUrl(army.townHall)! }} style={styles.thImage} resizeMode="contain" />
+        {armyThImage ? (
+          <Image source={armyThImage} style={styles.thImage} resizeMode="contain" />
         ) : (
           <View style={styles.thBadge}>
             <Text style={styles.thBadgeText}>TH{army.townHall}</Text>

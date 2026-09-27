@@ -3,7 +3,6 @@
 import { home, builder } from 'clash-of-clans-data';
 import type { TroopDetail, TroopDetailLevel } from '../api/troopDetail';
 import type { UnlockableType } from './thMaxLevels';
-import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from './troopImages';
 import { PACKAGE_IMAGES, PACKAGE_BUILDER_TROOP_IMAGES } from '../data/packageImages';
 
 export type { UnlockableType };
@@ -554,12 +553,7 @@ function buildDetailFromPackage(item: PackageItem): TroopDetail {
     name,
     slug: item.id ?? name.replace(/\s+/g, '-').toLowerCase(),
     description: item.description ?? '',
-    imageUrl:
-      getHeroImageUrl(name) ||
-      getPetImageUrl(name) ||
-      getEquipmentImageUrl(name) ||
-      getTroopImageUrl(name) ||
-      '',
+    image: getArmyItemImage(name) ?? getArmyItemImage(name, null, isBuilder) ?? undefined,
     levels,
     info,
     infoPairs: infoPairs.length ? infoPairs : undefined,

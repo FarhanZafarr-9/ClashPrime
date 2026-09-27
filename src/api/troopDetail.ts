@@ -24,7 +24,7 @@ export interface TroopDetail {
   name: string;
   slug: string;
   description: string;
-  imageUrl: string;
+  image?: number;
   levels: TroopDetailLevel[];
   currentLevel?: number;
   maxLevel?: number;
