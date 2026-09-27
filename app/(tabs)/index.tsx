@@ -16,6 +16,7 @@ import {
   Animated,
   BackHandler,
   Linking,
+  useWindowDimensions,
   type ImageSourcePropType,
 } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
@@ -30,10 +31,9 @@ import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
-import { getTroopImageUrl, getHeroImageUrl, getEquipmentImageUrl, getPetImageUrl } from '../../src/utils/troopImages';
+
 import { getBuildingItemImage, getBuildingCategories, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH } from '../../src/utils/buildingData';
-import { getTownHallImageUrl } from '../../src/utils/thImages';
-import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact } from '../../src/utils/buildingImages';
+import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact, getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
 import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime, buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
 import { Card } from '../../src/components/Card';
@@ -55,14 +55,16 @@ import {
 } from '../../src/hooks/useProgressSnapshot';
 import type { ClashPlayer, TimerReminder } from '../../src/types/clash';
 import { checkForUpdate, clearVersionCache, probeGitHubOnline } from '../../src/utils/versionCheck';
+import ShareCard, { type ShareCategory } from '../../src/components/ShareCard';
+import { useShareImage } from '../../src/hooks/useShareImage';
 
 const CATEGORY_META: Record<ProgressCategory, { label: string; sub: string; icon: { set: 'ion' | 'mc'; name: string } }> = {
   heroes: { label: 'Heroes', sub: 'Hero levels', icon: { set: 'ion', name: 'shield-half-outline' } },
   troops: { label: 'Troops', sub: 'Troop levels', icon: { set: 'mc', name: 'sword-cross' } },
   spells: { label: 'Spells', sub: 'Spell levels', icon: { set: 'ion', name: 'flask-outline' } },
   equipment: { label: 'Equipment', sub: 'Equipment levels', icon: { set: 'ion', name: 'trophy-outline' } },
-  builderTroops: { label: 'Builder Troops', sub: 'Builder troop levels', icon: { set: 'mc', name: 'goblin' } },
-  builderHeroes: { label: 'Builder Heroes', sub: 'Builder hero levels', icon: { set: 'mc', name: 'shield-crown' } },
+  builderTroops: { label: 'BB Troops', sub: 'Builder troop levels', icon: { set: 'mc', name: 'hammer-wrench' } },
+  builderHeroes: { label: 'BB Heroes', sub: 'Builder hero levels', icon: { set: 'mc', name: 'shield-crown' } },
 };
 
 // Representative home building shown in the "Overall Progress" rows, using its
@@ -76,17 +78,84 @@ const CATEGORY_BUILDING: Record<ProgressCategory, string> = {
   builderHeroes: 'Builder Hall',
 };
 
-function levelUpImage(key: ProgressCategory, name: string): number | string | null {
-  const local = getArmyItemImage(name);
-  if (local) return local;
-  switch (key) {
-    case 'heroes':
-    case 'builderHeroes': return getHeroImageUrl(name);
-    case 'troops':
-    case 'spells':
-    case 'builderTroops': return getTroopImageUrl(name);
-    case 'equipment': return getEquipmentImageUrl(name);
+const SHARE_BUILDING_CATS = ['Defenses', 'Resources', 'Traps', 'Army'];
+
+// Fraction of Home Village building levels owned among buildings currently
+// unlockable at the player's TH (locked buildings are ignored entirely).
+function calcBuildingProgress(p: ClashPlayer, th: number, cats: string[]): number {
+  let total = 0;
+  let counted = 0;
+  for (const cat of cats) {
+    const items = getBuildingCategories(th)[cat] ?? {};
+    const entries = Object.entries(items).filter(([, thData]) => {
+      const thEntry = thData[String(th)];
+      return thEntry != null && (thEntry.level ?? 0) > 0;
+    });
+    let catLevel = 0;
+    let catMax = 0;
+    for (const [name] of entries) {
+      const effectiveMax = getBuildingEffectiveMax(name, th);
+      const count = getCountAtTH(name, th);
+      const copies = getBuildingCopies(name, p.buildingLevels, p.buildings, effectiveMax, count, p.lastMaxedTH, th);
+      if (copies.levels.length === 0) continue;
+      catLevel += copies.levels.reduce((s, l) => s + l, 0);
+      catMax += count * effectiveMax;
+    }
+    if (catMax > 0) {
+      total += catLevel / catMax;
+      counted++;
+    }
   }
+  return counted > 0 ? total / counted : 0;
+}
+
+// Combined troops + spells progress among items unlockable at the current TH,
+// against their max level reachable at that TH.
+function calcArmyProgress(p: ClashPlayer, th: number, superTroopNames: readonly string[]): number {
+  const all = getAllItemsAtTH(th).filter((i) => i.type === 'troop' || i.type === 'spell');
+  const ownedT = new Map<string, number>();
+  for (const t of p.troops ?? []) {
+    if (t.village !== 'home') continue;
+    if (superTroopNames.includes(t.name) || t.name.startsWith('Super ') || t.name.startsWith('Sneaky ') || t.name.startsWith('Rocket ')) continue;
+    ownedT.set(t.name.toLowerCase(), t.level);
+  }
+  const ownedS = new Map<string, number>();
+  for (const s of p.spells ?? []) {
+    if (s.village !== 'home' && s.village) continue;
+    ownedS.set(s.name.toLowerCase(), s.level);
+  }
+  let sum = 0;
+  for (const it of all) {
+    const owned = it.type === 'troop' ? ownedT : ownedS;
+    const level = owned.get(it.name.toLowerCase()) ?? 0;
+    sum += it.maxLevel > 0 ? level / it.maxLevel : 0;
+  }
+  return all.length > 0 ? sum / all.length : 0;
+}
+
+// Representative building sprite shown next to each share-card progress row.
+const SHARE_CATEGORY_BUILDING: Record<string, { name: string; builder: boolean }> = {
+  heroes: { name: 'Hero Hall', builder: false },
+  troops: { name: 'Laboratory', builder: false },
+  equipment: { name: 'Blacksmith', builder: false },
+  buildings: { name: 'Builder Hut', builder: false },
+  walls: { name: 'Walls', builder: false },
+  pets: { name: 'Pet House', builder: false },
+  builderTroops: { name: 'Star Laboratory', builder: true },
+  builderHeroes: { name: 'Battle Machine Altar', builder: true },
+};
+
+function shareCategoryImage(key: string, th: number, bh: number) {
+  const meta = SHARE_CATEGORY_BUILDING[key];
+  if (!meta) return undefined;
+  const level = meta.builder
+    ? (getBuildingMaxLevelAtBH(meta.name, bh) ?? 1)
+    : (getBuildingMaxLevelAtTH(meta.name, th) ?? 1);
+  return getBuildingLevelImageSource(meta.name, Math.max(1, level));
+}
+
+function levelUpImage(key: ProgressCategory, name: string): number | null {
+  return getArmyItemImage(name, null, key === 'builderHeroes' || key === 'builderTroops') ?? null;
 }
 
 const RUSHED_ACCENT = '#F6C453';
@@ -420,6 +489,13 @@ export default function HomeScreen() {
   const [latestVersion, setLatestVersion] = useState('');
   const [checkingUpdate, setCheckingUpdate] = useState(false);
 
+  const [shareVisible, setShareVisible] = useState(false);
+  const [shareCardSize, setShareCardSize] = useState<{ width: number; height: number } | null>(null);
+  const { width: windowWidth } = useWindowDimensions();
+  const shareCardWidth = Math.min(windowWidth - 50, 520);
+  const shareCardRef = useRef<View>(null);
+  const { share, sharing } = useShareImage(shareCardRef);
+
   // Per-second UI clock for timer rows (foreground only; RN pauses it in bg).
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
@@ -618,6 +694,51 @@ export default function HomeScreen() {
   }) ?? [], [player, superTroopNames]);
   const homeSpells = useMemo(() => player?.spells?.filter((s: { village?: string }) => s.village === 'home' || !s.village) ?? [], [player]);
   const heroEquipment = useMemo(() => player?.heroEquipment ?? [], [player]);
+
+  const shareCategories = useMemo<ShareCategory[]>(() => {
+    if (!player) return [];
+    const cats = buildSnapshot(player).categories;
+    const bh = player.builderHallLevel ?? 1;
+    if (showBH) {
+      const bbRows: { key: string; label: string; progress: number }[] = [
+        { key: 'builderTroops', label: 'BB Troops', progress: cats.builderTroops },
+        { key: 'builderHeroes', label: 'BB Heroes', progress: cats.builderHeroes },
+      ];
+      return bbRows.map((r) => ({ ...r, image: shareCategoryImage(r.key, th, bh) }));
+    }
+    const petList = (player.troops ?? []).filter((t: any) => (t.village === 'home' || !t.village) && petNames.includes(t.name));
+    const petsUnlocked = petNames.some((n) => (getMaxLevelAtTH(n, th) ?? 0) > 0);
+    const petProgress = petList.length > 0
+      ? petList.reduce((s: number, p: any) => {
+        const maxLvl = getMaxLevelAtTH(p.name, th) ?? p.maxLevel ?? 0;
+        return s + (maxLvl > 0 ? p.level / maxLvl : 0);
+      }, 0) / petList.length
+      : 0;
+    const rows: { key: string; label: string; progress: number }[] = [
+      { key: 'heroes', label: 'Heroes', progress: cats.heroes },
+      { key: 'troops', label: 'Troops & Spells', progress: calcArmyProgress(player, th, superTroopNames) },
+      { key: 'equipment', label: 'Equipment', progress: cats.equipment },
+      { key: 'buildings', label: 'Buildings', progress: calcBuildingProgress(player, th, SHARE_BUILDING_CATS) },
+      { key: 'walls', label: 'Walls', progress: calcBuildingProgress(player, th, ['Walls']) },
+      ...(petsUnlocked ? [{ key: 'pets', label: 'Pets', progress: petProgress }] : []),
+    ];
+    return rows.map((r) => ({ ...r, image: shareCategoryImage(r.key, th, bh) }));
+  }, [player, buildSnapshot, th, superTroopNames, petNames, showBH]);
+
+  const handleOpenShare = useCallback(() => {
+    if (player) setShareVisible(true);
+  }, [player]);
+
+  const handleShareProgress = useCallback(async () => {
+    if (!shareCardSize) return;
+    const err = await share({
+      dialogTitle: 'Share progress',
+      width: shareCardSize.width,
+      height: shareCardSize.height,
+      errorMessage: 'Could not share progress right now.',
+    });
+    if (err) Alert.alert('Share Failed', err);
+  }, [share, shareCardSize]);
 
   // Prefetch hero-equipment details (full level list) so equipment rows show the
   // item's correct max level for the Town Hall instead of the API's
@@ -923,10 +1044,10 @@ export default function HomeScreen() {
     key: string;
     title: string;
     icon: keyof typeof Ionicons.glyphMap;
-    iconUrl?: string;
+    iconSource?: ImageSourcePropType;
     progress: number;
     pushTo: string;
-    rows: { name: string; level: number; maxLevel: number; icon?: string }[];
+    rows: { name: string; level: number; maxLevel: number; iconSource?: ImageSourcePropType }[];
   }[] = [
       {
         key: 'heroes',
@@ -936,59 +1057,59 @@ export default function HomeScreen() {
         pushTo: '/(tabs)/army?tab=heroes',
         rows: allHeroesAtTH.map((h) => {
           const owned = homeHeroes.find((o: { name: string }) => o.name === h.name);
-          return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel, icon: getHeroImageUrl(h.name) || undefined };
+          return { name: h.name, level: owned?.level ?? 0, maxLevel: h.maxLevel, iconSource: getArmyItemImage(h.name) ?? undefined };
         }),
       },
       {
         key: 'troops',
         title: 'Troops',
         icon: 'bonfire-outline',
-        iconUrl: getTroopImageUrl('Barbarian', 1) || undefined,
+        iconSource: getArmyItemImage('Barbarian', 1) ?? undefined,
         progress: troopsProgress,
         pushTo: '/(tabs)/army?tab=troops',
         rows: allTroopsAtTH.map((t) => {
           const owned = homeTroops.find((o: { name: string }) => o.name === t.name);
           const level = owned?.level ?? 0;
-          return { name: t.name, level, maxLevel: t.maxLevel, icon: getTroopImageUrl(t.name, level) || undefined };
+          return { name: t.name, level, maxLevel: t.maxLevel, iconSource: getArmyItemImage(t.name) ?? undefined };
         }),
       },
       {
         key: 'spells',
         title: 'Spells',
         icon: 'flash-outline',
-        iconUrl: getTroopImageUrl('Lightning Spell', 1) || undefined,
+        iconSource: getArmyItemImage('Lightning Spell', 1) ?? undefined,
         progress: spellsProgress,
         pushTo: '/(tabs)/army?tab=spells',
         rows: allSpellsAtTH.map((s) => {
           const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
           const level = owned?.level ?? 0;
-          return { name: s.name, level, maxLevel: s.maxLevel, icon: getTroopImageUrl(s.name, level) || undefined };
+          return { name: s.name, level, maxLevel: s.maxLevel, iconSource: getArmyItemImage(s.name) ?? undefined };
         }),
       },
       {
         key: 'pets',
         title: 'Pets',
         icon: 'paw',
-        iconUrl: getPetImageUrl('L.A.S.S.I') || undefined,
+        iconSource: getArmyItemImage('L.A.S.S.I') ?? undefined,
         progress: petsProgress,
         pushTo: '/(tabs)/army?tab=pets',
         rows: homePetList.map((p) => {
           const maxLevel = petMaxAt(p.name);
-          return { name: p.name, level: p.level, maxLevel, icon: getPetImageUrl(p.name) || undefined };
+          return { name: p.name, level: p.level, maxLevel, iconSource: getArmyItemImage(p.name) ?? undefined };
         }),
       },
       {
         key: 'equipment',
         title: 'Equipment',
         icon: 'hammer-outline',
-        iconUrl: getEquipmentImageUrl('Barbarian Puppet') || undefined,
+        iconSource: getArmyItemImage('Barbarian Puppet') ?? undefined,
         progress: equipProgress,
         pushTo: '/(tabs)/army?tab=equipment',
         rows: player.heroEquipment.map((e: { name: string; level: number; maxLevel: number }) => ({
           name: e.name,
           level: e.level,
           maxLevel: getEquipFullMax(e.name, e.maxLevel),
-          icon: getEquipmentImageUrl(e.name) || undefined,
+          iconSource: getArmyItemImage(e.name) ?? undefined,
         })),
       },
     ];
@@ -1087,6 +1208,8 @@ export default function HomeScreen() {
     ? getLeagueLootInfo(playerLeague.name, player.townHallLevel)
     : null;
 
+  const playerThImage = getTownHallImageSource(player.townHallLevel);
+
   const fmtAmount = (amount: { gold: number | null; dark: number | null } | null): string | null => {
     if (!amount) return null;
     const parts: string[] = [];
@@ -1183,6 +1306,11 @@ export default function HomeScreen() {
                 </View>
               )}
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+                {player && (
+                  <PressableRipple style={styles.switchBtn} onPress={handleOpenShare}>
+                    <Ionicons name="share-outline" size={18} color={Colors.textSecondary} />
+                  </PressableRipple>
+                )}
                 <PressableRipple style={styles.switchBtn} onPress={handleCheckUpdates}>
                   {checkingUpdate ? (
                     <ActivityIndicator size="small" color={Colors.textSecondary} />
@@ -1215,9 +1343,9 @@ export default function HomeScreen() {
                         <Text style={styles.avatarText}>BH</Text>
                       );
                     })()
-                    : getTownHallImageUrl(player.townHallLevel) ? (
+                    : playerThImage ? (
                       <Image
-                        source={{ uri: getTownHallImageUrl(player.townHallLevel)! }}
+                        source={playerThImage}
                         style={styles.avatarImage}
                         resizeMode="contain"
                       />
@@ -1293,7 +1421,7 @@ export default function HomeScreen() {
                           key={group.key}
                           isLast={gi === groups.length - 1}
                           icon={group.icon}
-                          iconUrl={group.iconUrl}
+                             iconSource={group.iconSource}
                           title={group.title}
                           compact
                           onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
@@ -1310,7 +1438,7 @@ export default function HomeScreen() {
                                 name={row.name}
                                 level={row.level}
                                 maxLevel={row.maxLevel}
-                                icon={row.icon}
+                                   iconSource={row.iconSource}
                                 costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                                 costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                                 timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
@@ -1440,8 +1568,7 @@ export default function HomeScreen() {
                                   name={row.name}
                                   level={row.level}
                                   maxLevel={row.maxLevel}
-                                  icon={row.icon}
-                                  iconSource={row.iconSource}
+                                   iconSource={row.iconSource}
                                   costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                                   costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                                   timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
@@ -1488,7 +1615,7 @@ export default function HomeScreen() {
                           name={row.name}
                           level={row.level}
                           maxLevel={row.maxLevel}
-                          icon={row.icon}
+                             iconSource={row.iconSource}
                           costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                           costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                           timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
@@ -1531,7 +1658,7 @@ export default function HomeScreen() {
                           name={row.name}
                           level={row.level}
                           maxLevel={row.maxLevel}
-                          icon={row.icon}
+                             iconSource={row.iconSource}
                           costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
                           costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
                           timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
@@ -1573,15 +1700,15 @@ export default function HomeScreen() {
                     >
                       {(() => {
                         return unlockableItems.flatMap((item, i) => {
-                          const thUrl = getTownHallImageUrl(item.unlockTh);
-                          const imageUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : getTroopImageUrl(item.name, 1);
+                          const thImage = getTownHallImageSource(item.unlockTh);
+                          const image = getArmyItemImage(item.name, item.type === 'hero' ? null : 1);
                           const levelsAtTH = getMaxLevelAtTH(item.name, th);
                           const itemCost = upgradeCosts[item.name];
                           return (
                             <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
                               <View style={styles.statRowIcon}>
-                                {imageUrl ? (
-                                  <Image source={{ uri: imageUrl }} style={styles.statRowIconImage} resizeMode="contain" />
+                                {image ? (
+                                  <Image source={image} style={styles.statRowIconImage} resizeMode="contain" />
                                 ) : (
                                   <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
                                 )}
@@ -1605,9 +1732,9 @@ export default function HomeScreen() {
                                   ) : null}
                                   {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
                                 </View>
-                                {thUrl ? (
+                                {thImage ? (
                                   <View style={styles.thImageBadge}>
-                                    <Image source={{ uri: thUrl }} style={styles.thImageBadgeImg} resizeMode="contain" />
+                                    <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" />
                                   </View>
                                 ) : null}
                               </View>
@@ -1645,13 +1772,13 @@ export default function HomeScreen() {
                         const visible = groups.filter((g) => g.items.length > 0);
                         const allItems = visible.flatMap((g) => g.items);
                         return allItems.map((item, i) => {
-                          const iconUrl = item.type === 'hero' ? getHeroImageUrl(item.name) : item.type === 'equipment' ? getEquipmentImageUrl(item.name) : getTroopImageUrl(item.name, item.currentLevel);
+                          const itemImage = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'equipment' ? null : item.currentLevel);
                           const costData = rushedCosts[item.name];
                           return (
                             <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
                               <View style={styles.statRowIcon}>
-                                {iconUrl ? (
-                                  <Image source={{ uri: iconUrl }} style={styles.statRowIconImage} resizeMode="contain" />
+                                {itemImage ? (
+                                  <Image source={itemImage} style={styles.statRowIconImage} resizeMode="contain" />
                                 ) : (
                                   <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
                                 )}
@@ -2006,6 +2133,7 @@ export default function HomeScreen() {
             {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
               const isSyncing = acct.tag === syncingTag;
+              const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
               return (
                 <PressableRipple
                   key={acct.tag}
@@ -2013,8 +2141,8 @@ export default function HomeScreen() {
                   onPress={() => handleHomeSwitch(acct.tag)}
                 >
                   <View style={styles.switcherAvatar}>
-                    {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
-                      <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.switcherAvatarImg} resizeMode="contain" />
+                    {acctThImage ? (
+                      <Image source={acctThImage} style={styles.switcherAvatarImg} resizeMode="contain" />
                     ) : (
                       <Ionicons name="person" size={18} color={Colors.textSecondary} />
                     )}
@@ -2055,6 +2183,42 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {player && (
+        <Modal visible={shareVisible} transparent animationType="fade" onRequestClose={() => setShareVisible(false)} statusBarTranslucent>
+          <View style={styles.shareOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setShareVisible(false)} />
+            <View style={styles.sharePreviewCard}>
+              <View
+                collapsable={false}
+                ref={shareCardRef}
+                onLayout={(e) => setShareCardSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
+              >
+                <ShareCard
+                  player={player}
+                  categories={shareCategories}
+                  showBH={showBH}
+                  width={shareCardWidth}
+                  measure={shareCardSize}
+                  subtitle={lastSync ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : undefined}
+                />
+              </View>
+              <View style={[styles.shareActions, { width: shareCardWidth }]}>
+                <PressableRipple style={styles.shareActionGhost} onPress={() => setShareVisible(false)}>
+                  <Text style={styles.shareActionGhostText}>Close</Text>
+                </PressableRipple>
+                <PressableRipple style={[styles.shareActionPrimary, sharing && { opacity: 0.5 }]} disabled={sharing} onPress={handleShareProgress}>
+                  {sharing ? (
+                    <ActivityIndicator size="small" color={Colors.bg} />
+                  ) : (
+                    <Text style={styles.shareActionPrimaryText}>Share</Text>
+                  )}
+                </PressableRipple>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       <Modal visible={progressDiff !== null} transparent animationType="fade" onRequestClose={() => setProgressDiff(null)} statusBarTranslucent>
         <Pressable style={styles.progressOverlay} onPress={() => setProgressDiff(null)}>
@@ -2254,6 +2418,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  shareOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  sharePreviewCard: {
+    alignSelf: 'stretch',
+    maxWidth: 520,
+    alignItems: 'center',
+    gap: Spacing.base,
+  },
+  shareActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    alignSelf: 'center',
+  },
+  shareActionGhost: {
+    flex: 1,
+    height: 46,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareActionGhostText: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
+  },
+  shareActionPrimary: {
+    flex: 1,
+    height: 46,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareActionPrimaryText: {
+    ...Typography.headline,
+    color: Colors.bg,
   },
   switcherCard: {
     alignSelf: 'stretch',

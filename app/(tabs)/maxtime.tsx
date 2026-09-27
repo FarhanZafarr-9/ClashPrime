@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, Pressable } from 'react-native';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, Pressable, Modal, Alert, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -16,11 +16,12 @@ import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hook
 import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
 import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getBuildingCategories, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { getBuildingCopies, getCountAtTH } from '../../src/utils/buildingCopies';
-import { getBuildingEffectiveMax } from '../../src/utils/buildingImages';
-import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getBuildingEffectiveMax, getTownHallImageSource } from '../../src/utils/buildingImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, computeBuilderBaseMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
 import { computeThReadiness } from '../../src/utils/thReadiness';
+import { useShareImage } from '../../src/hooks/useShareImage';
+import MaxtimeShareCard, { type MaxtimeShareData, type MaxtimePipeline } from '../../src/components/MaxtimeShareCard';
 import { formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../../src/utils/upgradeCosts';
 import type { TroopDetail } from '../../src/api/troopDetail';
 
@@ -64,9 +65,20 @@ function rowScope(row: PipelineItemRow, heroNames: Set<string>, discounts: Disco
   return heroNames.has(row.name) ? discounts.army : discounts.buildings;
 }
 
+function orderShareResources(byResource: Record<string, number>) {
+  return (Object.entries(byResource).filter(([r, v]) => v > 0 && r !== 'Unknown') as [string, number][])
+    .sort((a, b) => {
+      const ia = RESOURCE_ORDER.indexOf(a[0] as (CostResource | BuildingCostResource));
+      const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    })
+    .map(([key, amount]) => ({ key, amount }));
+}
+
 export default function MaxTimeScreen() {
-  const { player, loading } = usePlayer();
+  const { player, loading, lastSync } = usePlayer();
   const { colors } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
   const { count: builderCount, setBuilderCount, loaded: builderLoaded } = useBuilderCount();
   const { excluded, toggleExcluded, setExcludedMany, clearExcluded, loaded: exclusionsLoaded } = useBuildingExclusions();
   const { discounts } = useDiscounts();
@@ -78,11 +90,15 @@ export default function MaxTimeScreen() {
   const [labExpanded, setLabExpanded] = useState(false);
   const [rushExpanded, setRushExpanded] = useState(false);
   const [excludeOpen, setExcludeOpen] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
+  const [shareVillage, setShareVillage] = useState<'home' | 'builder'>('home');
+  const [shareCardSize, setShareCardSize] = useState<{ width: number; height: number } | null>(null);
 
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const maxTh = getMaxTownHall();
   const isMaxTh = th >= maxTh;
+  const hasPets = (player?.pets?.length ?? 0) > 0;
   const { count: bbBuilderCount, setBuilderBaseCount, loaded: bbBuilderLoaded } = useBuilderBaseCount(bh);
 
   const armyNames = useMemo(() => {
@@ -207,6 +223,63 @@ export default function MaxTimeScreen() {
       'bb-lab': bbDiscounted.bbLab,
     } as Record<PipelineKey, { timeSec: number; cost: number; byResource: Record<string, number> }>;
   }, [discounted, bbDiscounted]);
+
+  const shareCardWidth = Math.min(windowWidth - 50, 520);
+  const shareCardRef = useRef<View>(null);
+  const { share, sharing } = useShareImage(shareCardRef);
+  const syncSubtitle = lastSync
+    ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : undefined;
+
+  const homeShare = useMemo<MaxtimeShareData | null>(() => {
+    if (!discounted || !result) return null;
+    const image = (name: string) =>
+      getBuildingItemImage(name, getBuildingMaxLevelAtTH(name, th) ?? 1) ?? undefined;
+    const pipelines: MaxtimePipeline[] = [
+      { key: 'lab', label: 'Laboratory', timeSec: discounted.lab.timeSec, image: image('Lab') },
+      { key: 'builders', label: 'Builders', timeSec: discounted.builders.timeSec, image: image('Builder Hut') },
+      ...(hasPets ? [{ key: 'pets', label: 'Pet House', timeSec: discounted.pets.timeSec, image: image('Pet House') }] : []),
+      { key: 'equipment', label: 'Equipment', timeSec: discounted.equipment.timeSec, instant: discounted.equipment.timeSec <= 0, image: image('Blacksmith') },
+    ];
+    const upgradesLeft = result.lab.items.length + result.builders.items.length + result.pets.items.length;
+    return {
+      showBH: false,
+      headlineLabel: 'Time to max',
+      headlineTime: discounted.headlineTime,
+      headlineNote: `TH${th} · ${builderCount} builders · ${upgradesLeft} upgrades left`,
+      pipelines,
+      resources: orderShareResources(discounted.totalByResource),
+      subtitle: syncSubtitle,
+    };
+  }, [discounted, result, th, builderCount, hasPets, syncSubtitle]);
+
+  const bbShare = useMemo<MaxtimeShareData | null>(() => {
+    if (!bbDiscounted || !bbResult) return null;
+    const image = (name: string) =>
+      getBuildingItemImage(name, getBuildingMaxLevelAtBH(name, bh) ?? 1, true) ?? undefined;
+    const pipelines: MaxtimePipeline[] = [
+      { key: 'bb-builders', label: 'Builder Hall', timeSec: bbDiscounted.bbBuilders.timeSec, image: image('Builder Hall') },
+      { key: 'bb-lab', label: 'Star Laboratory', timeSec: bbDiscounted.bbLab.timeSec, image: image('Star Laboratory') },
+    ];
+    const upgradesLeft = bbResult.bbBuilders.items.length + bbResult.bbLab.items.length;
+    return {
+      showBH: true,
+      headlineLabel: 'BB time to max',
+      headlineTime: bbDiscounted.headlineTime,
+      headlineNote: `BH${bh} · ${bbBuilderCount} builders · ${upgradesLeft} upgrades left`,
+      pipelines,
+      resources: orderShareResources(bbDiscounted.totalByResource),
+      subtitle: syncSubtitle,
+    };
+  }, [bbDiscounted, bbResult, bh, bbBuilderCount, syncSubtitle]);
+
+  const activeShare = shareVillage === 'home' ? homeShare : bbShare;
+
+  const handleShare = useCallback(async () => {
+    if (!activeShare) return;
+    const err = await share();
+    if (err) Alert.alert('Share Failed', err);
+  }, [activeShare, share]);
 
   const nextResult = useMemo(() => {
     if (!player || !details) return null;
@@ -528,7 +601,9 @@ export default function MaxTimeScreen() {
                 index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
               ]}
             >
-              <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
+              {PACKAGE_RESOURCE_IMAGES[r] ? (
+                <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
+              ) : null}
               <Text style={[styles.heroResourceValue, { color }]}>{formatCost(v)}</Text>
             </View>
           );
@@ -541,7 +616,14 @@ export default function MaxTimeScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Time to Max</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>Time to Max</Text>
+            <View style={styles.headerActions}>
+              <PressableRipple onPress={() => setShareVisible(true)} hitSlop={8} style={styles.headerBtn}>
+                <Ionicons name="share-outline" size={20} color={Colors.textSecondary} />
+              </PressableRipple>
+            </View>
+          </View>
           <Text style={styles.subtitle}>Remaining upgrades for Town Hall {th}</Text>
         </View>
 
@@ -701,7 +783,7 @@ export default function MaxTimeScreen() {
         <View style={styles.pipelineSections}>
           {renderPipeline(result.lab, discounts.army, false)}
           {renderPipeline(result.builders, discounts.buildings, false)}
-          {renderPipeline(result.pets, discounts.army, false)}
+          {hasPets ? renderPipeline(result.pets, discounts.army, false) : null}
           {renderPipeline(result.equipment, discounts.army, true)}
         </View>
 
@@ -815,7 +897,7 @@ export default function MaxTimeScreen() {
                       level={th}
                       maxLevel={readiness.nextTh}
                       thMaxLevel={readiness.nextTh}
-                      icon={getTownHallImageUrl(readiness.nextTh) ?? undefined}
+                      icon={getTownHallImageSource(readiness.nextTh) ?? undefined}
                       costResources={thUpgrade.byResource}
                       timeLabel={thUpgrade.timeSec > 0 ? formatTimeShort(thUpgrade.timeSec) : ''}
                       isFirst
@@ -973,6 +1055,56 @@ export default function MaxTimeScreen() {
           {renderPipeline(bbResult.bbLab, discounts.army, true)}
         </View>
       </ScrollView>
+
+      {player && (
+        <Modal visible={shareVisible} transparent animationType="fade" onRequestClose={() => setShareVisible(false)} statusBarTranslucent>
+          <View style={styles.shareOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setShareVisible(false)} />
+            <View style={styles.sharePreviewCard}>
+              <View style={styles.villageToggle}>
+                <PressableRipple
+                  style={[styles.villageToggleItem, shareVillage === 'home' && styles.villageToggleActive]}
+                  onPress={() => setShareVillage('home')}
+                >
+                  <Ionicons name="home-outline" size={13} color={shareVillage === 'home' ? Colors.bg : Colors.textSecondary} />
+                  <Text style={[styles.villageToggleText, shareVillage === 'home' && styles.villageToggleTextActive]}>Home</Text>
+                </PressableRipple>
+                <PressableRipple
+                  style={[styles.villageToggleItem, shareVillage === 'builder' && styles.villageToggleActive]}
+                  onPress={() => setShareVillage('builder')}
+                >
+                  <Ionicons name="hammer-outline" size={13} color={shareVillage === 'builder' ? Colors.bg : Colors.textSecondary} />
+                  <Text style={[styles.villageToggleText, shareVillage === 'builder' && styles.villageToggleTextActive]}>Builder Base</Text>
+                </PressableRipple>
+              </View>
+              {activeShare ? (
+                <View
+                  collapsable={false}
+                  ref={shareCardRef}
+                  onLayout={(e) => setShareCardSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
+                >
+                  <MaxtimeShareCard
+                    player={player}
+                    data={{ ...activeShare, width: shareCardWidth, measure: shareCardSize }}
+                  />
+                </View>
+              ) : null}
+              <View style={[styles.shareActions, { width: shareCardWidth }]}>
+                <PressableRipple style={styles.shareActionGhost} onPress={() => setShareVisible(false)}>
+                  <Text style={styles.shareActionGhostText}>Close</Text>
+                </PressableRipple>
+                <PressableRipple style={[styles.shareActionPrimary, sharing && { opacity: 0.5 }]} disabled={sharing || !activeShare} onPress={handleShare}>
+                  {sharing ? (
+                    <ActivityIndicator size="small" color={Colors.bg} />
+                  ) : (
+                    <Text style={styles.shareActionPrimaryText}>Share</Text>
+                  )}
+                </PressableRipple>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -989,6 +1121,97 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  headerBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  sharePreviewCard: {
+    alignSelf: 'stretch',
+    maxWidth: 520,
+    alignItems: 'center',
+    gap: Spacing.base,
+  },
+  villageToggle: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 3,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  villageToggleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+  },
+  villageToggleActive: {
+    backgroundColor: Colors.textPrimary,
+  },
+  villageToggleText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  villageToggleTextActive: {
+    color: Colors.bg,
+  },
+  shareActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    alignSelf: 'center',
+  },
+  shareActionGhost: {
+    flex: 1,
+    height: 46,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareActionGhostText: {
+    ...Typography.headline,
+    color: Colors.textPrimary,
+  },
+  shareActionPrimary: {
+    flex: 1,
+    height: 46,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareActionPrimaryText: {
+    ...Typography.headline,
+    color: Colors.bg,
   },
   title: {
     ...Typography.largeTitle,
