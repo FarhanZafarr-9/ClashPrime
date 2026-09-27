@@ -112,7 +112,7 @@ const FONT_TEXT_PROPS = ['fontSize', 'fontWeight', 'fontVariant', 'lineHeight', 
 // Clash glyphs render large, so scale sizes down when the font is active.
 const CLASH_FONT_SCALE = 0.85;
 
-let clashFontPref: FontPref = 'off';
+let clashFontPref: FontPref = 'all';
 let clashFontLoaded = false;
 
 export function isClashFontLoaded() {
