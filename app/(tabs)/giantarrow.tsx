@@ -30,8 +30,7 @@ import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { PACKAGE_IMAGES } from '../../src/data/packageImages';
 import { useDialog } from '../../src/components/AlertDialog';
 import Svg, { Line, Polygon } from 'react-native-svg';
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
+import { useShareImage } from '../../src/hooks/useShareImage';
 
 const STORAGE_KEY = 'clashprime_giant_arrow';
 const PATH_COLORS = [
@@ -268,22 +267,17 @@ export default function GiantArrowScreen() {
 
   const [shareSize, setShareSize] = useState<{ width: number; height: number } | null>(null);
 
+  const { share } = useShareImage(shareRef);
+
   const handleShare = useCallback(async () => {
-    try {
-      const snapSize = shareSize ? { width: shareSize.width * 3, height: shareSize.height * 3 } : {};
-      const snapshot = await captureRef(shareRef, { format: 'png', quality: 1, ...snapSize });
-      if (!(await Sharing.isAvailableAsync())) {
-        setHint('Sharing is not available on this device.');
-        return;
-      }
-      await Sharing.shareAsync(snapshot, {
-        mimeType: 'image/png',
-        dialogTitle: PLAN_MODES[mode].shareTitle,
-      });
-    } catch {
-      setHint('Could not share the plan right now.');
-    }
-  }, [shareSize, mode]);
+    const err = await share({
+      dialogTitle: PLAN_MODES[mode].shareTitle,
+      width: shareSize?.width,
+      height: shareSize?.height,
+      errorMessage: 'Could not share the plan right now.',
+    });
+    if (err) setHint(err);
+  }, [share, shareSize, mode]);
 
   const onPick = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
