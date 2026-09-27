@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, Pressable, Modal, Alert, ActivityIndicator, useWindowDimensions } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -20,7 +20,7 @@ import { getBuildingEffectiveMax, getTownHallImageSource } from '../../src/utils
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, computeBuilderBaseMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
 import { computeThReadiness } from '../../src/utils/thReadiness';
-import { useShareImage } from '../../src/hooks/useShareImage';
+import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
 import MaxtimeShareCard, { type MaxtimeShareData, type MaxtimePipeline } from '../../src/components/MaxtimeShareCard';
 import { formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../../src/utils/upgradeCosts';
 import type { TroopDetail } from '../../src/api/troopDetail';
@@ -78,7 +78,6 @@ function orderShareResources(byResource: Record<string, number>) {
 export default function MaxTimeScreen() {
   const { player, loading, lastSync } = usePlayer();
   const { colors } = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
   const { count: builderCount, setBuilderCount, loaded: builderLoaded } = useBuilderCount();
   const { excluded, toggleExcluded, setExcludedMany, clearExcluded, loaded: exclusionsLoaded } = useBuildingExclusions();
   const { discounts } = useDiscounts();
@@ -92,7 +91,6 @@ export default function MaxTimeScreen() {
   const [excludeOpen, setExcludeOpen] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [shareVillage, setShareVillage] = useState<'home' | 'builder'>('home');
-  const [shareCardSize, setShareCardSize] = useState<{ width: number; height: number } | null>(null);
 
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
@@ -224,9 +222,6 @@ export default function MaxTimeScreen() {
     } as Record<PipelineKey, { timeSec: number; cost: number; byResource: Record<string, number> }>;
   }, [discounted, bbDiscounted]);
 
-  const shareCardWidth = Math.min(windowWidth - 50, 520);
-  const shareCardRef = useRef<View>(null);
-  const { share, sharing } = useShareImage(shareCardRef);
   const syncSubtitle = lastSync
     ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     : undefined;
@@ -275,11 +270,26 @@ export default function MaxTimeScreen() {
 
   const activeShare = shareVillage === 'home' ? homeShare : bbShare;
 
-  const handleShare = useCallback(async () => {
-    if (!activeShare) return;
-    const err = await share();
-    if (err) Alert.alert('Share Failed', err);
-  }, [activeShare, share]);
+  const shareCardWidth = useShareCardWidth();
+
+  const shareVillageToggle = (
+    <View style={styles.villageToggle}>
+      <PressableRipple
+        style={[styles.villageToggleItem, shareVillage === 'home' && styles.villageToggleActive]}
+        onPress={() => setShareVillage('home')}
+      >
+        <Ionicons name="home-outline" size={13} color={shareVillage === 'home' ? Colors.bg : Colors.textSecondary} />
+        <Text style={[styles.villageToggleText, shareVillage === 'home' && styles.villageToggleTextActive]}>Home</Text>
+      </PressableRipple>
+      <PressableRipple
+        style={[styles.villageToggleItem, shareVillage === 'builder' && styles.villageToggleActive]}
+        onPress={() => setShareVillage('builder')}
+      >
+        <Ionicons name="hammer-outline" size={13} color={shareVillage === 'builder' ? Colors.bg : Colors.textSecondary} />
+        <Text style={[styles.villageToggleText, shareVillage === 'builder' && styles.villageToggleTextActive]}>Builder Base</Text>
+      </PressableRipple>
+    </View>
+  );
 
   const nextResult = useMemo(() => {
     if (!player || !details) return null;
@@ -483,7 +493,7 @@ export default function MaxTimeScreen() {
                         <View style={styles.summaryRow}>
                           <Text style={styles.summaryLabel}>Optimal split</Text>
                           <Text style={styles.summaryValue}>
-                            {p.split.optimalHeroBuilders}H / {p.split.optimalBuildingBuilders}B →{' '}
+                            {p.split.optimalHeroBuilders}H / {p.split.optimalBuildingBuilders}B <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
                             {formatTime(buildingSplitSec(p.split.optimalSec))}
                           </Text>
                         </View>
@@ -569,7 +579,7 @@ export default function MaxTimeScreen() {
           key: `${d.name}-${d.nextMax}-${gi}`,
           name: d.name,
           icon: (getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name)) ?? undefined,
-          meta: `${d.count > 1 ? `×${d.count} ` : ''}+${d.levels} → ${d.nextMax}`,
+          meta: `${d.count > 1 ? `×${d.count} ` : ''}+${d.levels} \u2192 ${d.nextMax}`,
           type: undefined,
         });
       }
@@ -1057,53 +1067,24 @@ export default function MaxTimeScreen() {
       </ScrollView>
 
       {player && (
-        <Modal visible={shareVisible} transparent animationType="fade" onRequestClose={() => setShareVisible(false)} statusBarTranslucent>
-          <View style={styles.shareOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setShareVisible(false)} />
-            <View style={styles.sharePreviewCard}>
-              <View style={styles.villageToggle}>
-                <PressableRipple
-                  style={[styles.villageToggleItem, shareVillage === 'home' && styles.villageToggleActive]}
-                  onPress={() => setShareVillage('home')}
-                >
-                  <Ionicons name="home-outline" size={13} color={shareVillage === 'home' ? Colors.bg : Colors.textSecondary} />
-                  <Text style={[styles.villageToggleText, shareVillage === 'home' && styles.villageToggleTextActive]}>Home</Text>
-                </PressableRipple>
-                <PressableRipple
-                  style={[styles.villageToggleItem, shareVillage === 'builder' && styles.villageToggleActive]}
-                  onPress={() => setShareVillage('builder')}
-                >
-                  <Ionicons name="hammer-outline" size={13} color={shareVillage === 'builder' ? Colors.bg : Colors.textSecondary} />
-                  <Text style={[styles.villageToggleText, shareVillage === 'builder' && styles.villageToggleTextActive]}>Builder Base</Text>
-                </PressableRipple>
-              </View>
-              {activeShare ? (
-                <View
-                  collapsable={false}
-                  ref={shareCardRef}
-                  onLayout={(e) => setShareCardSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
-                >
-                  <MaxtimeShareCard
-                    player={player}
-                    data={{ ...activeShare, width: shareCardWidth, measure: shareCardSize }}
-                  />
-                </View>
-              ) : null}
-              <View style={[styles.shareActions, { width: shareCardWidth }]}>
-                <PressableRipple style={styles.shareActionGhost} onPress={() => setShareVisible(false)}>
-                  <Text style={styles.shareActionGhostText}>Close</Text>
-                </PressableRipple>
-                <PressableRipple style={[styles.shareActionPrimary, sharing && { opacity: 0.5 }]} disabled={sharing || !activeShare} onPress={handleShare}>
-                  {sharing ? (
-                    <ActivityIndicator size="small" color={Colors.bg} />
-                  ) : (
-                    <Text style={styles.shareActionPrimaryText}>Share</Text>
-                  )}
-                </PressableRipple>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <SharePreviewModal
+          visible={shareVisible}
+          onClose={() => setShareVisible(false)}
+          cardWidth={shareCardWidth}
+          header={shareVillageToggle}
+          ready={activeShare !== null}
+          shareTitle="Time to max"
+          onError={(message) => Alert.alert('Share Failed', message)}
+        >
+          {({ measure }) =>
+            activeShare ? (
+              <MaxtimeShareCard
+                player={player}
+                data={{ ...activeShare, width: shareCardWidth, measure }}
+              />
+            ) : null
+          }
+        </SharePreviewModal>
       )}
     </SafeAreaView>
   );
