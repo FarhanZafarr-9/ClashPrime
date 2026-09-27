@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Linking,
   Share,
+  Alert,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +21,8 @@ import { getPopularArmies } from '../../src/api/clashArmies';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { buildCopyArmyLink } from '../../src/utils/armyLinks';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
+import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
+import ArmyShareCard from '../../src/components/ArmyShareCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SAVED_ARMIES_KEY = 'clashprime_saved_armies';
@@ -92,6 +95,13 @@ export default function ArmiesScreen() {
   const [selectedTag, setSelectedTag] = useState('All');
 
   const thLevel = player?.townHallLevel || getMaxTownHall();
+
+  const [cardArmy, setCardArmy] = useState<ClashArmy | null>(null);
+  const shareCardWidth = useShareCardWidth();
+
+  const openShareCard = useCallback((army: ClashArmy) => {
+    setCardArmy(army);
+  }, []);
 
   const fetchArmies = useCallback(async (bypass?: boolean) => {
     try {
@@ -267,6 +277,7 @@ export default function ArmiesScreen() {
                     onFavorite={() => handleArmyFavorite(army.id)}
                     onSave={() => handleSaveArmy(army)}
                     onShare={() => handleShareArmy(army)}
+                    onShareCard={() => openShareCard(army)}
                     onCopy={() => handleCopyArmy(army)}
                     onPress={() => {
                       if (army.guide?.youtubeUrl) {
@@ -309,6 +320,27 @@ export default function ArmiesScreen() {
           </ScrollView>
         </>
       )}
+
+      <SharePreviewModal
+        visible={cardArmy !== null}
+        onClose={() => setCardArmy(null)}
+        cardWidth={shareCardWidth}
+        shareTitle={cardArmy?.name}
+        onError={(message) => Alert.alert('Share Failed', message)}
+      >
+        {({ measure }) =>
+          cardArmy ? (
+            <ArmyShareCard
+              army={cardArmy}
+              unitsById={unitsById}
+              equipmentById={equipmentById}
+              petsById={petsById}
+              width={shareCardWidth}
+              measure={measure}
+            />
+          ) : null
+        }
+      </SharePreviewModal>
     </SafeAreaView>
   );
 }
