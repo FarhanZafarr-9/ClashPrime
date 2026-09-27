@@ -22,8 +22,9 @@ import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref } from 
 import { Chip } from '../../src/components/Chip';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
-import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
+import { parseCocExport, cocExportToBuildingLevels, normalizeTag, CocImportResult } from '../../src/utils/cocExport';
 import type { ClashPlayer } from '../../src/types/clash';
+import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 import { ClashAPI } from '../../src/api/clash';
 import { checkForUpdate } from '../../src/utils/versionCheck';
 import {
@@ -45,6 +46,7 @@ import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import DiscountModal from '../../src/components/DiscountModal';
+import OnboardingModal from '../../src/components/OnboardingModal';
 import Constants from 'expo-constants';
 import { Switch } from 'react-native-paper'
 const heartImg = require('../../images/heart.png') as any;
@@ -408,11 +410,17 @@ export default function SettingsScreen() {
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState<'tag' | 'profile' | 'builderCount' | 'thPicker'>('tag');
+  const [onboardingStep, setOnboardingStep] = useState<'tag' | 'import' | 'importToken' | 'profile' | 'builderCount' | 'thPicker'>('tag');
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingBuilderCount, setOnboardingBuilderCount] = useState(2);
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
   const [onboardingPlayer, setOnboardingPlayer] = useState<ClashPlayer | null>(null);
+
+  // Import flow state
+  const [onboardingImportJson, setOnboardingImportJson] = useState('');
+  const [onboardingImportResult, setOnboardingImportResult] = useState<CocImportResult | null>(null);
+  const [onboardingImportTag, setOnboardingImportTag] = useState<string | null>(null);
+  const [onboardingImportError, setOnboardingImportError] = useState<string | null>(null);
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
@@ -570,6 +578,104 @@ export default function SettingsScreen() {
     showDialog({ title: 'Cache Cleared', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
   };
 
+  const handleOnboardingImportPaste = async () => {
+    try {
+      const raw = await getStringAsync();
+      if (raw) {
+        setOnboardingImportJson(raw);
+        const parsed = parseCocExport(raw);
+        if (!parsed.ok || !parsed.data) {
+          setOnboardingImportError(parsed.error ?? 'Failed to parse export.');
+          setOnboardingImportResult(null);
+          setOnboardingImportTag(null);
+          return;
+        }
+        setOnboardingImportError(null);
+        setOnboardingImportResult(cocExportToBuildingLevels(parsed.data));
+        setOnboardingImportTag(normalizeTag(parsed.data.tag) || null);
+      } else {
+        setOnboardingImportError('Clipboard is empty. Copy the export JSON first, then try again.');
+      }
+    } catch {
+      setOnboardingImportError('Could not read the clipboard. Paste the JSON manually instead.');
+    }
+  };
+
+  const handleOnboardingImportParse = (raw: string) => {
+    const parsed = parseCocExport(raw);
+    if (!parsed.ok || !parsed.data) {
+      setOnboardingImportError(parsed.error ?? 'Failed to parse export.');
+      setOnboardingImportResult(null);
+      setOnboardingImportTag(null);
+      return;
+    }
+    setOnboardingImportError(null);
+    setOnboardingImportResult(cocExportToBuildingLevels(parsed.data));
+    setOnboardingImportTag(normalizeTag(parsed.data.tag) || null);
+  };
+
+  const handleOnboardingImportContinue = () => {
+    if (onboardingImportResult && onboardingImportTag) {
+      setOnboardingStep('importToken');
+    }
+  };
+
+  const handleOnboardingImportTokenSubmit = async (token:string) => {
+  
+    if (token.length < 20) {
+      setModalError('Enter a valid API token from clashofclans.com');
+      return;
+    }
+    if (!onboardingImportResult || !onboardingImportTag) return;
+
+    setModalVisible(false);
+    setShowOnboarding(true); // keep onboarding open for loading
+
+    try {
+      const api = new ClashAPI(token);
+      const data = await api.getPlayer(onboardingImportTag!);
+
+      const mergedPlayer: ClashPlayer = {
+        ...data,
+        buildingLevels: onboardingImportResult.levels,
+        lastMaxedTH: data.townHallLevel || getMaxTownHall(),
+      };
+
+      await saveAccount({
+        tag: onboardingImportTag!,
+        name: data.name,
+        townHallLevel: data.townHallLevel,
+        addedAt: new Date().toISOString(),
+        lastUsedAt: new Date().toISOString(),
+      });
+      await setPlayerTag(onboardingImportTag!);
+      await setApiToken(token);
+      await cachePlayer(mergedPlayer, onboardingImportTag!);
+
+      // Import provides all building levels; skip profile/TH/builder steps
+      setShowOnboarding(false);
+      setOnboardingStep('tag');
+      setOnboardingImportJson('');
+      setOnboardingImportResult(null);
+      setOnboardingImportTag(null);
+      setOnboardingImportError(null);
+      setOnboardingPlayer(null);
+      setOnboardingTag('');
+      setOnboardingThLevel('');
+      setOnboardingBuilderCount(2);
+
+      // Refresh accounts and switch to the new one
+      await refreshAccounts();
+      await handleSwitchAccount(onboardingImportTag!);
+    } catch (e: any) {
+      showDialog({
+        title: 'Sign-in Failed',
+        message: e.message || 'Failed to connect. Check your token.',
+        actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+      });
+    }
+  };
+
   const handleOnboardingSave = async () => {
     if (onboardingStep === 'tag') {
       const tag = onboardingTag;
@@ -655,9 +761,7 @@ export default function SettingsScreen() {
       setOnboardingPlayer(null);
       setOnboardingStep('tag');
 
-      // Don't yank the user to the new account unless it's the first one.
-      const storedAccounts = await getAccounts();
-      await prefetchAccount(tag, { token, th: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh, switch: storedAccounts.length === 0 });
+      await prefetchAccount(tag, { token, th: Number.isFinite(thLevel) && thLevel > 0 ? thLevel : currentTh, switch: true });
     }
   };
 
@@ -1405,203 +1509,37 @@ export default function SettingsScreen() {
               ))}
             </View>
           </View>
-        </KeyboardAvoidingView>
+              </KeyboardAvoidingView>
       </Modal>
 
-      <Modal
+      <OnboardingModal
         visible={showOnboarding}
-        transparent
-        animationType="fade"
-        onRequestClose={() => { setShowOnboarding(false); setOnboardingStep('tag'); setOnboardingPlayer(null); }}
-        statusBarTranslucent
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.onboardingOverlay}
-        >
-          {onboardingStep === 'tag' && (
-            <View style={styles.onboardingCard}>
-              <View style={styles.onboardingIcon}>
-                <Ionicons name="person-add-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <Text style={styles.onboardingTitle}>Add Account</Text>
-              <Text style={styles.onboardingDesc}>
-                {"Enter your player tag. We'll fetch your profile and let you confirm before connecting."}
-              </Text>
-              <View style={styles.onboardingInputGroup}>
-                <Text style={styles.onboardingFieldLabel}>Player Tag</Text>
-                <TextInput
-                  style={styles.onboardingInput}
-                  value={onboardingTag}
-                  onChangeText={(t) => setOnboardingTag(t)}
-                  placeholder="#PG8U2LR00"
-                  placeholderTextColor={Colors.textMuted}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                />
-              </View>
-              <View style={styles.onboardingActions}>
-                <PressableRipple
-                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
-                  onPress={() => { setShowOnboarding(false); setOnboardingStep('tag'); }}
-                >
-                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Cancel</Text>
-                </PressableRipple>
-                <PressableRipple
-                  style={styles.onboardingBtn}
-                  onPress={handleOnboardingSave}
-                >
-                  <Text style={styles.onboardingBtnText}>Next</Text>
-                </PressableRipple>
-              </View>
-            </View>
-          )}
-
-          {onboardingStep === 'profile' && onboardingPlayer && (
-            <View style={styles.onboardingCard}>
-              <View style={styles.onboardingIcon}>
-                <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <Text style={styles.onboardingTitle}>Confirm Profile</Text>
-              <Text style={styles.onboardingDesc}>
-                Does this look like your account?
-              </Text>
-              <View style={styles.onboardingProfileCard}>
-                <View style={styles.profileCardRow}>
-                  <View style={styles.profileCardIconWrap}>
-                    <Image source={getTownHallImageSource(onboardingPlayer.townHallLevel)!} style={styles.profileCardIconImage} resizeMode="contain" />
-                  </View>
-                  <View style={styles.profileCardMiddle}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={styles.profileCardName} numberOfLines={1}>{onboardingPlayer.name}</Text>
-                      {onboardingPlayer.clan && (
-                        <Text style={styles.profileCardSubtitle} numberOfLines={1}>{onboardingPlayer.clan.name}</Text>
-                      )}
-                    </View>
-                    <View style={styles.profileCardProgressRow}>
-                      <View style={styles.profileCardProgressTrack}>
-                        <View
-                          style={[
-                            styles.profileCardProgressFill,
-                            {
-                              width: `${Math.min((onboardingPlayer.townHallLevel || 1) / getMaxTownHall(), 1) * 100}%`,
-                              backgroundColor: Colors.textSecondary,
-                            },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.profileCardTimeLabel} numberOfLines={1}>
-                        TH{onboardingPlayer.townHallLevel} · {onboardingPlayer.trophies?.toLocaleString()} trophies
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-              </View>
-              <View style={styles.onboardingActions}>
-                <PressableRipple
-                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
-                  onPress={() => setOnboardingStep('tag')}
-                >
-                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Back</Text>
-                </PressableRipple>
-                <PressableRipple
-                  style={styles.onboardingBtn}
-                  onPress={() => setOnboardingStep('builderCount')}
-                >
-                  <Text style={styles.onboardingBtnText}>Confirm & Continue</Text>
-                </PressableRipple>
-              </View>
-            </View>
-          )}
-
-          {onboardingStep === 'builderCount' && onboardingPlayer && (
-            <View style={styles.onboardingCard}>
-              <View style={styles.onboardingIcon}>
-                <Ionicons name="hammer-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <Text style={styles.onboardingTitle}>Builder Count</Text>
-              <Text style={styles.onboardingDesc}>
-                How many builders do you have in Home Village? This affects time-to-max calculations.
-              </Text>
-              <View style={styles.builderCountRow}>
-                <PressableRipple
-                  style={styles.builderCountBtn}
-                  onPress={() => setOnboardingBuilderCount(Math.max(2, onboardingBuilderCount - 1))}
-                >
-                  <Ionicons name="remove" size={18} color={Colors.textPrimary} />
-                </PressableRipple>
-                <Text style={styles.builderCountValue}>{onboardingBuilderCount}</Text>
-                <PressableRipple
-                  style={styles.builderCountBtn}
-                  onPress={() => setOnboardingBuilderCount(Math.min(6, onboardingBuilderCount + 1))}
-                >
-                  <Ionicons name="add" size={18} color={Colors.textPrimary} />
-                </PressableRipple>
-              </View>
-              <View style={styles.onboardingActions}>
-                <PressableRipple
-                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
-                  onPress={() => setOnboardingStep('profile')}
-                >
-                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Back</Text>
-                </PressableRipple>
-                <PressableRipple
-                  style={styles.onboardingBtn}
-                  onPress={() => setOnboardingStep('thPicker')}
-                >
-                  <Text style={styles.onboardingBtnText}>Continue</Text>
-                </PressableRipple>
-              </View>
-            </View>
-          )}
-
-          {onboardingStep === 'thPicker' && onboardingPlayer && (
-            <View style={styles.onboardingCard}>
-              <View style={styles.onboardingIcon}>
-                <Ionicons name="hammer-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <Text style={styles.onboardingTitle}>Last Maxed Town Hall</Text>
-              <Text style={styles.onboardingDesc}>
-                {"Pick the last Town Hall you've fully maxed. This sets your starting building levels."}
-              </Text>
-              <View style={styles.onboardingThGrid}>
-                {Array.from({ length: (onboardingPlayer.townHallLevel || getMaxTownHall()) - 1 }, (_, i) => i + 2).map((th, index, arr) => {
-
-                  return (
-                    <PressableRipple
-                      key={th}
-                      style={[
-                        styles.onboardingThCell,
-                        index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
-                        index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
-                        index === arr.length - 2 && index % 2 === 0 && { borderBottomLeftRadius: Radius.xl * 1.25 },
-                        index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
-                      ]}
-                      onPress={() => { setOnboardingThLevel(String(th)); handleOnboardingSave(); }}
-                    >
-                      <Image source={getTownHallImageSource(th)!} style={styles.onboardingThImg} resizeMode="contain" />
-                      <Text style={styles.onboardingThText}>TH{th}</Text>
-                    </PressableRipple>
-                  );
-                })}
-              </View>
-              <Text style={styles.onboardingThHint}>
-                {`You're on TH${onboardingPlayer.townHallLevel}. Pick the last Town Hall you've fully maxed.`}
-              </Text>
-              <View style={styles.onboardingActions}>
-                <PressableRipple
-                  style={[styles.onboardingBtn, styles.onboardingBtnGhost]}
-                  onPress={() => setOnboardingStep('profile')}
-                >
-                  <Text style={[styles.onboardingBtnText, styles.onboardingBtnTextGhost]}>Back</Text>
-                </PressableRipple>
-              </View>
-            </View>
-          )}
-        </KeyboardAvoidingView>
-      </Modal>
-
+        onClose={() => { setShowOnboarding(false); setOnboardingStep('tag'); setOnboardingPlayer(null); }}
+        step={onboardingStep}
+        setStep={setOnboardingStep}
+        onboardingTag={onboardingTag}
+        setOnboardingTag={setOnboardingTag}
+        onboardingPlayer={onboardingPlayer}
+        setOnboardingPlayer={setOnboardingPlayer}
+        onboardingBuilderCount={onboardingBuilderCount}
+        setOnboardingBuilderCount={setOnboardingBuilderCount}
+        onboardingThLevel={onboardingThLevel}
+        setOnboardingThLevel={setOnboardingThLevel}
+        onboardingImportJson={onboardingImportJson}
+        setOnboardingImportJson={setOnboardingImportJson}
+        onboardingImportResult={onboardingImportResult}
+        setOnboardingImportResult={setOnboardingImportResult}
+        onboardingImportTag={onboardingImportTag}
+        setOnboardingImportTag={setOnboardingImportTag}
+        onboardingImportError={onboardingImportError}
+        setOnboardingImportError={setOnboardingImportError}
+        handleOnboardingSave={handleOnboardingSave}
+        handleOnboardingImportPaste={handleOnboardingImportPaste}
+        handleOnboardingImportParse={handleOnboardingImportParse}
+        handleOnboardingImportContinue={handleOnboardingImportContinue}
+        handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
+      />
+      
       <Modal visible={switchModalVisible} transparent animationType="fade" onRequestClose={() => setSwitchModalVisible(false)} statusBarTranslucent>
         <PressableRipple style={styles.switchOverlay} onPress={() => setSwitchModalVisible(false)}>
           <View style={styles.switchCard}>
@@ -2775,5 +2713,88 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flexShrink: 1,
     textAlign: 'right',
+  },
+  onboardingImportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.base,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardHover,
+    marginTop: Spacing.md,
+  },
+  onboardingImportBtnText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  onboardingBtnRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  onboardingGhostBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  onboardingGhostBtnText: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  onboardingParseBtn: {
+    paddingHorizontal: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+  },
+  onboardingParseBtnText: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '600',
+  },
+  onboardingSummaryCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.xl,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+    gap: Spacing.xs,
+    marginTop: Spacing.md,
+  },
+  onboardingSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.borderSubtle,
+  },
+  onboardingSummaryLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  onboardingSummaryValue: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  onboardingErrorText: {
+    ...Typography.caption,
+    color: Colors.destructive,
+    marginTop: Spacing.sm,
   },
 });
