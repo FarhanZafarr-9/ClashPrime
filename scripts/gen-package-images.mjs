@@ -126,6 +126,7 @@ collect(hh.siegeMachines().get());
 collect(bb.troops().get());
 collect(bb.heroes().get());
 
+collectBuilding(hh.townHall().get());
 collectBuilding(hh.defenses().get());
 collectBuilding(hh.resourceBuildings().get());
 collectBuilding(hh.resourceBuildings().clanCastle().get());
@@ -168,6 +169,21 @@ const resourceFiles = [
   ['Glowing Ore', 'ore/glowy-ore'],
   ['Starry Ore', 'ore/starry-ore'],
 ];
+
+// The combined "X or Y" resource art is not shipped by clash-of-clans-data, so it is
+// referenced straight from the repo copy instead of being copied/converted.
+const localResourceFiles = [
+  ['Gold or Elixir', 'images/other/goldelxir.png'],
+  ['Builder Gold or Builder Elixir', 'images/other/goldelxir_b.webp'],
+];
+
+// Builder Base league badges (images/builder/leagues/*.png) ship separately from
+// the item APIs and go into their own map keyed by league name.
+const bbLeagueEntries = bb
+  .leagues()
+  .get()
+  .filter((l) => l.image)
+  .sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));
 
 // Magic items are exposed via magicItems() with per-type queries (books/hammers/potions/snacks/utilities).
 const magicItemEntries = [];
@@ -221,6 +237,9 @@ async function generate() {
   for (const [name, file] of resourceFiles) {
     lines.push(`  ${JSON.stringify(name)}: ${await req(`images/other/${file}.png`)},`);
   }
+  for (const [name, file] of localResourceFiles) {
+    lines.push(`  ${JSON.stringify(name)}: require('../../assets/package-images/${file}'),`);
+  }
   lines.push('};');
   lines.push('');
 
@@ -231,8 +250,15 @@ async function generate() {
   lines.push('};');
   lines.push('');
 
+  lines.push('export const BB_LEAGUE_IMAGES: Record<string, number> = {');
+  for (const e of bbLeagueEntries) {
+    lines.push(`  ${JSON.stringify(e.name)}: ${await req(e.image)},`);
+  }
+  lines.push('};');
+  lines.push('');
+
   writeFileSync(outPath, lines.join('\n'));
-  console.log(`Wrote ${outPath} (${homeEntries.length} home + ${builderEntries.length} builder items, ${magicItemEntries.length} magic items)`);
+  console.log(`Wrote ${outPath} (${homeEntries.length} home + ${builderEntries.length} builder items, ${magicItemEntries.length} magic items, ${bbLeagueEntries.length} builder base leagues)`);
 }
 
 generate().catch((err) => { console.error(err); process.exit(1); });
