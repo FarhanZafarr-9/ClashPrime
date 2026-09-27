@@ -30,7 +30,7 @@ import {
 } from '../../src/utils/zapquake';
 import { getBuildingMaxLevelAtTH } from '../../src/utils/buildingData';
 import { getBuildingLevelImageSource } from '../../src/utils/buildingImages';
-import { getTroopImageUrl } from '../../src/utils/troopImages';
+import { getArmyItemImage } from '../../src/utils/armyData';
 
 const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
 
@@ -220,8 +220,7 @@ export default function ZapquakerScreen() {
   const getTargetImage = (detail: { target: ZapquakeTarget; level: number }) =>
     detail.target.category === 'Heroes'
       ? (() => {
-        const url = getTroopImageUrl(detail.target.name, detail.level);
-        return url ? { uri: url } : undefined;
+        return getArmyItemImage(detail.target.name, detail.level) ?? undefined;
       })()
       : getBuildingLevelImageSource(detail.target.name, detail.level);
 
@@ -622,10 +621,8 @@ export default function ZapquakerScreen() {
                   ? player?.heroes?.find((x) => x.name === t.name)?.level ?? t.levels.length
                   : 0;
               const iconLevel = heroLevel > 0 ? heroLevel : levelAtTH > 0 ? levelAtTH : 1;
-              const heroUrl = t.category === 'Heroes' ? getTroopImageUrl(t.name, iconLevel) : null;
-              const icon = heroUrl
-                ? { uri: heroUrl }
-                : getBuildingLevelImageSource(t.name, iconLevel);
+              const heroImage = t.category === 'Heroes' ? getArmyItemImage(t.name, iconLevel) : null;
+              const icon = heroImage ?? getBuildingLevelImageSource(t.name, iconLevel);
               return (
                 <PressableRipple
                   key={t.name}
@@ -667,9 +664,9 @@ function giantArrowIcon(level: number) {
 }
 
 function SpellIcon({ name, level, size = 34 }: { name: string; level: number; size?: number }) {
-  const url = getTroopImageUrl(name, level);
-  return url ? (
-    <Image source={{ uri: url }} style={{ width: size, height: size }} resizeMode="contain" />
+  const image = getArmyItemImage(name, level);
+  return image ? (
+    <Image source={image} style={{ width: size, height: size }} resizeMode="contain" />
   ) : (
     <View style={[styles.spellIcon, styles.spellIconFallback, { width: size, height: size }]}>
       <Ionicons name="flask-outline" size={Math.round(size * 0.6)} color={Colors.textPrimary} />

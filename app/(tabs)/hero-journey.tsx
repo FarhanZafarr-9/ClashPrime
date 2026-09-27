@@ -13,8 +13,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { formatCost, getArmyItemImage } from '../../src/utils/armyData';
-import { getEquipmentImageUrl } from '../../src/utils/troopImages';
-import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { PACKAGE_RESOURCE_IMAGES, PACKAGE_MAGIC_ITEM_IMAGES } from '../../src/data/packageImages';
 import {
   computeHeroJourney,
@@ -555,13 +554,13 @@ function JourneySection({ group, first, last, expanded, reachable, onToggle, onR
   const locked = !reachable;
   const claimed = rows.filter((r) => r.ms.claimState === 'claimed').length;
   const allClaimed = rows.length > 0 && claimed === rows.length;
-  const thUri = getTownHallImageUrl(section.th);
+  const thImage = getTownHallImageSource(section.th);
   const desc = `Levels ${section.minLevel}-${section.maxLevel}`;
 
   return (
     <>
       <SettingRow
-        iconUrl={thUri ?? undefined}
+        iconSource={thImage ?? undefined}
         title={`Town Hall ${section.th}`}
         desc={desc}
         isFirst={first || expanded}
@@ -719,14 +718,11 @@ function MilestoneRow({
   const equipmentClaimed = ms.kind === 'equipment' && ms.claimState === 'claimed';
   const extraDesc = milestoneDesc(ms);
 
-  const equipLocal =
-    ms.kind === 'equipment' && ms.rewardEquip ? getArmyItemImage(ms.rewardEquip) ?? null : null;
-  const equipUrl =
-    ms.kind === 'equipment' && ms.rewardEquip && !equipLocal ? getEquipmentImageUrl(ms.rewardEquip) ?? null : null;
+  const equipImage =
+    ms.kind === 'equipment' && ms.rewardEquip ? getArmyItemImage(ms.rewardEquip) : null;
   const equipIcon =
-    equipLocal != null ? <Image source={equipLocal} style={styles.milestoneImg} resizeMode="contain" />
-      : equipUrl != null ? <Image source={{ uri: equipUrl }} style={styles.milestoneImg} resizeMode="contain" />
-        : null;
+    equipImage != null ? <Image source={equipImage} style={styles.milestoneImg} resizeMode="contain" />
+      : null;
 
   return (
     <View

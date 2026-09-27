@@ -26,9 +26,8 @@ import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../src/api/clash';
 import type { ClashPlayer, Hero, Pet, HeroEquipment } from '../src/types/clash';
 import { isSuperTroop } from '../src/types/clash';
-import { getTownHallImageUrl } from '../src/utils/thImages';
-import { getBuildingLevelImageSource, formatCompact } from '../src/utils/buildingImages';
-import { getTroopImageUrl, getHeroImageUrl, getPetImageUrl, getEquipmentImageUrl } from '../src/utils/troopImages';
+import { getTownHallImageSource , getBuildingLevelImageSource, formatCompact } from '../src/utils/buildingImages';
+import { getArmyItemImage } from '../src/utils/armyData';
 import { entityRef } from '../src/data/entityReference';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -228,6 +227,7 @@ export default function PlayerInspectScreen() {
   const sumMax = (rows: { maxLevel: number }[]) => rows.reduce((a, r) => a + r.maxLevel, 0);
 
   const achievements = useMemo(() => player?.achievements ?? [], [player?.achievements]);
+  const playerThImage = getTownHallImageSource(player?.townHallLevel);
   const achievementGroups = useMemo(() => groupAchievementsByStars(achievements), [achievements]);
   const starTotals = useMemo(() => getTotalStars(achievements), [achievements]);
   const allAchievementsComplete = starTotals.max > 0 && starTotals.earned >= starTotals.max;
@@ -327,8 +327,8 @@ export default function PlayerInspectScreen() {
           <Card>
             <View style={styles.playerRow}>
               <View style={styles.avatar}>
-                {getTownHallImageUrl(player.townHallLevel) ? (
-                  <Image source={{ uri: getTownHallImageUrl(player.townHallLevel)! }} style={styles.avatarImage} resizeMode="contain" />
+                {playerThImage ? (
+                  <Image source={playerThImage} style={styles.avatarImage} resizeMode="contain" />
                 ) : (() => {
                   const bhSrc = getBuildingLevelImageSource('Builder Hall', player.builderHallLevel ?? 1);
                   return bhSrc ? (
@@ -461,7 +461,7 @@ export default function PlayerInspectScreen() {
                     name={h.name}
                     level={h.level}
                     maxLevel={h.maxLevel}
-                    icon={getHeroImageUrl(h.name) || undefined}
+                    icon={getArmyItemImage(h.name) ?? undefined}
                     isLast={i === heroRows.length - 1}
                   />
                 ))}
@@ -473,7 +473,7 @@ export default function PlayerInspectScreen() {
                     name={t.name}
                     level={t.level}
                     maxLevel={t.maxLevel}
-                    icon={getTroopImageUrl(t.name, t.level) || undefined}
+                    icon={getArmyItemImage(t.name, t.level) ?? undefined}
                     isLast={i === troopRows.length - 1}
                   />
                 ))}
@@ -485,7 +485,7 @@ export default function PlayerInspectScreen() {
                     name={t.name}
                     level={t.level}
                     maxLevel={t.maxLevel}
-                    icon={getTroopImageUrl(t.name, t.level) || undefined}
+                    icon={getArmyItemImage(t.name, t.level) ?? undefined}
                     isLast={i === darkTroopRows.length - 1}
                   />
                 ))}
@@ -497,7 +497,7 @@ export default function PlayerInspectScreen() {
                     name={t.name}
                     level={t.level}
                     maxLevel={t.maxLevel}
-                    icon={getTroopImageUrl(t.name, t.level) || undefined}
+                    icon={getArmyItemImage(t.name, t.level) ?? undefined}
                     isLast={i === superTroopRows.length - 1}
                   />
                 ))}
@@ -509,7 +509,7 @@ export default function PlayerInspectScreen() {
                     name={s.name}
                     level={s.level}
                     maxLevel={s.maxLevel}
-                    icon={getTroopImageUrl(s.name, s.level) || undefined}
+                    icon={getArmyItemImage(s.name, s.level) ?? undefined}
                     isLast={i === siegeRows.length - 1}
                   />
                 ))}
@@ -521,7 +521,7 @@ export default function PlayerInspectScreen() {
                     name={s.name}
                     level={s.level}
                     maxLevel={s.maxLevel}
-                    icon={getTroopImageUrl(s.name, s.level) || undefined}
+                    icon={getArmyItemImage(s.name, s.level) ?? undefined}
                     isLast={i === spellRows.length - 1}
                   />
                 ))}
@@ -533,7 +533,7 @@ export default function PlayerInspectScreen() {
                     name={p.name}
                     level={p.level}
                     maxLevel={p.maxLevel}
-                    icon={getPetImageUrl(p.name) || undefined}
+                    icon={getArmyItemImage(p.name) ?? undefined}
                     isLast={i === petRows.length - 1}
                   />
                 ))}
@@ -545,7 +545,7 @@ export default function PlayerInspectScreen() {
                     name={e.name}
                     level={e.level}
                     maxLevel={e.maxLevel}
-                    icon={getEquipmentImageUrl(e.name) || undefined}
+                    icon={getArmyItemImage(e.name) ?? undefined}
                     isLast={i === equipRows.length - 1}
                   />
                 ))}
