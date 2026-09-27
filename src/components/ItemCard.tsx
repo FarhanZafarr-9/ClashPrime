@@ -15,7 +15,7 @@ interface Props {
   costLabel?: string;
   costResources?: Record<string, number>;
   timeLabel?: string;
-  icon?: string;
+  icon?: string | number;
   iconSource?: ImageSourcePropType;
   onPress?: () => void;
   locked?: boolean;
@@ -47,8 +47,11 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
           {iconSource ? (
             <Image source={iconSource} style={styles.iconImage} resizeMode="contain" />
           ) : icon ? (
-
-            <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
+            typeof icon === 'number' ? (
+              <Image source={icon} style={styles.iconImage} resizeMode="contain" />
+            ) : (
+              <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
+            )
           ) : (
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           )}
