@@ -106,7 +106,7 @@ export function ShareProfile({ player, showBH }: { player: ClashPlayer; showBH?:
 export function ShareFooter({ subtitle }: { subtitle?: string }) {
   return (
     <View style={shareStyles.footerRow}>
-      <Image source={require('../../../assets/icon.png')} style={shareStyles.brandIcon} resizeMode="cover" />
+      <Image source={require('../../../assets/images/brand/icon-96.png')} style={shareStyles.brandIcon} resizeMode="contain" />
       <View style={shareStyles.footerBrand}>
         <Text style={shareStyles.footerText}>ClashPrime</Text>
         <Text style={shareStyles.footerDesc}>The Prime Clash experience</Text>
@@ -144,7 +144,6 @@ export const shareStyles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: Radius.sm,
-    opacity: 0.9,
   },
   body: {
     gap: Spacing.xl,
