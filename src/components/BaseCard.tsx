@@ -24,6 +24,7 @@ interface Props {
   onFavorite?: () => void;
   onSave?: () => void;
   onShare?: () => void;
+  onShareCard?: () => void;
 }
 
 export function BaseCard({
@@ -44,6 +45,7 @@ export function BaseCard({
   onFavorite,
   onSave,
   onShare,
+  onShareCard,
 }: Props) {
   const safeRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
   return (
@@ -113,6 +115,11 @@ export function BaseCard({
             <PressableRipple onPress={onShare} hitSlop={8} style={styles.actionBtn}>
               <Ionicons name="share-outline" size={18} color={Colors.textTertiary} />
             </PressableRipple>
+            {onShareCard ? (
+              <PressableRipple onPress={onShareCard} hitSlop={8} style={styles.actionBtn}>
+                <Ionicons name="image-outline" size={18} color={Colors.textTertiary} />
+              </PressableRipple>
+            ) : null}
           </View>
         </View>
         {hasLink ? (
