@@ -273,7 +273,7 @@ export default function HeroJourneyScreen() {
     const done = new Set(completedGroups.map((g) => g.section.th));
     const remaining = sectionGroups.filter((g) => !done.has(g.section.th));
     const items: TimelineItem[] = [];
-    if (completedGroups.length > 3) {
+    if (completedGroups.length > 0) {
       items.push({ parentGroups: completedGroups, kind: 'done' });
     }
     const keepVisible = 3;
