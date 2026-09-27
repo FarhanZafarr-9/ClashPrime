@@ -19,12 +19,11 @@ import { usePlayer } from '../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../src/hooks/useBuilderBaseCount';
 import { parseCocExport, cocExportToBuildingLevels, normalizeTag, CocImportResult } from '../src/utils/cocExport';
-import { getBuildingEffectiveMax, getBuildingLevelImageSource } from '../src/utils/buildingImages';
+import { getBuildingEffectiveMax, getBuildingLevelImageSource , getTownHallImageSource } from '../src/utils/buildingImages';
 import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildingCopies';
 import { buildingUpgradeCosts, buildingUpgradeChainTimes, scheduleChains, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../src/utils/upgradeCosts';
 import { PACKAGE_RESOURCE_IMAGES } from '../src/data/packageImages';
 import { BUILDING_RESOURCE_META, isBuilderName, type BuildingCostResource } from '../src/utils/buildingData';
-import { getTownHallImageUrl } from '../src/utils/thImages';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -66,6 +65,7 @@ function BuildingRowIcon({ storeName, level }: { storeName: string; level: numbe
 export default function ImportExportScreen() {
   const router = useRouter();
   const { player, accounts, setBulkLevels, applyLevelsToAccount } = usePlayer();
+  const playerThImage = getTownHallImageSource(player?.townHallLevel);
   const { show, Dialog } = useDialog();
   const { colors } = useTheme();
   const { count: builderCount } = useBuilderCount();
@@ -773,8 +773,8 @@ export default function ImportExportScreen() {
                         ]}
                       >
                         {item.storeName === 'Town Hall' && player
-                          ? (getTownHallImageUrl(player.townHallLevel) ? (
-                            <Image source={{ uri: getTownHallImageUrl(player.townHallLevel)! }} style={styles.levelIcon} resizeMode="contain" />
+                          ? (playerThImage ? (
+                            <Image source={playerThImage} style={styles.levelIcon} resizeMode="contain" />
                           ) : (
                             <View style={styles.levelIconBox}>
                               <Ionicons name="business-outline" size={16} color={Colors.textTertiary} />

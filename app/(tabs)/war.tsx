@@ -21,7 +21,7 @@ import type { ClanWar, WarLogEntry, WarClanDetail, WarMember, WarState, ClashPla
 import { filterHomeTroops } from '../../src/types/clash';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
-import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 
 const WAR_AUTO_REFRESH_KEY = 'clashprime_war_auto_refresh_ts';
@@ -1164,7 +1164,7 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
   const router = useRouter();
   const attacks = member.attacks ?? [];
   const maxAttacks = isCwl ? 1 : 2;
-  const thImg = getTownHallImageUrl(member.townhallLevel);
+  const thImg = getTownHallImageSource(member.townhallLevel);
   const [expanded, setExpanded] = useState(false);
 
   const shield = shieldConfig(member);
@@ -1184,7 +1184,7 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
         <View style={styles.memberLeft}>
           <View style={[styles.memberIconTile, isMine && styles.memberIconTileMine]}>
             {thImg ? (
-              <Image source={{ uri: thImg }} style={styles.memberIconImage} resizeMode="contain" />
+              <Image source={thImg} style={styles.memberIconImage} resizeMode="contain" />
             ) : (
               <Text style={[styles.thBadgeText, isMine && styles.thBadgeTextMine]}>{member.townhallLevel}</Text>
             )}

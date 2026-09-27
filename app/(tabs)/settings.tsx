@@ -20,7 +20,7 @@ import { openURL } from 'expo-linking';
 import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref } from '../../src/theme';
 import { Chip } from '../../src/components/Chip';
-import { getTownHallImageUrl } from '../../src/utils/thImages';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 import type { ClashPlayer } from '../../src/types/clash';
@@ -376,6 +376,9 @@ export default function SettingsScreen() {
   const appVersion = `v${(Constants.expoConfig as any)?.version ?? '6.0.0'}`;
   const { bumpTagVersion } = usePlayerActions();
   const { switchAccount, refreshAccounts, accounts, activeAccount, prefetchAccount, syncingTag, player } = usePlayer();
+  const activeThImage = activeAccount && activeAccount.townHallLevel > 0
+    ? getTownHallImageSource(activeAccount.townHallLevel)
+    : null;
   const { show: showDialog, Dialog } = useDialog();
   const [playerTag, setPlayerTagState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
@@ -956,8 +959,8 @@ export default function SettingsScreen() {
             >
               {switchingAccount ? (
                 <ActivityIndicator size="small" color={Colors.textSecondary} />
-              ) : activeAccount && activeAccount.townHallLevel > 0 && getTownHallImageUrl(activeAccount.townHallLevel) ? (
-                <Image source={{ uri: getTownHallImageUrl(activeAccount.townHallLevel)! }} style={styles.settingThImage} resizeMode="contain" />
+              ) : activeThImage ? (
+                <Image source={activeThImage} style={styles.settingThImage} resizeMode="contain" />
               ) : null}
               <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} style={{ marginLeft: 6 }} />
             </SettingRow>
@@ -1466,7 +1469,7 @@ export default function SettingsScreen() {
               <View style={styles.onboardingProfileCard}>
                 <View style={styles.profileCardRow}>
                   <View style={styles.profileCardIconWrap}>
-                    <Image source={{ uri: getTownHallImageUrl(onboardingPlayer.townHallLevel)! }} style={styles.profileCardIconImage} resizeMode="contain" />
+                    <Image source={getTownHallImageSource(onboardingPlayer.townHallLevel)!} style={styles.profileCardIconImage} resizeMode="contain" />
                   </View>
                   <View style={styles.profileCardMiddle}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1577,7 +1580,7 @@ export default function SettingsScreen() {
                       ]}
                       onPress={() => { setOnboardingThLevel(String(th)); handleOnboardingSave(); }}
                     >
-                      <Image source={{ uri: getTownHallImageUrl(th)! }} style={styles.onboardingThImg} resizeMode="contain" />
+                      <Image source={getTownHallImageSource(th)!} style={styles.onboardingThImg} resizeMode="contain" />
                       <Text style={styles.onboardingThText}>TH{th}</Text>
                     </PressableRipple>
                   );
@@ -1617,6 +1620,7 @@ export default function SettingsScreen() {
             {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
               const isSyncing = acct.tag === syncingTag;
+              const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
               return (
                 <PressableRipple
                   key={acct.tag}
@@ -1653,8 +1657,8 @@ export default function SettingsScreen() {
                   }}
                 >
                   <View style={styles.switchAvatar}>
-                    {acct.townHallLevel > 0 && getTownHallImageUrl(acct.townHallLevel) ? (
-                      <Image source={{ uri: getTownHallImageUrl(acct.townHallLevel)! }} style={styles.switchAvatarImg} resizeMode="contain" />
+                    {acctThImage ? (
+                      <Image source={acctThImage} style={styles.switchAvatarImg} resizeMode="contain" />
                     ) : (
                       <Ionicons name="person" size={18} color={Colors.textSecondary} />
                     )}

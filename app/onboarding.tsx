@@ -29,7 +29,7 @@ import {
 } from '../src/hooks/usePlayer';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
-import { getTownHallImageUrl } from '../src/utils/thImages';
+import { getTownHallImageSource } from '../src/utils/buildingImages';
 import { seedBuildingLevelsForTH } from '../src/utils/seedBuildingLevels';
 import type { ClashPlayer } from '../src/types/clash';
 
@@ -313,7 +313,7 @@ export default function OnboardingScreen() {
                 <View style={styles.profileCard}>
                   <View style={styles.profileCardRow}>
                     <View style={styles.profileCardIconWrap}>
-                      <Image source={{ uri: getTownHallImageUrl(playerData.townHallLevel)! }} style={styles.profileCardIconImage} resizeMode="contain" />
+                      <Image source={getTownHallImageSource(playerData.townHallLevel)!} style={styles.profileCardIconImage} resizeMode="contain" />
                     </View>
                     <View style={styles.profileCardMiddle}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -388,7 +388,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
                 <View style={styles.thGrid}>
                   {thOptions.map((th, index, arr) => {
-                    const thImg = getTownHallImageUrl(th);
+                    const thImg = getTownHallImageSource(th);
                     const isSelected = onboardingThLevel === String(th);
                     return (
                       <PressableRipple
@@ -403,7 +403,7 @@ export default function OnboardingScreen() {
                         ]}
                         onPress={() => setOnboardingThLevel(String(th))}
                       >
-                        <Image source={{ uri: thImg! }} style={styles.thImg} resizeMode="contain" />
+                        <Image source={thImg!} style={styles.thImg} resizeMode="contain" />
                         <Text style={[
                           styles.thText,
                           isSelected && styles.thTextSelected

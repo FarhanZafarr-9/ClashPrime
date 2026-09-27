@@ -1,4 +1,3 @@
-import buildingImagesData from '../data/building-images.json';
 import {
   getBuildingDetail,
   getBuildingItemImage,
@@ -6,48 +5,23 @@ import {
   getBuildingMaxLevelAtTH,
   isBuilderName,
 } from './buildingData';
-import { getTownHallImageUrl } from './thImages';
 
-const images = buildingImagesData.images;
-const nameToEntry = new Map(images.map((img) => [img.name.toLowerCase(), img]));
+export function getTownHallImageSource(level: number | undefined | null) {
+  if (level == null) return null;
+  return getBuildingItemImage('Town Hall', level);
+}
 
 export function getBuildingImageSource(name: string) {
-  if (name === 'Town Hall') {
-    // Town Hall art is stored per-level on the wiki (the package ships no sprite).
-    const thImg = getTownHallImageUrl(1);
-    if (thImg) return { uri: thImg };
-  }
-  const pkg = getBuildingItemImage(name, null, isBuilderName(name));
-  if (pkg) return pkg;
-  const entry = nameToEntry.get(name.toLowerCase());
-  if (entry?.imageUrl) return { uri: entry.imageUrl };
-  return undefined;
+  return getBuildingItemImage(name, null, isBuilderName(name)) ?? undefined;
 }
 
 export function getBuildingLevelImageSource(name: string, level: number) {
-  if (name === 'Town Hall') {
-    // Town Hall art is stored per-level on the wiki (the package ships no sprite).
-    const thImg = getTownHallImageUrl(level);
-    if (thImg) return { uri: thImg };
-  }
-  const pkg = getBuildingItemImage(name, level, isBuilderName(name));
-  if (pkg) return pkg;
-  const entry = nameToEntry.get(name.toLowerCase());
-  if (entry?.levels && entry.levels.length > 0) {
-    const match = entry.levels.find((l) => l.level === level);
-    if (match) return { uri: match.imageUrl };
-    const highest = entry.levels.reduce((a, b) => (a.level > b.level ? a : b));
-    if (level <= highest.level) return { uri: highest.imageUrl };
-  }
-  if (entry?.imageUrl) return { uri: entry.imageUrl };
-  return undefined;
+  return getBuildingItemImage(name, level, isBuilderName(name)) ?? undefined;
 }
 
 export function getBuildingAvailableLevels(name: string): number[] {
   const detail = getBuildingDetail(name, { builderBase: isBuilderName(name) });
   if (detail?.levels?.length) return detail.levels.map((l) => l.Level);
-  const entry = nameToEntry.get(name.toLowerCase());
-  if (entry?.levels) return entry.levels.map((l) => l.level).sort((a, b) => a - b);
   return [];
 }
 
@@ -110,7 +84,7 @@ export function formatTimeShort(totalSec: number): string {
 
 /**
  * Stats-table data for a building, sourced from the clash-of-clans-data package
- * (shaped like the legacy building-levels.json entries the UI already renders).
+ * (shaped like the historical stat-table entries the UI already renders).
  */
 export function getBuildingData(name: string, opts?: { builderBase?: boolean }) {
   return getBuildingDetail(name, opts);
