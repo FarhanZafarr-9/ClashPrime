@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Linking,
   Share,
+  Alert,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,8 @@ import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
 import { scrapeBasesForTH, scrapeBasesForBH } from '../../src/api/baseScraper';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
+import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
+import BaseShareCard from '../../src/components/BaseShareCard';
 import {
   getSavedBases,
   getFavorites,
@@ -64,6 +67,15 @@ export default function BaseLibraryScreen() {
 
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
+
+  const [cardBase, setCardBase] = useState<ScrapedBase | null>(null);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
+  const shareCardWidth = useShareCardWidth();
+
+  const openShareCard = useCallback((base: ScrapedBase) => {
+    setPreviewLoaded(false);
+    setCardBase(base);
+  }, []);
 
   const hallLevel = selectedVillage === 'home'
     ? player?.townHallLevel || getMaxTownHall()
@@ -346,6 +358,7 @@ export default function BaseLibraryScreen() {
                         onCopy={() => handleCopy(scrapedBase)}
                         onSave={() => handleSave(scrapedBase)}
                         onShare={() => handleShare(scrapedBase)}
+                        onShareCard={() => openShareCard(scrapedBase)}
                       />
                     );
                   })}
@@ -372,6 +385,28 @@ export default function BaseLibraryScreen() {
           </ScrollView>
         </>
       )}
+
+      <SharePreviewModal
+        visible={cardBase !== null}
+        onClose={() => setCardBase(null)}
+        cardWidth={shareCardWidth}
+        shareTitle={cardBase?.title}
+        ready={!cardBase?.preview_image_url || previewLoaded}
+        onError={(message) => Alert.alert('Share Failed', message)}
+      >
+        {({ measure }) =>
+          cardBase ? (
+            <BaseShareCard
+              base={cardBase}
+              category={CATEGORY_MAP[cardBase.type] || cardBase.type}
+              width={shareCardWidth}
+              measure={measure}
+              onPreviewLoad={() => setPreviewLoaded(true)}
+              onPreviewError={() => setPreviewLoaded(true)}
+            />
+          ) : null
+        }
+      </SharePreviewModal>
     </SafeAreaView>
   );
 }
