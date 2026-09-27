@@ -1480,7 +1480,8 @@ export default function HomeScreen() {
                     <>
                       {builderSplit && (
                         <Text style={{ ...styles.splitInfoLabel, marginBottom: -Spacing.xs }}>
-                          Build: {formatTimeShort(builderSplit.buildingsOnlySec)} · Hero: {formatTimeShort(builderSplit.heroesOnlySec)} · Opt: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B → {formatTimeShort(builderSplit.optimalSec)}
+                          Build: {formatTimeShort(builderSplit.buildingsOnlySec)} · Hero: {formatTimeShort(builderSplit.heroesOnlySec)} · Opt: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B <Ionicons name="chevron-forward" size={10} color={Colors.textMuted} />
+                {formatTimeShort(builderSplit.optimalSec)}
                         </Text>
                       )}
                       {renderProgressHeader(builderProgress, builderCost)}
@@ -1701,12 +1702,12 @@ export default function HomeScreen() {
                       {(() => {
                         return unlockableItems.flatMap((item, i) => {
                           const thImage = getTownHallImageSource(item.unlockTh);
-                          const image = getArmyItemImage(item.name, item.type === 'hero' ? null : 1);
+                          const image = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : 1);
                           const levelsAtTH = getMaxLevelAtTH(item.name, th);
                           const itemCost = upgradeCosts[item.name];
                           return (
                             <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
-                              <View style={styles.statRowIcon}>
+                              <View style={styles.statRowIconNoBg}>
                                 {image ? (
                                   <Image source={image} style={styles.statRowIconImage} resizeMode="contain" />
                                 ) : (
@@ -1733,7 +1734,7 @@ export default function HomeScreen() {
                                   {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
                                 </View>
                                 {thImage ? (
-                                  <View style={styles.thImageBadge}>
+                                  <View style={[styles.thImageBadge, (i === unlockableItems.length - 1) && {borderBottomRightRadius: Radius.lg}]}>
                                     <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" />
                                   </View>
                                 ) : null}
@@ -1772,11 +1773,11 @@ export default function HomeScreen() {
                         const visible = groups.filter((g) => g.items.length > 0);
                         const allItems = visible.flatMap((g) => g.items);
                         return allItems.map((item, i) => {
-                          const itemImage = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'equipment' ? null : item.currentLevel);
+                          const itemImage = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'equipment' || item.type === 'troop' || item.type === 'spell' ? null : item.currentLevel);
                           const costData = rushedCosts[item.name];
                           return (
                             <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
-                              <View style={styles.statRowIcon}>
+                              <View style={styles.statRowIconNoBg}>
                                 {itemImage ? (
                                   <Image source={itemImage} style={styles.statRowIconImage} resizeMode="contain" />
                                 ) : (
@@ -1785,7 +1786,7 @@ export default function HomeScreen() {
                               </View>
                               <View style={styles.statRowText}>
                                 <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
-                                <Text style={styles.statRowSub}>Lv{item.currentLevel} → Lv{item.maxLevelAtPrevTH}</Text>
+                                <Text style={styles.statRowSub}>Lv{item.currentLevel} <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} /> Lv{item.maxLevelAtPrevTH}</Text>
                               </View>
                               <View style={styles.statRowRight}>
                                 {costData ? (
@@ -2270,7 +2271,7 @@ export default function HomeScreen() {
                         </View>
                         <View style={styles.progressRowBadge}>
                           <Text style={styles.progressRowBadgeBefore}>{Math.round(c.before * 100)}%</Text>
-                          <Text style={styles.progressRowBadgeArrow}>→</Text>
+                          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
                           <Text style={styles.progressRowBadgeAfter}>{Math.round(c.after * 100)}%</Text>
                         </View>
                       </View>
@@ -2309,7 +2310,7 @@ export default function HomeScreen() {
                         <View style={{ flex: 1 }} />
                         <Text style={styles.progressLevelCellValue}>
                           <Text style={styles.progressRowBefore}>Lv{u.before}</Text>
-                          {' → '}
+                          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
                           <Text style={styles.progressRowAfter}>Lv{u.after}</Text>
                         </Text>
                       </View>
@@ -2866,7 +2867,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statRowIconNoBg: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2892,6 +2899,7 @@ const styles = StyleSheet.create({
   statRowIconImage: {
     width: 26,
     height: 26,
+    resizeMode: 'contain',
   },
   statRowRight: {
     alignItems: 'flex-end',
