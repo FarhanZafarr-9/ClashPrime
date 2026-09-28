@@ -1324,7 +1324,7 @@ export default function BuildingsScreen() {
     return out;
   }, [activeData, levelKey, isBB, th, bh, player]);
 
-  // The village switch leads with the halls the player is actually at.
+  // The village switch leads with the halls the player are actually at.
   const thHallImage = getTownHallImageSource(th);
   const bhHallImage = getBuildingItemImage('Builder Hall', bh, true);
 
