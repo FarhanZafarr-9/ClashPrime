@@ -603,6 +603,9 @@ export default function PlayerProfileScreen() {
     }
 
     const pills = formatStatPills(detail.info);
+    // The unlock requirement has its own dedicated block below, so it is kept out
+    // of this summary row and shown once, not twice.
+    const factPairs = (detail.infoPairs ?? []).filter((f) => f.label !== 'Unlock Requirement');
     const unlockReq = detail.infoPairs?.find((i) => i.label === 'Unlock Requirement');
     const unlockReqItems = unlockReq ? parseUnlockRequirements(unlockReq.value) : [];
     const unlockHasCost = unlockReqItems.some((r) => r.cost);
@@ -615,7 +618,7 @@ export default function PlayerProfileScreen() {
     // everything else are still gated by the Hero Hall / Laboratory.
     const showLabColumn = activeTab !== 'bhHeroes';
     const LAB_COL_W = showLabColumn ? 72 : 0;
-    const contentMinW = 28 + 56 + 48 + LAB_COL_W + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 54);
+    const contentMinW = 28 + 56 + 48 + LAB_COL_W + (isTroopLike ? 36 + 36 : extraLabels.length * 54);
 
     // Acronyms for long column names
     const acronymMap = new Map<string, string>();
@@ -644,7 +647,18 @@ export default function PlayerProfileScreen() {
             {pills.map((pill, i) => (
               <View key={`${pill.icon}-${pill.value}-${i}`} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
-                <Text style={[styles.panelPillText, { color: colors.textPrimary }]}>{pill.value}</Text>
+                <Text style={styles.panelPillText}>{pill.value}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {factPairs.length > 0 && (
+          <View style={styles.panelFacts}>
+            {factPairs.map((f, i) => (
+              <View key={`${f.label}-${i}`} style={styles.panelFact}>
+                <Text style={[styles.panelFactLabel, { color: colors.textTertiary }]}>{f.label}</Text>
+                <Text style={[styles.panelFactValue, { color: colors.textPrimary }]}>{f.value}</Text>
               </View>
             ))}
           </View>
@@ -848,11 +862,9 @@ export default function PlayerProfileScreen() {
                         <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>DPS</Text>
                         <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 36 }]}>HP</Text>
                       </>
-                    ) : (
-                      (headerLabels.length ? headerLabels : ['Val']).map((lbl, i) => (
-                        <Text key={i} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 54 }]}>{lbl}</Text>
-                      ))
-                    )}
+                    ) : headerLabels.map((lbl, i) => (
+                      <Text key={i} style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 54 }]}>{lbl}</Text>
+                    ))}
                     <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 56 }]}>Cost</Text>
                     <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>Time</Text>
                     {showLabColumn && (
@@ -871,13 +883,11 @@ export default function PlayerProfileScreen() {
                             <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.dps}</Text>
                             <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.hitpoints}</Text>
                           </>
-                        ) : (
-                          (extraLabels.length ? extraLabels : ['Value']).map((lbl, i) => (
+                        ) : extraLabels.map((lbl, i) => (
                             <Text key={i} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 54 }]}>
                               {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
                             </Text>
-                          ))
-                        )}
+                          ))}
                         <Text
                           style={[
                             styles.panelTableCell,
@@ -1678,6 +1688,33 @@ const styles = StyleSheet.create({
     rowGap: Spacing.sm,
     marginBottom: Spacing.base,
     width: '100%',
+  },
+  // Label/value pairs for stats the package carries but has no column for.
+  panelFacts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    rowGap: Spacing.sm,
+    marginBottom: Spacing.base,
+    width: '100%',
+  },
+  panelFact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.sm,
+  },
+  panelFactLabel: {
+    ...Typography.caption,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  panelFactValue: {
+    ...Typography.caption,
+    fontSize: 10,
+    fontWeight: '700',
   },
   panelPill: {
     flexDirection: 'row',
