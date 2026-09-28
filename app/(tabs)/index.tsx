@@ -443,6 +443,30 @@ function CollapsibleSection({
   );
 }
 
+/**
+ * Seamless-block corner rounding for a single vertical stack of rows (the account
+ * switcher list), matching the Army tab chips: the rows read as one rounded block,
+ * so only the top and bottom ends take the large radius and the seams between rows
+ * stay at Radius.sm.
+ *
+ * Derived from the row index rather than hardcoded, so a list of any length keeps
+ * its block shape. The first and last rows are the same row when there is only
+ * one account, so each end is tested independently.
+ */
+function listCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  return {
+    ...(index === 0 && {
+      borderTopLeftRadius: outer,
+      borderTopRightRadius: outer,
+    }),
+    ...(index === total - 1 && {
+      borderBottomLeftRadius: outer,
+      borderBottomRightRadius: outer,
+    }),
+  };
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -2131,14 +2155,19 @@ export default function HomeScreen() {
               </View>
             </View>
             {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
-            {accounts.map((acct) => {
+            {accounts.map((acct, ai) => {
               const isActive = acct.tag === activeAccount?.tag;
               const isSyncing = acct.tag === syncingTag;
               const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
+              const thLabel = acct.townHallLevel > 0 ? `TH${acct.townHallLevel}` : 'No Town Hall';
               return (
                 <PressableRipple
                   key={acct.tag}
-                  style={[styles.switcherItem, isActive && styles.switcherItemActive]}
+                  style={[
+                    styles.switcherItem,
+                    listCornerStyle(ai, accounts.length),
+                    isActive && styles.switcherItemActive,
+                  ]}
                   onPress={() => handleHomeSwitch(acct.tag)}
                 >
                   <View style={styles.switcherAvatar}>
@@ -2152,17 +2181,13 @@ export default function HomeScreen() {
                     <View style={styles.switcherItemNameRow}>
                       <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
                     </View>
-                    <Text style={styles.switcherItemTag}>{acct.tag}</Text>
+                    <Text style={styles.switcherItemTag} numberOfLines={1}>
+                      {`${thLabel} · ${acct.tag}`}
+                    </Text>
                   </View>
                   {isSyncing && (
                     <View style={styles.switcherSyncingBadge}>
                       <ActivityIndicator size="small" color={Colors.textSecondary} />
-                    </View>
-                  )}
-                  {acct.townHallLevel > 0 && (
-                    <View style={[styles.switcherThBox, isActive && styles.switcherThBoxActive]}>
-                      <Text style={[styles.switcherThBoxLevel, isActive && styles.switcherThBoxLevelActive]}>{acct.townHallLevel}</Text>
-                      <Text style={[styles.switcherThBoxLabel, isActive && styles.switcherThBoxLabelActive]}>TH</Text>
                     </View>
                   )}
                 </PressableRipple>
@@ -2523,7 +2548,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
   },
   switcherItemActive: {
     backgroundColor: Colors.accentGhost,
@@ -2584,31 +2609,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  switcherThBoxActive: {
-    backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
-  },
-  switcherThBoxLevel: {
-    ...Typography.headline,
-    color: Colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 16,
-    fontWeight: '700',
-  },
-  switcherThBoxLevelActive: {
-    color: Colors.bg,
-  },
-  switcherThBoxLabel: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 8,
-    lineHeight: 9,
-    fontWeight: '600',
-  },
-  switcherThBoxLabelActive: {
-    color: Colors.bg,
-    opacity: 0.7,
   },
   switcherClose: {
     alignItems: 'center',
