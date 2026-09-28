@@ -3,7 +3,9 @@ import type { ClashArmy, ClashArmyUnit, ClashArmyEquipment, ClashArmyPet, ClashA
 
 const LIST_URL = 'https://clasharmies.com/armies/__data.json';
 const CACHE_PREFIX = 'clasharmies_v1_';
-const CACHE_TTL_MS = 30 * 60 * 1000;
+// Lists are trusted for three days. Anything older is still painted first (so
+// navigation never shows a skeleton) but is refetched in the background.
+const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 const DEFS_CACHE_KEY = 'clasharmies_defs';
 const PAGE_SIZE = 20;
 const MAX_PAGES = 10;
@@ -191,20 +193,73 @@ async function fetchArmyPage(townHall: number | undefined, page: number): Promis
   return { armies, defsData: defsNode.data };
 }
 
-export async function getPopularArmies(bypassCache?: boolean, townHall?: number): Promise<{ armies: ClashArmy[]; unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> }> {
-  const cacheKey = `${CACHE_PREFIX}list${townHall !== undefined ? `_th${townHall}` : ''}`;
+export interface ArmySnapshot {
+  armies: ClashArmy[];
+  timestamp: number;
+  count: number;
+  unitsById: Map<number, UnitDef>;
+  equipmentById: Map<number, EquipmentDef>;
+  petsById: Map<number, PetDef>;
+}
+
+function listCacheKey(townHall?: number): string {
+  return `${CACHE_PREFIX}list${townHall !== undefined ? `_th${townHall}` : ''}`;
+}
+
+/**
+ * Reads the stored list with no freshness check, so a screen can paint the cached
+ * armies on navigation and reconcile with the network afterwards. Returns null
+ * when either the list or the unit definitions are missing, since the cards
+ * cannot render the troop art without the definitions.
+ */
+export async function getCachedArmies(townHall?: number): Promise<ArmySnapshot | null> {
+  try {
+    const raw = await AsyncStorage.getItem(listCacheKey(townHall));
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (!entry?.armies) return null;
+    const defs = await getCachedDefs();
+    if (defs.unitsById.size === 0) return null;
+    return {
+      armies: entry.armies,
+      timestamp: entry.timestamp ?? 0,
+      count: entry.count ?? entry.armies.length,
+      unitsById: defs.unitsById,
+      equipmentById: defs.equipmentById,
+      petsById: defs.petsById,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A snapshot can be served as-is when it is younger than the TTL and already
+ * holds at least as many armies as the screen is asking for. Anything else is
+ * still painted first, but must be refetched.
+ */
+export function isArmyCacheUsable(snapshot: ArmySnapshot | null, minItems: number): boolean {
+  if (!snapshot) return false;
+  if (Date.now() - snapshot.timestamp >= CACHE_TTL_MS) return false;
+  return snapshot.count >= minItems;
+}
+
+export async function getPopularArmies(
+  bypassCache?: boolean,
+  townHall?: number,
+  opts: { minItems?: number } = {}
+): Promise<{ armies: ClashArmy[]; unitsById: Map<number, UnitDef>; equipmentById: Map<number, EquipmentDef>; petsById: Map<number, PetDef> }> {
+  const cacheKey = listCacheKey(townHall);
   if (!bypassCache) {
     try {
-      const raw = await AsyncStorage.getItem(cacheKey);
-      const defsRaw = await AsyncStorage.getItem(DEFS_CACHE_KEY);
-      if (raw && defsRaw) {
-        const entry = JSON.parse(raw);
-        if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
-          const cachedDefs = await getCachedDefs();
-          if (cachedDefs.unitsById.size > 0) {
-            return { armies: entry.armies, unitsById: cachedDefs.unitsById, equipmentById: cachedDefs.equipmentById, petsById: cachedDefs.petsById };
-          }
-        }
+      const snapshot = await getCachedArmies(townHall);
+      if (isArmyCacheUsable(snapshot, opts.minItems ?? 0)) {
+        return {
+          armies: snapshot!.armies,
+          unitsById: snapshot!.unitsById,
+          equipmentById: snapshot!.equipmentById,
+          petsById: snapshot!.petsById,
+        };
       }
     } catch {}
   }
@@ -238,7 +293,7 @@ export async function getPopularArmies(bypassCache?: boolean, townHall?: number)
   }
 
   try {
-    await AsyncStorage.setItem(cacheKey, JSON.stringify({ armies, timestamp: Date.now() }));
+    await AsyncStorage.setItem(cacheKey, JSON.stringify({ armies, timestamp: Date.now(), count: armies.length }));
   } catch {}
 
   return { armies, unitsById: defs.unitsById, equipmentById: defs.equipmentById, petsById: defs.petsById };
