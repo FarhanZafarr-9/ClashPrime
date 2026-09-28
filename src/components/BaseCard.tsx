@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import PressableRipple from './PressableRipple';
 import { Colors, Radius, Spacing, Typography } from '../theme';
@@ -27,6 +27,47 @@ interface Props {
   onShareCard?: () => void;
 }
 
+/**
+ * Owns the thumbnail so the placeholder is tied to the actual image state. A cached
+ * layout can carry a dead or missing image url, and without an error handler the
+ * skeleton would sit there shimmering forever instead of falling back to the hall.
+ */
+function BaseThumbnail({
+  previewImage,
+  village,
+  townHallLevel,
+  children,
+}: {
+  previewImage?: string;
+  village: Village;
+  townHallLevel: number;
+  children?: React.ReactNode;
+}) {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'failed'>(
+    previewImage ? 'loading' : 'failed'
+  );
+  const showImage = !!previewImage && status !== 'failed';
+
+  return (
+    <View style={styles.thumbnail}>
+      {status === 'loading' ? <Skeleton width="100%" height="100%" borderRadius={0} /> : null}
+      {showImage ? (
+        <Image
+          source={{ uri: previewImage }}
+          style={styles.thumbImage}
+          resizeMode="cover"
+          onLoadEnd={() => setStatus('loaded')}
+          onError={() => setStatus('failed')}
+        />
+      ) : null}
+      {!showImage && (
+        <Text style={styles.thText}>{village === 'builder' ? 'BH' : 'TH'}{townHallLevel}</Text>
+      )}
+      {children}
+    </View>
+  );
+}
+
 export function BaseCard({
   name,
   townHallLevel,
@@ -50,17 +91,7 @@ export function BaseCard({
   const safeRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
   return (
     <View style={styles.card}>
-      <View style={styles.thumbnail}>
-        <Skeleton width="100%" height="100%" borderRadius={0} />
-        {previewImage ? (
-          <Image
-            source={{ uri: previewImage }}
-            style={styles.thumbImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <Text style={styles.thText}>{village === 'builder' ? 'BH' : 'TH'}{townHallLevel}</Text>
-        )}
+      <BaseThumbnail previewImage={previewImage} village={village} townHallLevel={townHallLevel}>
         {safeRating > 0 && (
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={10} color={Colors.textPrimary} />
@@ -91,7 +122,7 @@ export function BaseCard({
             <Text style={styles.yearText}>{year}</Text>
           </View>
         ) : null}
-      </View>
+      </BaseThumbnail>
       <View style={styles.content}>
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
