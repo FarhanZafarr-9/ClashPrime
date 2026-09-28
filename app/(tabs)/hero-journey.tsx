@@ -50,14 +50,40 @@ const FILTER_GROUPS: Record<Exclude<FilterKey, 'all'>, HeroJourneyRewardKind[]> 
   items: ['elixir', 'darkElixir', 'heroPotion', 'mightyMorsel', 'petPotion', 'bookHeroes', 'runeElixir', 'runeDarkElixir'],
 };
 
-const FILTER_OPTIONS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'ores', label: 'Ores' },
-  { key: 'quests', label: 'Quests' },
-  { key: 'equipment', label: 'Equipment' },
-  { key: 'skins', label: 'Skins' },
-  { key: 'items', label: 'Items' },
+const FILTER_OPTIONS: { key: FilterKey; label: string; lead: HeroJourneyRewardKind }[] = [
+  { key: 'all', label: 'All', lead: 'shinyOre' },
+  { key: 'ores', label: 'Ores', lead: 'shinyOre' },
+  { key: 'quests', label: 'Quests', lead: 'quest' },
+  { key: 'equipment', label: 'Equipment', lead: 'equipment' },
+  { key: 'skins', label: 'Skins', lead: 'skin' },
+  { key: 'items', label: 'Items', lead: 'heroPotion' },
 ];
+
+const PILL_COLUMNS = 3;
+
+/**
+ * Seamless-grid corner rounding, matching the Buildings category pills, the Army
+ * tab chips and the Base/Army library filters: the pills read as one rounded
+ * block, so only the four outermost corners take the large radius and the
+ * interior seams stay at Radius.sm.
+ *
+ * Derived from the cell index rather than hardcoded, because the pill count
+ * varies with the journey data and the last row is often partial. A cell can be
+ * simultaneously the first and last of its row, and both the top and bottom of the
+ * block (single row, or a lone trailing pill), so each corner is tested
+ * independently instead of by a single "is this a corner cell" branch.
+ */
+function pillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / PILL_COLUMNS) * PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
 
 const MC_ICONS: Partial<Record<HeroJourneyRewardKind, keyof typeof MaterialCommunityIcons.glyphMap>> = {
   heroPotion: 'flask-outline',
@@ -237,11 +263,40 @@ export default function HeroJourneyScreen() {
     }
   }, [refresh, player]);
 
+  // Each filter pill leads with a real reward from its group and carries the number
+  // of milestones it would switch to, matching the Buildings category pills.
+  const filterCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const opt of FILTER_OPTIONS) {
+      const key = opt.key;
+      if (!journey) {
+        counts[key] = 0;
+      } else if (key === 'all') {
+        counts[key] = journey.milestones.length;
+      } else {
+        const kinds = FILTER_GROUPS[key];
+        counts[key] = journey.milestones.filter((m) => kinds.includes(m.kind)).length;
+      }
+    }
+    return counts;
+  }, [journey]);
+
+  // Groups with no milestones are dropped, matching the Buildings screen. "All"
+  // always stays so there is a way back to everything.
+  const availableFilters = useMemo(
+    () => FILTER_OPTIONS.filter((o) => o.key === 'all' || (filterCounts[o.key] ?? 0) > 0),
+    [filterCounts],
+  );
+
+  const activeFilter: FilterKey = availableFilters.some((o) => o.key === filter)
+    ? filter
+    : availableFilters[0]?.key ?? 'all';
+
   const filtered = useMemo(() => {
     if (!journey) return [];
-    if (filter === 'all') return journey.milestones;
-    return journey.milestones.filter((m) => FILTER_GROUPS[filter].includes(m.kind));
-  }, [journey, filter]);
+    if (activeFilter === 'all') return journey.milestones;
+    return journey.milestones.filter((m) => FILTER_GROUPS[activeFilter].includes(m.kind));
+  }, [journey, activeFilter]);
 
   const sectionGroups = useMemo(() => {
     if (!journey || filtered.length === 0) return [] as JourneyGroup[];
@@ -362,53 +417,71 @@ export default function HeroJourneyScreen() {
             <Text style={styles.title}>Hero Journey</Text>
             <Text style={styles.subtitle}>Rewards track · progress by upgrading heroes</Text>
           </View>
-          <PressableRipple
-            onPress={onRefresh}
-            disabled={refreshing}
-            hitSlop={12}
-            style={styles.headerRefreshBtn}
-            accessibilityLabel="Refresh hero journey"
-            accessibilityRole="button"
-          >
-            <Ionicons
-              name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
-              size={28}
-              color={refreshing ? Colors.textTertiary : colors.textSecondary}
-            />
-          </PressableRipple>
+          <View style={styles.headerActions}>
+            {journey.currentMilestone && currentFilteredIndex >= 0 && (
+              <PressableRipple
+                onPress={scrollToCurrent}
+                style={styles.currentBtn}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Scroll to current milestone"
+              >
+                <MaterialCommunityIcons name="flag" size={15} color={Colors.warning} />
+              </PressableRipple>
+            )}
+            <PressableRipple
+              onPress={onRefresh}
+              disabled={refreshing}
+              hitSlop={12}
+              style={styles.headerRefreshBtn}
+              accessibilityLabel="Refresh hero journey"
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
+                size={28}
+                color={refreshing ? Colors.textTertiary : colors.textSecondary}
+              />
+            </PressableRipple>
+          </View>
         </View>
 
         <JourneySummary journey={journey} />
 
-        <View style={styles.filterRow}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterInner}>
-            {FILTER_OPTIONS.map((opt) => {
-              const active = filter === opt.key;
-              return (
-                <PressableRipple
-                  key={opt.key}
-                  onPress={() => setFilter(opt.key)}
-                  style={[styles.filterChip, active && { backgroundColor: colors.textPrimary }]}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.filterChipText, { color: active ? Colors.bg : colors.textSecondary }]}>
+        <View style={styles.pillRow}>
+          {availableFilters.map((opt, oi) => {
+            const active = activeFilter === opt.key;
+            const count = filterCounts[opt.key] ?? 0;
+            return (
+              <PressableRipple
+                key={opt.key}
+                onPress={() => setFilter(opt.key)}
+                style={[
+                  styles.pill,
+                  pillCornerStyle(oi, availableFilters.length),
+                  active && styles.pillActive,
+                ]}
+                accessibilityRole="button"
+              >
+                <RewardIcon
+                  kind={opt.lead}
+                  size={16}
+                  color={active ? Colors.bg : colors.textSecondary}
+                />
+                <View style={styles.pillTextCol}>
+                  <Text style={[styles.pillText, active && styles.pillTextActive]} numberOfLines={1}>
                     {opt.label}
                   </Text>
-                </PressableRipple>
-              );
-            })}
-          </ScrollView>
-          {journey.currentMilestone && currentFilteredIndex >= 0 && (
-            <PressableRipple
-              onPress={scrollToCurrent}
-              style={styles.currentBtn}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Scroll to current milestone"
-            >
-              <MaterialCommunityIcons name="flag" size={15} color={Colors.warning} />
-            </PressableRipple>
-          )}
+                  <Text
+                    style={[styles.pillSubText, active && styles.pillSubTextActive]}
+                    numberOfLines={1}
+                  >
+                    {`${count} reward${count === 1 ? '' : 's'}`}
+                  </Text>
+                </View>
+              </PressableRipple>
+            );
+          })}
         </View>
 
         {sectionGroups.length === 0 ? (
@@ -862,6 +935,11 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.textTertiary,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
   headerRefreshBtn: {
     width: 36,
     height: 36,
@@ -967,26 +1045,59 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: 10,
   },
-  filterRow: {
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  pill: {
+    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
+    // decided purely by the container width and can never be pushed wider by the
+    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
+    // needs another 32% and so always wraps. The gap does the spacing -
+    // space-between would push a short final row to opposite edges and break the
+    // seamless block.
+    width: '32%',
+    flexGrow: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
   },
-  filterInner: {
-    gap: Spacing.sm,
-    paddingRight: Spacing.sm,
+  pillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
   },
-  filterChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: Radius.full,
+  pillTextCol: {
+    flex: 1,
+    minWidth: 0,
   },
-  filterChipText: {
+  pillText: {
     ...Typography.caption,
-    fontWeight: '700',
-    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  pillTextActive: {
+    color: Colors.bg,
+  },
+  pillSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  pillSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   currentBtn: {
     width: 30,
