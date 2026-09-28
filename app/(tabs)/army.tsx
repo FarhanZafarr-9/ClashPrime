@@ -58,6 +58,52 @@ const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
   equipment: { set: 'ion', name: 'trophy-outline' },
 };
 
+// Chips sit three to a row.
+const CHIP_COLUMNS = 3;
+
+// The Clash API returns the Battle Machine and Battle Copter inside the `heroes`
+// array (see entityReference), so they can lead the Builder Base hero list and
+// would otherwise put a troop's art on the BH Heroes chip.
+const BH_HERO_MACHINES = new Set(['Battle Machine', 'Battle Copter']);
+
+/**
+ * Seamless-grid corner rounding, matching the resource grid on the Time to Max
+ * hero card: the chips read as one rounded block, so only the four outermost
+ * corners take the large radius and the interior seams stay at Radius.sm.
+ *
+ * Derived from the cell index rather than hardcoded, because the chip count
+ * varies with whatever the player owns and the last row is often partial. A cell
+ * can be simultaneously the first and last of its row, and both the top and
+ * bottom of the block (single row, or a lone trailing chip), so each corner is
+ * tested independently instead of by a single "is this a corner cell" branch.
+ */
+function chipCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(CHIP_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / CHIP_COLUMNS) * CHIP_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
+
+/**
+ * "Lv4 › Lv12" for the remaining-levels rows. Uses a real chevron glyph rather
+ * than a hardcoded "→" character, which renders inconsistently depending on the
+ * device font and misaligns against the tabular numerals.
+ */
+function LevelRange({ from, to, color }: { from: number; to: number | string; color: string }) {
+  return (
+    <View style={styles.levelRange}>
+      <Text style={[styles.levelRangeText, { color }]}>Lv{from}</Text>
+      <Ionicons name="chevron-forward" size={10} color={color} />
+      <Text style={[styles.levelRangeText, { color }]}>Lv{to}</Text>
+    </View>
+  );
+}
+
 // Decodes an "Unlock Requirement" value (e.g. "Buy in X event for 3,100 ... or
 // purchasable from the Trader for 1,500") into discrete unlock methods.
 function parseUnlockRequirements(raw: string): { source: string; cost?: string; kind: 'event' | 'shop' | 'other' }[] {
@@ -297,7 +343,6 @@ export default function PlayerProfileScreen() {
     { key: 'siege', label: 'Siege' },
     { key: 'equipment', label: 'Gear' },
   ];
-
   const hasHeroes = homeTroops.length >= 0 && homeHeroes.length > 0;
   const hasBhHeroes = builderHeroes.length > 0;
   const hasTroops = homeTroops.length > 0;
@@ -306,6 +351,21 @@ export default function PlayerProfileScreen() {
   const hasPets = homePets.length > 0;
   const hasSiege = siegeMachines.length > 0;
   const hasEquipment = (player?.heroEquipment.length ?? 0) > 0;
+
+  // Each top chip leads with a real item image instead of a glyph, using the
+  // first owned unit of that kind and the same bundled asset the ItemCard uses.
+  // BH chips resolve against the Builder Base sprite set.
+  const tabPreviewItem: Record<Tab, string | null> = {
+    heroes: homeHeroes[0]?.name ?? null,
+    // Prefer a real BH hero over the Battle Machine / Battle Copter.
+    bhHeroes: (builderHeroes.find((h) => !BH_HERO_MACHINES.has(h.name)) ?? builderHeroes[0])?.name ?? null,
+    troops: homeTroops[0]?.name ?? null,
+    bhTroops: builderTroops[0]?.name ?? null,
+    spells: homeSpells[0]?.name ?? null,
+    pets: homePets[0]?.name ?? null,
+    siege: siegeMachines[0]?.name ?? null,
+    equipment: player?.heroEquipment[0]?.name ?? null,
+  };
 
   // Maxed-out equipment goes last in the Gear tab so upgrades are easy to spot.
   const sortedHeroEquipment = useMemo(() => {
@@ -406,6 +466,28 @@ export default function PlayerProfileScreen() {
   const isBuilderBaseName = () =>
     activeTab === 'bhTroops' || activeTab === 'bhHeroes';
 
+  // Chip subtitle: how much of each category is already maxed. This screen is an
+  // upgrade tracker, so "3/10 maxed" is the signal that matters per category.
+  // Reuses the same max-level rules the card grids use, so the subtitle always
+  // agrees with the counts shown inside the tab.
+  const maxedLine = (maxed: number, total: number) => `${maxed}/${total} maxed`;
+  const tabDescription: Record<Tab, string> = {
+    heroes: maxedLine(homeHeroesSplit.maxed.length, homeHeroes.length),
+    bhHeroes: maxedLine(builderHeroesSplit.maxed.length, builderHeroes.length),
+    troops: maxedLine(homeTroopsSplit.maxed.length, homeTroops.length),
+    bhTroops: maxedLine(builderTroopsSplit.maxed.length, builderTroops.length),
+    spells: maxedLine(homeSpellsSplit.maxed.length, homeSpells.length),
+    pets: maxedLine(homePetsSplit.maxed.length, homePets.length),
+    siege: maxedLine(
+      siegeMachines.filter((t) => t.level >= (getMaxLevelAtTH(t.name, th) ?? t.maxLevel)).length,
+      siegeMachines.length
+    ),
+    equipment: maxedLine(
+      player.heroEquipment.filter((e) => e.level >= (getEquipmentMaxLevel(e.name) || e.maxLevel)).length,
+      player.heroEquipment.length
+    ),
+  };
+
   const getLabBuilding = (name: string, tab: Tab): string => {
     switch (tab) {
       case 'heroes':
@@ -422,7 +504,7 @@ export default function PlayerProfileScreen() {
   // Returns the level rows to show for an expanded item, applying the right
   // gating per village. Home troops/spells/pets/heroes are capped by the max
   // reachable at the player's Town Hall (via their gating building's max level
-  // at that TH â€” never the player's own building level); equipment by the
+  // at that TH — never the player's own building level); equipment by the
   // player's Blacksmith; Builder Base units by their Star Lab at the BH.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
     const isHero = entityRef(detail.name)?.category === 'heroes';
@@ -443,7 +525,7 @@ export default function PlayerProfileScreen() {
 
   // Inline expansion panel rendered directly under a tapped card (replaces the
   // old modal). Because it lives in the page's own ScrollView, the stats table
-  // scrolls naturally with the page â€” no nested-scroll quirks.
+  // scrolls naturally with the page — no nested-scroll quirks.
   const renderDetailPanel = (name: string) => {
     const detail = details[detailCacheKey(name, isBuilderBaseName())];
 
@@ -497,7 +579,7 @@ export default function PlayerProfileScreen() {
     const isBB = isBuilderBaseName();
     const isEquip = isEquipmentName(detail.name);
     // Builder Base units are already capped by their Star Lab (getVisibleLevels);
-    // never apply the Home Village Town Hall cap â€” getMaxLevelAtTH resolves the
+    // never apply the Home Village Town Hall cap — getMaxLevelAtTH resolves the
     // name's home copy, so a shared name like "Baby Dragon" would apply the wrong
     // ceiling to a Builder Base troop.
     const maxReachable = isEquip ? getEquipmentMaxLevel(detail.name) || null : isBB ? null : getMaxLevelAtTH(detail.name, player.townHallLevel);
@@ -528,7 +610,12 @@ export default function PlayerProfileScreen() {
     const isTroopLike = (detail.levels[0]?.dps ?? 0) > 0 || (detail.levels[0]?.hitpoints ?? 0) > 0;
     const extraLabels = detail.levels[0]?.extra?.map((e) => e.label) ?? [];
     const showDiscounted = discounts.army.costPercent > 0 || discounts.army.timePercent > 0;
-    const contentMinW = 28 + 56 + 48 + 72 + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 54);
+    // Builder Base hero level caps come from the Builder Hall, not the Hero Hall,
+    // so a "lab level required" column would be wrong there. Home heroes and
+    // everything else are still gated by the Hero Hall / Laboratory.
+    const showLabColumn = activeTab !== 'bhHeroes';
+    const LAB_COL_W = showLabColumn ? 72 : 0;
+    const contentMinW = 28 + 56 + 48 + LAB_COL_W + (isTroopLike ? 36 + 36 : Math.max(extraLabels.length, 1) * 54);
 
     // Acronyms for long column names
     const acronymMap = new Map<string, string>();
@@ -607,7 +694,7 @@ export default function PlayerProfileScreen() {
 
         {visibleDetailLevels.length > 0 && (() => {
           const parseTime = (s: string): number => {
-            if (!s || /[â€”\-]/.test(s)) return 0;
+            if (!s || /[—\-]/.test(s)) return 0;
             const d = s.match(/(\d+)\s*d/);
             const h = s.match(/(\d+)\s*h/);
             const m = s.match(/(\d+)\s*m/);
@@ -637,7 +724,7 @@ export default function PlayerProfileScreen() {
           }
           const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
           // Units with per-level cosmetic sprites show their visual progression
-          // (current + upcoming levels) until they're maxed â€” including Builder
+          // (current + upcoming levels) until they're maxed — including Builder
           // Base troops, which use their own village sprites.
           const showAppearance =
             !isHero && !isEquip && isTroopLike &&
@@ -689,11 +776,15 @@ export default function PlayerProfileScreen() {
                       const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
                       return (
                         <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
-                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                            {ri === 0
-                              ? `Lv${currentLevel} â†’ Lv${maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}`
-                              : ''}
-                          </Text>
+                          <View style={[styles.panelTableCell, { flex: 1, paddingLeft: Spacing.base }]}>
+                            {ri === 0 && (
+                              <LevelRange
+                                from={currentLevel}
+                                to={maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                                color={colors.textSecondary}
+                              />
+                            )}
+                          </View>
                           <View style={[styles.panelTableCell, { alignItems: 'center', justifyContent: 'center' }]}>
                             <View style={styles.resourceSumRow}>
                               {icon ? (
@@ -723,10 +814,14 @@ export default function PlayerProfileScreen() {
                     })
                   ) : (
                     <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, flex: 1, paddingLeft: Spacing.base }]}>
-                        Lv{currentLevel} â†’ Lv{maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
-                      </Text>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>â€”</Text>
+                      <View style={[styles.panelTableCell, { flex: 1, paddingLeft: Spacing.base }]}>
+                        <LevelRange
+                          from={currentLevel}
+                          to={maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+                          color={colors.textSecondary}
+                        />
+                      </View>
+                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>—</Text>
                       <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
                         {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
                       </Text>
@@ -760,9 +855,11 @@ export default function PlayerProfileScreen() {
                     )}
                     <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 56 }]}>Cost</Text>
                     <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 48 }]}>Time</Text>
-                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 72 }]}>
-                      {getLabBuilding(detail.name, activeTab)}
-                    </Text>
+                    {showLabColumn && (
+                      <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, minWidth: 72 }]}>
+                        {getLabBuilding(detail.name, activeTab)}
+                      </Text>
+                    )}
                   </View>
                   {displayLevels.map((l) => {
                     const isCurrentRow = l.level === currentLevel;
@@ -777,7 +874,7 @@ export default function PlayerProfileScreen() {
                         ) : (
                           (extraLabels.length ? extraLabels : ['Value']).map((lbl, i) => (
                             <Text key={i} style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 54 }]}>
-                              {l.extra?.find((e) => e.label === lbl)?.value ?? 'â€”'}
+                              {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
                             </Text>
                           ))
                         )}
@@ -794,10 +891,12 @@ export default function PlayerProfileScreen() {
                             },
                           ]}
                         >
-                          {showDiscounted ? applyCostDiscount(l.upgradeCost || 'â€”', discounts.army) : (l.upgradeCost || 'â€”')}
+                          {showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}
                         </Text>
-                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || 'â€”', discounts.army) : (l.upgradeTime || 'â€”')}</Text>
-                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? 'â€”'}</Text>
+                        <Text style={[styles.panelTableCell, { color: showDiscounted ? colors.warning : colors.textSecondary, minWidth: 48 }]}>{showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}</Text>
+                        {showLabColumn && (
+                          <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
+                        )}
                       </View>
                     );
                   })}
@@ -939,24 +1038,45 @@ export default function PlayerProfileScreen() {
         </View>
 
         <View style={styles.tabsContainer}>
-          {visibleTabs.map((tab) => {
+          {visibleTabs.map((tab, ti) => {
             const isActive = activeTab === tab.key;
             const iconDef = TAB_ICONS[tab.key];
             const iconColor = isActive ? Colors.bg : Colors.textSecondary;
+            const previewName = tabPreviewItem[tab.key];
+            const previewSrc = previewName
+              ? getArmyItemImage(previewName, null, tab.key === 'bhTroops' || tab.key === 'bhHeroes')
+              : null;
             return (
               <PressableRipple
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
-                style={[styles.tab, isActive && styles.tabActive]}
+                style={[
+                  styles.tab,
+                  chipCornerStyle(ti, visibleTabs.length),
+                  isActive && styles.tabActive,
+                ]}
               >
-                {iconDef.set === 'mc' ? (
+                {previewSrc != null ? (
+                  <Image source={previewSrc} style={styles.tabIcon} resizeMode="contain" />
+                ) : iconDef.set === 'mc' ? (
                   <MaterialCommunityIcons name={iconDef.name as any} size={14} color={iconColor} />
                 ) : (
                   <Ionicons name={iconDef.name as any} size={14} color={iconColor} />
                 )}
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-                  {tab.label}
-                </Text>
+                <View style={styles.tabTextCol}>
+                  <Text
+                    style={[styles.tabText, isActive && styles.tabTextActive]}
+                    numberOfLines={1}
+                  >
+                    {tab.label}
+                  </Text>
+                  <Text
+                    style={[styles.tabSubText, isActive && styles.tabSubTextActive]}
+                    numberOfLines={1}
+                  >
+                    {tabDescription[tab.key]}
+                  </Text>
+                </View>
               </PressableRipple>
             );
           })}
@@ -1459,16 +1579,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: Spacing.base,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     paddingVertical: Spacing.base,
   },
   tab: {
+    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point
+    // is decided purely by the container width and can never be pushed wider by
+    // the chip's own content. 32% leaves room for the two 4px gaps; a fourth
+    // chip needs another 32% and so always wraps. The gap does the spacing —
+    // space-between would push a short final row to opposite edges and break
+    // the seamless block.
+    width: '32%',
+    flexGrow: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
@@ -1477,6 +1606,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textPrimary,
     borderColor: Colors.textPrimary,
   },
+  tabIcon: {
+    width: 16,
+    height: 16,
+  },
+  tabTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
   tabText: {
     ...Typography.caption,
     color: Colors.textSecondary,
@@ -1484,6 +1621,17 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: Colors.bg,
+  },
+  tabSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  tabSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   tabContent: {
     paddingHorizontal: Spacing.base,
@@ -1679,6 +1827,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
+  },
+  levelRange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  levelRangeText: {
+    ...Typography.caption,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   panelTableHeader: {
     color: Colors.textMuted,
