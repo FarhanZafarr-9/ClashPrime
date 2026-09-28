@@ -14,7 +14,7 @@ import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { formatCost, getArmyItemImage } from '../../src/utils/armyData';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
-import { PACKAGE_RESOURCE_IMAGES, PACKAGE_MAGIC_ITEM_IMAGES } from '../../src/data/packageImages';
+import { PACKAGE_RESOURCE_IMAGES, PACKAGE_MAGIC_ITEM_IMAGES, PACKAGE_IMAGES } from '../../src/data/packageImages';
 import {
   computeHeroJourney,
   type HeroJourneyData,
@@ -58,6 +58,17 @@ const FILTER_OPTIONS: { key: FilterKey; label: string; lead: HeroJourneyRewardKi
   { key: 'skins', label: 'Skins', lead: 'skin' },
   { key: 'items', label: 'Items', lead: 'heroPotion' },
 ];
+
+/**
+ * Lead art for the pills whose group has one unmistakable item: quests are chests
+ * (the same chest the milestone rows use) and equipment leads with the Fireball,
+ * the icon the Warden's quest actually grants. Skins are resolved per-journey
+ * instead, because the Majestic skin awarded is the one the player is tracking.
+ */
+const FILTER_IMAGES: Partial<Record<FilterKey, number>> = {
+  quests: chestImage,
+  equipment: PACKAGE_IMAGES['Fireball']?.icon,
+};
 
 const PILL_COLUMNS = 3;
 
@@ -281,6 +292,14 @@ export default function HeroJourneyScreen() {
     return counts;
   }, [journey]);
 
+  // The skin pill leads with the Majestic skin the journey actually awards, so it
+  // previews the hero's own skin rather than a generic one.
+  const skinLead = useMemo(() => {
+    const skin = journey?.milestones.find((m) => m.kind === 'skin');
+    const hero = skin && 'hero' in skin ? skin.hero : undefined;
+    return (hero ? SKIN_IMAGES[hero] : undefined) ?? Object.values(SKIN_IMAGES)[0] ?? null;
+  }, [journey]);
+
   // Groups with no milestones are dropped, matching the Buildings screen. "All"
   // always stays so there is a way back to everything.
   const availableFilters = useMemo(
@@ -452,6 +471,7 @@ export default function HeroJourneyScreen() {
           {availableFilters.map((opt, oi) => {
             const active = activeFilter === opt.key;
             const count = filterCounts[opt.key] ?? 0;
+            const leadImage = opt.key === 'skins' ? skinLead : FILTER_IMAGES[opt.key];
             return (
               <PressableRipple
                 key={opt.key}
@@ -463,11 +483,15 @@ export default function HeroJourneyScreen() {
                 ]}
                 accessibilityRole="button"
               >
-                <RewardIcon
-                  kind={opt.lead}
-                  size={16}
-                  color={active ? Colors.bg : colors.textSecondary}
-                />
+                {leadImage ? (
+                  <Image source={leadImage} style={styles.pillImg} resizeMode="contain" />
+                ) : (
+                  <RewardIcon
+                    kind={opt.lead}
+                    size={16}
+                    color={active ? Colors.bg : colors.textSecondary}
+                  />
+                )}
                 <View style={styles.pillTextCol}>
                   <Text style={[styles.pillText, active && styles.pillTextActive]} numberOfLines={1}>
                     {opt.label}
@@ -1075,6 +1099,10 @@ const styles = StyleSheet.create({
   pillActive: {
     backgroundColor: Colors.textPrimary,
     borderColor: Colors.textPrimary,
+  },
+  pillImg: {
+    width: 16,
+    height: 16,
   },
   pillTextCol: {
     flex: 1,
