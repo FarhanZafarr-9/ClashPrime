@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   StyleSheet,
+  Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,9 +15,49 @@ import { AchievementCard } from '../../src/components/AchievementCard';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { EmptyState } from '../../src/components/EmptyState';
 import { groupAchievementsByStars, getTotalStars } from '../../src/utils/achievements';
+import { getBuildingItemImage } from '../../src/utils/buildingData';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import type { Village } from '../../src/types/clash';
 
 type AchievementVillageFilter = 'all' | Village;
+
+const ACHIEVEMENT_FILTER_PILLS: {
+  key: AchievementVillageFilter;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { key: 'all', label: 'All', icon: 'planet-outline' },
+  { key: 'home', label: 'Home', icon: 'home-outline' },
+  { key: 'builderBase', label: 'Builder', icon: 'hammer-outline' },
+  { key: 'clanCapital', label: 'Capital', icon: 'flag-outline' },
+];
+
+const PILL_COLUMNS = 3;
+
+const STARS_IMAGE = require('../../assets/stats/war_stars.png');
+
+/**
+ * Seamless-grid corner rounding, matching the Bases, Armies and Hero Journey
+ * pills: the pills read as one rounded block, so only the four outermost corners
+ * take the large radius and the interior seams stay at Radius.sm.
+ *
+ * Derived from the cell index rather than hardcoded, because villages with no
+ * achievements are dropped and the last row is often partial. A cell can be
+ * simultaneously the first and last of its row, and both the top and bottom of
+ * the block (single row, or a lone trailing pill), so each corner is tested
+ * independently instead of by a single "is this a corner cell" branch.
+ */
+function pillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / PILL_COLUMNS) * PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
 
 export default function AchievementsScreen() {
   const { player, loading } = usePlayer();
@@ -34,17 +75,40 @@ export default function AchievementsScreen() {
     );
   }
 
-  const filteredAchievements = achievementVillageFilter === 'all'
-    ? player.achievements
-    : player.achievements.filter((a) => a.village === achievementVillageFilter);
-  const achievementGroups = groupAchievementsByStars(filteredAchievements);
-  const starTotals = getTotalStars(filteredAchievements);
   const achievementVillageCounts = {
     all: player.achievements.length,
     home: player.achievements.filter((a) => a.village === 'home').length,
     builderBase: player.achievements.filter((a) => a.village === 'builderBase').length,
     clanCapital: player.achievements.filter((a) => a.village === 'clanCapital').length,
   };
+
+  // Each village pill leads with its own hall art - the same pairing the Bases
+  // village toggle uses - and carries the number of awards it would switch to.
+  // The Clan Capital has no package art, so it falls back to its icon.
+  const pillImage: Record<AchievementVillageFilter, number | null> = {
+    all: STARS_IMAGE,
+    home: getTownHallImageSource(player.townHallLevel),
+    builderBase: getBuildingItemImage('Builder Hall', player.builderHallLevel, true),
+    clanCapital: null,
+  };
+
+  // Villages with no awards are dropped, matching the Bases, Armies and Hero
+  // Journey screens. "All" always stays so there is a way back to everything.
+  const availablePills = ACHIEVEMENT_FILTER_PILLS.filter(
+    (f) => f.key === 'all' || achievementVillageCounts[f.key] > 0
+  );
+
+  // If the active village stops existing there is nothing to show, so fall back to
+  // the first available pill rather than leaving an empty screen behind.
+  const activeFilter = availablePills.some((f) => f.key === achievementVillageFilter)
+    ? achievementVillageFilter
+    : availablePills[0]?.key ?? 'all';
+
+  const activeAchievements = activeFilter === 'all'
+    ? player.achievements
+    : player.achievements.filter((a) => a.village === activeFilter);
+  const activeStarTotals = getTotalStars(activeAchievements);
+  const activeGroups = groupAchievementsByStars(activeAchievements);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
@@ -70,14 +134,14 @@ export default function AchievementsScreen() {
                 </View>
                 <View style={styles.achievementSummaryText}>
                   <Text style={styles.achievementSummaryTitle}>
-                    {starTotals.earned}/{starTotals.max} stars
+                    {activeStarTotals.earned}/{activeStarTotals.max} stars
                   </Text>
                   <Text style={styles.achievementSummarySub}>
-                    {filteredAchievements.filter((a) => a.stars === 3).length}/{filteredAchievements.length} complete
+                    {activeAchievements.filter((a) => a.stars === 3).length}/{activeAchievements.length} complete
                   </Text>
                 </View>
                 <Text style={styles.achievementSummaryPct}>
-                  {starTotals.max > 0 ? Math.round((starTotals.earned / starTotals.max) * 100) : 0}%
+                  {activeStarTotals.max > 0 ? Math.round((activeStarTotals.earned / activeStarTotals.max) * 100) : 0}%
                 </Text>
               </View>
               <View style={styles.achievementSummaryBarRow}>
@@ -85,51 +149,52 @@ export default function AchievementsScreen() {
                   <View
                     style={[
                       styles.achievementSummaryFill,
-                      { width: `${starTotals.max > 0 ? (starTotals.earned / starTotals.max) * 100 : 0}%` },
+                      { width: `${activeStarTotals.max > 0 ? (activeStarTotals.earned / activeStarTotals.max) * 100 : 0}%` },
                     ]}
                   />
                 </View>
               </View>
             </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.achievementFilters}
-            >
-              {([
-                { key: 'all' as const, label: 'All', icon: 'planet-outline' as const },
-                { key: 'home' as const, label: 'Home', icon: 'home-outline' as const },
-                { key: 'builderBase' as const, label: 'Builder', icon: 'hammer-outline' as const },
-                { key: 'clanCapital' as const, label: 'Capital', icon: 'flag-outline' as const },
-              ]).filter((f) => f.key === 'all' || achievementVillageCounts[f.key] > 0).map((f) => (
-                <PressableRipple
-                  key={f.key}
-                  onPress={() => setAchievementVillageFilter(f.key)}
-                  style={[
-                    styles.achievementFilterPill,
-                    achievementVillageFilter === f.key && styles.achievementFilterPillActive,
-                  ]}
-                >
-                  <Ionicons
-                    name={f.icon}
-                    size={12}
-                    color={achievementVillageFilter === f.key ? Colors.bg : Colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.achievementFilterText,
-                      achievementVillageFilter === f.key && styles.achievementFilterTextActive,
-                    ]}
-                  >
-                    {f.label}
-                    {f.key !== 'all' ? ` (${achievementVillageCounts[f.key]})` : ''}
-                  </Text>
-                </PressableRipple>
-              ))}
-            </ScrollView>
+            <View style={styles.filterSection}>
+              <View style={styles.pillRow}>
+                {availablePills.map((pill, ci) => {
+                  const isActive = pill.key === activeFilter;
+                  const count = achievementVillageCounts[pill.key];
+                  return (
+                    <PressableRipple
+                      key={pill.key}
+                      onPress={() => setAchievementVillageFilter(pill.key)}
+                      style={[
+                        styles.pill,
+                        pillCornerStyle(ci, availablePills.length),
+                        isActive && styles.pillActive,
+                      ]}
+                    >
+                      {pillImage[pill.key] != null ? (
+                        <Image source={pillImage[pill.key]!} style={styles.pillImg} resizeMode="contain" />
+                      ) : (
+                        <Ionicons
+                          name={pill.icon}
+                          size={15}
+                          color={isActive ? Colors.bg : Colors.textSecondary}
+                        />
+                      )}
+                      <View style={styles.pillTextCol}>
+                        <Text style={[styles.pillText, isActive && styles.pillTextActive]} numberOfLines={1}>
+                          {pill.label}
+                        </Text>
+                        <Text style={[styles.pillSubText, isActive && styles.pillSubTextActive]} numberOfLines={1}>
+                          {`${count} award${count === 1 ? '' : 's'}`}
+                        </Text>
+                      </View>
+                    </PressableRipple>
+                  );
+                })}
+              </View>
+            </View>
 
-            {filteredAchievements.length === 0 ? (
+            {activeAchievements.length === 0 ? (
               <EmptyState
                 icon="🏆"
                 title="No achievements in this village"
@@ -137,7 +202,7 @@ export default function AchievementsScreen() {
               />
             ) : (
               <View style={{ paddingHorizontal: Spacing.base }}>
-                {achievementGroups.map((group) => (
+                {activeGroups.map((group) => (
                   <View key={group.group}>
                     <SectionHeader title={`${group.label} (${group.items.length})`} />
                     {group.items.map((a, idx) => {
@@ -147,7 +212,7 @@ export default function AchievementsScreen() {
                           key={key}
                           achievement={a}
                           expanded={expandedAchievement === key}
-                          showVillage={achievementVillageFilter === 'all'}
+                          showVillage={activeFilter === 'all'}
                           isFirst={idx === 0}
                           isLast={idx === group.items.length - 1}
                           onPress={() => setExpandedAchievement(expandedAchievement === key ? null : key)}
@@ -255,32 +320,65 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textPrimary,
     borderRadius: 2,
   },
-  achievementFilters: {
-    gap: Spacing.sm,
+  filterSection: {
     paddingHorizontal: Spacing.base,
     paddingBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  achievementFilterPill: {
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  pill: {
+    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
+    // decided purely by the container width and can never be pushed wider by the
+    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
+    // needs another 32% and so always wraps. The gap does the spacing -
+    // space-between would push a short final row to opposite edges and break the
+    // seamless block.
+    width: '32%',
+    flexGrow: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
-  achievementFilterPillActive: {
+  pillActive: {
     backgroundColor: Colors.textPrimary,
     borderColor: Colors.textPrimary,
   },
-  achievementFilterText: {
+  pillImg: {
+    width: 18,
+    height: 18,
+  },
+  pillTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pillText: {
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '600',
   },
-  achievementFilterTextActive: {
+  pillTextActive: {
     color: Colors.bg,
+  },
+  pillSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  pillSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
 });
