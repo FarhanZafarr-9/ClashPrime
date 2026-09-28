@@ -854,7 +854,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
   const clanStars = clan.stars ?? 0;
   const oppStars = opponent.stars ?? 0;
 
-  const plan = isInWar
+  const plan = isInWar || isPreparation
     ? buildAttackPlan({ player, clan, opponent, myPlayerTag, clanStars, opponentStars: oppStars, maxAttacks: isCwl ? 1 : 2 })
     : null;
 
@@ -990,7 +990,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
       )}
 
       {plan && (
-        <AttackPlanCard plan={plan} />
+        <AttackPlanCard plan={plan} preparing={isPreparation} />
       )}
 
       {!isPreparation && (
@@ -1368,10 +1368,12 @@ function LegendCard() {
   );
 }
 
-function AttackPlanCard({ plan }: { plan: AttackPlan }) {
+function AttackPlanCard({ plan, preparing = false }: { plan: AttackPlan; preparing?: boolean }) {
+  const { colors } = useTheme();
   const [open, setOpen] = useState(true);
   const starsColor = (s: number) => (s >= 2.5 ? '#4CAF50' : s >= 1.5 ? '#FFB74D' : '#f44336');
   const deltaColor = (d: number) => (d > 0 ? '#f44336' : d < 0 ? '#4CAF50' : Colors.textMuted);
+  const deltaLabel = (d: number) => (d === 0 ? 'Same TH' : `${d > 0 ? '+' : ''}${d} TH`);
   const tags = (s: AttackSuggestion) => {
     const out: { label: string; color: string; bg: string }[] = [];
     if (s.tag === 'best') out.push({ label: 'Best', color: '#4CAF50', bg: 'rgba(76,175,80,0.15)' });
@@ -1390,7 +1392,9 @@ function AttackPlanCard({ plan }: { plan: AttackPlan }) {
         <View style={styles.planHeaderText}>
           <Text style={styles.planTitle}>Attack Plan</Text>
           <Text style={styles.planSubtitle}>
-            TH{plan.myTH} · Offense {Math.round(plan.offense * 100)}% · {plan.attacksLeft}/{plan.maxAttacks} attack{plan.attacksLeft === 1 ? '' : 's'} left
+            TH{plan.myTH} · Offense {Math.round(plan.offense * 100)}% · {preparing
+              ? `targets locked in, attacks unlock when war starts`
+              : `${plan.attacksLeft}/${plan.maxAttacks} attack${plan.attacksLeft === 1 ? '' : 's'} left`}
           </Text>
         </View>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
@@ -1406,7 +1410,7 @@ function AttackPlanCard({ plan }: { plan: AttackPlan }) {
               </View>
               <View style={styles.planMirrorRight}>
                 <Text style={[styles.planDelta, { color: deltaColor(plan.mirror.thDelta) }]}>
-                  {plan.mirror.thDelta > 0 ? `+${plan.mirror.thDelta}` : plan.mirror.thDelta} TH
+                  {deltaLabel(plan.mirror.thDelta)}
                 </Text>
                 <Text style={[styles.planStars, { color: starsColor(plan.mirror.expectedStars) }]}>
                   {plan.mirror.expectedStars.toFixed(1)}★
@@ -1420,7 +1424,9 @@ function AttackPlanCard({ plan }: { plan: AttackPlan }) {
           {plan.suggestions.map((s, i) => (
             <View key={s.member.tag} style={[styles.planRow, i === plan.suggestions.length - 1 && styles.planRowLast]}>
               <View style={styles.planRowLeft}>
-                <Text style={styles.planPos}>#{s.position}</Text>
+                <View style={[styles.planPosBadge, { backgroundColor: colors.bgCardHover }]}>
+                  <Text style={styles.planPos}>{s.position}</Text>
+                </View>
                 <View style={styles.planRowName}>
                   <Text style={styles.planName} numberOfLines={1}>{s.member.name}</Text>
                   <View style={styles.planTagRow}>
@@ -1434,7 +1440,7 @@ function AttackPlanCard({ plan }: { plan: AttackPlan }) {
               </View>
               <View style={styles.planRowRight}>
                 <Text style={[styles.planDelta, { color: deltaColor(s.thDelta) }]}>
-                  {s.thDelta > 0 ? `+${s.thDelta}` : s.thDelta} TH
+                  {deltaLabel(s.thDelta)}
                 </Text>
                 <Text style={[styles.planStars, { color: starsColor(s.expectedStars) }]}>
                   {s.expectedStars.toFixed(1)}★
@@ -1996,7 +2002,8 @@ const styles = StyleSheet.create({
   planRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm, paddingVertical: Spacing.sm },
   planRowLast: { paddingBottom: 0 },
   planRowLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
-  planPos: { ...Typography.caption, color: Colors.textTertiary, fontSize: 10, fontWeight: '700', width: 30 },
+  planPosBadge: { width: 26, height: 26, borderRadius: Radius.sm, alignItems: 'center', justifyContent: 'center' },
+  planPos: { ...Typography.caption, color: Colors.textSecondary, fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'] },
   planRowName: { flex: 1 },
   planName: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
   planTagRow: { flexDirection: 'row', gap: 4, marginTop: 2, flexWrap: 'wrap' },
