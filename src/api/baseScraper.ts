@@ -3,7 +3,9 @@ import type { ScrapedBase, ScrapeResult, Village } from '../types/bases';
 
 const CLASHLY_API = 'https://api.clashly.app';
 const CLASHLY_APP_ID = '923673396b6e8649e9ed06ea63a3828f';
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+// Snapshots are trusted for three days. Anything older is still painted first (so
+// navigation never shows a skeleton) but is refetched in the background.
+const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
 const HEADERS = {
   'X-Parse-Application-Id': CLASHLY_APP_ID,
@@ -28,6 +30,14 @@ interface ClashLyLayout {
 interface CacheEntry {
   data: ScrapeResult;
   timestamp: number;
+  /** Stored so a snapshot can be checked without walking every group. */
+  count?: number;
+}
+
+export interface BaseSnapshot {
+  data: ScrapeResult;
+  timestamp: number;
+  count: number;
 }
 
 function cacheKey(village: Village, level: number): string {
@@ -39,21 +49,69 @@ function hallPrefix(village: Village): string {
   return village === 'home' ? 'th' : 'bh';
 }
 
-async function getCached(village: Village, level: number): Promise<ScrapeResult | null> {
+function countOf(data: ScrapeResult): number {
+  if (typeof data.total_bases === 'number') return data.total_bases;
+  return Object.values(data.groups ?? {}).reduce((n, group) => n + group.length, 0);
+}
+
+/**
+ * Layouts stored without a preview url can only ever render the placeholder, so they
+ * are dropped from the snapshot. This happens with snapshots written by older builds
+ * or by scrapes where the layout carried no image, and it makes the snapshot fail the
+ * isBaseCacheUsable count check so the list is refetched with usable layouts.
+ */
+function withoutImagelessBases(data: ScrapeResult): { data: ScrapeResult; dropped: number } {
+  const groups: Record<string, ScrapedBase[]> = {};
+  let kept = 0;
+  let dropped = 0;
+
+  for (const [tag, list] of Object.entries(data.groups ?? {})) {
+    const usable = list.filter((base) => !!base.preview_image_url);
+    dropped += list.length - usable.length;
+    if (usable.length === 0) continue;
+    groups[tag] = usable;
+    kept += usable.length;
+  }
+
+  if (dropped === 0) return { data, dropped };
+  return { data: { ...data, groups, total_bases: kept }, dropped };
+}
+
+/**
+ * Reads the stored snapshot with no freshness check, so a screen can paint the
+ * cached layouts on navigation and reconcile with the network afterwards.
+ */
+export async function getCachedBases(village: Village, level: number): Promise<BaseSnapshot | null> {
   try {
     const raw = await AsyncStorage.getItem(cacheKey(village, level));
     if (!raw) return null;
     const entry: CacheEntry = JSON.parse(raw);
-    if (Date.now() - entry.timestamp > CACHE_TTL_MS) return null;
-    return entry.data;
+    if (!entry?.data) return null;
+    const { data, dropped } = withoutImagelessBases(entry.data);
+    return {
+      data,
+      timestamp: entry.timestamp ?? 0,
+      count: dropped > 0 ? countOf(data) : entry.count ?? countOf(data),
+    };
   } catch {
     return null;
   }
 }
 
+/**
+ * A snapshot can be served as-is when it is younger than the TTL and already
+ * holds at least as many layouts as the screen is asking for. Anything else is
+ * still painted first, but must be refetched.
+ */
+export function isBaseCacheUsable(snapshot: BaseSnapshot | null, minItems: number): boolean {
+  if (!snapshot) return false;
+  if (Date.now() - snapshot.timestamp >= CACHE_TTL_MS) return false;
+  return snapshot.count >= minItems;
+}
+
 async function setCache(village: Village, level: number, data: ScrapeResult): Promise<void> {
   try {
-    const entry: CacheEntry = { data, timestamp: Date.now() };
+    const entry: CacheEntry = { data, timestamp: Date.now(), count: countOf(data) };
     await AsyncStorage.setItem(cacheKey(village, level), JSON.stringify(entry));
   } catch {}
 }
@@ -107,10 +165,12 @@ function layoutToBase(layout: ClashLyLayout, level: number, village: Village): S
 async function scrapeBases(
   village: Village,
   level: number,
-  _opts: { maxPages?: number; skipDetail?: boolean } = {}
+  opts: { minItems?: number; bypass?: boolean } = {}
 ): Promise<ScrapeResult> {
-  const cached = await getCached(village, level);
-  if (cached) return cached;
+  if (!opts.bypass) {
+    const snapshot = await getCachedBases(village, level);
+    if (isBaseCacheUsable(snapshot, opts.minItems ?? 0)) return snapshot!.data;
+  }
 
   const allLayouts: ClashLyLayout[] = [];
   let skip = 0;
@@ -158,14 +218,14 @@ async function scrapeBases(
 
 export async function scrapeBasesForTH(
   thLevel: number,
-  opts: { maxPages?: number; skipDetail?: boolean } = {}
+  opts: { minItems?: number; bypass?: boolean } = {}
 ): Promise<ScrapeResult> {
   return scrapeBases('home', thLevel, opts);
 }
 
 export async function scrapeBasesForBH(
   bhLevel: number,
-  opts: { maxPages?: number; skipDetail?: boolean } = {}
+  opts: { minItems?: number; bypass?: boolean } = {}
 ): Promise<ScrapeResult> {
   return scrapeBases('builder', bhLevel, opts);
 }
