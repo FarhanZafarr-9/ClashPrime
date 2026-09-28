@@ -60,12 +60,14 @@ const FILTER_OPTIONS: { key: FilterKey; label: string; lead: HeroJourneyRewardKi
 ];
 
 /**
- * Lead art for the pills whose group has one unmistakable item: quests are chests
- * (the same chest the milestone rows use) and equipment leads with the Fireball,
- * the icon the Warden's quest actually grants. Skins are resolved per-journey
+ * Lead art for the pills whose group has one unmistakable item: "All" reuses the
+ * Hero's Journey mark from the completed-section header, quests are chests (the
+ * same chest the milestone rows use) and equipment leads with the Fireball, the
+ * icon the Warden's quest actually grants. Skins are resolved per-journey
  * instead, because the Majestic skin awarded is the one the player is tracking.
  */
 const FILTER_IMAGES: Partial<Record<FilterKey, number>> = {
+  all: heroJourneyImage,
   quests: chestImage,
   equipment: PACKAGE_IMAGES['Fireball']?.icon,
 };
@@ -595,16 +597,16 @@ function JourneySummary({ journey }: { journey: HeroJourneyData }) {
         </Text>
       </View>
 
-      {journey.nextMilestone && (
+      {journey.currentMilestone && (
         <View style={[styles.nextCard, { backgroundColor: colors.bgSubtle }]}>
           <RewardIcon
-            kind={journey.nextMilestone.kind}
+            kind={journey.currentMilestone.kind}
             size={15}
-            color={isSpecial(journey.nextMilestone) ? Colors.warning : colors.textSecondary}
-            hero={journey.nextMilestone.hero}
+            color={isSpecial(journey.currentMilestone) ? Colors.warning : colors.textSecondary}
+            hero={journey.currentMilestone.hero}
           />
           <Text style={styles.nextText} numberOfLines={2}>
-            <Text style={styles.nextLevel}>Lv {journey.nextMilestone.level}</Text> · {milestoneLabel(journey.nextMilestone)}
+            <Text style={styles.nextLevel}>Lv {journey.currentMilestone.level}</Text> · {milestoneLabel(journey.currentMilestone)}
           </Text>
         </View>
       )}
@@ -647,12 +649,16 @@ interface JourneySectionProps {
 
 function JourneySection({ group, first, last, expanded, reachable, onToggle, onRowLayout }: JourneySectionProps) {
   const { colors } = useTheme();
+  const { player } = usePlayer();
   const { section, rows } = group;
   const locked = !reachable;
   const claimed = rows.filter((r) => r.ms.claimState === 'claimed').length;
   const allClaimed = rows.length > 0 && claimed === rows.length;
   const thImage = getTownHallImageSource(section.th);
   const desc = `Levels ${section.minLevel}-${section.maxLevel}`;
+  // A hero unlocked in the profile is shown in full colour; one the player has not
+  // unlocked yet is dimmed and badged, so the header says which is which.
+  const ownedHeroes = new Set((player?.heroes ?? []).map((h) => h.name));
 
   return (
     <>
@@ -666,11 +672,24 @@ function JourneySection({ group, first, last, expanded, reachable, onToggle, onR
         compact
       >
         <View style={styles.sectionBadges}>
-          {section.newHeroes.map((name) => (
-            <View key={name} style={styles.sectionNewHeroBadge}>
-              <Image source={HERO_IMAGES[name]} style={styles.sectionNewHeroImg} resizeMode="contain" />
-            </View>
-          ))}
+          {section.newHeroes.map((name) => {
+            const heroImage = HERO_IMAGES[name];
+            const owned = ownedHeroes.has(name);
+            return (
+              <View key={name} style={styles.sectionNewHeroBadge}>
+                {heroImage != null && (
+                  <Image
+                    source={heroImage}
+                    style={[styles.sectionNewHeroImg, !owned && styles.sectionNewHeroImgLocked]}
+                    resizeMode="contain"
+                  />
+                )}
+                {!owned && (
+                  <Image source={lockedImage} style={styles.sectionNewHeroLock} resizeMode="contain" />
+                )}
+              </View>
+            );
+          })}
           <View style={[
             styles.sectionBadge,
             allClaimed && styles.sectionBadgeMaxed,
@@ -811,7 +830,10 @@ function MilestoneRow({
   const quest = isQuest(ms);
 
   const specialColored = special && unlocked;
-  const titleColor = specialColored ? Colors.warning : unlocked ? colors.textPrimary : colors.textTertiary;
+  // The flagged node is the frontier: not reached yet, but it is the active one, so
+  // it reads as highlighted rather than dimmed like the locked nodes past it.
+  const active = unlocked || ms.isCurrent;
+  const titleColor = specialColored ? Colors.warning : active ? colors.textPrimary : colors.textTertiary;
   const equipmentClaimed = ms.kind === 'equipment' && ms.claimState === 'claimed';
   const extraDesc = milestoneDesc(ms);
 
@@ -841,7 +863,7 @@ function MilestoneRow({
         <Text
           style={[
             styles.milestonePillNum,
-            { color: unlocked ? (ms.isCurrent ? Colors.bg : colors.textPrimary) : colors.textTertiary },
+            { color: active ? (ms.isCurrent ? Colors.bg : colors.textPrimary) : colors.textTertiary },
           ]}
         >
           {ms.level}
@@ -890,7 +912,7 @@ function MilestoneRow({
         )}
       </View>
 
-      {!unlocked &&
+      {!active &&
         <View style={[styles.sectionBadge, last && {
           borderBottomRightRadius: Radius.lg,
         }]}>
@@ -909,7 +931,7 @@ function MilestoneRow({
             }
           ]
         }>
-          <Ionicons name="flag" size={12} color={special && unlocked ? Colors.warning : colors.textSecondary} />
+          <Ionicons name="flag" size={12} color={Colors.warning} />
         </View>
       }
 
@@ -967,7 +989,8 @@ const styles = StyleSheet.create({
   headerRefreshBtn: {
     width: 36,
     height: 36,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.textPrimary + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1128,11 +1151,12 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   currentBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: Radius.full,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
     borderWidth: 0.75,
-    borderColor: Colors.warning,
+    borderColor: Colors.warning +'60',
+    backgroundColor: Colors.warning+'20',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1152,7 +1176,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionNewHeroBadge: {
-    width: 36,
+    // The package hero icons are portrait (165x225), so a square badge letterboxes
+    // them into a narrow strip with dead space either side. Sizing the badge to the
+    // icon's aspect keeps the art centred and filling the tile, and the height
+    // still lines up with the 36px progress badge beside it.
+    width: 28,
     height: 36,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgCardHover,
@@ -1160,8 +1188,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionNewHeroImg: {
-    width: 32,
+    width: 24,
     height: 32,
+  },
+  sectionNewHeroImgLocked: {
+    opacity: 0.35,
+  },
+  sectionNewHeroLock: {
+    position: 'absolute',
+    right: -3,
+    bottom: -2,
+    width: 13,
+    height: 13,
   },
   sectionBadge: {
     minWidth: 36,
