@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import { ArmyCard } from '../../src/components/ArmyCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
-import { getPopularArmies } from '../../src/api/clashArmies';
+import { getPopularArmies, getCachedArmies } from '../../src/api/clashArmies';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { getArmyItemImage } from '../../src/utils/armyData';
 import { buildCopyArmyLink } from '../../src/utils/armyLinks';
@@ -156,21 +156,56 @@ export default function ArmiesScreen() {
     setCardArmy(army);
   }, []);
 
-  const fetchArmies = useCallback(async (bypass?: boolean) => {
+  // The armies already scrolled to are what the snapshot has to cover, so a cache
+  // holding fewer of them is refetched instead of ending the list short. Kept in a
+  // ref so paging the list does not re-trigger the load.
+  const displayCountRef = useRef(PAGE_SIZE);
+  useEffect(() => {
+    displayCountRef.current = displayCount;
+  }, [displayCount]);
+
+  // Which town hall the rendered armies belong to, so a hall change never leaves
+  // the old list on screen while its own snapshot is being fetched.
+  const dataKeyRef = useRef<string | null>(null);
+
+  const loadArmies = useCallback(async (bypass?: boolean) => {
+    const minItems = Math.max(displayCountRef.current, PAGE_SIZE);
+    const dataKey = `${thLevel}`;
     try {
-      setLoading(true);
       setError(null);
-      const { armies: list, unitsById: defs, equipmentById: eqDefs, petsById: pDefs } = await getPopularArmies(bypass, thLevel);
+      if (!bypass) {
+        // Paint the stored list straight away so navigating back is instant, then
+        // reconcile below - a stale or short snapshot is refetched there.
+        const snapshot = await getCachedArmies(thLevel);
+        if (snapshot) {
+          setArmies(snapshot.armies);
+          setUnitsById(snapshot.unitsById);
+          setEquipmentById(snapshot.equipmentById);
+          setPetsById(snapshot.petsById);
+          dataKeyRef.current = dataKey;
+          setLoading(false);
+        } else if (dataKeyRef.current !== dataKey) {
+          setArmies([]);
+          setLoading(true);
+        }
+      }
+      const { armies: list, unitsById: defs, equipmentById: eqDefs, petsById: pDefs } = await getPopularArmies(bypass, thLevel, { minItems });
       setArmies(list);
       if (defs.size > 0) setUnitsById(defs);
       if (eqDefs.size > 0) setEquipmentById(eqDefs);
       if (pDefs.size > 0) setPetsById(pDefs);
+      dataKeyRef.current = dataKey;
     } catch (e: any) {
       setError(e.message || 'Failed to load armies');
     } finally {
       setLoading(false);
     }
   }, [thLevel]);
+
+  const fetchArmies = useCallback(async (bypass?: boolean) => {
+    setLoading(true);
+    await loadArmies(bypass);
+  }, [loadArmies]);
 
   const loadSavedData = useCallback(async () => {
     const [sArmies, aFavs] = await Promise.all([
@@ -186,10 +221,10 @@ export default function ArmiesScreen() {
     (async () => {
       await Promise.resolve();
       if (cancelled) return;
-      await Promise.all([fetchArmies(), loadSavedData()]);
+      await Promise.all([loadArmies(), loadSavedData()]);
     })();
     return () => { cancelled = true; };
-  }, [fetchArmies, loadSavedData]);
+  }, [loadArmies, loadSavedData]);
 
   const handleArmyFavorite = async (id: number) => {
     const key = String(id);
