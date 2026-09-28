@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Linking,
   Share,
   Alert,
+  Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import { Skeleton } from '../../src/components/Skeleton';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/armies';
 import { getPopularArmies } from '../../src/api/clashArmies';
 import { getMaxTownHall } from '../../src/utils/buildingData';
+import { getArmyItemImage } from '../../src/utils/armyData';
 import { buildCopyArmyLink } from '../../src/utils/armyLinks';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
@@ -77,6 +79,57 @@ const ARMY_TAG_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
   { key: 'Spam', label: 'Spam', icon: 'flash-outline' },
   { key: 'Beginner Friendly', label: 'Beginner', icon: 'happy-outline' },
 ];
+
+const PILL_COLUMNS = 3;
+
+/**
+ * Seamless-grid corner rounding, matching the Buildings category pills and the
+ * Army tab chips: the pills read as one rounded block, so only the four outermost
+ * corners take the large radius and the interior seams stay at Radius.sm.
+ *
+ * Derived from the cell index rather than hardcoded, because the pill count
+ * varies with the fetched armies and the last row is often partial. A cell can be
+ * simultaneously the first and last of its row, and both the top and bottom of the
+ * block (single row, or a lone trailing pill), so each corner is tested
+ * independently instead of by a single "is this a corner cell" branch.
+ */
+function pillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / PILL_COLUMNS) * PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
+
+/**
+ * The troop art leading a tag pill, taken from the highest-scoring army carrying
+ * that tag so the pill previews what the player is about to filter to. The first
+ * army-camp troop with package art wins; army camps come first because the clan
+ * castle leg is usually a single hero.
+ */
+function leadingUnitImage(army: ClashArmy | undefined, unitsById: Map<number, UnitDef>) {
+  if (!army) return null;
+  const campUnits = army.units.filter((u) => u.home === 'armyCamp');
+  for (const unit of campUnits) {
+    const def = unitsById.get(unit.unitId);
+    if (!def) continue;
+    const kind = def.type === 'Spell' ? 'spell' : def.type === 'Siege' ? 'siege' : 'troop';
+    const variants = [
+      def.name,
+      ...(kind === 'spell' ? [`${def.name} Spell`, `${def.name} Potion`] : []),
+      ...(kind === 'siege' ? [`${def.name} Machine`, `${def.name} Workshop`] : []),
+    ];
+    for (const variant of variants) {
+      const src = getArmyItemImage(variant);
+      if (src) return src;
+    }
+  }
+  return null;
+}
 
 export default function ArmiesScreen() {
   const { player } = usePlayer();
@@ -181,10 +234,38 @@ export default function ArmiesScreen() {
     }
   };
 
-  const thArmies = armies.filter((a) => a.townHall === thLevel).sort((a, b) => b.score - a.score);
-  const currentArmies = selectedTag === 'All'
+  const thArmies = useMemo(
+    () => armies.filter((a) => a.townHall === thLevel).sort((a, b) => b.score - a.score),
+    [armies, thLevel],
+  );
+
+  // Each tag pill leads with the troop art of its top-scoring army and carries the
+  // number of armies it would switch to, matching the Buildings category pills.
+  const tagMeta = useMemo(() => {
+    const out: Record<string, { image: number | null; count: number }> = {};
+    for (const pill of ARMY_TAG_PILLS) {
+      const matches = pill.key === 'All'
+        ? thArmies
+        : thArmies.filter((a) => a.tags.includes(pill.key));
+      out[pill.key] = { image: leadingUnitImage(matches[0], unitsById), count: matches.length };
+    }
+    return out;
+  }, [thArmies, unitsById]);
+
+  // Tags with no armies at this hall are dropped, matching the Buildings screen.
+  // "All" always stays so there is a way back to everything.
+  const availableTags = useMemo(
+    () => ARMY_TAG_PILLS.filter((p) => p.key === 'All' || (tagMeta[p.key]?.count ?? 0) > 0),
+    [tagMeta],
+  );
+
+  const activeTag = availableTags.some((p) => p.key === selectedTag)
+    ? selectedTag
+    : availableTags[0]?.key ?? 'All';
+
+  const currentArmies = activeTag === 'All'
     ? thArmies
-    : thArmies.filter((a) => a.tags.includes(selectedTag));
+    : thArmies.filter((a) => a.tags.includes(activeTag));
   const visibleArmies = currentArmies.slice(0, displayCount);
   const hasMore = displayCount < currentArmies.length;
 
@@ -229,23 +310,46 @@ export default function ArmiesScreen() {
 
           {/* Tag filter pills */}
           <View style={styles.filterSection}>
-            <View style={styles.filterPills}>
-              {ARMY_TAG_PILLS.map((pill) => (
-                <PressableRipple
-                  key={pill.key}
-                  onPress={() => { setSelectedTag(pill.key); setDisplayCount(PAGE_SIZE); }}
-                  style={[styles.filterPill, selectedTag === pill.key && styles.filterPillActive]}
-                >
-                  <Ionicons
-                    name={pill.icon}
-                    size={13}
-                    color={selectedTag === pill.key ? Colors.bg : Colors.textSecondary}
-                  />
-                  <Text style={[styles.filterPillText, selectedTag === pill.key && styles.filterPillTextActive]}>
-                    {pill.label}
-                  </Text>
-                </PressableRipple>
-              ))}
+            <View style={styles.pillRow}>
+              {availableTags.map((pill, ci) => {
+                const isActive = pill.key === activeTag;
+                const meta = tagMeta[pill.key];
+                return (
+                  <PressableRipple
+                    key={pill.key}
+                    onPress={() => { setSelectedTag(pill.key); setDisplayCount(PAGE_SIZE); }}
+                    style={[
+                      styles.pill,
+                      pillCornerStyle(ci, availableTags.length),
+                      isActive && styles.pillActive,
+                    ]}
+                  >
+                    {meta?.image != null ? (
+                      <Image source={meta.image} style={styles.pillImg} resizeMode="contain" />
+                    ) : (
+                      <Ionicons
+                        name={pill.icon}
+                        size={15}
+                        color={isActive ? Colors.bg : Colors.textSecondary}
+                      />
+                    )}
+                    <View style={styles.pillTextCol}>
+                      <Text
+                        style={[styles.pillText, isActive && styles.pillTextActive]}
+                        numberOfLines={1}
+                      >
+                        {pill.label}
+                      </Text>
+                      <Text
+                        style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
+                        numberOfLines={1}
+                      >
+                        {`${meta?.count ?? 0} arm${(meta?.count ?? 0) === 1 ? 'y' : 'ies'}`}
+                      </Text>
+                    </View>
+                  </PressableRipple>
+                );
+              })}
             </View>
           </View>
 
@@ -420,33 +524,61 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: Spacing.xs,
   },
-  filterPills: {
+  pillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
-  filterPill: {
+  pill: {
+    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
+    // decided purely by the container width and can never be pushed wider by the
+    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
+    // needs another 32% and so always wraps. The gap does the spacing -
+    // space-between would push a short final row to opposite edges and break the
+    // seamless block.
+    width: '32%',
+    flexGrow: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
-  filterPillActive: {
+  pillActive: {
     backgroundColor: Colors.textPrimary,
     borderColor: Colors.textPrimary,
   },
-  filterPillText: {
+  pillImg: {
+    width: 18,
+    height: 18,
+  },
+  pillTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pillText: {
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '600',
   },
-  filterPillTextActive: {
+  pillTextActive: {
     color: Colors.bg,
+  },
+  pillSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  pillSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   list: {
     paddingHorizontal: Spacing.base,

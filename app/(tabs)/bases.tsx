@@ -7,6 +7,7 @@ import {
   Linking,
   Share,
   Alert,
+  Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +19,8 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
 import { scrapeBasesForTH, scrapeBasesForBH } from '../../src/api/baseScraper';
-import { getMaxTownHall } from '../../src/utils/buildingData';
+import { getMaxTownHall, getBuildingItemImage } from '../../src/utils/buildingData';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
 import BaseShareCard from '../../src/components/BaseShareCard';
@@ -49,10 +51,58 @@ const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
   { key: 'CWL', label: 'CWL', icon: 'medal-outline' },
 ];
 
-const VILLAGE_OPTIONS: { key: Village; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'home', label: 'Home Village', icon: 'home-outline' },
-  { key: 'builder', label: 'Builder Base', icon: 'hammer-outline' },
-];
+/**
+ * A scraped base belongs to a pill when its raw type either matches the pill key
+ * or maps onto it through CATEGORY_MAP (scraped types are lower-cased).
+ */
+function matchesCategory(base: ScrapedBase, key: string): boolean {
+  if (key === 'All') return true;
+  return base.type === key.toLowerCase() || CATEGORY_MAP[base.type] === key;
+}
+
+const PILL_COLUMNS = 3;
+
+/**
+ * Seamless-grid corner rounding, matching the Buildings category pills and the
+ * Army tab chips: the pills read as one rounded block, so only the four outermost
+ * corners take the large radius and the interior seams stay at Radius.sm.
+ *
+ * Derived from the cell index rather than hardcoded, because the pill count
+ * varies with the scraped results and the last row is often partial. A cell can
+ * be simultaneously the first and last of its row, and both the top and bottom of
+ * the block (single row, or a lone trailing pill), so each corner is tested
+ * independently instead of by a single "is this a corner cell" branch.
+ */
+function pillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / PILL_COLUMNS) * PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
+
+/**
+ * The same seamless treatment for a single horizontal row of segments (the
+ * Home Village / Builder Base switch). Only the two ends are outer corners, so
+ * there is no row wrapping to derive the position from.
+ */
+function segCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  return {
+    ...(index === 0 && {
+      borderTopLeftRadius: outer,
+      borderBottomLeftRadius: outer,
+    }),
+    ...(index === total - 1 && {
+      borderTopRightRadius: outer,
+      borderBottomRightRadius: outer,
+    }),
+  };
+}
 
 export default function BaseLibraryScreen() {
   const { player } = usePlayer();
@@ -77,9 +127,10 @@ export default function BaseLibraryScreen() {
     setCardBase(base);
   }, []);
 
-  const hallLevel = selectedVillage === 'home'
-    ? player?.townHallLevel || getMaxTownHall()
-    : player?.builderHallLevel || 10;
+  const thLevel = player?.townHallLevel || getMaxTownHall();
+  const bhLevel = player?.builderHallLevel || 10;
+  const showBuilderBase = thLevel >= 6;
+  const hallLevel = selectedVillage === 'home' ? thLevel : bhLevel;
 
   const fetchBases = useCallback(async () => {
     try {
@@ -124,15 +175,41 @@ export default function BaseLibraryScreen() {
     return bases;
   }, [baseData]);
 
-  const filteredBases = useMemo(() => {
-    const catLower = selectedCategory.toLowerCase();
-    return allBases.filter((b) => {
-      if (selectedCategory !== 'All') {
-        if (b.type !== catLower && CATEGORY_MAP[b.type] !== selectedCategory) return false;
-      }
-      return true;
-    });
-  }, [allBases, selectedCategory]);
+  // Each category pill leads with a real layout from the scraped results, so the
+  // pill is recognisable by the base art rather than a generic glyph, and carries
+  // the number of layouts it would switch to. Hall levels can be missing from the
+  // scrape, so the first layout with a preview is used instead of the first one.
+  const catMeta = useMemo(() => {
+    const out: Record<string, { image: string | null; count: number }> = {};
+    for (const pill of CATEGORY_PILLS) {
+      const matches = allBases.filter((b) => matchesCategory(b, pill.key));
+      out[pill.key] = {
+        image: matches.find((b) => !!b.preview_image_url)?.preview_image_url ?? null,
+        count: matches.length,
+      };
+    }
+    return out;
+  }, [allBases]);
+
+  // Categories with no layouts for the current hall are dropped, matching the
+  // Buildings screen. "All" always stays so there is a way back to everything.
+  const availableCats = useMemo(
+    () => CATEGORY_PILLS.filter((p) => p.key === 'All' || (catMeta[p.key]?.count ?? 0) > 0),
+    [catMeta],
+  );
+
+  const activeCategory = availableCats.some((p) => p.key === selectedCategory)
+    ? selectedCategory
+    : availableCats[0]?.key ?? 'All';
+
+  const filteredBases = useMemo(
+    () => allBases.filter((b) => matchesCategory(b, activeCategory)),
+    [allBases, activeCategory],
+  );
+
+  // The village switch leads with the halls the player are actually at.
+  const thHallImage = getTownHallImageSource(thLevel);
+  const bhHallImage = getBuildingItemImage('Builder Hall', bhLevel, true);
 
   const isSaved = (detailUrl: string) => savedBases.some((b) => b.url === detailUrl);
 
@@ -179,9 +256,9 @@ export default function BaseLibraryScreen() {
     }
   };
 
-  const [prevResetCat, setPrevResetCat] = useState(selectedCategory);
-  if (prevResetCat !== selectedCategory) {
-    setPrevResetCat(selectedCategory);
+  const [prevResetCat, setPrevResetCat] = useState(activeCategory);
+  if (prevResetCat !== activeCategory) {
+    setPrevResetCat(activeCategory);
     setDisplayCount(PAGE_SIZE);
   }
 
@@ -251,48 +328,121 @@ export default function BaseLibraryScreen() {
       </View>
 
       {/* Village toggle */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Village</Text>
-        <View style={styles.filterPills}>
-          {VILLAGE_OPTIONS.map((opt) => (
+      {showBuilderBase && (
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Village</Text>
+          <View style={styles.villageToggle}>
             <PressableRipple
-              key={opt.key}
-              onPress={() => setSelectedVillage(opt.key)}
-              style={[styles.filterPill, selectedVillage === opt.key && styles.filterPillActive]}
+              onPress={() => setSelectedVillage('home')}
+              style={[
+                styles.villageToggleItem,
+                segCornerStyle(0, 2),
+                selectedVillage === 'home' && styles.villageToggleActive,
+              ]}
             >
-              <Ionicons
-                name={opt.icon}
-                size={13}
-                color={selectedVillage === opt.key ? Colors.bg : Colors.textSecondary}
-              />
-              <Text style={[styles.filterPillText, selectedVillage === opt.key && styles.filterPillTextActive]}>
-                {opt.label}
-              </Text>
+              {thHallImage ? (
+                <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+              ) : (
+                <Ionicons
+                  name="home-outline"
+                  size={15}
+                  color={selectedVillage === 'home' ? Colors.bg : Colors.textSecondary}
+                />
+              )}
+              <View style={styles.villageToggleTextCol}>
+                <Text
+                  style={[styles.villageToggleText, selectedVillage === 'home' && styles.villageToggleTextActive]}
+                  numberOfLines={1}
+                >
+                  Home
+                </Text>
+                <Text
+                  style={[styles.villageToggleSubText, selectedVillage === 'home' && styles.villageToggleSubTextActive]}
+                  numberOfLines={1}
+                >
+                  {`TH${thLevel}`}
+                </Text>
+              </View>
             </PressableRipple>
-          ))}
+            <PressableRipple
+              onPress={() => setSelectedVillage('builder')}
+              style={[
+                styles.villageToggleItem,
+                segCornerStyle(1, 2),
+                selectedVillage === 'builder' && styles.villageToggleActive,
+              ]}
+            >
+              {bhHallImage ? (
+                <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+              ) : (
+                <Ionicons
+                  name="hammer-outline"
+                  size={15}
+                  color={selectedVillage === 'builder' ? Colors.bg : Colors.textSecondary}
+                />
+              )}
+              <View style={styles.villageToggleTextCol}>
+                <Text
+                  style={[styles.villageToggleText, selectedVillage === 'builder' && styles.villageToggleTextActive]}
+                  numberOfLines={1}
+                >
+                  Builder
+                </Text>
+                <Text
+                  style={[styles.villageToggleSubText, selectedVillage === 'builder' && styles.villageToggleSubTextActive]}
+                  numberOfLines={1}
+                >
+                  {`BH${bhLevel}`}
+                </Text>
+              </View>
+            </PressableRipple>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Category filter */}
       <View style={styles.filterSection}>
         <Text style={styles.filterLabel}>Category</Text>
-        <View style={styles.filterPills}>
-          {CATEGORY_PILLS.map((pill) => (
-            <PressableRipple
-              key={pill.key}
-              onPress={() => setSelectedCategory(pill.key)}
-              style={[styles.filterPill, selectedCategory === pill.key && styles.filterPillActive]}
-            >
-              <Ionicons
-                name={pill.icon}
-                size={13}
-                color={selectedCategory === pill.key ? Colors.bg : Colors.textSecondary}
-              />
-              <Text style={[styles.filterPillText, selectedCategory === pill.key && styles.filterPillTextActive]}>
-                {pill.label}
-              </Text>
-            </PressableRipple>
-          ))}
+        <View style={styles.pillRow}>
+          {availableCats.map((pill, ci) => {
+            const isActive = pill.key === activeCategory;
+            const meta = catMeta[pill.key];
+            return (
+              <PressableRipple
+                key={pill.key}
+                onPress={() => setSelectedCategory(pill.key)}
+                style={[
+                  styles.pill,
+                  pillCornerStyle(ci, availableCats.length),
+                  isActive && styles.pillActive,
+                ]}
+              >
+                {meta?.image ? (
+                  <Image source={{ uri: meta.image }} style={styles.pillImg} resizeMode="cover" />
+                ) : (
+                  <Ionicons
+                    name={pill.icon}
+                    size={15}
+                    color={isActive ? Colors.bg : Colors.textSecondary}
+                  />
+                )}
+                <View style={styles.pillTextCol}>
+                  <Text
+                    style={[styles.pillText, isActive && styles.pillTextActive]}
+                    numberOfLines={1}
+                  >
+                    {pill.label}
+                  </Text>
+                  <Text
+                    style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
+                    numberOfLines={1}
+                  >
+                    {`${meta?.count ?? 0} base${(meta?.count ?? 0) === 1 ? '' : 's'}`}
+                  </Text>
+                </View>
+              </PressableRipple>
+            );
+          })}
         </View>
       </View>
 
@@ -326,7 +476,7 @@ export default function BaseLibraryScreen() {
               <EmptyState
                 icon={'🔍'}
                 title={'No bases found'}
-                description={`No ${selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase() + ' '}bases for ${hallLabel}${hallLevel}. Try a different filter.`}
+                description={`No ${activeCategory === 'All' ? '' : activeCategory.toLowerCase() + ' '}bases for ${hallLabel}${hallLevel}. Try a different filter.`}
               />
             ) : (
               visibleSections.map((section) => (
@@ -486,33 +636,109 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: Spacing.xs,
   },
-  filterPills: {
+  villageToggle: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: 4,
   },
-  filterPill: {
+  villageToggleItem: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
-  filterPillActive: {
+  villageToggleActive: {
     backgroundColor: Colors.textPrimary,
     borderColor: Colors.textPrimary,
   },
-  filterPillText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
+  villageToggleImg: {
+    width: 18,
+    height: 18,
   },
-  filterPillTextActive: {
+  villageToggleTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  villageToggleText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  villageToggleTextActive: {
     color: Colors.bg,
+  },
+  villageToggleSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  villageToggleSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  pill: {
+    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
+    // decided purely by the container width and can never be pushed wider by the
+    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
+    // needs another 32% and so always wraps. The gap does the spacing -
+    // space-between would push a short final row to opposite edges and break the
+    // seamless block.
+    width: '32%',
+    flexGrow: 0,
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  pillActive: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  pillImg: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+  },
+  pillTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pillText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  pillTextActive: {
+    color: Colors.bg,
+  },
+  pillSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  pillSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
   },
   list: {
     paddingHorizontal: Spacing.base,
