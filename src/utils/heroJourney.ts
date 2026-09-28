@@ -296,7 +296,7 @@ export const HERO_EQUIPMENT_POOLS: Record<string, string[]> = {
 
 export interface HeroJourneyMilestone extends RawHeroJourneyMilestone {
   unlocked: boolean;
-  isCurrent: boolean; // most recently reached milestone
+  isCurrent: boolean; // next node to claim (the frontier); the last one once all are reached
   /** Passed nodes are already claimed (level reached); lower ones are upcoming. */
   claimState: 'claimed' | 'upcoming';
   /** Lowest Town Hall able to reach this node's cumulative level. */
@@ -319,6 +319,7 @@ export interface HeroJourneyData {
   globalMaxLevel: number;
   unlockedCount: number;
   currentMilestone: HeroJourneyMilestone | null;
+  /** The node after currentMilestone; null once the track is finished. */
   nextMilestone: HeroJourneyMilestone | null;
   progressPercent: number; // between current and next milestone
   overallPercent: number; // cumulative / global max
@@ -387,13 +388,21 @@ export function computeHeroJourney(player: ClashPlayer): HeroJourneyData {
   for (const m of milestones) m.description = milestoneDescription(m);
 
   const unlockedList = milestones.filter((m) => m.unlocked);
-  const current = unlockedList.length > 0 ? unlockedList[unlockedList.length - 1] : null;
-  const next = milestones.find((m) => !m.unlocked) ?? null;
+  const reached = unlockedList.length > 0 ? unlockedList[unlockedList.length - 1] : null;
+  // The active node is the frontier: the first milestone the player has not reached
+  // yet, i.e. the next one they can work towards and claim. Flagging the last
+  // reached node instead would point at a reward already collected - at 100
+  // cumulative levels that would flag the Lv99 node while Lv101 is still to come.
+  const frontier = milestones.find((m) => !m.unlocked) ?? null;
+  const current = frontier ?? reached;
+  const next = current ? milestones[milestones.indexOf(current) + 1] ?? null : null;
 
   if (current) current.isCurrent = true;
 
   const progressPercent =
-    current && next ? ((capped - current.level) / (next.level - current.level)) * 100 : capped >= HERO_JOURNEY_MAX_LEVEL ? 100 : 0;
+    reached && frontier && frontier.level > reached.level
+      ? ((capped - reached.level) / (frontier.level - reached.level)) * 100
+      : capped >= HERO_JOURNEY_MAX_LEVEL ? 100 : 0;
 
   return {
     milestones,
