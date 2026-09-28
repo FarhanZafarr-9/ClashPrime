@@ -208,6 +208,24 @@ export default function PlayerProfileScreen() {
     return pills;
   }
 
+  // Icons for the label/value pairs the package carries but that have no column in
+  // the level table. Reusing the pill row keeps one visual language instead of a
+  // second block of near-identical chips just below it.
+  const FACT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+    'Spell Type': 'sparkles-outline',
+    Radius: 'radio-outline',
+    'Housing Space': 'cube-outline',
+    Target: 'locate-outline',
+    'Donation Cost': 'gift-outline',
+  };
+
+  function formatFactPills(pairs: { label: string; value: string }[] | undefined): StatPill[] {
+    return (pairs ?? []).map((f) => ({
+      icon: FACT_ICONS[f.label] ?? 'information-circle-outline',
+      value: f.value,
+    }));
+  }
+
   const toggleDetail = useCallback(async (name: string) => {
     // Open the bottom sheet for this item and fetch its details if needed.
     setSheetName(name);
@@ -604,8 +622,11 @@ export default function PlayerProfileScreen() {
 
     const pills = formatStatPills(detail.info);
     // The unlock requirement has its own dedicated block below, so it is kept out
-    // of this summary row and shown once, not twice.
-    const factPairs = (detail.infoPairs ?? []).filter((f) => f.label !== 'Unlock Requirement');
+    // of the pill row and shown once, not twice.
+    const pillsAll = [
+      ...pills,
+      ...formatFactPills((detail.infoPairs ?? []).filter((f) => f.label !== 'Unlock Requirement')),
+    ];
     const unlockReq = detail.infoPairs?.find((i) => i.label === 'Unlock Requirement');
     const unlockReqItems = unlockReq ? parseUnlockRequirements(unlockReq.value) : [];
     const unlockHasCost = unlockReqItems.some((r) => r.cost);
@@ -642,23 +663,12 @@ export default function PlayerProfileScreen() {
           </View>
         ) : null}
 
-        {pills.length > 0 && (
+        {pillsAll.length > 0 && (
           <View style={styles.panelPillsRow}>
-            {pills.map((pill, i) => (
+            {pillsAll.map((pill, i) => (
               <View key={`${pill.icon}-${pill.value}-${i}`} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
                 <Text style={styles.panelPillText}>{pill.value}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {factPairs.length > 0 && (
-          <View style={styles.panelFacts}>
-            {factPairs.map((f, i) => (
-              <View key={`${f.label}-${i}`} style={styles.panelFact}>
-                <Text style={[styles.panelFactLabel, { color: colors.textTertiary }]}>{f.label}</Text>
-                <Text style={[styles.panelFactValue, { color: colors.textPrimary }]}>{f.value}</Text>
               </View>
             ))}
           </View>
@@ -1688,33 +1698,6 @@ const styles = StyleSheet.create({
     rowGap: Spacing.sm,
     marginBottom: Spacing.base,
     width: '100%',
-  },
-  // Label/value pairs for stats the package carries but has no column for.
-  panelFacts: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    rowGap: Spacing.sm,
-    marginBottom: Spacing.base,
-    width: '100%',
-  },
-  panelFact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.sm,
-  },
-  panelFactLabel: {
-    ...Typography.caption,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  panelFactValue: {
-    ...Typography.caption,
-    fontSize: 10,
-    fontWeight: '700',
   },
   panelPill: {
     flexDirection: 'row',
