@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import { BaseCard } from '../../src/components/BaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
-import { scrapeBasesForTH, scrapeBasesForBH } from '../../src/api/baseScraper';
+import { scrapeBasesForTH, scrapeBasesForBH, getCachedBases } from '../../src/api/baseScraper';
 import { getMaxTownHall, getBuildingItemImage } from '../../src/utils/buildingData';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -132,20 +132,52 @@ export default function BaseLibraryScreen() {
   const showBuilderBase = thLevel >= 6;
   const hallLevel = selectedVillage === 'home' ? thLevel : bhLevel;
 
-  const fetchBases = useCallback(async () => {
+  // The layouts already scrolled to are what the snapshot has to cover, so a cache
+  // holding fewer of them is refetched instead of ending the list short. Kept in a
+  // ref so paging the list does not re-trigger the load.
+  const displayCountRef = useRef(PAGE_SIZE);
+  useEffect(() => {
+    displayCountRef.current = displayCount;
+  }, [displayCount]);
+
+  // Which village/hall the rendered layouts belong to, so a toggle never leaves the
+  // other hall's bases on screen while its own snapshot is being fetched.
+  const dataKeyRef = useRef<string | null>(null);
+
+  const loadBases = useCallback(async (bypass = false) => {
+    const minItems = Math.max(displayCountRef.current, PAGE_SIZE);
+    const dataKey = `${selectedVillage}-${hallLevel}`;
     try {
-      setLoading(true);
       setScrapeError(null);
+      if (!bypass) {
+        // Paint the stored snapshot straight away so navigating back is instant,
+        // then reconcile below - a stale or short snapshot is refetched there.
+        const snapshot = await getCachedBases(selectedVillage, hallLevel);
+        if (snapshot) {
+          setBaseData(snapshot.data);
+          dataKeyRef.current = dataKey;
+          setLoading(false);
+        } else if (dataKeyRef.current !== dataKey) {
+          setBaseData(null);
+          setLoading(true);
+        }
+      }
       const data = selectedVillage === 'home'
-        ? await scrapeBasesForTH(hallLevel, { maxPages: 2 })
-        : await scrapeBasesForBH(hallLevel, { maxPages: 2 });
+        ? await scrapeBasesForTH(hallLevel, { minItems, bypass })
+        : await scrapeBasesForBH(hallLevel, { minItems, bypass });
       setBaseData(data);
+      dataKeyRef.current = dataKey;
     } catch (e: any) {
       setScrapeError(e.message || 'Failed to load bases');
     } finally {
       setLoading(false);
     }
   }, [hallLevel, selectedVillage]);
+
+  const fetchBases = useCallback(async () => {
+    setLoading(true);
+    await loadBases(true);
+  }, [loadBases]);
 
   const loadSavedData = useCallback(async () => {
     const [saved, favs] = await Promise.all([
@@ -161,10 +193,10 @@ export default function BaseLibraryScreen() {
     (async () => {
       await Promise.resolve();
       if (cancelled) return;
-      await Promise.all([fetchBases(), loadSavedData()]);
+      await Promise.all([loadBases(), loadSavedData()]);
     })();
     return () => { cancelled = true; };
-  }, [fetchBases, loadSavedData]);
+  }, [loadBases, loadSavedData]);
 
   const allBases = useMemo(() => {
     if (!baseData) return [];
