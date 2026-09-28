@@ -9,6 +9,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import { SPELL_STAT_ICONS } from '../../src/utils/statImages';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -154,33 +155,31 @@ export default function PlayerProfileScreen() {
   const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
   const [tableViewportW, setTableViewportW] = useState(0);
 
-  type StatPill = { icon: keyof typeof Ionicons.glyphMap; value: string };
+  type StatPill = { icon?: keyof typeof Ionicons.glyphMap; image?: number; value: string };
 
   function formatStatPills(info: TroopDetail['info']): StatPill[] {
     const pills: StatPill[] = [];
 
     if (info.damageType) {
       const dt = info.damageType.toLowerCase();
-      let icon: keyof typeof Ionicons.glyphMap = 'flash-outline';
       let label = '';
 
-      if (dt.includes('melee')) { icon = 'cut-outline'; label = 'Melee'; }
-      else if (dt.includes('ranged')) { icon = 'arrow-up-outline'; label = 'Ranged'; }
+      if (dt.includes('melee')) { label = 'Melee'; }
+      else if (dt.includes('ranged')) { label = 'Ranged'; }
       else if (dt.includes('splash')) {
-        icon = 'flame-outline';
         const r = dt.match(/[\d.]+/);
         label = r ? `Splash ${r[0]}` : 'Splash';
       }
-      else if (dt.includes('single')) { icon = 'locate-outline'; label = 'Single'; }
+      else if (dt.includes('single')) { label = 'Single'; }
       else { label = dt.replace(/tile radius/i, '').trim(); }
 
       if (info.targetType) {
         const tt = info.targetType.toLowerCase();
-        if (tt.includes('ground') && tt.includes('air')) label += ' Â· All';
-        else if (tt.includes('ground')) label += ' Â· Ground';
-        else if (tt.includes('air')) label += ' Â· Air';
+        if (tt.includes('ground') && tt.includes('air')) label += ' · All';
+        else if (tt.includes('ground')) label += ' · Ground';
+        else if (tt.includes('air')) label += ' · Air';
       }
-      pills.push({ icon, value: label });
+      pills.push({ image: SPELL_STAT_ICONS.damageType, value: label });
     }
 
     if (info.attackSpeed) {
@@ -188,21 +187,21 @@ export default function PlayerProfileScreen() {
       const damageKeywords = /melee|ranged|splash|tile|radius|ground|air|single/i;
       if (!damageKeywords.test(speedVal)) {
         const s = speedVal.replace(/ seconds?/i, 's');
-        pills.push({ icon: 'time-outline', value: s });
+        pills.push({ image: SPELL_STAT_ICONS.duration, value: s });
       }
     }
 
     if (info.range) {
       const r = info.range.replace(/ tiles?/i, '').trim();
-      pills.push({ icon: 'radio-outline', value: r });
+      pills.push({ image: SPELL_STAT_ICONS.damageRadius, value: r });
     }
 
     if (info.housingSpace > 0) {
-      pills.push({ icon: 'cube-outline', value: `${info.housingSpace}` });
+      pills.push({ image: SPELL_STAT_ICONS.housingSpace, value: `${info.housingSpace}` });
     }
 
     if (info.favoriteTarget) {
-      pills.push({ icon: 'heart-half-outline', value: info.favoriteTarget });
+      pills.push({ image: SPELL_STAT_ICONS.target, value: info.favoriteTarget });
     }
 
     return pills;
@@ -210,20 +209,24 @@ export default function PlayerProfileScreen() {
 
   // Icons for the label/value pairs the package carries but that have no column in
   // the level table. Reusing the pill row keeps one visual language instead of a
-  // second block of near-identical chips just below it.
-  const FACT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-    'Spell Type': 'sparkles-outline',
-    Radius: 'radio-outline',
-    'Housing Space': 'cube-outline',
-    Target: 'locate-outline',
-    'Donation Cost': 'gift-outline',
+  // second block of near-identical chips just below it. Stats with a real game
+  // glyph use that; spell type and donation cost have no asset, so they fall back
+  // to an icon.
+  const FACT_ICONS: Record<string, { icon?: keyof typeof Ionicons.glyphMap; image?: number }> = {
+    'Spell Type': { icon: 'sparkles-outline' },
+    Radius: { image: SPELL_STAT_ICONS.damageRadius },
+    'Housing Space': { image: SPELL_STAT_ICONS.housingSpace },
+    Target: { image: SPELL_STAT_ICONS.target },
+    'Donation Cost': { icon: 'gift-outline' },
   };
 
   function formatFactPills(pairs: { label: string; value: string }[] | undefined): StatPill[] {
-    return (pairs ?? []).map((f) => ({
-      icon: FACT_ICONS[f.label] ?? 'information-circle-outline',
-      value: f.value,
-    }));
+    return (pairs ?? []).map((f) => {
+      const icon = FACT_ICONS[f.label];
+      return icon
+        ? { icon: icon.icon, image: icon.image, value: f.value }
+        : { icon: 'information-circle-outline' as const, value: f.value };
+    });
   }
 
   const toggleDetail = useCallback(async (name: string) => {
@@ -666,8 +669,12 @@ export default function PlayerProfileScreen() {
         {pillsAll.length > 0 && (
           <View style={styles.panelPillsRow}>
             {pillsAll.map((pill, i) => (
-              <View key={`${pill.icon}-${pill.value}-${i}`} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
+              <View key={`${pill.icon ?? pill.image}-${pill.value}-${i}`} style={[styles.panelPill, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                {pill.image != null ? (
+                  <Image source={pill.image} style={styles.panelPillIcon} resizeMode="contain" />
+                ) : (
+                  <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
+                )}
                 <Text style={styles.panelPillText}>{pill.value}</Text>
               </View>
             ))}
@@ -1712,6 +1719,10 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     fontWeight: '600',
     fontSize: 10,
+  },
+  panelPillIcon: {
+    width: 12,
+    height: 12,
   },
   panelNote: {
     ...Typography.caption,
