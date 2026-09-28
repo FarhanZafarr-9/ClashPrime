@@ -94,6 +94,8 @@ interface PackageItem {
   preferredTarget?: string;
   spellType?: string;
   radius?: number;
+  spellFactoryLevelRequired?: number;
+  donationCost?: { amount?: number; resource?: string; gemsOrRaidMedals?: number };
   superTroop?: { name?: string };
   unlockRequirement?: string[];
   levels: PackageLevel[];
@@ -418,6 +420,69 @@ function statLabel(key: string): string {
   return STAT_LABELS[key] ?? titleCase(key);
 }
 
+// Spell stat fields, with the unit each value is expressed in. The package spells
+// each carry a different subset (Poison has damage + two slows, Clone only a
+// capacity, Earthquake only a damage percent), so these are declared as an allow
+// list rather than assuming one shared shape. Anything not listed here is dropped
+// rather than dumped raw.
+const SPELL_STAT_META: Record<string, { label: string; suffix?: string }> = {
+  // Damage
+  damage: { label: 'Damage' },
+  maxDamagePerSecond: { label: 'Max Damage/Sec' },
+  // Duration
+  spellDuration: { label: 'Duration', suffix: 's' },
+  angerDuration: { label: 'Anger Duration', suffix: 's' },
+  boostTime: { label: 'Boost Duration', suffix: 's' },
+  stunTime: { label: 'Stun Duration', suffix: 's' },
+  // Speed / attack modifiers, all percentages in the package
+  speedIncrease: { label: 'Speed Boost', suffix: '%' },
+  movementSpeedIncrease: { label: 'Speed Boost', suffix: '%' },
+  speedDecrease: { label: 'Speed Reduction', suffix: '%' },
+  attackRateDecrease: { label: 'Attack Speed Reduction', suffix: '%' },
+  damageIncrease: { label: 'Damage Boost', suffix: '%' },
+  buildingDamagePercent: { label: 'Building Damage', suffix: '%' },
+  incomingDamageReduction: { label: 'Damage Reduction', suffix: '%' },
+  // Capacity / counts
+  clonedCapacity: { label: 'Clones' },
+  recalledCapacity: { label: 'Units Recalled' },
+  skeletonsGenerated: { label: 'Skeletons' },
+  batsGenerated: { label: 'Bats' },
+  // Healing
+  totalHealing: { label: 'Total Healing' },
+  healingPerPulse: { label: 'Healing per Pulse' },
+  totalHealingOnHeroes: { label: 'Healing on Heroes' },
+  heroHealPercent: { label: 'Hero Heal', suffix: '%' },
+  // Hitpoints
+  totemHitpoints: { label: 'Totem Hitpoints' },
+  hitpointDecayPerSecond: { label: 'HP Decay/Sec' },
+  // Pulse-based spells
+  numberOfPulses: { label: 'Pulses' },
+  timeBetweenPulses: { label: 'Time Between Pulses', suffix: 's' },
+  // Area
+  radius: { label: 'Radius', suffix: ' tiles' },
+};
+
+/**
+ * Pull the real per-level stats out of a spell, in a stable order.
+ *
+ * The research/TH/lab fields are rendered as their own columns, so they are
+ * skipped here; everything else in SPELL_STAT_META that the spell actually carries
+ * becomes a column. A spell whose only stat is `damage` (Lightning) yields one
+ * column, while Poison yields three.
+ */
+function spellStats(lvl: unknown): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
+  const fields = (lvl ?? {}) as Record<string, unknown>;
+  for (const [key, meta] of Object.entries(SPELL_STAT_META)) {
+    const raw = fields[key];
+    if (raw == null) continue;
+    const num = typeof raw === 'number' ? raw : Number(raw);
+    if (!isFinite(num) || num === 0) continue;
+    out.push({ label: meta.label, value: `${num}${meta.suffix ?? ''}` });
+  }
+  return out;
+}
+
 function buildDetailFromPackage(item: PackageItem): TroopDetail {
   const name = item.name;
   const isBuilder = item.base === 'builder';
@@ -490,7 +555,11 @@ function buildDetailFromPackage(item: PackageItem): TroopDetail {
     }
 
     if (isSpell) {
-      if (lvl.damage != null) extra.push({ label: 'Damage', value: String(lvl.damage) });
+      // Spells are free, so there is no "Value" column to speak of - their real
+      // per-level stats become the columns instead. Poison carries damage plus two
+      // slows, Clone only a capacity, and so on. dps/hitpoints stay 0 so the table
+      // keeps using these stat columns rather than switching to the DPS/HP layout.
+      extra.push(...spellStats(lvl));
     } else if (isSiege) {
       common.dps = lvl.damagePerSecond ?? 0;
       common.damagePerHit = lvl.damagePerHit ?? 0;
@@ -543,6 +612,17 @@ function buildDetailFromPackage(item: PackageItem): TroopDetail {
     if (item.spellType) infoPairs.push({ label: 'Spell Type', value: item.spellType });
     if (item.radius != null) infoPairs.push({ label: 'Radius', value: `${item.radius} tiles` });
     if (item.housingSpace != null) infoPairs.push({ label: 'Housing Space', value: String(item.housingSpace) });
+    if (item.targetType) infoPairs.push({ label: 'Target', value: item.targetType });
+    // Spells cost nothing to research, so the donation cost is the only money
+    // attached to one - the level table's Cost column is research gold/elixir.
+    if (item.donationCost?.amount != null) {
+      infoPairs.push({
+        label: 'Donation Cost',
+        value: [formatCost(item.donationCost.amount), item.donationCost.resource]
+          .filter(Boolean)
+          .join(' '),
+      });
+    }
   }
   if (isHero && !isBuilder) {
     const minHall = Math.min(...item.levels.filter((l) => l.heroHallLevelRequired != null).map((l) => l.heroHallLevelRequired!));
