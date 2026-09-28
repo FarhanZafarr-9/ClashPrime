@@ -220,13 +220,19 @@ export default function PlayerProfileScreen() {
     'Donation Cost': { icon: 'gift-outline' },
   };
 
+  // Labels the stat pills already cover. The pill row renders both sources, so a
+  // fact repeating one of these would show the same value twice.
+  const FACT_LABELS_ALREADY_PILLED = new Set(['Housing Space']);
+
   function formatFactPills(pairs: { label: string; value: string }[] | undefined): StatPill[] {
-    return (pairs ?? []).map((f) => {
-      const icon = FACT_ICONS[f.label];
-      return icon
-        ? { icon: icon.icon, image: icon.image, value: f.value }
-        : { icon: 'information-circle-outline' as const, value: f.value };
-    });
+    return (pairs ?? [])
+      .filter((f) => f.label !== 'Unlock Requirement' && !FACT_LABELS_ALREADY_PILLED.has(f.label))
+      .map((f) => {
+        const icon = FACT_ICONS[f.label];
+        return icon
+          ? { icon: icon.icon, image: icon.image, value: f.value }
+          : { icon: 'information-circle-outline' as const, value: f.value };
+      });
   }
 
   const toggleDetail = useCallback(async (name: string) => {
@@ -624,12 +630,9 @@ export default function PlayerProfileScreen() {
     }
 
     const pills = formatStatPills(detail.info);
-    // The unlock requirement has its own dedicated block below, so it is kept out
-    // of the pill row and shown once, not twice.
-    const pillsAll = [
-      ...pills,
-      ...formatFactPills((detail.infoPairs ?? []).filter((f) => f.label !== 'Unlock Requirement')),
-    ];
+    // Stat pills first, then the facts that have no stat of their own. The unlock
+    // requirement is excluded inside formatFactPills because it has its own block.
+    const pillsAll = [...pills, ...formatFactPills(detail.infoPairs)];
     const unlockReq = detail.infoPairs?.find((i) => i.label === 'Unlock Requirement');
     const unlockReqItems = unlockReq ? parseUnlockRequirements(unlockReq.value) : [];
     const unlockHasCost = unlockReqItems.some((r) => r.cost);
@@ -675,7 +678,7 @@ export default function PlayerProfileScreen() {
                 ) : (
                   <Ionicons name={pill.icon} size={11} color={colors.textSecondary} />
                 )}
-                <Text style={styles.panelPillText}>{pill.value}</Text>
+                <Text style={[styles.panelPillText, { color: colors.textPrimary }]}>{pill.value}</Text>
               </View>
             ))}
           </View>
