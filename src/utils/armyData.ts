@@ -611,7 +611,9 @@ function buildDetailFromPackage(item: PackageItem): TroopDetail {
   if (isSpell) {
     if (item.spellType) infoPairs.push({ label: 'Spell Type', value: item.spellType });
     if (item.radius != null) infoPairs.push({ label: 'Radius', value: `${item.radius} tiles` });
-    if (item.housingSpace != null) infoPairs.push({ label: 'Housing Space', value: String(item.housingSpace) });
+    // Housing space is deliberately not repeated here: it already drives a stat pill
+    // from `info.housingSpace`, and listing it in both places showed the same number
+    // in two chips.
     if (item.targetType) infoPairs.push({ label: 'Target', value: item.targetType });
     // Spells cost nothing to research, so the donation cost is the only money
     // attached to one - the level table's Cost column is research gold/elixir.
