@@ -79,12 +79,12 @@ export default function OnboardingModal({
   handleOnboardingImportContinue,
   handleOnboardingImportTokenSubmit,
 }: OnboardingModalProps) {
-  if (!visible) return null;
-
   // Local state for the API token field on the importToken step — this
   // modal previously had no field bound to any state at all.
   const [tokenInput, setTokenInput] = useState('');
   const [tokenError, setTokenError] = useState('');
+
+  if (!visible) return null;
 
   const currentTh = onboardingPlayer?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
