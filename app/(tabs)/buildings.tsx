@@ -14,6 +14,8 @@ import { Colors, Typography, Spacing, Radius, clashFontFamily } from '../../src/
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import {
   getBuildingLevelImageSource,
+  getBuildingImageSource,
+  getTownHallImageSource,
   getBuildingAvailableLevels,
   getBuildingEffectiveMax,
   parseCost,
@@ -29,6 +31,7 @@ import {
   getBuildingCategories,
   getBBCategories,
   getBuildingDetail,
+  getBuildingItemImage,
 } from '../../src/utils/buildingData';
 import type { BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
@@ -1168,6 +1171,51 @@ function CategoryIcon({ cat, isActive }: { cat: string; isActive: boolean }) {
   );
 }
 
+// Category pills sit three to a row, matching the Army tab chips.
+const PILL_COLUMNS = 3;
+
+/**
+ * Seamless-grid corner rounding, matching the Army tab chips: the pills read as
+ * one rounded block, so only the four outermost corners take the large radius
+ * and the interior seams stay at Radius.sm.
+ *
+ * Derived from the cell index rather than hardcoded, because the pill count
+ * varies with the player's village and the last row is often partial. A cell can
+ * be simultaneously the first and last of its row, and both the top and bottom of
+ * the block (single row, or a lone trailing pill), so each corner is tested
+ * independently instead of by a single "is this a corner cell" branch.
+ */
+function pillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / PILL_COLUMNS) * PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
+
+/**
+ * The same seamless treatment for a single horizontal row of segments (the
+ * Home Village / Builder Base switch). Only the two ends are outer corners, so
+ * there is no row wrapping to derive the position from.
+ */
+function segCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  return {
+    ...(index === 0 && {
+      borderTopLeftRadius: outer,
+      borderBottomLeftRadius: outer,
+    }),
+    ...(index === total - 1 && {
+      borderTopRightRadius: outer,
+      borderBottomRightRadius: outer,
+    }),
+  };
+}
+
 type CondensedLevel = { kind: 'row'; data: any } | { kind: 'ellipsis' };
 
 function condenseLevels(levels: any[], head = 2, tail = 3, expand = false): CondensedLevel[] {
@@ -1227,6 +1275,58 @@ export default function BuildingsScreen() {
   const activeCat = selectedCat && availableCats.includes(selectedCat)
     ? selectedCat
     : availableCats[0] || '';
+
+  // Each category pill leads with a real building the player actually owns in the
+  // active village, drawn at the highest level among its copies. Builder Base
+  // names are stored prefixed ("BB Cannon") and resolve through NAME_FIX and
+  // toPackageName, so the same lookup works for both villages.
+  const catMeta = useMemo(() => {
+    const out: Record<string, { image: number | null; types: number }> = {};
+    for (const cat of SHOW_CATEGORIES) {
+      const items = activeData[cat] ?? {};
+      const owned = Object.entries(items).filter(([, data]) => {
+        const entry = data[String(levelKey)];
+        return entry != null && (entry.level ?? 0) > 0;
+      });
+      let image: number | null = null;
+      for (const [name, data] of owned) {
+        const lookupName = NAME_FIX[name] ?? name;
+        const maxLvl = (data as any)[String(levelKey)]?.level ?? 0;
+        const effectiveMax = maxLvl > 0
+          ? maxLvl
+          : getBuildingEffectiveMax(lookupName, isBB ? bh : th);
+        const count = isBB ? getCountAtBH(lookupName, bh) : getCountAtTH(lookupName, th);
+        const copies = getBuildingCopies(
+          lookupName,
+          player?.buildingLevels,
+          player?.buildings,
+          effectiveMax,
+          count,
+          player?.lastMaxedTH,
+          isBB ? undefined : th,
+        );
+        // Highest level across the building's copies. A building the player has
+        // none of yet (all copies locked at 0) is skipped, so the pill never shows
+        // a level the account does not own.
+        const maxCopyLevel = copies.levels.reduce((m, l) => (l > 0 && l > m ? l : m), 0);
+        if (maxCopyLevel > 0) {
+          const src = getBuildingLevelImageSource(lookupName, maxCopyLevel);
+          if (src) {
+            image = src;
+            break;
+          }
+        }
+        // Nothing placed yet: fall back to the generic building art.
+        if (image == null) image = getBuildingImageSource(lookupName) ?? null;
+      }
+      out[cat] = { image, types: owned.length };
+    }
+    return out;
+  }, [activeData, levelKey, isBB, th, bh, player]);
+
+  // The village switch leads with the halls the player is actually at.
+  const thHallImage = getTownHallImageSource(th);
+  const bhHallImage = getBuildingItemImage('Builder Hall', bh, true);
 
   const [prevInitialCat, setPrevInitialCat] = useState(initialCat);
   if (initialCat !== prevInitialCat) {
@@ -1491,33 +1591,83 @@ export default function BuildingsScreen() {
         {showBB && (
           <View style={styles.villageToggle}>
             <PressableRipple
-              style={[styles.villageToggleItem, !isBB && styles.villageToggleActive]}
+              style={[
+                styles.villageToggleItem,
+                segCornerStyle(0, 2),
+                !isBB && styles.villageToggleActive,
+              ]}
               onPress={() => setVillage('home')}
             >
-              <Ionicons name="home-outline" size={13} color={!isBB ? Colors.bg : Colors.textSecondary} />
-              <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>Home Village</Text>
+              {thHallImage ? (
+                <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+              ) : (
+                <Ionicons
+                  name="home-outline"
+                  size={13}
+                  color={!isBB ? Colors.bg : Colors.textSecondary}
+                />
+              )}
+              <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>
+                {`TH${th}`}
+              </Text>
             </PressableRipple>
             <PressableRipple
-              style={[styles.villageToggleItem, isBB && styles.villageToggleActive]}
+              style={[
+                styles.villageToggleItem,
+                segCornerStyle(1, 2),
+                isBB && styles.villageToggleActive,
+              ]}
               onPress={() => setVillage('builder')}
             >
-              <Ionicons name="hammer-outline" size={13} color={isBB ? Colors.bg : Colors.textSecondary} />
-              <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>Builder Base</Text>
+              {bhHallImage ? (
+                <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+              ) : (
+                <Ionicons
+                  name="hammer-outline"
+                  size={13}
+                  color={isBB ? Colors.bg : Colors.textSecondary}
+                />
+              )}
+              <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>
+                {`BH${bh}`}
+              </Text>
             </PressableRipple>
           </View>
         )}
 
         <View style={styles.pillRow}>
-          {availableCats.map((cat) => {
+          {availableCats.map((cat, ci) => {
             const isActive = cat === activeCat;
+            const meta = catMeta[cat];
             return (
               <PressableRipple
                 key={cat}
-                style={[styles.pill, isActive && styles.pillActive]}
+                style={[
+                  styles.pill,
+                  pillCornerStyle(ci, availableCats.length),
+                  isActive && styles.pillActive,
+                ]}
                 onPress={() => setSelectedCat(cat)}
               >
-                <CategoryIcon cat={cat} isActive={isActive} />
-                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{cat}</Text>
+                {meta?.image != null ? (
+                  <Image source={meta.image} style={styles.pillImg} resizeMode="contain" />
+                ) : (
+                  <CategoryIcon cat={cat} isActive={isActive} />
+                )}
+                <View style={styles.pillTextCol}>
+                  <Text
+                    style={[styles.pillText, isActive && styles.pillTextActive]}
+                    numberOfLines={1}
+                  >
+                    {cat}
+                  </Text>
+                  <Text
+                    style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
+                    numberOfLines={1}
+                  >
+                    {`${meta?.types ?? 0} types`}
+                  </Text>
+                </View>
               </PressableRipple>
             );
           })}
@@ -1676,18 +1826,27 @@ const styles = StyleSheet.create({
   pillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     paddingHorizontal: Spacing.base,
     marginTop: Spacing.sm,
     marginBottom: Spacing.md,
   },
   pill: {
+    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
+    // decided purely by the container width and can never be pushed wider by the
+    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
+    // needs another 32% and so always wraps. The gap does the spacing -
+    // space-between would push a short final row to opposite edges and break the
+    // seamless block.
+    width: '32%',
+    flexGrow: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+    borderRadius: Radius.sm,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
@@ -1695,6 +1854,14 @@ const styles = StyleSheet.create({
   pillActive: {
     backgroundColor: Colors.textPrimary,
     borderColor: Colors.textPrimary,
+  },
+  pillImg: {
+    width: 18,
+    height: 18,
+  },
+  pillTextCol: {
+    flex: 1,
+    minWidth: 0,
   },
   pillText: {
     ...Typography.caption,
@@ -1704,13 +1871,24 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: Colors.bg,
   },
+  pillSubText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  pillSubTextActive: {
+    color: Colors.bg,
+    opacity: 0.7,
+  },
   villageToggle: {
     flexDirection: 'row',
     alignSelf: 'center',
     gap: 4,
     marginTop: Spacing.sm,
     padding: 3,
-    borderRadius: Radius.full,
+    borderRadius: Radius.xl * 1.25,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
@@ -1721,7 +1899,11 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+    borderRadius: Radius.sm,
+  },
+  villageToggleImg: {
+    width: 16,
+    height: 16,
   },
   villageToggleActive: {
     backgroundColor: Colors.textPrimary,
