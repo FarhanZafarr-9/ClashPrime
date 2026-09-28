@@ -16,24 +16,39 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles. Multi-copy buildings (Cannons, Walls, Traps, etc.) are grouped into collapsible sections with per-copy level tracking, aggregated remaining cost/time, and quick upgrade/downgrade controls
 - **Events** — upcoming in-game events with countdown timers and progress bars
 - **War** — live war tracking with per-member attack dots and defense shields, plus live Clan War League rounds (expandable per-member breakdowns, W/L/D per round) and a searchable war history split into regular wars and CWL
-- **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback
-- **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, in-game copy, and end-of-list feedback
+- **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback. Loads from the on-device snapshot first (3-day TTL) and refreshes in the background, so returning to the tab is instant
+- **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, in-game copy, share card, and end-of-list feedback. Same cache-first loading as the Base Library
+- **Hero Journey** — the Chief's Journey rewards track from TH7 to TH18 (quests, ore, hero equipment, potions, books, runes and Majestic skins) as milestones grouped into collapsible Town Hall sections, with claimed badges, lock icons, owned-hero portraits in the section headers and a shortcut that flags the next milestone you can claim
 - **Discount System** — modal with per-scope (Buildings / Army) cost and time reduction sliders, preset pills, custom percentage input, and instant preview across all tabs
 - **Saved** — quick access to saved and favorited bases and armies, with full army cards and share actions
 - **Zapquaker** — per-building Zap + Quake combo calculator: pick buildings from game data, tune Lightning/Earthquake levels and spell capacity, flip each spell On/Off, and bring Fireball or Giant Arrow equipment (own level steppers) into the mix. Suggests the cheapest kill combos by spell slots with spell-only and equipment-lean variants and overkill %
 - **Giant Arrow** — plan the Archer Queen's arrow on a base screenshot: tap/drag start and end pins, pick a path color, auto-save/restore on device, and share the finished plan as a high-res PNG (3x capture) from the editor or fullscreen viewer. A **Rocket Backpack** mode (Dragon Duke) reuses the canvas with a center pivot so the dash line always runs through the base center
 - **6th Builder (B.O.B.)** — Builder Base planner that turns your player profile into an ordered, resource-feasible schedule for all seven B.O.B. unlock requirements (3 gear-ups, troop lvl 18, defence lvl 9, BM+Copter 45, B.O.B Control 5): requirement checklist (3 gear-up toggles persist locally), machine timeline grouped by bb-builder / star-lab with per-chain ETA and cost badges, storage-feasibility cascades that auto-insert storage upgrades, Builder Hall gate chains, Clock Tower value, and "what is blocking you" callouts
-- **Awards** — standalone tab with star summary and village-filtered achievement list
+- **Awards** — standalone tab with star summary and village-filtered achievement list, filtered through the same seamless pill grid used by Bases, Armies and Hero Journey (Town Hall and Builder Hall art per village, award counts on each pill)
 - **Settings** — API token, dark mode, discounts, account management, plus a **What's New changelog** with a hero header and collapsible release cards (version chips, item counts, "Latest" badge), About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
 - **Onboarding** — guided first-run flow with an image-based Town Hall picker and an Add Account (Full Setup) flow
 - **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding, and an ongoing notification with an **Android-native per-second countdown** that keeps ticking even when the app is killed (zero battery) plus sound/vibration on finish
 - **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection
+
+## What's New (v6.2.0)
+
+- **Share cards** — Home progress, Time to Max, base layouts and community armies all render a high-res PNG through one shared preview sheet, with capture, save and share from the card.
+- **Cache-first libraries** — Bases and Armies paint from their on-device snapshot the moment the tab opens, then refresh quietly behind it. The stored data is trusted for **3 days** and refetched early if it is older or holds fewer items than the list you have scrolled to; the refresh button still forces a fresh pull. Base thumbnails also fall back to their TH/BH label when a stored image fails, instead of shimmering forever.
+- **Seamless filter pills** — Bases, Armies, Hero Journey and Awards now share one 3-up pill block: real leading art per filter, a count subtitle under the label, and large rounding only on the outer corners of the grid.
+- **Hero Journey fixes and polish** — the flag and summary mark the next milestone you can actually claim (Lv101 at 100 cumulative levels, not the already-claimed Lv99), the All pill uses the Hero's Journey mark, quest/equipment/skin pills lead with the chest, Fireball and Majestic skin, section headers show centred hero portraits dimmed behind a lock badge for heroes you don't own, and the header flag/refresh buttons are squares.
+- **Spell stat tables** — real stats from package data, the placeholder Value column is gone, and each spell fact sits in a pill row with its own glyph and no repeated housing space.
+- **War tab** — war/CWL tab switcher, collapsible member sections, auto-refresh, and the attack plan visible during preparation with the target position badged.
+- **Buildings and Army** — Builder Base categories with Town Hall gating, redesigned category pills and village switch, redesigned Army chips, and unit/hero/spell/siege/pet/equipment icons on every army card.
+- **Home and Time to Max** — the account switcher is a seamless block, rushed/locked troops and spells use their in-game icons, and Time to Max gains a Builder Base section.
+- **Polish** — onboarding export guide step and chevron icons, a shared builder-count store so every screen stays in sync, account switching re-fetches the right player, tidied tab order, Clash font defaults to "All", and Android edge-to-edge with a hidden status bar.
 
 ## What's New (v6.1.0)
 
 - **Zapquaker tab** — pick buildings from game data and find the cheapest Lightning + Earthquake combo that kills them. Tune spell levels, spell capacity, toggle each spell On/Off, and opt into **Fireball (Warden)** or **Giant Arrow (Queen)** equipment with their own level steppers. Combo suggestions are curated per family — cheapest spell-slot kill, spell-only zapquake, and equipment-lean variants — with overkill %.
 - **Giant Arrow tab** — plan the Archer Queen skill on a base screenshot: place and drag start/end pins, choose a path color from a collapsible swatch row (blueprint-style white/black + bold saturated tones), and open a **fullscreen viewer** with draggable pins. Plans auto-save on device and restore on relaunch; **Share** exports a crisp 3x PNG snapshot.
 - **6th Builder tab** — a B.O.B. unlock planner driven by your player profile: requirement checklist with persisted gear-up toggles, a bb-builder / star-lab machine timeline with per-chain ETA and cost badges, storage-feasibility cascade that auto-inserts storage upgrades, Builder Hall gate chains, Clock Tower value, and "what is blocking you" callouts.
+- **Giant Arrow Rocket Backpack** — the Dragon Duke dash reuses the same canvas with a centre pivot, so the line always runs through the base center.
+- **Builder Base buildings** — their own categories in Buildings with Town Hall gating, and dedicated sprites for Builder Base troops.
 - **Credits** — data sources under Settings → Credits are tappable with links, RoyaleAPI + Zapquaker + Otaku Planner are credited as reference sites for the new tools, and a Supercell fan-content notice was added.
 
 ## What's New (v6.0.0)
@@ -88,8 +103,8 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Data | Source | Method |
 |------|--------|--------|
 | Player data | CoC API | REST fetch (Bearer token) |
-| Base layouts | ClashLy API | REST fetch (Parse server) |
-| Community armies | ClashArmies | Devalue-format REST fetch with 30-min cache |
+| Base layouts | ClashLy API | REST fetch (Parse server), 3-day on-device snapshot |
+| Community armies | ClashArmies | Devalue-format REST fetch with 3-day snapshot |
 | Troop, hero, spell, pet, equipment & siege machine details (levels, costs, stats, images) | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Building images, levels, TH max, copy counts (Home & Builder Base) | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | **Max Town Hall** | clash-of-clans-data (npm) | **Derived from `townHallRequired` across all building levels** (falls back to 18) |
@@ -133,6 +148,7 @@ ClashPrime/
 │       ├── bases.tsx       # Base Library
 │       ├── armies.tsx      # Army Library (ClashArmies)
 │       ├── maxtime.tsx     # Time to Max (4 Home pipelines + Builder Base: headings, stepper, BB pipelines)
+│       ├── hero-journey.tsx# Chief's Journey rewards track (quests, ore, equipment, potions, books, runes, skins)
 │       ├── saved.tsx       # Saved & Favorites
 │       ├── war.tsx         # War & CWL
 │       ├── achievements.tsx# Awards
@@ -143,16 +159,17 @@ ClashPrime/
 ├── src/
 │   ├── api/                # API clients and scrapers
 │   │   ├── clash.ts        # CoC API client
-│   │   ├── baseScraper.ts  # ClashLy API base layout fetcher
-│   │   ├── clashArmies.ts  # ClashArmies popular armies fetcher with devalue parser
+│   │   ├── baseScraper.ts  # ClashLy API base layout fetcher (3-day snapshot)
+│   │   ├── clashArmies.ts  # ClashArmies popular armies fetcher with devalue parser (3-day snapshot)
 │   │   ├── troopDetail.ts  # TroopDetail types (levels from package)
-│   │   └── eventsScraper.ts# Events scraper
+│   │   ├── eventsScraper.ts# Events scraper
+│   │   └── newsScraper.ts  # In-game news scraper
 │   ├── components/         # Shared UI components
 │   ├── data/               # Static data (packageImages.ts, cocBuildingIds.ts, entityReference.ts)
 │   ├── hooks/              # Player context and storage
 │   ├── theme/              # Design system (colors, spacing, typography)
 │   ├── types/              # TypeScript interfaces
-│   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, thMaxLevels, upgradeCosts (chain scheduling), zapquake (combo math), etc.
+│   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, heroJourney (Chief's Journey track), statImages, thReadiness, thMaxLevels, upgradeCosts (chain scheduling), zapquake (combo math), versionCheck, etc.
 ├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs
 ├── images/                 # App icons and logos
 ```
@@ -209,7 +226,7 @@ Then commit the regenerated `src/data/` files + lockfile, push, and tag the rele
 ## Future Considerations
 
 - **Fork `clash-of-clans-data`** — Upstream is pre-1.0 and updates on Supercell's schedule. Consider forking as `@clashprime/clash-of-clans-data` with a sync script to apply custom mappings (display names, BB building fixes, image paths) and publish on our own cadence when new content drops.
-- **Offline-first sync** — Cache player data + reference data for full offline usage; background sync when online.
+- **Offline-first sync** — Player data and the base/army libraries are cached on device and served instantly; remaining: full offline coverage for reference data with background sync when online.
 - **Clan roster management** — Track member donations, war participation, and activity across seasons.
 - **Push notifications** — Event start/end, war attacks. Builder/upgrade timers already ship as native countdown notifications; remaining: event and war attack alerts.
 - **Builder chain planner** — Visual scheduler for serial upgrade chains across N builders with drag-to-reorder.
