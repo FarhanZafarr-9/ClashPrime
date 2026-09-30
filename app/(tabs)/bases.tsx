@@ -359,10 +359,10 @@ export default function BaseLibraryScreen() {
         </PressableRipple>
       </View>
 
-      {/* Village toggle */}
+      {/* Village toggle: same compact hall pills as the Time to Max and Army tabs,
+          rather than a full-width two-line filter row. */}
       {showBuilderBase && (
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Village</Text>
+        <View style={styles.villageToggleWrap}>
           <View style={styles.villageToggle}>
             <PressableRipple
               onPress={() => setSelectedVillage('home')}
@@ -377,24 +377,13 @@ export default function BaseLibraryScreen() {
               ) : (
                 <Ionicons
                   name="home-outline"
-                  size={15}
+                  size={13}
                   color={selectedVillage === 'home' ? Colors.bg : Colors.textSecondary}
                 />
               )}
-              <View style={styles.villageToggleTextCol}>
-                <Text
-                  style={[styles.villageToggleText, selectedVillage === 'home' && styles.villageToggleTextActive]}
-                  numberOfLines={1}
-                >
-                  Home
-                </Text>
-                <Text
-                  style={[styles.villageToggleSubText, selectedVillage === 'home' && styles.villageToggleSubTextActive]}
-                  numberOfLines={1}
-                >
-                  {`TH${thLevel}`}
-                </Text>
-              </View>
+              <Text style={[styles.villageToggleText, selectedVillage === 'home' && styles.villageToggleTextActive]}>
+                {`TH${thLevel}`}
+              </Text>
             </PressableRipple>
             <PressableRipple
               onPress={() => setSelectedVillage('builder')}
@@ -409,24 +398,13 @@ export default function BaseLibraryScreen() {
               ) : (
                 <Ionicons
                   name="hammer-outline"
-                  size={15}
+                  size={13}
                   color={selectedVillage === 'builder' ? Colors.bg : Colors.textSecondary}
                 />
               )}
-              <View style={styles.villageToggleTextCol}>
-                <Text
-                  style={[styles.villageToggleText, selectedVillage === 'builder' && styles.villageToggleTextActive]}
-                  numberOfLines={1}
-                >
-                  Builder
-                </Text>
-                <Text
-                  style={[styles.villageToggleSubText, selectedVillage === 'builder' && styles.villageToggleSubTextActive]}
-                  numberOfLines={1}
-                >
-                  {`BH${bhLevel}`}
-                </Text>
-              </View>
+              <Text style={[styles.villageToggleText, selectedVillage === 'builder' && styles.villageToggleTextActive]}>
+                {`BH${bhLevel}`}
+              </Text>
             </PressableRipple>
           </View>
         </View>
@@ -668,33 +646,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: Spacing.xs,
   },
+  villageToggleWrap: {
+    alignSelf: 'center',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
   villageToggle: {
     flexDirection: 'row',
     gap: 4,
-  },
-  villageToggleItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
+    padding: 3,
+    borderRadius: Radius.xl * 1.25,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
+  villageToggleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+  },
   villageToggleActive: {
     backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
   },
   villageToggleImg: {
-    width: 18,
-    height: 18,
-  },
-  villageToggleTextCol: {
-    flex: 1,
-    minWidth: 0,
+    width: 16,
+    height: 16,
   },
   villageToggleText: {
     ...Typography.caption,
@@ -703,17 +682,6 @@ const styles = StyleSheet.create({
   },
   villageToggleTextActive: {
     color: Colors.bg,
-  },
-  villageToggleSubText: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    fontSize: 10,
-    fontWeight: '500',
-    marginTop: 1,
-  },
-  villageToggleSubTextActive: {
-    color: Colors.bg,
-    opacity: 0.7,
   },
   pillRow: {
     flexDirection: 'row',
