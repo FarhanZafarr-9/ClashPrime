@@ -2335,7 +2335,7 @@ export default function HomeScreen() {
                         <View style={{ flex: 1 }} />
                         <Text style={styles.progressLevelCellValue}>
                           <Text style={styles.progressRowBefore}>Lv{u.before}</Text>
-                          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+                          <Ionicons name="chevron-forward" size={10} color={Colors.textMuted} />
                           <Text style={styles.progressRowAfter}>Lv{u.after}</Text>
                         </Text>
                       </View>
