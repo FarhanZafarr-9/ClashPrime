@@ -27,6 +27,8 @@ import {
   type CostResource,
 } from '../../src/utils/armyData';
 import { entityRef } from '../../src/data/entityReference';
+import { getBuildingItemImage } from '../../src/utils/buildingData';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { ItemCard } from '../../src/components/ItemCard';
@@ -44,6 +46,9 @@ const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
 
 type Tab = 'heroes' | 'bhHeroes' | 'troops' | 'bhTroops' | 'spells' | 'pets' | 'siege' | 'equipment';
 
+/** The only two Builder Base tabs; everything else belongs to the Home Village. */
+const isBBTab = (key: Tab) => key === 'bhTroops' || key === 'bhHeroes';
+
 // Cached troop details are keyed by name, but Home and Builder Base share names
 // (e.g. "Baby Dragon"). Disambiguate the cache key with the village.
 const detailCacheKey = (name: string, isBB: boolean) => (isBB ? `${name}__builder` : name);
@@ -59,8 +64,9 @@ const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
   equipment: { set: 'ion', name: 'trophy-outline' },
 };
 
-// Chips sit three to a row.
-const CHIP_COLUMNS = 3;
+// Chips sit two to a row. Wider than the previous three-up, which left the
+// longer labels ("BH Heroes") and their "3/10 maxed" subtitles truncated.
+const CHIP_COLUMNS = 2;
 
 // The Clash API returns the Battle Machine and Battle Copter inside the `heroes`
 // array (see entityReference), so they can lead the Builder Base hero list and
@@ -124,6 +130,26 @@ function parseUnlockRequirements(raw: string): { source: string; cost?: string; 
     return items;
   }
   return [{ source: text, kind: 'other' }];
+}
+
+/**
+ * Outer corners of the Home / Builder Base switch, so the two segments read as
+ * one segmented control. Only the two ends are outer, matching the Buildings and
+ * Time to Max tabs. Distinct from `chipCornerStyle` above, which lays out a
+ * three-column grid where the middle chips have no outer corners at all.
+ */
+function segCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  return {
+    ...(index === 0 && {
+      borderTopLeftRadius: outer,
+      borderBottomLeftRadius: outer,
+    }),
+    ...(index === total - 1 && {
+      borderTopRightRadius: outer,
+      borderBottomRightRadius: outer,
+    }),
+  };
 }
 
 export default function PlayerProfileScreen() {
@@ -379,6 +405,15 @@ export default function PlayerProfileScreen() {
   const hasSiege = siegeMachines.length > 0;
   const hasEquipment = (player?.heroEquipment.length ?? 0) > 0;
 
+  // The village switch is not its own state: the two BH tabs already identify the
+  // Builder Base, and `activeTab` drives data scoping, preview art and detail
+  // fetches. A separate village flag could disagree with the tab it is meant to
+  // describe, so the switch just moves the selection to that village's first tab.
+  const village = isBBTab(activeTab) ? 'builder' : 'home';
+  const showBB = th >= 6 && (hasBhTroops || hasBhHeroes);
+  const thHallImage = getTownHallImageSource(th);
+  const bhHallImage = getBuildingItemImage('Builder Hall', bhLevel, true);
+
   // Each top chip leads with a real item image instead of a glyph, using the
   // first owned unit of that kind and the same bundled asset the ItemCard uses.
   // BH chips resolve against the Builder Base sprite set.
@@ -403,7 +438,9 @@ export default function PlayerProfileScreen() {
     });
   }, [player?.heroEquipment]);
 
-  const visibleTabs = TABS.filter((tab) => {
+  // Chip rows are split by village: the Builder Base only has BH Heroes and
+  // BH Troops, so the two villages get separate rows rather than one long wrap.
+  const populatedTabs = TABS.filter((tab) => {
     if (tab.key === 'heroes') return hasHeroes;
     if (tab.key === 'bhHeroes') return hasBhHeroes;
     if (tab.key === 'troops') return hasTroops;
@@ -414,6 +451,9 @@ export default function PlayerProfileScreen() {
     if (tab.key === 'equipment') return hasEquipment;
     return true;
   });
+  const homeTabs = populatedTabs.filter((tab) => !isBBTab(tab.key));
+  const bbTabs = populatedTabs.filter((tab) => isBBTab(tab.key));
+  const visibleTabs = village === 'builder' ? bbTabs : homeTabs;
 
   const [prevVisibleTabKeys, setPrevVisibleTabKeys] = useState('');
   const visibleTabKeys = visibleTabs.map((t) => t.key).join(',');
@@ -1067,6 +1107,55 @@ export default function PlayerProfileScreen() {
           </View>
         </View>
 
+        {showBB && (
+          <View style={styles.villageToggleWrap}>
+            <View style={styles.villageToggle}>
+              <PressableRipple
+                style={[
+                  styles.villageToggleItem,
+                  segCornerStyle(0, 2),
+                  village === 'home' && styles.villageToggleActive,
+                ]}
+                onPress={() => setActiveTab(homeTabs[0]?.key ?? 'troops')}
+              >
+                {thHallImage ? (
+                  <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+                ) : (
+                  <Ionicons
+                    name="home-outline"
+                    size={13}
+                    color={village === 'home' ? Colors.bg : Colors.textSecondary}
+                  />
+                )}
+                <Text style={[styles.villageToggleText, village === 'home' && styles.villageToggleTextActive]}>
+                  {`TH${th}`}
+                </Text>
+              </PressableRipple>
+              <PressableRipple
+                style={[
+                  styles.villageToggleItem,
+                  segCornerStyle(1, 2),
+                  village === 'builder' && styles.villageToggleActive,
+                ]}
+                onPress={() => setActiveTab(bbTabs[0]?.key ?? 'bhTroops')}
+              >
+                {bhHallImage ? (
+                  <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+                ) : (
+                  <Ionicons
+                    name="hammer-outline"
+                    size={13}
+                    color={village === 'builder' ? Colors.bg : Colors.textSecondary}
+                  />
+                )}
+                <Text style={[styles.villageToggleText, village === 'builder' && styles.villageToggleTextActive]}>
+                  {`BH${bhLevel}`}
+                </Text>
+              </PressableRipple>
+            </View>
+          </View>
+        )}
+
         <View style={styles.tabsContainer}>
           {visibleTabs.map((tab, ti) => {
             const isActive = activeTab === tab.key;
@@ -1605,6 +1694,43 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
+  villageToggleWrap: {
+    alignSelf: 'center',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  villageToggle: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 3,
+    borderRadius: Radius.xl * 1.25,
+    backgroundColor: Colors.bgSubtle,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+  },
+  villageToggleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+  },
+  villageToggleImg: {
+    width: 16,
+    height: 16,
+  },
+  villageToggleActive: {
+    backgroundColor: Colors.textPrimary,
+  },
+  villageToggleText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  villageToggleTextActive: {
+    color: Colors.bg,
+  },
   tabsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1613,13 +1739,13 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.base,
   },
   tab: {
-    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point
+    // Fixed half-of-a-row basis with no grow and no shrink, so the wrap point
     // is decided purely by the container width and can never be pushed wider by
-    // the chip's own content. 32% leaves room for the two 4px gaps; a fourth
-    // chip needs another 32% and so always wraps. The gap does the spacing —
+    // the chip's own content. 48% leaves room for the 4px gap; a third chip
+    // needs another 48% and so always wraps. The gap does the spacing —
     // space-between would push a short final row to opposite edges and break
     // the seamless block.
-    width: '32%',
+    width: '48%',
     flexGrow: 0,
     flexShrink: 0,
     flexDirection: 'row',
