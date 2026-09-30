@@ -1171,8 +1171,10 @@ function CategoryIcon({ cat, isActive }: { cat: string; isActive: boolean }) {
   );
 }
 
-// Category pills sit three to a row, matching the Army tab chips.
-const PILL_COLUMNS = 3;
+// Category pills sit two to a row, matching the Army tab chips. Wider than the
+// previous three-up, which left the longer labels and their "N types" subtitles
+// truncated.
+const PILL_COLUMNS = 2;
 
 /**
  * Seamless-grid corner rounding, matching the Army tab chips: the pills read as
@@ -1832,13 +1834,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   pill: {
-    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
+    // Fixed half-of-a-row basis with no grow and no shrink, so the wrap point is
     // decided purely by the container width and can never be pushed wider by the
-    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
-    // needs another 32% and so always wraps. The gap does the spacing -
+    // pill's own content. 48% leaves room for the 4px gap; a third pill needs
+    // another 48% and so always wraps. The gap does the spacing -
     // space-between would push a short final row to opposite edges and break the
     // seamless block.
-    width: '32%',
+    width: '48%',
     flexGrow: 0,
     flexShrink: 0,
     flexDirection: 'row',
