@@ -53,6 +53,53 @@ const RESOURCE_ORDER: (CostResource | BuildingCostResource)[] = [
   'Starry Ore',
 ];
 
+/** Resource costs in the app's canonical order, dropping zero and unknown entries. */
+function resourceEntries(byResource: Record<string, number>): [string, number][] {
+  return (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
+    .filter(([r]) => r !== 'Unknown')
+    .sort((a, b) => {
+      const ia = RESOURCE_ORDER.indexOf(a[0] as (CostResource | BuildingCostResource));
+      const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+}
+
+/** The subset a resource block can actually draw: known order, and real package art. */
+function resourceRows(byResource: Record<string, number>): [string, number][] {
+  return resourceEntries(byResource).filter(([r]) => PACKAGE_RESOURCE_IMAGES[r]);
+}
+
+/** Tint per resource, so gold, elixir and the ores read apart without a label. */
+function resourceColor(resource: string): string {
+  return RESOURCE_META[resource as CostResource]?.color
+    ?? BUILDING_RESOURCE_META[resource as BuildingCostResource]?.color
+    ?? '#94A3B8';
+}
+
+function resourceLabel(resource: string): string {
+  return RESOURCE_META[resource as CostResource]?.label
+    ?? BUILDING_RESOURCE_META[resource as BuildingCostResource]?.label
+    ?? resource;
+}
+
+/**
+ * Outer corners of the Home / Builder Base switch, so the two segments read as
+ * one segmented control. Only the two ends are outer, matching the Buildings tab.
+ */
+function segCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  return {
+    ...(index === 0 && {
+      borderTopLeftRadius: outer,
+      borderBottomLeftRadius: outer,
+    }),
+    ...(index === total - 1 && {
+      borderTopRightRadius: outer,
+      borderBottomRightRadius: outer,
+    }),
+  };
+}
+
 function applyScope(timeSec: number, cost: number, byResource: Record<string, number>, scope: ScopeDiscount) {
   const t = Math.max(0, Math.round(timeSec * (1 - scope.timePercent / 100)));
   const c = Math.max(0, Math.round(cost * (1 - scope.costPercent / 100)));
@@ -91,12 +138,19 @@ export default function MaxTimeScreen() {
   const [excludeOpen, setExcludeOpen] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [shareVillage, setShareVillage] = useState<'home' | 'builder'>('home');
+  const [village, setVillage] = useState<'home' | 'builder'>('home');
 
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
   const maxTh = getMaxTownHall();
   const isMaxTh = th >= maxTh;
   const hasPets = (player?.pets?.length ?? 0) > 0;
+  // The Builder Base unlocks alongside the sixth Town Hall, same gate the
+  // Buildings tab uses for its own village switch.
+  const showBB = th >= 6;
+  const isBB = village === 'builder' && showBB;
+  const thHallImage = getTownHallImageSource(th);
+  const bhHallImage = getBuildingItemImage('Builder Hall', bh, true);
   const { count: bbBuilderCount, setBuilderBaseCount, loaded: bbBuilderLoaded } = useBuilderBaseCount(bh);
 
   const armyNames = useMemo(() => {
@@ -275,14 +329,14 @@ export default function MaxTimeScreen() {
   const shareVillageToggle = (
     <View style={styles.villageToggle}>
       <PressableRipple
-        style={[styles.villageToggleItem, shareVillage === 'home' && styles.villageToggleActive]}
+        style={[styles.villageToggleItem, segCornerStyle(0, 2), shareVillage === 'home' && styles.villageToggleActive]}
         onPress={() => setShareVillage('home')}
       >
         <Ionicons name="home-outline" size={13} color={shareVillage === 'home' ? Colors.bg : Colors.textSecondary} />
         <Text style={[styles.villageToggleText, shareVillage === 'home' && styles.villageToggleTextActive]}>Home</Text>
       </PressableRipple>
       <PressableRipple
-        style={[styles.villageToggleItem, shareVillage === 'builder' && styles.villageToggleActive]}
+        style={[styles.villageToggleItem, segCornerStyle(1, 2), shareVillage === 'builder' && styles.villageToggleActive]}
         onPress={() => setShareVillage('builder')}
       >
         <Ionicons name="hammer-outline" size={13} color={shareVillage === 'builder' ? Colors.bg : Colors.textSecondary} />
@@ -399,28 +453,28 @@ export default function MaxTimeScreen() {
         );
       });
 
-  const renderResourceRows = (byResource: Record<string, number>) => {
-    const entries = (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
-      .filter(([r]) => r !== 'Unknown')
-      .sort((a, b) => {
-        const ia = RESOURCE_ORDER.indexOf(a[0] as (CostResource | BuildingCostResource));
-        const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
-        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-      });
-    const renderResourceRow = (r: string, v: number) => (
-      <View key={r} style={styles.oreRow}>
-        <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.oreIcon} resizeMode="contain" />
-        <Text style={[styles.oreLabel, { color: RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8' }]}>
-          {RESOURCE_META[r as CostResource]?.label ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.label ?? r}
-        </Text>
-        <Text style={styles.oreValue}>{formatCost(v)}</Text>
-      </View>
-    );
-    const withIcon = entries.filter(([r]) => PACKAGE_RESOURCE_IMAGES[r]);
+  /**
+   * Costs as the same two-column chip block the hero card uses, so the screen has
+   * one pattern for resources. The label is kept here (the hero card omits it)
+   * because these are the per-section amounts and the icon alone is ambiguous
+   * between the three ores.
+   */
+  const renderResourceGrid = (entries: [string, number][]) => {
+    if (entries.length === 0) return null;
     return (
-      <>
-        {withIcon.map(([r, v]) => renderResourceRow(r, v))}
-      </>
+      <View style={styles.resourceGrid}>
+        {entries.map(([r, v]) => (
+          <View key={r} style={styles.resourceCell}>
+            <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.resourceCellIcon} resizeMode="contain" />
+            <Text style={styles.resourceCellLabel} numberOfLines={1}>
+              {resourceLabel(r)}
+            </Text>
+            <Text style={[styles.resourceCellValue, { color: resourceColor(r) }]}>
+              {formatCost(v)}
+            </Text>
+          </View>
+        ))}
+      </View>
     );
   };
 
@@ -429,6 +483,9 @@ export default function MaxTimeScreen() {
     const isOpen = expanded[p.key];
     const d = pipelineDiscounted ? pipelineDiscounted[p.key] : null;
     const isEquipment = p.key === 'equipment';
+    // Only resources with real package art are shown, so the block is hidden
+    // entirely rather than rendering an empty "Resources" heading.
+    const pipelineResources = resourceRows(d ? d.byResource : p.byResource);
     const buildingSplitSec = (sec: number, isHero = false) => {
       const pct = isHero ? discounts.army.timePercent : discounts.buildings.timePercent;
       return Math.max(0, Math.round(sec * (1 - pct / 100)));
@@ -470,38 +527,48 @@ export default function MaxTimeScreen() {
             {p.items.length > 0 ? (
               <>
                 <View style={styles.summaryCard}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Time</Text>
-                    <Text style={styles.summaryValue}>{isEquipment ? 'Instant' : formatTime(d ? d.timeSec : p.timeSec)}</Text>
-                  </View>
-                  <View style={styles.summaryDivider} />
+                  <Text style={styles.summaryLabel}>Time</Text>
+                  <Text style={styles.summaryTime}>
+                    {isEquipment ? 'Instant' : formatTime(d ? d.timeSec : p.timeSec)}
+                  </Text>
                   {p.split && (
-                    <>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Buildings only</Text>
-                        <Text style={styles.summaryValue}>
+                    <View style={styles.splitList}>
+                      <View style={styles.splitRow}>
+                        <Text style={styles.splitLabel}>Buildings</Text>
+                        <Text style={styles.splitValue}>
                           {formatTime(buildingSplitSec(p.split.buildingsOnlySec))}
                         </Text>
                       </View>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Heroes only</Text>
-                        <Text style={styles.summaryValue}>
+                      <View style={styles.splitRow}>
+                        <Text style={styles.splitLabel}>Heroes</Text>
+                        <Text style={styles.splitValue}>
                           {formatTime(buildingSplitSec(p.split.heroesOnlySec, true))}
                         </Text>
                       </View>
                       {p.split.optimalHeroBuilders >= 0 && (
-                        <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>Optimal split</Text>
-                          <Text style={styles.summaryValue}>
-                            {p.split.optimalHeroBuilders}H / {p.split.optimalBuildingBuilders}B <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+                        <View style={styles.splitRow}>
+                          <View style={styles.splitLabelRow}>
+                            <Text style={styles.splitLabel}>Optimal split</Text>
+                            <View style={styles.splitAllocation}>
+                              <Text style={styles.splitAllocationText}>
+                                {`${p.split.optimalHeroBuilders}H / ${p.split.optimalBuildingBuilders}B`}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={styles.splitValue}>
                             {formatTime(buildingSplitSec(p.split.optimalSec))}
                           </Text>
                         </View>
                       )}
+                    </View>
+                  )}
+                  {pipelineResources.length > 0 && (
+                    <>
                       <View style={styles.summaryDivider} />
+                      <Text style={styles.summaryLabel}>Resources</Text>
+                      {renderResourceGrid(pipelineResources)}
                     </>
                   )}
-                  {renderResourceRows(d ? d.byResource : p.byResource)}
                 </View>
                 {renderItems(p.items, p.key, scope)}
               </>
@@ -588,19 +655,11 @@ export default function MaxTimeScreen() {
     .filter((g) => g.rows.length > 0);
 
   const renderHeroResourceGrid = (byResource: Record<string, number>) => {
-    const entries = (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
-      .filter(([r]) => r !== 'Unknown')
-      .sort((a, b) => {
-        const ia = RESOURCE_ORDER.indexOf(a[0] as (CostResource | BuildingCostResource));
-        const ib = RESOURCE_ORDER.indexOf(b[0] as (CostResource | BuildingCostResource));
-        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-      });
+    const entries = resourceEntries(byResource);
     if (entries.length === 0) return null;
     return (
       <View style={styles.heroResourcesGrid}>
-        {entries.map(([r, v], index, arr) => {
-          const color = RESOURCE_META[r as CostResource]?.color ?? BUILDING_RESOURCE_META[r as BuildingCostResource]?.color ?? '#94A3B8';
-          return (
+        {entries.map(([r, v], index, arr) => (
             <View
               key={r}
               style={[
@@ -614,10 +673,9 @@ export default function MaxTimeScreen() {
               {PACKAGE_RESOURCE_IMAGES[r] ? (
                 <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
               ) : null}
-              <Text style={[styles.heroResourceValue, { color }]}>{formatCost(v)}</Text>
+              <Text style={[styles.heroResourceValue, { color: resourceColor(r) }]}>{formatCost(v)}</Text>
             </View>
-          );
-        })}
+        ))}
       </View>
     );
   };
@@ -629,14 +687,76 @@ export default function MaxTimeScreen() {
           <View style={styles.headerRow}>
             <Text style={styles.title}>Time to Max</Text>
             <View style={styles.headerActions}>
-              <PressableRipple onPress={() => setShareVisible(true)} hitSlop={8} style={styles.headerBtn}>
+              <PressableRipple
+                onPress={() => {
+                  // Share whichever village is on screen, so the preview matches
+                  // what the user just tapped share on.
+                  setShareVillage(village);
+                  setShareVisible(true);
+                }}
+                hitSlop={8}
+                style={styles.headerBtn}
+              >
                 <Ionicons name="share-outline" size={20} color={Colors.textSecondary} />
               </PressableRipple>
             </View>
           </View>
-          <Text style={styles.subtitle}>Remaining upgrades for Town Hall {th}</Text>
+          <Text style={styles.subtitle}>
+            {isBB ? `Remaining upgrades for Builder Hall ${bh}` : `Remaining upgrades for Town Hall ${th}`}
+          </Text>
         </View>
 
+        {showBB && (
+          <View style={styles.villageToggleWrap}>
+            <View style={styles.villageToggle}>
+            <PressableRipple
+              style={[
+                styles.villageToggleItem,
+                segCornerStyle(0, 2),
+                !isBB && styles.villageToggleActive,
+              ]}
+              onPress={() => setVillage('home')}
+            >
+              {thHallImage ? (
+                <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+              ) : (
+                <Ionicons
+                  name="home-outline"
+                  size={13}
+                  color={!isBB ? Colors.bg : Colors.textSecondary}
+                />
+              )}
+              <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>
+                {`TH${th}`}
+              </Text>
+            </PressableRipple>
+            <PressableRipple
+              style={[
+                styles.villageToggleItem,
+                segCornerStyle(1, 2),
+                isBB && styles.villageToggleActive,
+              ]}
+              onPress={() => setVillage('builder')}
+            >
+              {bhHallImage ? (
+                <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+              ) : (
+                <Ionicons
+                  name="hammer-outline"
+                  size={13}
+                  color={isBB ? Colors.bg : Colors.textSecondary}
+                />
+              )}
+              <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>
+                {`BH${bh}`}
+              </Text>
+            </PressableRipple>
+            </View>
+          </View>
+        )}
+
+        {!isBB && (
+          <>
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Estimated time to max</Text>
           <Text style={styles.heroTime}>{summaryTime}</Text>
@@ -954,10 +1074,10 @@ export default function MaxTimeScreen() {
                       <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
                     </View>
                   ))}
-                  {Object.keys(nextDiscounted.totalByResource).length > 0 && (
+                  {resourceRows(nextDiscounted.totalByResource).length > 0 && (
                     <View style={styles.rushCostResources}>
                       <Text style={styles.rushNewItemsTitle}>Resources needed by TH{readiness.nextTh}</Text>
-                      {renderResourceRows(nextDiscounted.totalByResource)}
+                      {renderResourceGrid(resourceRows(nextDiscounted.totalByResource))}
                     </View>
                   )}
                   <View style={styles.rushDivider} />
@@ -1017,10 +1137,11 @@ export default function MaxTimeScreen() {
             </View>
           )}
         </View>
+          </>
+        )}
 
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="Builder Base" />
-        </View>
+        {isBB && (
+          <>
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Builder Base time to max</Text>
           <Text style={styles.heroTime}>{formatTime(bbDiscounted.headlineTime)}</Text>
@@ -1028,6 +1149,10 @@ export default function MaxTimeScreen() {
             BB builders & Star Laboratory run in parallel — this is the longest pipeline
           </Text>
           {renderHeroResourceGrid(bbDiscounted.totalByResource)}
+        </View>
+
+        <View style={styles.sectionHeaderWrap}>
+          <SectionHeader title="Builders" />
         </View>
         <View style={styles.builderCard}>
           <View style={styles.builderTextBlock}>
@@ -1060,10 +1185,16 @@ export default function MaxTimeScreen() {
             </Pressable>
           </View>
         </View>
+
+        <View style={styles.sectionHeaderWrap}>
+          <SectionHeader title="Pipelines" />
+        </View>
         <View style={styles.pipelineSections}>
           {renderPipeline(bbResult.bbBuilders, discounts.buildings, false)}
           {renderPipeline(bbResult.bbLab, discounts.army, true)}
         </View>
+          </>
+        )}
       </ScrollView>
 
       {player && (
@@ -1135,11 +1266,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.base,
   },
+  villageToggleWrap: {
+    alignSelf: 'center',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.lg,
+  },
   villageToggle: {
     flexDirection: 'row',
     gap: 4,
     padding: 3,
-    borderRadius: Radius.full,
+    borderRadius: Radius.xl * 1.25,
     backgroundColor: Colors.bgSubtle,
     borderWidth: 0.75,
     borderColor: Colors.border,
@@ -1150,7 +1286,11 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+    borderRadius: Radius.sm,
+  },
+  villageToggleImg: {
+    width: 16,
+    height: 16,
   },
   villageToggleActive: {
     backgroundColor: Colors.textPrimary,
@@ -1588,17 +1728,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
   },
   summaryDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   summaryLabel: {
     ...Typography.caption,
@@ -1606,33 +1743,79 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  summaryValue: {
-    ...Typography.subhead,
+  summaryTime: {
+    ...Typography.title3,
     color: Colors.textPrimary,
-    fontWeight: '600',
-    flexShrink: 1,
-    textAlign: 'right',
-    marginLeft: Spacing.md,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
-  oreRow: {
+  splitList: {
+    marginTop: Spacing.xs,
+  },
+  splitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  splitLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    flexShrink: 1,
   },
-  oreIcon: {
-    width: 18,
-    height: 18,
-  },
-  oreLabel: {
+  splitLabel: {
     ...Typography.footnote,
-    flex: 1,
-    fontWeight: '600',
+    color: Colors.textSecondary,
   },
-  oreValue: {
+  splitAllocation: {
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  splitAllocationText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  splitValue: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  resourceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginTop: 2,
+  },
+  resourceCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: Colors.bgCardHover,
+    borderRadius: Radius.sm,
+    minWidth: '47%',
+    flexGrow: 1,
+  },
+  resourceCellIcon: {
+    width: 18,
+    height: 18,
+  },
+  resourceCellLabel: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    flex: 1,
+  },
+  resourceCellValue: {
+    ...Typography.subhead,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   emptyText: {
