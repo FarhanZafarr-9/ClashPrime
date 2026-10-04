@@ -67,10 +67,10 @@ export interface CocCraftedDefense {
   /** Defense name from the export mapping, e.g. "Hot Candle". */
   displayName: string;
   dataId: number;
-  /** One entry per upgrade module, e.g. Hitpoints / Damage / Poison Level. */
+  /** One entry per upgrade module, e.g. Hitpoints / Damage / Seconds Active. */
   modules: { name: string; level: number }[];
-  /** Highest module level — a stand-in for "how built out is it". */
-  level: number;
+  /** Sum of the module levels — the level the game shows for this defense. */
+  effectiveLevel: number;
 }
 
 export interface CocImportResult {
@@ -80,8 +80,9 @@ export interface CocImportResult {
   resolved: CocImportItem[];
   /** Resolved by ID but not tracked by the app (e.g. Town Hall). */
   skipped: CocImportItem[];
-  /** Crafted defenses nested inside the Crafting Station. Not tracked by the
-   *  app yet, so they are reported separately from `skipped`. */
+  /** Crafted defenses nested inside the Crafting Station. Their levels are per
+   *  module rather than a single level, so they are reported separately from
+   *  `resolved`/`skipped`. */
   crafted: CocCraftedDefense[];
   /** dataIds with no mapping. */
   unresolved: { dataId: number; level: number; copies: number }[];
@@ -162,7 +163,7 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
           displayName: name,
           dataId: type.data,
           modules,
-          level: Math.max(0, ...modules.map((m) => m.level)),
+          effectiveLevel: modules.reduce((sum, m) => sum + m.level, 0),
         });
       }
       return;
