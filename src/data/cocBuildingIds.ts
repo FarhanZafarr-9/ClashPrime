@@ -95,3 +95,37 @@ export const COC_BUILDER_BUILDING_IDS: Record<number, string> = {
   12000013: "Mine",
   12000014: "Mega Mine",
 };
+
+// Crafted defense dataId → name, for the `types[]` nested inside the
+// Crafting Station row.
+export const COC_CRAFTED_DEFENSE_IDS: Record<number, string> = {
+  103000008: "Roaster",
+  103000009: "Air Bombs",
+  103000010: "Lava Launcher",
+  103000011: "Hot Candle",
+  103000012: "Hero Hunter",
+  103000013: "Cake-A-Pult",
+};
+
+// Crafted defense module dataId → stat name (Hitpoints, Damage, ...), for
+// the `modules[]` nested inside each `types[]` entry.
+export const COC_CRAFTED_MODULE_IDS: Record<number, string> = {
+  102000024: "Hitpoints",
+  102000025: "Damage",
+  102000026: "Burst Fire",
+  102000027: "Hitpoints",
+  102000028: "Damage",
+  102000029: "Attack Cooldown",
+  102000030: "Hitpoints",
+  102000031: "Damage",
+  102000032: "Range",
+  102000033: "Hitpoints",
+  102000034: "Damage",
+  102000035: "Seconds Active",
+  102000036: "Hitpoints",
+  102000037: "Damage",
+  102000038: "Poison Level",
+  102000039: "Hitpoints",
+  102000040: "Damage",
+  102000041: "Explosion Damage",
+};
