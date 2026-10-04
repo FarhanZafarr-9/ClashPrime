@@ -286,7 +286,11 @@ export default function ImportExportScreen() {
         return {
           name: c.displayName,
           defense,
-          levels,
+          // The export already reports every module the game knows, so the raw
+          // levels are persisted even when the package does not know this defense
+          // yet. Dropping them here would show "detected" and then save nothing.
+          levels: levels ?? { ...raw },
+          known: !!defense,
           effectiveLevel: eff,
           image: getCraftedDefenseImage(c.displayName, eff),
           modules: defense && levels
@@ -306,7 +310,7 @@ export default function ImportExportScreen() {
   /** defense name → module name → level, ready to persist. */
   const craftedPayload = useMemo(() => {
     const out: Record<string, Record<string, number>> = {};
-    for (const row of craftedRows) if (row.levels) out[row.name] = row.levels;
+    for (const row of craftedRows) if (Object.keys(row.levels).length) out[row.name] = row.levels;
     return out;
   }, [craftedRows]);
 
@@ -728,7 +732,10 @@ export default function ImportExportScreen() {
                         key: 'crafted',
                         icon: 'shield-half-outline' as const,
                         label: 'Crafted defenses',
-                        value: `${craftedRows.length} detected`,
+                        // Counts what an apply would actually save, so the number here
+                        // always matches the cards below it.
+                        value: `${Object.keys(craftedPayload).length} detected`,
+                        warning: Object.keys(craftedPayload).length < craftedDefs.length,
                       }]
                       : []),
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
@@ -770,6 +777,12 @@ export default function ImportExportScreen() {
                         <Text style={styles.craftedName} numberOfLines={1}>{row.name}</Text>
                         <Text style={styles.craftedLevel}>Lv {row.effectiveLevel}</Text>
                       </View>
+                      {!row.known && (
+                        <Text style={styles.craftedUnknown}>
+                          This defense is not in the app data yet, so its modules, stats and
+                          upgrade costs are unknown. The levels above are still imported.
+                        </Text>
+                      )}
                       {row.modules.map((m) => (
                         <View key={m.name} style={styles.craftedModuleRow}>
                           <Text style={styles.craftedModuleName} numberOfLines={1}>{m.name}</Text>
@@ -1403,6 +1416,12 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
+  },
+  craftedUnknown: {
+    ...Typography.caption,
+    color: Colors.warning,
+    lineHeight: 16,
+    paddingBottom: Spacing.xs,
   },
   levelIcon: {
     width: 24,
