@@ -4,15 +4,29 @@
 // are supported; each village is resolved against its own dataId map so
 // colliding names (Cannon, Archer Tower, Wall, ...) stay disambiguated.
 
-import { COC_HOME_BUILDING_IDS, COC_BUILDER_BUILDING_IDS } from '../data/cocBuildingIds';
+import {
+  COC_HOME_BUILDING_IDS,
+  COC_BUILDER_BUILDING_IDS,
+  COC_CRAFTED_DEFENSE_IDS,
+  COC_CRAFTED_MODULE_IDS,
+} from '../data/cocBuildingIds';
 import { toStoreName } from './buildingCopies';
 import { HOME_CATEGORIES, BB_BUILDINGS, isBuilderName } from './buildingData';
 
+/** The Crafting Station is the one building an export does not describe with a
+ *  `lvl`: it nests the crafted defenses it has produced under `types[]`, and each
+ *  of those carries `modules[]` holding the level of every individual upgrade. */
+export interface CocCraftedType {
+  data: number;
+  modules?: { data: number; lvl?: number }[];
+}
+
 export interface CocExportEntry {
   data: number;
-  lvl: number;
+  lvl?: number;
   timer?: number;
   cnt?: number;
+  types?: CocCraftedType[];
 }
 
 export interface CocExportData {
@@ -48,6 +62,17 @@ export interface CocImportItem {
   timerRows: { level: number; remainingSec: number }[];
 }
 
+/** One crafted defense decoded out of the Crafting Station's `types[]`. */
+export interface CocCraftedDefense {
+  /** Defense name from the export mapping, e.g. "Hot Candle". */
+  displayName: string;
+  dataId: number;
+  /** One entry per upgrade module, e.g. Hitpoints / Damage / Poison Level. */
+  modules: { name: string; level: number }[];
+  /** Highest module level — a stand-in for "how built out is it". */
+  level: number;
+}
+
 export interface CocImportResult {
   /** storeName → representative level, ready for setBulkLevels. */
   levels: Record<string, number>;
@@ -55,8 +80,18 @@ export interface CocImportResult {
   resolved: CocImportItem[];
   /** Resolved by ID but not tracked by the app (e.g. Town Hall). */
   skipped: CocImportItem[];
+  /** Crafted defenses nested inside the Crafting Station. Not tracked by the
+   *  app yet, so they are reported separately from `skipped`. */
+  crafted: CocCraftedDefense[];
   /** dataIds with no mapping. */
   unresolved: { dataId: number; level: number; copies: number }[];
+}
+
+/** Export levels are plain numbers, but a row can omit `lvl` entirely. Feeding
+ *  undefined into Math.max yields NaN, which then poisons every level total and
+ *  renders as "NaN" in the import preview, so coerce anything non-finite to 0. */
+function finiteLvl(raw: unknown): number {
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
 }
 
 /** Every building the app stores levels for (HOME_CATEGORIES + BB_BUILDINGS values are store names). */
@@ -103,14 +138,40 @@ export function parseCocExport(raw: string): CocExportResult {
 export function cocExportToBuildingLevels(data: CocExportData): CocImportResult {
   const byStore = new Map<string, CocImportItem>();
   const skipped = new Map<string, CocImportItem>();
+  const crafted: CocCraftedDefense[] = [];
   const unresolved: CocImportResult['unresolved'] = [];
 
   const ingest = (entry: CocExportEntry, idMap: Record<number, string>, builderBase: boolean) => {
+    // The Crafting Station carries no `lvl` of its own — it reports the crafted
+    // defenses it has produced under `types[]`. Decode those here and keep the
+    // station itself out of the level tables, so no row is built from a missing
+    // level.
+    const types = entry.types;
+    if (Array.isArray(types)) {
+      for (const type of types) {
+        const name = COC_CRAFTED_DEFENSE_IDS[type.data];
+        if (!name) {
+          unresolved.push({ dataId: type.data, level: 0, copies: 1 });
+          continue;
+        }
+        const modules = (type.modules ?? []).map((m) => ({
+          name: COC_CRAFTED_MODULE_IDS[m.data] ?? `Module ${m.data}`,
+          level: finiteLvl(m.lvl),
+        }));
+        crafted.push({
+          displayName: name,
+          dataId: type.data,
+          modules,
+          level: Math.max(0, ...modules.map((m) => m.level)),
+        });
+      }
+      return;
+    }
     const copies = entry.cnt ?? 1;
     const hasTimer = typeof entry.timer === 'number' && entry.timer > 0;
     // A building row with `lvl` + `cnt` packs the level distribution; timer rows
     // are one copy each (stuck/upgrading) described individually.
-    const effectiveLvl = entry.lvl;
+    const effectiveLvl = finiteLvl(entry.lvl);
     const rawName = idMap[entry.data];
     if (!rawName) {
       unresolved.push({ dataId: entry.data, level: effectiveLvl, copies });
@@ -164,6 +225,7 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
     levels,
     resolved,
     skipped: [...skipped.values()].sort((a, b) => a.storeName.localeCompare(b.storeName)),
+    crafted,
     unresolved,
   };
 }
