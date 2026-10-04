@@ -145,7 +145,7 @@ function orderShareResources(byResource: Record<string, number>) {
 export default function MaxTimeScreen() {
   const { player, loading, lastSync } = usePlayer();
   const { colors } = useTheme();
-  const { count: builderCount, setBuilderCount, loaded: builderLoaded } = useBuilderCount();
+  const { count: builderCount, setBuilderCount, loaded: builderLoaded, canDecrease: canDecreaseBuilders, canIncrease: canIncreaseBuilders } = useBuilderCount();
   const { excluded, toggleExcluded, setExcludedMany, loaded: exclusionsLoaded } = useBuildingExclusions();
   const { discounts } = useDiscounts();
   const [details, setDetails] = useState<Record<string, TroopDetail | null> | null>(null);
@@ -914,27 +914,27 @@ export default function MaxTimeScreen() {
               </View>
               <View style={styles.builderStepper}>
                 <Pressable
-                  onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
-                  disabled={builderCount <= 2}
+                  onPress={() => setBuilderCount(builderCount - 1)}
+                  disabled={!canDecreaseBuilders}
                   style={[
                     styles.stepperBtn,
-                    builderCount <= 2 && styles.stepperBtnDisabled,
+                    !canDecreaseBuilders && styles.stepperBtnDisabled,
                   ]}
                 >
-                  <Ionicons name="remove" size={18} color={builderCount <= 2 ? Colors.textMuted : Colors.textPrimary} />
+                  <Ionicons name="remove" size={18} color={canDecreaseBuilders ? Colors.textPrimary : Colors.textMuted} />
                 </Pressable>
                 <View style={styles.builderCountPill}>
                   <Text style={styles.builderCountText}>{builderCount}</Text>
                 </View>
                 <Pressable
-                  onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
-                  disabled={builderCount >= 6}
+                  onPress={() => setBuilderCount(builderCount + 1)}
+                  disabled={!canIncreaseBuilders}
                   style={[
                     styles.stepperBtn,
-                    builderCount >= 6 && styles.stepperBtnDisabled,
+                    !canIncreaseBuilders && styles.stepperBtnDisabled,
                   ]}
                 >
-                  <Ionicons name="add" size={18} color={builderCount >= 6 ? Colors.textMuted : Colors.textPrimary} />
+                  <Ionicons name="add" size={18} color={canIncreaseBuilders ? Colors.textPrimary : Colors.textMuted} />
                 </Pressable>
               </View>
             </View>
