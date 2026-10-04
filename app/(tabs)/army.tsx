@@ -45,6 +45,7 @@ const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
 
 
 type Tab = 'heroes' | 'bhHeroes' | 'troops' | 'bhTroops' | 'spells' | 'pets' | 'siege' | 'equipment';
+type TabDef = { key: Tab; label: string };
 
 /** The only two Builder Base tabs; everything else belongs to the Home Village. */
 const isBBTab = (key: Tab) => key === 'bhTroops' || key === 'bhHeroes';
@@ -454,6 +455,17 @@ export default function PlayerProfileScreen() {
   const homeTabs = populatedTabs.filter((tab) => !isBBTab(tab.key));
   const bbTabs = populatedTabs.filter((tab) => isBBTab(tab.key));
   const visibleTabs = village === 'builder' ? bbTabs : homeTabs;
+
+  // Chips are chunked into explicit rows rather than left to flex-wrap on a fixed
+  // percentage width, so each chip can be flex: 1 and fill its row exactly. The gap
+  // is the only spacing, and a partial trailing row spans it whole.
+  const tabRows = useMemo(() => {
+    const rows: TabDef[][] = [];
+    for (let i = 0; i < visibleTabs.length; i += CHIP_COLUMNS) {
+      rows.push(visibleTabs.slice(i, i + CHIP_COLUMNS));
+    }
+    return rows;
+  }, [visibleTabs]);
 
   const [prevVisibleTabKeys, setPrevVisibleTabKeys] = useState('');
   const visibleTabKeys = visibleTabs.map((t) => t.key).join(',');
@@ -1157,48 +1169,52 @@ export default function PlayerProfileScreen() {
         )}
 
         <View style={styles.tabsContainer}>
-          {visibleTabs.map((tab, ti) => {
-            const isActive = activeTab === tab.key;
-            const iconDef = TAB_ICONS[tab.key];
-            const iconColor = isActive ? Colors.bg : Colors.textSecondary;
-            const previewName = tabPreviewItem[tab.key];
-            const previewSrc = previewName
-              ? getArmyItemImage(previewName, null, tab.key === 'bhTroops' || tab.key === 'bhHeroes')
-              : null;
-            return (
-              <PressableRipple
-                key={tab.key}
-                onPress={() => setActiveTab(tab.key)}
-                style={[
-                  styles.tab,
-                  chipCornerStyle(ti, visibleTabs.length),
-                  isActive && styles.tabActive,
-                ]}
-              >
-                {previewSrc != null ? (
-                  <Image source={previewSrc} style={styles.tabIcon} resizeMode="contain" />
-                ) : iconDef.set === 'mc' ? (
-                  <MaterialCommunityIcons name={iconDef.name as any} size={14} color={iconColor} />
-                ) : (
-                  <Ionicons name={iconDef.name as any} size={14} color={iconColor} />
-                )}
-                <View style={styles.tabTextCol}>
-                  <Text
-                    style={[styles.tabText, isActive && styles.tabTextActive]}
-                    numberOfLines={1}
+          {tabRows.map((row) => (
+            <View key={row[0].key} style={styles.tabLine}>
+              {row.map((tab) => {
+                const isActive = activeTab === tab.key;
+                const iconDef = TAB_ICONS[tab.key];
+                const iconColor = isActive ? Colors.bg : Colors.textSecondary;
+                const previewName = tabPreviewItem[tab.key];
+                const previewSrc = previewName
+                  ? getArmyItemImage(previewName, null, tab.key === 'bhTroops' || tab.key === 'bhHeroes')
+                  : null;
+                return (
+                  <PressableRipple
+                    key={tab.key}
+                    onPress={() => setActiveTab(tab.key)}
+                    style={[
+                      styles.tab,
+                      chipCornerStyle(visibleTabs.indexOf(tab), visibleTabs.length),
+                      isActive && styles.tabActive,
+                    ]}
                   >
-                    {tab.label}
-                  </Text>
-                  <Text
-                    style={[styles.tabSubText, isActive && styles.tabSubTextActive]}
-                    numberOfLines={1}
-                  >
-                    {tabDescription[tab.key]}
-                  </Text>
-                </View>
-              </PressableRipple>
-            );
-          })}
+                    {previewSrc != null ? (
+                      <Image source={previewSrc} style={styles.tabIcon} resizeMode="contain" />
+                    ) : iconDef.set === 'mc' ? (
+                      <MaterialCommunityIcons name={iconDef.name as any} size={14} color={iconColor} />
+                    ) : (
+                      <Ionicons name={iconDef.name as any} size={14} color={iconColor} />
+                    )}
+                    <View style={styles.tabTextCol}>
+                      <Text
+                        style={[styles.tabText, isActive && styles.tabTextActive]}
+                        numberOfLines={1}
+                      >
+                        {tab.label}
+                      </Text>
+                      <Text
+                        style={[styles.tabSubText, isActive && styles.tabSubTextActive]}
+                        numberOfLines={1}
+                      >
+                        {tabDescription[tab.key]}
+                      </Text>
+                    </View>
+                  </PressableRipple>
+                );
+              })}
+            </View>
+          ))}
         </View>
 
         <View style={styles.tabContent}>
@@ -1732,22 +1748,19 @@ const styles = StyleSheet.create({
     color: Colors.bg,
   },
   tabsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing.base,
     gap: Spacing.xs,
+    paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.base,
   },
+  tabLine: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
   tab: {
-    // Fixed half-of-a-row basis with no grow and no shrink, so the wrap point
-    // is decided purely by the container width and can never be pushed wider by
-    // the chip's own content. 48% leaves room for the 4px gap; a third chip
-    // needs another 48% and so always wraps. The gap does the spacing —
-    // space-between would push a short final row to opposite edges and break
-    // the seamless block.
-    width: '48%',
-    flexGrow: 0,
-    flexShrink: 0,
+    // flex: 1 rather than a hardcoded percentage width, so a pair of chips shares
+    // the row exactly (gap-only spacing) and a lone trailing chip fills the row.
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
