@@ -425,49 +425,73 @@ export default function BaseLibraryScreen() {
       <View style={styles.filterSection}>
         <Text style={styles.filterLabel}>Category</Text>
         <View style={styles.pillRow}>
-          {pillRows.map((row) => (
-            <View key={row[0].key} style={styles.pillLine}>
-              {row.map((pill) => {
-                const isActive = pill.key === activeCategory;
-                const meta = catMeta[pill.key];
-                return (
-                  <PressableRipple
-                    key={pill.key}
-                    onPress={() => setSelectedCategory(pill.key)}
-                    style={[
-                      styles.pill,
-                      pillCornerStyle(availableCats.indexOf(pill), availableCats.length),
-                      isActive && styles.pillActive,
-                    ]}
-                  >
-                    {meta?.image ? (
-                      <Image source={{ uri: meta.image }} style={styles.pillImg} resizeMode="cover" />
-                    ) : (
-                      <Ionicons
-                        name={pill.icon}
-                        size={15}
-                        color={isActive ? Colors.bg : Colors.textSecondary}
-                      />
-                    )}
-                    <View style={styles.pillTextCol}>
-                      <Text
-                        style={[styles.pillText, isActive && styles.pillTextActive]}
-                        numberOfLines={1}
-                      >
-                        {pill.label}
-                      </Text>
-                      <Text
-                        style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
-                        numberOfLines={1}
-                      >
-                        {`${meta?.count ?? 0} base${(meta?.count ?? 0) === 1 ? '' : 's'}`}
-                      </Text>
-                    </View>
-                  </PressableRipple>
-                );
-              })}
+          {loading ? (
+            // The counts come from the scrape, so until it lands every pill would
+            // read "0 bases" and "All" would look empty. Placeholders keep the
+            // block's shape without claiming a number.
+            <View style={styles.pillLine}>
+              {Array.from({ length: PILL_COLUMNS }, (_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.pill,
+                    pillCornerStyle(i, PILL_COLUMNS),
+                    styles.pillPlaceholder,
+                  ]}
+                >
+                  <Skeleton width={18} height={18} borderRadius={4} />
+                  <View style={styles.pillTextCol}>
+                    <Skeleton width="70%" height={11} borderRadius={4} />
+                    <Skeleton width="45%" height={9} borderRadius={4} />
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
+          ) : (
+            pillRows.map((row) => (
+              <View key={row[0].key} style={styles.pillLine}>
+                {row.map((pill) => {
+                  const isActive = pill.key === activeCategory;
+                  const meta = catMeta[pill.key];
+                  return (
+                    <PressableRipple
+                      key={pill.key}
+                      onPress={() => setSelectedCategory(pill.key)}
+                      style={[
+                        styles.pill,
+                        pillCornerStyle(availableCats.indexOf(pill), availableCats.length),
+                        isActive && styles.pillActive,
+                      ]}
+                    >
+                      {meta?.image ? (
+                        <Image source={{ uri: meta.image }} style={styles.pillImg} resizeMode="cover" />
+                      ) : (
+                        <Ionicons
+                          name={pill.icon}
+                          size={15}
+                          color={isActive ? Colors.bg : Colors.textSecondary}
+                        />
+                      )}
+                      <View style={styles.pillTextCol}>
+                        <Text
+                          style={[styles.pillText, isActive && styles.pillTextActive]}
+                          numberOfLines={1}
+                        >
+                          {pill.label}
+                        </Text>
+                        <Text
+                          style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
+                          numberOfLines={1}
+                        >
+                          {`${meta?.count ?? 0} base${(meta?.count ?? 0) === 1 ? '' : 's'}`}
+                        </Text>
+                      </View>
+                    </PressableRipple>
+                  );
+                })}
+              </View>
+            ))
+          )}
         </View>
       </View>
 
@@ -728,6 +752,9 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 4,
+  },
+  pillPlaceholder: {
+    gap: 6,
   },
   pillTextCol: {
     flex: 1,
