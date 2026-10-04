@@ -1,5 +1,5 @@
 import { home, builder, magicItems as magicItemsApi } from 'clash-of-clans-data';
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -21,10 +21,28 @@ async function ensureWebp(pkgRelPath) {
   const dstDir = dirname(dst);
   if (!existsSync(dstDir)) mkdirSync(dstDir, { recursive: true });
   if (!existsSync(dst)) {
-    // Source is already WebP with .png extension (verified). Copy as-is with correct extension.
-    // If upstream ever changes format, sharp will convert to WebP.
-    const buffer = await sharp(src).webp().toBuffer();
-    await sharp(buffer).webp().toFile(dst);
+    // Much of the package (all of images/home/crafted-defenses) ships WebP bytes
+    // under a .png name. sharp sniffs the extension here and rejects those, so
+    // check the RIFF/WEBP header and copy the bytes as-is; only genuinely
+    // non-WebP sources get re-encoded.
+    const buf = readFileSync(src);
+    const isWebp =
+      buf.length > 12 &&
+      buf.subarray(0, 4).toString('latin1') === 'RIFF' &&
+      buf.subarray(8, 12).toString('latin1') === 'WEBP';
+    if (isWebp) {
+      writeFileSync(dst, buf);
+    } else {
+      try {
+        await sharp(src).webp().toFile(dst);
+      } catch {
+        // A few upstream files are not images at all — e.g.
+        // images/home/crafted-defenses/light-beam/normal/level-3.png is a saved
+        // 404 HTML page. Skip those instead of failing the whole run.
+        console.warn(`skipping unreadable package image: ${pkgRelPath}`);
+        return null;
+      }
+    }
   }
   return `../../assets/package-images/${dstRel}`;
 }
@@ -57,6 +75,7 @@ const levelSprite = (p, level) => {
 const homeEntries = [];
 const builderEntries = [];
 const builderTroopEntries = [];
+const craftedEntries = [];
 const homeByName = new Map();
 const builderByName = new Map();
 const builderTroopByName = new Map();
@@ -115,6 +134,23 @@ const collectBuilderBuilding = (items) => {
   }
 };
 
+// Crafted defenses are not flat per-level buildings: a defense's level is the sum of
+// its module levels, and the package ships one sprite per *range* of that total
+// (e.g. 3-11, 12-20, 21-29, 30). Key each tier by the first effective level of its
+// range so the caller can pick the tier containing a given total.
+const collectCraftedDefenses = (items) => {
+  for (const it of items ?? []) {
+    const tiers = {};
+    for (const im of it.images ?? []) {
+      if (!im.normal) continue;
+      const key = String(im.fromEffectiveLevel);
+      if (!tiers[key]) tiers[key] = im.normal;
+    }
+    const keys = Object.keys(tiers);
+    if (keys.length) craftedEntries.push({ name: it.name, icon: tiers[keys[0]], levels: tiers });
+  }
+};
+
 const hh = home();
 const bb = builder();
 collect(hh.troops().get());
@@ -151,6 +187,8 @@ collectBuilderBuilding(bb.otherBuildings().get());
 collectBuilderBuilding(bb.traps().get());
 collectBuilderBuilding(bb.walls().get());
 collectBuilderBuilding(bb.builderHall().get());
+
+collectCraftedDefenses(hh.craftedDefenses ? hh.craftedDefenses().get() : []);
 
 // Builder troops/heroes keep their own village sprites (separate from the
 // name-merged home map) so shared display names like "Baby Dragon" still show
@@ -201,7 +239,7 @@ const magicItemEntries = [];
 async function req(p) {
   if (!p) return '0';
   const localPath = await ensureWebp(p);
-  return `require('${localPath}')`;
+  return localPath ? `require('${localPath}')` : '0';
 }
 
 async function generate() {
@@ -214,7 +252,7 @@ async function generate() {
   lines.push('  levels: Record<string, number>;');
   lines.push('}');
   lines.push('');
-  for (const [constName, entries] of [['PACKAGE_IMAGES', homeEntries], ['PACKAGE_BUILDER_IMAGES', builderEntries], ['PACKAGE_BUILDER_TROOP_IMAGES', builderTroopEntries]]) {
+  for (const [constName, entries] of [['PACKAGE_IMAGES', homeEntries], ['PACKAGE_BUILDER_IMAGES', builderEntries], ['PACKAGE_BUILDER_TROOP_IMAGES', builderTroopEntries], ['PACKAGE_CRAFTED_IMAGES', craftedEntries]]) {
     lines.push(`export const ${constName}: Record<string, PackageItemImages> = {`);
     for (const e of entries) {
       lines.push(`  ${JSON.stringify(e.name)}: {`);
