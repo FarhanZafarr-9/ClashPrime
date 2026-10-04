@@ -39,7 +39,6 @@ import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, forma
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
-import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { getArmyTroopDetail, getArmyItemImage, getAllBuilderItemsAtBH } from '../../src/utils/armyData';
 import { getLeagueLootInfo } from '../../src/utils/leagueData';
@@ -201,13 +200,13 @@ function ResourceAmountIcon({ resource, amount }: { resource: string; amount: nu
   return (
     <View style={RES_AMOUNT_STYLE}>
       {src ? <Image source={src} style={{ width: 14, height: 14 }} resizeMode="contain" /> : null}
-      <Text style={styles.statRowValue}>{formatCost(amount)}</Text>
+      <Text style={styles.statValue}>{formatCost(amount)}</Text>
     </View>
   );
 }
 
 function LeagueAmountValue({ amount }: { amount: { gold: number | null; dark: number | null } | null }) {
-  if (!amount) return <Text style={styles.statRowValue}>—</Text>;
+  if (!amount) return <Text style={styles.statValue}>—</Text>;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
       {amount.gold ? (
@@ -222,7 +221,7 @@ function LeagueAmountValue({ amount }: { amount: { gold: number | null; dark: nu
 }
 
 function StarBonusValue({ star }: { star: { gold: number | null; dark: number | null; shiny: number | null; glowy: number | null; starry: number | null } | null }) {
-  if (!star) return <Text style={styles.statRowValue}>—</Text>;
+  if (!star) return <Text style={styles.statValue}>—</Text>;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
       {star.gold ? (
@@ -465,6 +464,53 @@ function listCornerStyle(index: number, total: number) {
       borderBottomRightRadius: outer,
     }),
   };
+}
+
+/**
+ * At or above this many pending rows a section header stops expanding in place
+ * and becomes a link to the tab that owns the list, so a long backlog does not
+ * push everything else off the screen.
+ */
+const NAVIGATE_ROW_THRESHOLD = 5;
+
+type ProgressRowItem = {
+  name: string;
+  level: number;
+  maxLevel: number;
+  iconSource?: ImageSourcePropType;
+};
+
+/**
+ * One pending upgrade inside a progress section. Every section resolves its own
+ * cost source (army items vs building copies) but presents them identically:
+ * per-resource chips plus remaining time, or a locked hint at level 0.
+ */
+function ProgressRow({
+  row,
+  cost,
+  isLast,
+  onPress,
+}: {
+  row: ProgressRowItem;
+  cost: CostTime;
+  isLast: boolean;
+  onPress?: () => void;
+}) {
+  const showCost = row.level > 0 && cost.hasData && cost.cost > 0;
+  return (
+    <ItemCard
+      name={row.name}
+      level={row.level}
+      maxLevel={row.maxLevel}
+      iconSource={row.iconSource}
+      costLabel={showCost ? (formatCostBreakdown(cost.byResource) || formatCost(cost.cost)) : undefined}
+      costResources={showCost && cost.byResource ? cost.byResource : undefined}
+      timeLabel={row.level > 0 && cost.hasData && cost.time > 0 ? formatTime(cost.time) : undefined}
+      locked={row.level === 0}
+      isLast={isLast}
+      onPress={onPress}
+    />
+  );
 }
 
 export default function HomeScreen() {
@@ -1439,7 +1485,7 @@ export default function HomeScreen() {
                       const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
                       const totalLevel = group.rows.reduce((s, r) => s + r.level, 0);
                       const totalMax = group.rows.reduce((s, r) => s + r.maxLevel, 0);
-                      const navigateInstead = displayRows.length >= 5;
+                      const navigateInstead = displayRows.length >= NAVIGATE_ROW_THRESHOLD;
                       return (
                         <CollapsibleSection
                           key={group.key}
@@ -1457,16 +1503,10 @@ export default function HomeScreen() {
                           {displayRows.map((row, ri) => {
                             const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
                             return (
-                              <ItemCard
+                              <ProgressRow
                                 key={`${group.key}-${ri}`}
-                                name={row.name}
-                                level={row.level}
-                                maxLevel={row.maxLevel}
-                                   iconSource={row.iconSource}
-                                costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                                costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                                timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                                locked={row.level === 0}
+                                row={row}
+                                cost={rowCost}
                                 isLast={ri === displayRows.length - 1}
                                 onPress={() => router.push(group!.pushTo)}
                               />
@@ -1588,16 +1628,10 @@ export default function HomeScreen() {
                                 ? remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel)
                                 : remainingBuildingCosts(row.name, row.copies ?? [], row.effectiveMax ?? 0);
                               return (
-                                <ItemCard
+                                <ProgressRow
                                   key={`${group.key}-${ri}`}
-                                  name={row.name}
-                                  level={row.level}
-                                  maxLevel={row.maxLevel}
-                                   iconSource={row.iconSource}
-                                  costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                                  costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                                  timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                                  locked={row.level === 0}
+                                  row={row}
+                                  cost={rowCost}
                                   isLast={ri === displayRows.length - 1}
                                   onPress={() => router.push(group!.pushTo)}
                                 />
@@ -1617,7 +1651,7 @@ export default function HomeScreen() {
               const group = progressGroups.find(g => g.key === 'pets');
               if (!group) return null;
               const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-              const navigateInstead = displayRows.length >= 5;
+              const navigateInstead = displayRows.length >= NAVIGATE_ROW_THRESHOLD;
               return (
                 <CollapsibleSection
                   isLast={false}
@@ -1635,16 +1669,10 @@ export default function HomeScreen() {
                     {navigateInstead ? null : displayRows.map((row, ri) => {
                       const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
                       return (
-                        <ItemCard
+                        <ProgressRow
                           key={`${group.key}-${ri}`}
-                          name={row.name}
-                          level={row.level}
-                          maxLevel={row.maxLevel}
-                             iconSource={row.iconSource}
-                          costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                          costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                          timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                          locked={row.level === 0}
+                          row={row}
+                          cost={rowCost}
                           isLast={ri === displayRows.length - 1}
                           onPress={() => router.push(group!.pushTo)}
                         />
@@ -1660,7 +1688,7 @@ export default function HomeScreen() {
               const group = progressGroups.find(g => g.key === 'equipment');
               if (!group) return null;
               const displayRows = group.rows.filter((r) => r.level < r.maxLevel);
-              const navigateInstead = displayRows.length >= 5;
+              const navigateInstead = displayRows.length >= NAVIGATE_ROW_THRESHOLD;
               return (
                 <CollapsibleSection
                   isLast={!(unlockableItems.length > 0 || rushedItems.length > 0)}
@@ -1678,16 +1706,10 @@ export default function HomeScreen() {
                     {navigateInstead ? null : displayRows.map((row, ri) => {
                       const rowCost = remainingArmyCosts(progressDetails[row.name], row.level, row.maxLevel);
                       return (
-                        <ItemCard
+                        <ProgressRow
                           key={`${group.key}-${ri}`}
-                          name={row.name}
-                          level={row.level}
-                          maxLevel={row.maxLevel}
-                             iconSource={row.iconSource}
-                          costLabel={row.level > 0 && rowCost.hasData && rowCost.cost > 0 ? (formatCostBreakdown(rowCost.byResource) || formatCost(rowCost.cost)) : undefined}
-                          costResources={row.level > 0 && rowCost.hasData && rowCost.byResource ? rowCost.byResource : undefined}
-                          timeLabel={row.level > 0 && rowCost.hasData && rowCost.time > 0 ? formatTime(rowCost.time) : undefined}
-                          locked={row.level === 0}
+                          row={row}
+                          cost={rowCost}
                           isLast={ri === displayRows.length - 1}
                           onPress={() => router.push(group!.pushTo)}
                         />
@@ -1724,46 +1746,28 @@ export default function HomeScreen() {
                       badges={[{ key: 'locked', value: unlockableItems.length, tone: 'danger' }]}
                     >
                       {(() => {
-                        return unlockableItems.flatMap((item, i) => {
+                        return unlockableItems.map((item, i) => {
                           const thImage = getTownHallImageSource(item.unlockTh);
                           const image = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : 1);
-                          const levelsAtTH = getMaxLevelAtTH(item.name, th);
+                          const levelsAtTH = getMaxLevelAtTH(item.name, th) ?? 0;
                           const itemCost = upgradeCosts[item.name];
+                          const time = itemCost && itemCost.timeSeconds > 0 ? fmtTime(itemCost.timeSeconds) : null;
+                          const showCost = !!itemCost;
                           return (
-                            <View key={item.name} style={[styles.statRow, i === unlockableItems.length - 1 && styles.statRowLast]}>
-                              <View style={styles.statRowIconNoBg}>
-                                {image ? (
-                                  <Image source={image} style={styles.statRowIconImage} resizeMode="contain" />
-                                ) : (
-                                  <Ionicons name={item.type === 'spell' ? 'flask-outline' : 'person-outline'} size={16} color={Colors.textTertiary} />
-                                )}
-                              </View>
-                              <View style={styles.statRowText}>
-                                <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
-                                <Text style={styles.statRowSub}>
-                                  {levelsAtTH} {levelsAtTH === 1 ? 'level' : 'levels'}
-                                  {itemCost && itemCost.timeSeconds > 0 ? ` · ${fmtTime(itemCost.timeSeconds)}` : ''}
-                                </Text>
-                              </View>
-                              <View style={styles.statRowRightRow}>
-                                <View style={styles.statRowRightBadge}>
-                                  {itemCost ? (
-                                    <>
-                                      <ResourceCostChips byResource={itemCost.byResource ?? {}} compact />
-                                      {formatCostBreakdown(itemCost.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(itemCost.cost)}</Text>}
-                                    </>
-                                  ) : lockedCostsPending ? (
-                                    <Text style={styles.statRowValue}>…</Text>
-                                  ) : null}
-                                  {itemCost && itemCost.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(itemCost.timeSeconds)}</Text>}
-                                </View>
-                                {thImage ? (
-                                  <View style={[styles.thImageBadge, (i === unlockableItems.length - 1) && {borderBottomRightRadius: Radius.lg}]}>
-                                    <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" />
-                                  </View>
-                                ) : null}
-                              </View>
-                            </View>
+                            <ItemCard
+                              key={item.name}
+                              name={item.name}
+                              level={0}
+                              maxLevel={levelsAtTH}
+                              hideLevelBadge
+                              iconSource={image ?? undefined}
+                              subtitle={`${levelsAtTH} ${levelsAtTH === 1 ? 'level' : 'levels'}${time ? ` · ${time}` : ''}`}
+                              costLabel={showCost ? (formatCostBreakdown(itemCost.byResource) || fmtCost(itemCost.cost)) : undefined}
+                              costResources={showCost && itemCost.byResource ? itemCost.byResource : undefined}
+                              trailing={thImage ? <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" /> : undefined}
+                              isLast={i === unlockableItems.length - 1}
+                              footer={!showCost && lockedCostsPending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
+                            />
                           );
                         });
                       })()}
@@ -1799,31 +1803,22 @@ export default function HomeScreen() {
                         return allItems.map((item, i) => {
                           const itemImage = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'equipment' || item.type === 'troop' || item.type === 'spell' ? null : item.currentLevel);
                           const costData = rushedCosts[item.name];
+                          const showCost = !!costData && costData.cost > 0;
                           return (
-                            <View key={item.name} style={[styles.statRow, i === allItems.length - 1 && styles.statRowLast]}>
-                              <View style={styles.statRowIconNoBg}>
-                                {itemImage ? (
-                                  <Image source={itemImage} style={styles.statRowIconImage} resizeMode="contain" />
-                                ) : (
-                                  <Ionicons name="person-outline" size={16} color={Colors.textTertiary} />
-                                )}
-                              </View>
-                              <View style={styles.statRowText}>
-                                <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
-                                <Text style={styles.statRowSub}>Lv{item.currentLevel} <Ionicons name="chevron-forward" size={10} color={Colors.textMuted} /> Lv{item.maxLevelAtPrevTH}</Text>
-                              </View>
-                              <View style={styles.statRowRight}>
-                                {costData ? (
-                                  <>
-                                    <ResourceCostChips byResource={costData.byResource ?? {}} compact />
-                                    {formatCostBreakdown(costData.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>}
-                                    {costData.timeSeconds > 0 && <Text style={[styles.statRowValueSub, { marginTop: 4 }]}>{fmtTime(costData.timeSeconds)}</Text>}
-                                  </>
-                                ) : rushedCostsPending ? (
-                                  <Text style={styles.statRowValue}>…</Text>
-                                ) : null}
-                              </View>
-                            </View>
+                            <ItemCard
+                              key={item.name}
+                              name={item.name}
+                              level={item.currentLevel}
+                              maxLevel={item.maxLevelAtPrevTH}
+                              iconSource={itemImage ?? undefined}
+                              subtitle={`Lv${item.currentLevel} › Lv${item.maxLevelAtPrevTH}`}
+                              subtitleWithBar
+                              costLabel={showCost ? (formatCostBreakdown(costData.byResource) || fmtCost(costData.cost)) : undefined}
+                              costResources={showCost && costData.byResource ? costData.byResource : undefined}
+                              timeLabel={costData && costData.timeSeconds > 0 ? fmtTime(costData.timeSeconds) : undefined}
+                              isLast={i === allItems.length - 1}
+                              footer={!showCost && rushedCostsPending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
+                            />
                           );
                         });
                       })()}
@@ -1892,26 +1887,18 @@ export default function HomeScreen() {
                 badges={[{ key: 'count', value: group.rows.length }]}
               >
                 {group.rows.map((row, ri) => (
-                  <View key={`${group.title}-${ri}`} style={[styles.statRow, ri === group.rows.length - 1 && styles.statRowLast]}>
-                    <View style={styles.statRowIcon}>
-                      {row.iconUrl ? (
-                        <Image source={{ uri: row.iconUrl }} style={styles.statRowIconImage} resizeMode="contain" />
-                      ) : row.iconSource ? (
-                        <Image source={row.iconSource} style={styles.statRowIconImage} resizeMode="contain" />
-                      ) : (
-                        <Ionicons name={row.icon} size={16} color={Colors.textPrimary} />
-                      )}
-                    </View>
-                    <View style={styles.statRowText}>
-                      <Text style={styles.statRowLabel}>{row.label}</Text>
-                      {row.desc ? <Text style={styles.statRowSub}>{row.desc}</Text> : null}
-                    </View>
-                    {row.valueNode ?? (
-                      <Text style={[styles.statRowValue, row.accentColor ? { color: row.accentColor } : null]}>
-                        {typeof row.value === 'number' ? row.value.toLocaleString() : row.value}
-                      </Text>
-                    )}
-                  </View>
+                  <ItemCard
+                    key={`${group.title}-${ri}`}
+                    variant="plain"
+                    name={row.label}
+                    subtitle={row.desc}
+                    iconSource={row.iconSource}
+                    icon={row.iconUrl}
+                    iconName={row.icon}
+                    rightValue={row.valueNode ?? (typeof row.value === 'number' ? row.value.toLocaleString() : row.value)}
+                    rightValueColor={row.accentColor}
+                    isLast={ri === group.rows.length - 1}
+                  />
                 ))}
               </CollapsibleSection>
             ))}
@@ -1952,39 +1939,41 @@ export default function HomeScreen() {
                     const fmtClock = (iso: string) =>
                       new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     return (
-                      <View key={r.id} style={styles.statRow}>
-                        <View style={styles.statRowIcon}>
-                          <Ionicons name="time-outline" size={16} color={Colors.textPrimary} />
-                        </View>
-                        <View style={styles.statRowText}>
-                          <Text style={styles.statRowLabel} numberOfLines={1}>{r.label}</Text>
-                          <Text style={[styles.statRowSub, expired && styles.timerExpired]}>{expired ? 'Done!' : timeStr}</Text>
-                        </View>
-                        <View style={styles.timerTimes}>
-                          <Text style={styles.timerTimeStart} numberOfLines={1}>{fmtClock(r.createdAt)}</Text>
-                          <Text style={styles.timerTimeEnd} numberOfLines={1}>{fmtClock(r.targetDate)}</Text>
-                        </View>
-                        <PressableRipple style={[styles.timerEditBadge, expired && styles.timerExpiredBtn]} onPress={() => { setEditingTimer(r); setTimerLabel(r.label); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }} hitSlop={6}>
-                          <Ionicons name="pencil" size={15} color={expired ? Colors.success : Colors.textPrimary} />
-                        </PressableRipple>
-                        <PressableRipple style={styles.timerDismissBadge} onPress={() => dismissTimer(r.id)} hitSlop={6}>
-                          <Ionicons name="close" size={16} color={Colors.textPrimary} />
-                        </PressableRipple>
-                      </View>
+                      <ItemCard
+                        key={r.id}
+                        variant="plain"
+                        name={r.label}
+                        subtitle={expired ? 'Done!' : timeStr}
+                        subtitleColor={expired ? Colors.success : undefined}
+                        iconName="time-outline"
+                        rightValue={
+                          <View style={styles.timerTimes}>
+                            <Text style={styles.timerTimeStart} numberOfLines={1}>{fmtClock(r.createdAt)}</Text>
+                            <Text style={styles.timerTimeEnd} numberOfLines={1}>{fmtClock(r.targetDate)}</Text>
+                          </View>
+                        }
+                        actionIcon="pencil"
+                        actionColor={expired ? Colors.success : undefined}
+                        actionAccessibilityLabel={`Edit ${r.label}`}
+                        onActionPress={() => { setEditingTimer(r); setTimerLabel(r.label); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}
+                        actionIcon2="close"
+                        actionAccessibilityLabel2={`Dismiss ${r.label}`}
+                        onActionPress2={() => dismissTimer(r.id)}
+                      />
                     );
                   })}
-                <PressableRipple style={[styles.statRow, styles.statRowLast, styles.addTimerRow]} onPress={() => { setEditingTimer(null); setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}>
-                  <View style={[styles.statRowIcon, styles.addTimerRowIcon]}>
-                    <Ionicons name="alarm-outline" size={16} color={Colors.textPrimary} />
-                  </View>
-                  <View style={styles.statRowText}>
-                    <Text style={styles.statRowLabel}>Add timer</Text>
-                    <Text style={styles.statRowSub}>Set a countdown</Text>
-                  </View>
-                  <View style={[styles.timerAddBadge, styles.timerAddBadgeLast]}>
-                    <Ionicons name="add" size={18} color={Colors.textPrimary} />
-                  </View>
-                </PressableRipple>
+                <ItemCard
+                  variant="plain"
+                  dashed
+                  name="Add timer"
+                  subtitle="Set a countdown"
+                  iconName="alarm-outline"
+                  onPress={() => { setEditingTimer(null); setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}
+                  actionIcon="add"
+                  actionAccessibilityLabel="Add timer"
+                  onActionPress={() => { setEditingTimer(null); setTimerLabel(''); setTimerMinutes(30); setTimerCustom(''); setAddTimerVisible(true); }}
+                  isLast
+                />
               </CollapsibleSection>
             </View>
           ) : (
@@ -2849,87 +2838,19 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     margin: Spacing.lg,
   },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginBottom: Spacing.xs,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.sm,
-  },
-  statRowLast: {
-    borderBottomLeftRadius: Radius.xl,
-    borderBottomRightRadius: Radius.xl,
-  },
-  statRowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statRowIconNoBg: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statRowText: {
-    flex: 1,
-  },
-  statRowLabel: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  statRowSub: {
-    ...Typography.footnote,
-    color: Colors.textTertiary,
-    marginTop: Spacing.xs / 2,
-  },
-  statRowValue: {
+  statValue: {
     ...Typography.subhead,
     color: Colors.textPrimary,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  statRowIconImage: {
-    width: 26,
-    height: 26,
-    resizeMode: 'contain',
-  },
-  statRowRight: {
-    alignItems: 'flex-end',
-  },
-  statRowValueSub: {
-    ...Typography.footnote,
-    color: Colors.textTertiary,
-    marginTop: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  statRowRightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statRowRightBadge: {
-    alignItems: 'flex-end',
-  },
-  thImageBadge: {
-    width: 32,
-    height: 32,
-    marginLeft: Spacing.lg,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
   thImageBadgeImg: {
     width: 26,
     height: 26,
+  },
+  backlogPending: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -2956,10 +2877,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginLeft: 24,
   },
-  timerExpired: {
-    color: Colors.success,
-    fontWeight: '700',
-  },
   timerTimes: {
     alignSelf: 'stretch',
     justifyContent: 'space-between',
@@ -2979,48 +2896,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     fontVariant: ['tabular-nums'],
-  },
-  timerEditBadge: {
-    minWidth: 36,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xs,
-  },
-  timerExpiredBtn: {
-    backgroundColor: Colors.successGhost,
-  },
-  timerDismissBadge: {
-    minWidth: 36,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xs,
-  },
-  timerAddBadge: {
-    minWidth: 36,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xs,
-  },
-  timerAddBadgeLast: {
-    borderBottomRightRadius: Radius.xl,
-  },
-  addTimerRow: {
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgCard,
-  },
-  addTimerRowIcon: {
-    borderBottomLeftRadius: Radius.xl,
   },
   timersEmpty: {
     flexDirection: 'row',
