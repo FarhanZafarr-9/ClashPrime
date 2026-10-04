@@ -724,7 +724,6 @@ export default function SettingsScreen() {
   };
 
   const handleOnboardingImportTokenSubmit = async (token:string) => {
-  
     if (token.length < 20) {
       setModalError('Enter a valid API token from clashofclans.com');
       return;
@@ -1224,7 +1223,7 @@ export default function SettingsScreen() {
             />
             <SettingRow
               icon="rocket-outline"
-title="Add Account (Full Setup)"
+              title="Add Account (Full Setup)"
                 desc="Walk through the full setup for a new account"
                 compact
                 isLast
@@ -1253,7 +1252,7 @@ title="Add Account (Full Setup)"
             </SettingRow>
             <SettingRow
               icon="text-outline"
-title="Clash Font"
+              title="Clash Font"
               desc={clashFontDesc}
               compact
               isLast
@@ -1286,7 +1285,7 @@ title="Clash Font"
             </SettingRow>
             <SettingRow
               icon="shield-half-outline"
-title="Army Discounts"
+              title="Army Discounts"
               desc={discountDesc(discounts.army)}
               compact
               onPress={() => setDiscountModalScope('army')}
@@ -1387,7 +1386,7 @@ title="Army Discounts"
             </SettingRow>
             <SettingRow
               icon="refresh-outline"
-title="Refresh Game Data"
+              title="Refresh Game Data"
               desc="Reload the bundled game database"
               compact
               isLast
@@ -1454,7 +1453,7 @@ title="Refresh Game Data"
             />
             <SettingRow
               icon="chatbubble-outline"
-title="Send Feedback"
+              title="Send Feedback"
               desc="Report a bug or share an idea"
               compact
               onPress={openFeedback}
@@ -1480,7 +1479,7 @@ title="Send Feedback"
             </SettingRow>
             <SettingRow
               icon="code-slash-outline"
-title="Build Diagnostics"
+              title="Build Diagnostics"
               desc="Technical build details for bug reports"
               compact
               onPress={openBuildDiagnostics}
@@ -1682,7 +1681,7 @@ title="Build Diagnostics"
         handleOnboardingImportContinue={handleOnboardingImportContinue}
         handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
       />
-      
+
       <Modal visible={switchModalVisible} transparent animationType="fade" onRequestClose={() => setSwitchModalVisible(false)} statusBarTranslucent>
         <PressableRipple style={styles.switchOverlay} onPress={() => setSwitchModalVisible(false)}>
           <View style={styles.switchCard}>
