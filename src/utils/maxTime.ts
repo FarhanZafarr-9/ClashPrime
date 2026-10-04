@@ -14,6 +14,12 @@ import { getBuildingEffectiveMax } from './buildingImages';
 import { getBuildingCopies, getCountAtTH, getCountAtBH } from './buildingCopies';
 import { getBuildingCategories, getBBCategories, getBuildingMaxLevelAtBH } from './buildingData';
 import {
+  isArmyExcluded,
+  isBuildingExcluded,
+  isPipelineGated,
+  type ArmyPipeline,
+} from './exclusions';
+import {
   remainingArmyCosts,
   remainingBuildingCosts,
   sumCosts,
@@ -62,6 +68,11 @@ export interface PipelineResult {
   items: PipelineItemRow[];
   /** Only present on the builders pipeline. */
   split?: BuilderSplit;
+  /**
+   * True when the pipeline is skipped wholesale because its gating building
+   * (Laboratory, Pet House, Blacksmith, Star Laboratory) is excluded.
+   */
+  gated?: boolean;
 }
 
 export interface MaxTimeInput {
@@ -70,7 +81,11 @@ export interface MaxTimeInput {
   builderCount: number;
   /** Pre-fetched package details keyed by display name (armyData.getArmyTroopDetail). */
   armyDetails: Record<string, TroopDetail | null>;
-  /** Buildings the player does not plan to max — all copies are skipped. */
+  /**
+   * Exclusions from the Time to Max screen, keyed by building display name or by
+   * `exclusions.armyKey(name)` for a single troop, spell, siege, hero, pet or
+   * piece of equipment. Excluding a gating building drops its whole pipeline.
+   */
   excludedBuildings?: ReadonlySet<string>;
 }
 
@@ -159,12 +174,14 @@ function buildSerialPipeline(
   items: LeveledItem[],
   th: number,
   armyDetails: Record<string, TroopDetail | null>,
+  excludedBuildings?: ReadonlySet<string>,
 ): PipelineResult {
   const superTroops = new Set(getSuperTroopNames());
   const rows: PipelineItemRow[] = [];
   for (const item of items) {
     if (item.village === 'builderBase') continue;
     if (key === 'lab' && superTroops.has(item.name)) continue;
+    if (isArmyExcluded(excludedBuildings, item.name)) continue;
     const maxLevel = getMaxLevelAtTH(item.name, th) ?? 0;
     if (maxLevel <= 0) continue;
     const ct = remainingArmyCosts(armyDetails[item.name], item.level, maxLevel);
@@ -172,6 +189,11 @@ function buildSerialPipeline(
     rows.push(toRow(item.name, item.level, maxLevel, ct));
   }
   return aggregate(key, rows);
+}
+
+/** An empty pipeline, used when the building that runs it is excluded. */
+function gatedPipeline(key: PipelineKey): PipelineResult {
+  return { ...aggregate(key, []), gated: true };
 }
 
 /** Buildings + heroes compete for the same builder pool. Each hero and each
@@ -190,11 +212,14 @@ function buildBuildersPipeline(
   const rows: PipelineItemRow[] = [];
   const buildingChains: number[] = [];
   const heroChains: number[] = [];
+  // Hero upgrades need the Hero Hall, so excluding it takes the whole hero chain
+  // out of the builder pool.
+  const heroesGated = isPipelineGated(excludedBuildings, 'heroes');
 
   const cats = getBuildingCategories(th);
   for (const items of Object.values(cats)) {
     for (const [name, thData] of Object.entries(items)) {
-      if (excludedBuildings?.has(name)) continue;
+      if (isBuildingExcluded(excludedBuildings, name)) continue;
       const entry = thData[String(th)];
       if (!entry || (entry.level ?? 0) <= 0) continue;
       const effectiveMax = getBuildingEffectiveMax(name, th);
@@ -218,8 +243,9 @@ function buildBuildersPipeline(
     }
   }
 
-  for (const hero of heroItems) {
+  for (const hero of heroesGated ? [] : heroItems) {
     if (hero.village === 'builderBase') continue;
+    if (isArmyExcluded(excludedBuildings, hero.name)) continue;
     const maxLevel = getMaxLevelAtTH(hero.name, th) ?? 0;
     if (maxLevel <= 0) continue;
     const ct = remainingArmyCosts(armyDetails[hero.name], hero.level, maxLevel);
@@ -244,11 +270,16 @@ function buildBuildersPipeline(
 }
 
 /** Equipment upgrades are instant — they only consume Shiny/Glowing/Starry ore at the Blacksmith. */
-function buildEquipmentPipeline(player: ClashPlayer, th: number): PipelineResult {
+function buildEquipmentPipeline(
+  player: ClashPlayer,
+  th: number,
+  excludedBuildings?: ReadonlySet<string>,
+): PipelineResult {
   const blacksmithMax = getBuildingMaxLevelAtTH('blacksmith', th) ?? 0;
   const rows: PipelineItemRow[] = [];
   for (const eq of player.heroEquipment ?? []) {
     if (eq.village === 'builderBase') continue;
+    if (isArmyExcluded(excludedBuildings, eq.name)) continue;
     const item = getArmyItem(eq.name);
     if (!item || item.base === 'builder' || !item.levels?.length) continue;
     let maxLevel = 0;
@@ -275,6 +306,18 @@ function buildEquipmentPipeline(player: ClashPlayer, th: number): PipelineResult
   return aggregate('equipment', rows);
 }
 
+/** Max equipment level the Blacksmith can reach at this TH (0 when locked). */
+function equipmentMaxLevel(name: string, blacksmithMax: number): number {
+  const item = getArmyItem(name);
+  if (!item || item.base === 'builder' || !item.levels?.length) return 0;
+  let maxLevel = 0;
+  for (const lvl of item.levels) {
+    const req = lvl.blacksmithLevelRequired ?? 0;
+    if ((req === 0 || req <= blacksmithMax) && lvl.level > maxLevel) maxLevel = lvl.level;
+  }
+  return maxLevel;
+}
+
 export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
   const { player, th, builderCount, armyDetails, excludedBuildings } = input;
   // Locked (not yet unlocked) troops/spells/heroes still count toward max: the
@@ -284,10 +327,18 @@ export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
     lockedItemsAtTH(th, ['troop', 'spell']),
   );
   const heroItems = mergeLeveled(player.heroes ?? [], lockedItemsAtTH(th, ['hero']));
-  const lab = buildSerialPipeline('lab', labItems, th, armyDetails);
-  const pets = buildSerialPipeline('pets', player.pets ?? [], th, armyDetails);
+  // Each research pipeline is gated by one building: excluding that building
+  // drops the pipeline rather than just its own upgrade chain.
+  const lab = isPipelineGated(excludedBuildings, 'lab')
+    ? gatedPipeline('lab')
+    : buildSerialPipeline('lab', labItems, th, armyDetails, excludedBuildings);
+  const pets = isPipelineGated(excludedBuildings, 'pets')
+    ? gatedPipeline('pets')
+    : buildSerialPipeline('pets', player.pets ?? [], th, armyDetails, excludedBuildings);
   const builders = buildBuildersPipeline(player, heroItems, th, builderCount, armyDetails, excludedBuildings);
-  const equipment = buildEquipmentPipeline(player, th);
+  const equipment = isPipelineGated(excludedBuildings, 'equipment')
+    ? gatedPipeline('equipment')
+    : buildEquipmentPipeline(player, th, excludedBuildings);
 
   const totalTimeSec = Math.max(lab.timeSec, builders.timeSec, pets.timeSec, equipment.timeSec);
   const totalCost = lab.cost + builders.cost + pets.cost + equipment.cost;
@@ -320,7 +371,11 @@ export interface BuilderBaseMaxTimeInput {
   builderCount: number;
   /** Pre-fetched package details keyed by display name (armyData.getArmyTroopDetail with builderBase). */
   armyDetails: Record<string, TroopDetail | null>;
-  /** Buildings the player does not plan to max — all copies are skipped. */
+  /**
+   * Same exclusion set as the Home Village (`MaxTimeInput.excludedBuildings`):
+   * Builder Base display names ("BB Cannon", "Star Laboratory") never collide
+   * with Home ones, so one list covers both villages.
+   */
   excludedBuildings?: ReadonlySet<string>;
 }
 
@@ -366,11 +421,13 @@ function buildBBBuildersPipeline(
   const rows: PipelineItemRow[] = [];
   const buildingChains: number[] = [];
   const heroChains: number[] = [];
+  // Builder Base hero upgrades need the Builder Barracks.
+  const heroesGated = isPipelineGated(excludedBuildings, 'bb-heroes');
 
   const cats = getBBCategories(bh);
   for (const items of Object.values(cats)) {
     for (const [name, bhData] of Object.entries(items)) {
-      if (excludedBuildings?.has(name)) continue;
+      if (isBuildingExcluded(excludedBuildings, name)) continue;
       const entry = bhData[String(bh)];
       if (!entry || (entry.level ?? 0) <= 0) continue;
       const effectiveMax = getBuildingMaxLevelAtBH(name, bh) ?? 0;
@@ -386,7 +443,8 @@ function buildBBBuildersPipeline(
     }
   }
 
-  for (const hero of heroItems) {
+  for (const hero of heroesGated ? [] : heroItems) {
+    if (isArmyExcluded(excludedBuildings, hero.name)) continue;
     const maxLevel = getBuilderHeroMaxLevel(hero.name, bh) ?? 0;
     if (maxLevel <= 0) continue;
     const ct = remainingArmyCosts(armyDetails[hero.name], hero.level, maxLevel);
@@ -415,9 +473,11 @@ function buildBBLabPipeline(
   troopItems: LeveledItem[],
   bh: number,
   armyDetails: Record<string, TroopDetail | null>,
+  excludedBuildings?: ReadonlySet<string>,
 ): PipelineResult {
   const rows: PipelineItemRow[] = [];
   for (const item of troopItems) {
+    if (isArmyExcluded(excludedBuildings, item.name)) continue;
     const maxLevel = getBuilderTroopMaxLevel(item.name, bh) ?? 0;
     if (maxLevel <= 0) continue;
     const ct = remainingArmyCosts(armyDetails[item.name], item.level, maxLevel);
@@ -432,7 +492,9 @@ export function computeBuilderBaseMaxTime(input: BuilderBaseMaxTimeInput): Build
   const heroItems = mergeBuilderLeveled(player.heroes ?? [], lockedBuilderItems(bh, ['hero']));
   const troopItems = mergeBuilderLeveled(player.troops ?? [], lockedBuilderItems(bh, ['troop']));
   const bbBuilders = buildBBBuildersPipeline(player, heroItems, bh, builderCount, armyDetails, excludedBuildings);
-  const bbLab = buildBBLabPipeline(troopItems, bh, armyDetails);
+  const bbLab = isPipelineGated(excludedBuildings, 'bb-lab')
+    ? gatedPipeline('bb-lab')
+    : buildBBLabPipeline(troopItems, bh, armyDetails, excludedBuildings);
 
   const totalTimeSec = Math.max(bbBuilders.timeSec, bbLab.timeSec);
   const totalCost = bbBuilders.cost + bbLab.cost;
@@ -451,4 +513,74 @@ export function computeBuilderBaseMaxTime(input: BuilderBaseMaxTimeInput): Build
     totalByResource,
     builderCount,
   };
+}
+
+// --- Exclusion listing ---
+
+export interface ExcludableArmyItem {
+  name: string;
+  /** The pipeline this item's upgrades belong to. */
+  pipeline: ArmyPipeline;
+  currentLevel: number;
+  maxLevel: number;
+}
+
+export interface ExcludableArmyInput {
+  player: ClashPlayer;
+  village: 'home' | 'builder';
+  /** Home Village Town Hall level (ignored for the Builder Base). */
+  th: number;
+  /** Builder Hall level (ignored for the Home Village). */
+  bh: number;
+}
+
+/**
+ * Army items still waiting on research or an upgrade, so the screen can offer a
+ * per-item exclusion for every pipeline. Deliberately computed *without* the
+ * exclusion set: excluding a gating building empties its pipeline, but the items
+ * must stay listable so the exclusion can be undone from the same screen.
+ * Fully-maxed items are left out — there is nothing left to skip.
+ */
+export function listExcludableArmyItems(input: ExcludableArmyInput): ExcludableArmyItem[] {
+  const { player, village, th, bh } = input;
+  const rows: ExcludableArmyItem[] = [];
+  const push = (pipeline: ArmyPipeline, name: string, currentLevel: number, maxLevel: number | null) => {
+    if (maxLevel == null || maxLevel <= 0) return;
+    if (currentLevel >= maxLevel) return;
+    rows.push({ name, pipeline, currentLevel: Math.max(0, currentLevel), maxLevel });
+  };
+
+  if (village === 'home') {
+    const superTroops = new Set(getSuperTroopNames());
+    const labItems = mergeLeveled(
+      [...(player.troops ?? []), ...(player.spells ?? [])],
+      lockedItemsAtTH(th, ['troop', 'spell']),
+    );
+    for (const item of labItems) {
+      if (item.village === 'builderBase' || superTroops.has(item.name)) continue;
+      push('lab', item.name, item.level, getMaxLevelAtTH(item.name, th));
+    }
+    for (const hero of mergeLeveled(player.heroes ?? [], lockedItemsAtTH(th, ['hero']))) {
+      if (hero.village === 'builderBase') continue;
+      push('heroes', hero.name, hero.level, getMaxLevelAtTH(hero.name, th));
+    }
+    for (const pet of player.pets ?? []) {
+      if (pet.village === 'builderBase') continue;
+      push('pets', pet.name, pet.level, getMaxLevelAtTH(pet.name, th));
+    }
+    const blacksmithMax = getBuildingMaxLevelAtTH('blacksmith', th) ?? 0;
+    for (const eq of player.heroEquipment ?? []) {
+      if (eq.village === 'builderBase') continue;
+      push('equipment', eq.name, eq.level, equipmentMaxLevel(eq.name, blacksmithMax));
+    }
+    return rows;
+  }
+
+  for (const troop of mergeBuilderLeveled(player.troops ?? [], lockedBuilderItems(bh, ['troop']))) {
+    push('bb-lab', troop.name, troop.level, getBuilderTroopMaxLevel(troop.name, bh));
+  }
+  for (const hero of mergeBuilderLeveled(player.heroes ?? [], lockedBuilderItems(bh, ['hero']))) {
+    push('bb-heroes', hero.name, hero.level, getBuilderHeroMaxLevel(hero.name, bh));
+  }
+  return rows;
 }

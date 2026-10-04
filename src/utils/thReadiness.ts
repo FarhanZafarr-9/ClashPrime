@@ -2,6 +2,7 @@ import type { ClashPlayer } from '../types/clash';
 import { getBuildingCategories, HOME_CATEGORIES } from './buildingData';
 import { getBuildingCopies, getCountAtTH } from './buildingCopies';
 import { getAllItemsAtTH, getPetNames, getMaxLevelAtTH, getSuperTroopNames } from './armyData';
+import { isArmyExcluded, isBuildingExcluded, isPipelineGated } from './exclusions';
 
 export interface CategoryReadiness {
   key: string;
@@ -79,7 +80,7 @@ function buildingCategory(
   let done = 0;
   let total = 0;
   for (const name of names) {
-    if (excludedBuildings?.has(name)) continue;
+    if (isBuildingExcluded(excludedBuildings, name)) continue;
     const effectiveMax = getBuildingMaxLevelAtTHLocal(name, th);
     if (effectiveMax <= 0) continue;
     const count = getCountAtTH(name, th);
@@ -124,6 +125,11 @@ function getBuildingMaxLevelAtTHLocal(name: string, th: number): number {
   return 0;
 }
 
+/**
+ * TH upgrade readiness: per-category and per-pipeline progress, a weighted
+ * score and what TH+1 would add. Excluded buildings, army items and gated
+ * pipelines drop out of every category and of the TH+1 preview.
+ */
 export function computeThReadiness(player: ClashPlayer, th: number, excludedBuildings?: ReadonlySet<string>): ThReadiness {
   const nextTh = th + 1;
   const cats: CategoryReadiness[] = [];
@@ -159,21 +165,35 @@ export function computeThReadiness(player: ClashPlayer, th: number, excludedBuil
     });
   }
 
+  // A gating building (Laboratory, Hero Hall, Pet House) excludes the whole
+  // pipeline that runs inside it, and individual items can be excluded too — the
+  // same keys the Time to Max screen writes.
   const superTroops = new Set(getSuperTroopNames());
-  const heroItems = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
+  const labGated = isPipelineGated(excludedBuildings, 'lab');
+  const heroesGated = isPipelineGated(excludedBuildings, 'heroes');
+  const petsGated = isPipelineGated(excludedBuildings, 'pets');
+  const skipItem = (name: string) => isArmyExcluded(excludedBuildings, name);
+  const heroItems = getAllItemsAtTH(th).filter(
+    (i) => i.type === 'hero' && !heroesGated && !skipItem(i.name),
+  );
   const troopItems = getAllItemsAtTH(th).filter(
-    (i) => i.type === 'troop' && !superTroops.has(i.name),
+    (i) => i.type === 'troop' && !labGated && !superTroops.has(i.name) && !skipItem(i.name),
   );
   const spellItems = getAllItemsAtTH(th).filter(
-    (i) => i.type === 'spell' && !superTroops.has(i.name),
+    (i) => i.type === 'spell' && !labGated && !superTroops.has(i.name) && !skipItem(i.name),
   );
-  const siegeItems = getAllItemsAtTH(th).filter((i) => i.type === 'siege');
-  const petItems = getPetNames()
-    .map((name) => {
-      const maxLevel = getMaxLevelAtTH(name, th) ?? 0;
-      return maxLevel > 0 ? { name, maxLevel } : null;
-    })
-    .filter((x): x is { name: string; maxLevel: number } => x != null);
+  const siegeItems = getAllItemsAtTH(th).filter(
+    (i) => i.type === 'siege' && !labGated && !skipItem(i.name),
+  );
+  const petItems = petsGated
+    ? []
+    : getPetNames()
+        .filter((name) => !skipItem(name))
+        .map((name) => {
+          const maxLevel = getMaxLevelAtTH(name, th) ?? 0;
+          return maxLevel > 0 ? { name, maxLevel } : null;
+        })
+        .filter((x): x is { name: string; maxLevel: number } => x != null);
 
   const heroOwned: Record<string, number> = {};
   for (const h of player.heroes ?? []) heroOwned[h.name] = h.level;
@@ -242,10 +262,17 @@ export function computeThReadiness(player: ClashPlayer, th: number, excludedBuil
   const verdict: ThReadiness['verdict'] = score >= 85 ? 'ready' : score >= 60 ? 'almost' : 'not-ready';
   const verdictLabel = verdict === 'ready' ? 'Safe to upgrade' : verdict === 'almost' ? 'Nearly there' : 'Not yet';
 
-  // What TH+1 would add on top of the current debt.
+  // What TH+1 would add on top of the current debt. Items behind an exclusion
+  // (or a gated pipeline) are not part of the plan, so they are left out too.
+  const typeGated = (type: string) =>
+    type === 'hero' ? heroesGated : type === 'pet' ? petsGated : labGated;
+  const inPlan = (i: { name: string; type: string }) =>
+    !typeGated(i.type) && !isArmyExcluded(excludedBuildings, i.name);
   const currentItems = getAllItemsAtTH(th);
   const nextItems = getAllItemsAtTH(nextTh);
-  const newItems = nextItems.filter((n) => !currentItems.some((c) => c.name === n.name && c.type === n.type));
+  const newItems = nextItems.filter(
+    (n) => !currentItems.some((c) => c.name === n.name && c.type === n.type) && inPlan(n),
+  );
   const nextUnlocks: {
     label: string;
     value: string;
@@ -274,8 +301,10 @@ export function computeThReadiness(player: ClashPlayer, th: number, excludedBuil
   const armyLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   const armyTypes = ['troop', 'spell', 'siege', 'hero'] as const;
   for (const type of armyTypes) {
+    if (typeGated(type)) continue;
     const currentTypeItems = currentItems.filter(i => i.type === type);
     for (const cur of currentTypeItems) {
+      if (isArmyExcluded(excludedBuildings, cur.name)) continue;
       const next = nextItems.find(n => n.name === cur.name && n.type === type);
       if (next && next.maxLevel > cur.maxLevel) {
         armyLevelDetails.push({
@@ -296,7 +325,7 @@ export function computeThReadiness(player: ClashPlayer, th: number, excludedBuil
   const extraLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   for (const [cat, buildings] of Object.entries(catsNext)) {
     for (const [name, thData] of Object.entries(buildings)) {
-      if (excludedBuildings?.has(name)) continue;
+      if (isBuildingExcluded(excludedBuildings, name)) continue;
       const nextMax = thData[String(nextTh)]?.level ?? 0;
       const curMax = catsNow[cat]?.[name]?.[String(th)]?.level ?? 0;
       const count = getCountAtTH(name, nextTh);
