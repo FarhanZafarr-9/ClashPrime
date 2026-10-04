@@ -77,8 +77,8 @@ const styles = StyleSheet.create({
     height: 20,
   },
   iconCompact: {
-    width: 14,
-    height: 14,
+    width: 12,
+    height: 12,
   },
   amount: {
     ...Typography.caption,
