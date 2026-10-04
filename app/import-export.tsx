@@ -16,6 +16,7 @@ import * as Clipboard from 'expo-clipboard';
 import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
 import { usePlayer } from '../src/hooks/usePlayerContext';
+import { setBulkCraftedLevels } from '../src/hooks/usePlayer';
 import { useBuilderCount } from '../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../src/hooks/useBuilderBaseCount';
 import { parseCocExport, cocExportToBuildingLevels, detectBuilderHutCount, normalizeTag, CocImportResult } from '../src/utils/cocExport';
@@ -24,6 +25,15 @@ import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildi
 import { buildingUpgradeCosts, buildingUpgradeChainTimes, scheduleChains, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../src/utils/upgradeCosts';
 import { PACKAGE_RESOURCE_IMAGES } from '../src/data/packageImages';
 import { BUILDING_RESOURCE_META, isBuilderName, type BuildingCostResource } from '../src/utils/buildingData';
+import {
+  getCraftedDefense,
+  normalizeModuleLevels,
+  effectiveLevel,
+  statFor,
+  nextUpgrade,
+  getCraftedDefenseImage,
+  moduleMaxLevel,
+} from '../src/utils/craftedDefenses';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -64,7 +74,7 @@ function BuildingRowIcon({ storeName, level }: { storeName: string; level: numbe
 
 export default function ImportExportScreen() {
   const router = useRouter();
-  const { player, accounts, setBulkLevels, applyLevelsToAccount } = usePlayer();
+  const { player, accounts, setBulkLevels, setCraftedLevels, applyLevelsToAccount } = usePlayer();
   const playerThImage = getTownHallImageSource(player?.townHallLevel);
   const { show, Dialog } = useDialog();
   const { colors } = useTheme();
@@ -260,7 +270,45 @@ export default function ImportExportScreen() {
 
   // A result parsed before `crafted` existed (Fast Refresh keeps the old state) has
   // no such field, so read it defensively rather than trusting the shape.
-  const craftedDefs = result?.crafted ?? [];
+  const craftedDefs = useMemo(() => result?.crafted ?? [], [result]);
+
+  // Crafted defenses report one level per module rather than a single level, so
+  // normalize them against the package's module lists. That fills in any module the
+  // export omitted, clamps out-of-range values, and yields the stat each module has
+  // reached — plus the effective level (the module sum) the sprites are tiered by.
+  const craftedRows = useMemo(
+    () =>
+      craftedDefs.map((c) => {
+        const raw = Object.fromEntries(c.modules.map((m) => [m.name, m.level]));
+        const defense = getCraftedDefense(c.displayName);
+        const levels = defense ? normalizeModuleLevels(defense, raw) : null;
+        const eff = defense && levels ? effectiveLevel(defense, levels) : c.effectiveLevel;
+        return {
+          name: c.displayName,
+          defense,
+          levels,
+          effectiveLevel: eff,
+          image: getCraftedDefenseImage(c.displayName, eff),
+          modules: defense && levels
+            ? defense.modules.map((m) => ({
+              name: m.name,
+              level: levels[m.name],
+              max: moduleMaxLevel(m),
+              stat: statFor(m, levels[m.name]),
+              next: nextUpgrade(defense, m.name, levels[m.name]),
+            }))
+            : c.modules.map((m) => ({ name: m.name, level: m.level, max: 0, stat: null, next: null })),
+        };
+      }),
+    [craftedDefs],
+  );
+
+  /** defense name → module name → level, ready to persist. */
+  const craftedPayload = useMemo(() => {
+    const out: Record<string, Record<string, number>> = {};
+    for (const row of craftedRows) if (row.levels) out[row.name] = row.levels;
+    return out;
+  }, [craftedRows]);
 
   // Flatten each building into one row per distinct level transition so the list
   // reads cleanly when copies upgrade across different levels. Each variant keeps
@@ -342,7 +390,7 @@ export default function ImportExportScreen() {
       .filter((u) => u.copies > 0)
       .sort((a, b) => b.remainingSec - a.remainingSec);
   }, [result, player]);
-  const canApply = applyCount > 0 && totalChanged > 0 && !!player;
+  const canApply = (applyCount > 0 && totalChanged > 0 || Object.keys(craftedPayload).length > 0) && !!player;
 
   const doApply = async (tag: string) => {
     if (!result || !player) return;
@@ -360,11 +408,13 @@ export default function ImportExportScreen() {
     for (const row of upgradeRows) levels[row.storeName] = Math.max(...row.targetLevels);
     if (tag.toUpperCase() === player.tag.toUpperCase()) {
       setBulkLevels(levels, perBuilding);
+      if (Object.keys(craftedPayload).length) setCraftedLevels(craftedPayload);
       router.back();
       return;
     }
     const target = accounts.find((a) => a.tag.toUpperCase() === tag.toUpperCase());
     await applyLevelsToAccount(tag, levels, perBuilding);
+    if (Object.keys(craftedPayload).length) await setBulkCraftedLevels(craftedPayload, tag);
     show({
       title: 'Levels applied',
       message: `Building levels were saved to ${target?.name || tag}. Switch to that account to see them.`,
@@ -678,7 +728,7 @@ export default function ImportExportScreen() {
                         key: 'crafted',
                         icon: 'shield-half-outline' as const,
                         label: 'Crafted defenses',
-                        value: `${craftedDefs.length} detected (not imported)`,
+                        value: `${craftedRows.length} detected`,
                       }]
                       : []),
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
@@ -704,33 +754,42 @@ export default function ImportExportScreen() {
                 })()}
               </View>
 
-              {craftedDefs.length > 0 ? (
+              {craftedRows.length > 0 ? (
                 <>
                   <Text style={styles.sectionTitle}>Crafted defenses in export</Text>
-                  <View style={styles.rows}>
-                    {craftedDefs.map((c, i) => (
-                      <View
-                        key={`${c.dataId}-${i}`}
-                        style={[
-                          styles.row,
-                          i === 0 && styles.rowFirst,
-                          i === craftedDefs.length - 1 && styles.rowLast,
-                          i < craftedDefs.length - 1 && styles.rowBorder,
-                        ]}
-                      >
-                        <Ionicons name="shield-half-outline" size={15} color={Colors.textSecondary} />
-                        <Text style={styles.rowLabel}>{c.displayName}</Text>
-                        <Text style={[styles.rowBefore, { flex: 1, textAlign: 'right' }]} numberOfLines={2}>
-                          {c.modules.length
-                            ? c.modules.map((m) => `${m.name} ${m.level}`).join(' · ')
-                            : 'no modules recorded'}
-                        </Text>
+                  {craftedRows.map((row, ri) => (
+                    <View key={row.name} style={[styles.craftedCard, ri === 0 && styles.craftedCardFirst]}>
+                      <View style={styles.craftedHeader}>
+                        {row.image ? (
+                          <Image source={row.image} style={styles.craftedIcon} resizeMode="contain" />
+                        ) : (
+                          <View style={styles.craftedIconBox}>
+                            <Ionicons name="shield-half-outline" size={18} color={Colors.textTertiary} />
+                          </View>
+                        )}
+                        <Text style={styles.craftedName} numberOfLines={1}>{row.name}</Text>
+                        <Text style={styles.craftedLevel}>Lv {row.effectiveLevel}</Text>
                       </View>
-                    ))}
-                  </View>
+                      {row.modules.map((m) => (
+                        <View key={m.name} style={styles.craftedModuleRow}>
+                          <Text style={styles.craftedModuleName} numberOfLines={1}>{m.name}</Text>
+                          <Text style={styles.craftedModuleLevel}>
+                            {m.max ? `${m.level}/${m.max}` : String(m.level)}
+                          </Text>
+                          {m.stat != null ? (
+                            <Text style={styles.craftedModuleStat} numberOfLines={1}>
+                              {m.stat.toLocaleString()}
+                              {m.next ? ` → ${m.next.stat.toLocaleString()}` : ' · maxed'}
+                            </Text>
+                          ) : null}
+                        </View>
+                      ))}
+                    </View>
+                  ))}
                   <Text style={styles.sectionHint}>
-                    Crafted defenses have their own per-module levels, which this app does not
-                    store yet, so they are reported here but not imported.
+                    A crafted defense has no single level: each module is upgraded on its own and
+                    the level shown is their sum, which is what the game displays. The value on the
+                    right is the stat the module currently reaches, then what the next upgrade gives.
                   </Text>
                 </>
               ) : null}
@@ -1279,6 +1338,71 @@ const styles = StyleSheet.create({
   levelRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+  },
+  craftedCard: {
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgSubtle,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 10,
+    gap: 2,
+    marginTop: Spacing.xs + 2,
+  },
+  craftedCardFirst: {
+    marginTop: 0,
+  },
+  craftedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingBottom: 6,
+  },
+  craftedIcon: {
+    width: 34,
+    height: 34,
+  },
+  craftedIconBox: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  craftedName: {
+    flex: 1,
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  craftedLevel: {
+    ...Typography.subhead,
+    color: Colors.success,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  craftedModuleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 3,
+  },
+  craftedModuleName: {
+    flex: 1,
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+  },
+  craftedModuleLevel: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    fontVariant: ['tabular-nums'],
+  },
+  craftedModuleStat: {
+    minWidth: 118,
+    textAlign: 'right',
+    ...Typography.footnote,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   levelIcon: {
     width: 24,
