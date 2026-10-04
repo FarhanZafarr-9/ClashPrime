@@ -442,29 +442,7 @@ function CollapsibleSection({
   );
 }
 
-/**
- * Seamless-block corner rounding for a single vertical stack of rows (the account
- * switcher list), matching the Army tab chips: the rows read as one rounded block,
- * so only the top and bottom ends take the large radius and the seams between rows
- * stay at Radius.sm.
- *
- * Derived from the row index rather than hardcoded, so a list of any length keeps
- * its block shape. The first and last rows are the same row when there is only
- * one account, so each end is tested independently.
- */
-function listCornerStyle(index: number, total: number) {
-  const outer = Radius.xl * 1.25;
-  return {
-    ...(index === 0 && {
-      borderTopLeftRadius: outer,
-      borderTopRightRadius: outer,
-    }),
-    ...(index === total - 1 && {
-      borderBottomLeftRadius: outer,
-      borderBottomRightRadius: outer,
-    }),
-  };
-}
+
 
 /**
  * At or above this many pending rows a section header stops expanding in place
@@ -2144,7 +2122,7 @@ export default function HomeScreen() {
               </View>
             </View>
             {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
-            {accounts.map((acct, ai) => {
+            {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
               const isSyncing = acct.tag === syncingTag;
               const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
@@ -2154,7 +2132,6 @@ export default function HomeScreen() {
                   key={acct.tag}
                   style={[
                     styles.switcherItem,
-                    listCornerStyle(ai, accounts.length),
                     isActive && styles.switcherItemActive,
                   ]}
                   onPress={() => handleHomeSwitch(acct.tag)}
