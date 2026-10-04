@@ -51,15 +51,65 @@ import Constants from 'expo-constants';
 import { Switch } from 'react-native-paper'
 const heartImg = require('../../images/heart.png') as any;
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.sectionHeader}>{children}</Text>;
-}
+/** Settings groups, collapsed the same way the Time to Max pipelines are. */
+type SettingsSectionKey = 'account' | 'appearance' | 'discounts' | 'data' | 'app' | 'developer';
 
-function SettingCard({ children }: { children: React.ReactNode }) {
+const SECTION_META: Record<SettingsSectionKey, { title: string; icon: string; desc: string }> = {
+  account: { title: 'Account', icon: 'people-outline', desc: 'Player tag, API token & villages' },
+  appearance: { title: 'Appearance', icon: 'color-palette-outline', desc: 'Theme & Clash font' },
+  discounts: { title: 'Discounts', icon: 'pricetag-outline', desc: 'Building & army discounts' },
+  data: { title: 'Data & Preferences', icon: 'construct-outline', desc: 'Cache, imports & builder counts' },
+  app: { title: 'App Management', icon: 'settings-outline', desc: 'Updates, policies & credits' },
+  developer: { title: 'Developer', icon: 'person-circle-outline', desc: 'Developer info & build diagnostics' },
+};
+
+/**
+ * A settings group behind a collapsing header. Same contract as the Time to Max
+ * pipeline rows: the header owns the group's top corners while open and its
+ * bottom corners while closed, and the body's last row closes them again when
+ * open, so one group always reads as a single rounded card.
+ */
+function SettingSection({
+  meta,
+  isOpen,
+  onToggle,
+  isFirst,
+  isLast,
+  badge,
+  children,
+}: {
+  meta: { title: string; icon: string; desc: string };
+  isOpen: boolean;
+  onToggle: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+  badge?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={styles.settingCard}>
-      {children}
-    </View>
+    <>
+      <SettingRow
+        icon={meta.icon}
+        title={meta.title}
+        desc={meta.desc}
+        compact
+        isFirst={isFirst || isOpen}
+        isLast={isLast && !isOpen}
+        onPress={onToggle}
+      >
+        {badge != null && (
+          <View style={styles.sectionBadge}>
+            <Text style={styles.sectionBadgeText}>{badge}</Text>
+          </View>
+        )}
+      </SettingRow>
+      {isOpen && (
+        <View style={styles.settingBody}>
+          {children}
+          {!isLast && <View style={styles.sectionSeparator} />}
+        </View>
+      )}
+    </>
   );
 }
 
@@ -442,6 +492,18 @@ export default function SettingsScreen() {
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Groups start collapsed so the whole tab fits one screen; Account stays open
+  // because the tag and token it holds are what everything else depends on.
+  const [expanded, setExpanded] = useState<Record<SettingsSectionKey, boolean>>({
+    account: true,
+    appearance: false,
+    discounts: false,
+    data: false,
+    app: false,
+    developer: false,
+  });
+  const toggleSection = (key: SettingsSectionKey) =>
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   const [onboardingStep, setOnboardingStep] = useState<'tag' | 'import' | 'importToken' | 'profile' | 'builderCount' | 'thPicker'>('tag');
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingBuilderCount, setOnboardingBuilderCount] = useState(2);
@@ -458,8 +520,17 @@ export default function SettingsScreen() {
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [discountModalScope, setDiscountModalScope] = useState<'buildings' | 'army' | null>(null);
   const { refresh: refreshGameData } = useGameData();
-  const { count: builderCount, setBuilderCount, verified: builderVerified, setBuilderVerified } = useBuilderCount();
-  const { count: builderBaseCount, setBuilderBaseCount } = useBuilderBaseCount(player?.builderHallLevel);
+  const {
+    count: builderCount,
+    setBuilderCount,
+    verified: builderVerifiedCount,
+    loaded: builderLoaded,
+    isVerified: builderIsVerified,
+    canDecrease: canDecreaseBuilders,
+    canIncrease: canIncreaseBuilders,
+    clearVerified: clearBuilderVerified,
+  } = useBuilderCount();
+  const { count: builderBaseCount, setBuilderBaseCount, loaded: bbBuilderLoaded } = useBuilderBaseCount(player?.builderHallLevel);
   const { discounts, setBuildingCost, setBuildingTime, setArmyCost, setArmyTime, resetDiscounts } = useDiscounts();
 
   const discountDesc = (s: ScopeDiscount) => {
@@ -783,9 +854,11 @@ export default function SettingsScreen() {
       await cachePlayer(updatedPlayer, tag);
       await refreshAccounts();
 
-      // Save builder count globally
-      setBuilderCount(onboardingBuilderCount);
-      setBuilderVerified(false);
+      // Save builder count for this account. Awaited and in this order so the
+      // chosen count lands before the import baseline is dropped; both read this
+      // account's own stored values rather than the active account's.
+      await setBuilderCount(onboardingBuilderCount, tag);
+      await clearBuilderVerified(tag);
 
       setShowOnboarding(false);
       setOnboardingTag('');
@@ -877,7 +950,7 @@ export default function SettingsScreen() {
           <Text style={styles.creditBlurb}>
             ClashPrime is an unofficial Clash of Clans companion, built to give players a clean, fast way to track progress and discover bases.
           </Text>
-          <Text style={styles.creditSectionTitle}>Data Sources</Text>
+          <Text style={styles.creditSectionTitle}>Data sources</Text>
           {DATA_SOURCES.map((s) => (
             <PressableRipple key={s.name} onPress={() => openURL(s.url)} style={styles.creditSourceRow} hitSlop={4}>
               <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
@@ -1060,325 +1133,363 @@ export default function SettingsScreen() {
           <Text style={styles.title}>Settings</Text>
         </View>
 
-        <SectionHeader>Account</SectionHeader>
-        <SettingCard>
-          {accounts.length === 0 ? (
-            <>
+        <View style={styles.settingSections}>
+          <SettingSection
+            meta={SECTION_META.account}
+            isOpen={expanded.account}
+            onToggle={() => toggleSection('account')}
+            isFirst
+            badge="5"
+          >
+            {accounts.length === 0 ? (
+              <>
+                <SettingRow
+                  icon="person-outline"
+                  title="Player Tag"
+                  desc={playerTag || 'Not set'}
+                  compact
+                  onPress={handleEditTag}
+                />
+                <SettingRow
+                  icon="key-outline"
+                  title="API Token"
+                  desc="Required for API access"
+                  compact
+                  pillText="Required"
+                  pillTopOffset={18}
+                  pillRightOffset={-4}
+                  onPress={handleEditToken}
+                >
+                  <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
+                  <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+                </SettingRow>
+              </>
+            ) : (
               <SettingRow
-                icon="person-outline"
-                title="Player Tag"
-                desc={playerTag || 'Not set'}
+                icon={switchingAccount ? 'ellipsis-horizontal' : 'people-outline'}
+                title={activeAccount?.name || 'Accounts'}
+                desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} · ${activeAccount?.tag || ''}`}
                 compact
-                onPress={handleEditTag}
-              />
+                onPress={() => setSwitchModalVisible(true)}
+              >
+                {switchingAccount ? (
+                  <ActivityIndicator size="small" color={Colors.textSecondary} />
+                ) : activeThImage ? (
+                  <Image source={activeThImage} style={styles.settingThImage} resizeMode="contain" />
+                ) : null}
+                <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+              </SettingRow>
+            )}
+            {accounts.length > 0 && (
               <SettingRow
                 icon="key-outline"
                 title="API Token"
                 desc="Required for API access"
                 compact
                 pillText="Required"
-                pillTopOffset={18}
-                pillRightOffset={-4}
+                pillTopOffset={8}
+                pillRightOffset={-10}
                 onPress={handleEditToken}
               >
                 <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
                 <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
               </SettingRow>
-            </>
-          ) : (
+            )}
             <SettingRow
-              icon={switchingAccount ? 'ellipsis-horizontal' : 'people-outline'}
-              title={activeAccount?.name || 'Accounts'}
-              desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} · ${activeAccount?.tag || ''}`}
+              icon="add-circle-outline"
+              title={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
+              desc="Connect a new player tag"
               compact
-              onPress={() => setSwitchModalVisible(true)}
+              onPress={() => {
+                setOnboardingTag('');
+                setOnboardingThLevel('');
+                setShowOnboarding(true);
+              }}
+            />
+            <SettingRow
+              icon="sync-outline"
+              title="Sync Now"
+              desc="Pull fresh data from the API"
+              compact
+              onPress={() => {
+                showDialog({
+                  title: 'Sync Now',
+                  message: 'Triggers an immediate sync of your player data from the Clash of Clans API. Use this if your stats seem outdated or after switching accounts.',
+                  actions: [
+                    { label: 'Cancel', onPress: () => { } },
+                    { label: 'Sync', primary: true, onPress: () => { bumpTagVersion(); } },
+                  ],
+                });
+              }}
+            />
+            <SettingRow
+              icon="rocket-outline"
+title="Add Account (Full Setup)"
+                desc="Walk through the full setup for a new account"
+                compact
+                isLast
+                onPress={() => router.push('/onboarding?mode=add')}
+            />
+          </SettingSection>
+
+          <SettingSection
+            meta={SECTION_META.appearance}
+            isOpen={expanded.appearance}
+            onToggle={() => toggleSection('appearance')}
+            badge="2"
+          >
+            <SettingRow
+              icon="moon-outline"
+              title="Dark Mode"
+              desc="Switch between dark and light theme"
+              compact
             >
-              {switchingAccount ? (
-                <ActivityIndicator size="small" color={Colors.textSecondary} />
-              ) : activeThImage ? (
-                <Image source={activeThImage} style={styles.settingThImage} resizeMode="contain" />
-              ) : null}
-              <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+              <Switch
+                value={isDark}
+                onValueChange={(v) => setThemeMode(v)}
+                trackColor={{ false: Colors.border, true: Colors.textMuted }}
+                thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
+              />
             </SettingRow>
-          )}
-          {accounts.length > 0 && (
             <SettingRow
-              icon="key-outline"
-              title="API Token"
-              desc="Required for API access"
+              icon="text-outline"
+title="Clash Font"
+              desc={clashFontDesc}
               compact
-              pillText="Required"
-              pillTopOffset={8}
-              pillRightOffset={-10}
-              onPress={handleEditToken}
+              isLast
             >
-              <Text style={styles.settingValue} numberOfLines={1}>{apiToken}</Text>
+              <View style={styles.fontChipRow}>
+                <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
+                <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
+                <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
+              </View>
+            </SettingRow>
+          </SettingSection>
+
+          <SettingSection
+            meta={SECTION_META.discounts}
+            isOpen={expanded.discounts}
+            onToggle={() => toggleSection('discounts')}
+            badge="2"
+          >
+            <SettingRow
+              icon="business-outline"
+              title="Building Discounts"
+              desc={discountDesc(discounts.buildings)}
+              compact
+              onPress={() => setDiscountModalScope('buildings')}
+            >
+              <View style={styles.discountRowRight}>
+                <View style={[styles.discountDot, discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? styles.discountDotActive : null]} />
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+              </View>
+            </SettingRow>
+            <SettingRow
+              icon="shield-half-outline"
+title="Army Discounts"
+              desc={discountDesc(discounts.army)}
+              compact
+              onPress={() => setDiscountModalScope('army')}
+              isLast
+            >
+              <View style={styles.discountRowRight}>
+                <View style={[styles.discountDot, discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? styles.discountDotActive : null]} />
+                <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+              </View>
+            </SettingRow>
+          </SettingSection>
+
+          <SettingSection
+            meta={SECTION_META.data}
+            isOpen={expanded.data}
+            onToggle={() => toggleSection('data')}
+            badge="5"
+          >
+            <SettingRow
+              icon="trash-outline"
+              title="Clear Cache"
+              desc="Remove all locally cached data"
+              compact
+              destructive
+              pillText="Destructive"
+              pillTopOffset={18}
+              pillRightOffset={-4}
+              onPress={handleClearCache}
+            />
+
+            <SettingRow
+              icon="cloud-upload-outline"
+              title="Import Building Levels"
+              desc="Paste a Clash of Clans JSON Export to bulk-set levels"
+              compact
+              onPress={() => router.push('/import-export')}
+            />
+            <SettingRow
+              icon="hammer-outline"
+              title="Builder Count"
+              desc={!builderLoaded
+                ? 'Loading your saved builder count…'
+                : builderVerifiedCount !== null
+                  ? `Number of builders · ${builderVerifiedCount} confirmed by import`
+                  : 'Number of builders (2–6)'}
+              compact
+              onPress={() => { }}
+            >
+              <View style={styles.builderCountRow}>
+                {builderIsVerified ? (
+                  <View style={[styles.builderCountBtn, styles.builderCountBadgeBtn]}>
+                    <Ionicons name="checkmark" size={16} color={Colors.success} />
+                  </View>
+                ) : null}
+                <PressableRipple
+                  style={[styles.builderCountBtn, !canDecreaseBuilders && styles.builderCountBtnDisabled]}
+                  disabled={!canDecreaseBuilders}
+                  onPress={() => setBuilderCount(builderCount - 1)}
+                >
+                  <Ionicons name="remove" size={18} color={canDecreaseBuilders ? Colors.textPrimary : Colors.textMuted} />
+                </PressableRipple>
+                <Text style={styles.builderCountValue}>{builderCount}</Text>
+                <PressableRipple
+                  style={[styles.builderCountBtn, !canIncreaseBuilders && styles.builderCountBtnDisabled]}
+                  disabled={!canIncreaseBuilders}
+                  onPress={() => setBuilderCount(builderCount + 1)}
+                >
+                  <Ionicons name="add" size={18} color={canIncreaseBuilders ? Colors.textPrimary : Colors.textMuted} />
+                </PressableRipple>
+              </View>
+            </SettingRow>
+            <SettingRow
+              icon="construct-outline"
+              title="Builder Base Builders"
+              desc={!bbBuilderLoaded
+                ? 'Loading your saved Builder Base count…'
+                : `Builder Base builders (1–3)${(player?.builderHallLevel ?? 1) >= 6 ? ' · 2 granted at BH6' : ' · unlocks a 2nd at BH6'}`}
+              compact
+              onPress={() => { }}
+            >
+              <View style={styles.builderCountRow}>
+                <PressableRipple
+                  style={[styles.builderCountBtn, !bbBuilderLoaded && styles.builderCountBtnDisabled]}
+                  disabled={!bbBuilderLoaded}
+                  onPress={() => setBuilderBaseCount(Math.max(1, builderBaseCount - 1))}
+                >
+                  <Ionicons name="remove" size={18} color={bbBuilderLoaded ? Colors.textPrimary : Colors.textMuted} />
+                </PressableRipple>
+                <Text style={styles.builderCountValue}>{builderBaseCount}</Text>
+                <PressableRipple
+                  style={[styles.builderCountBtn, !bbBuilderLoaded && styles.builderCountBtnDisabled]}
+                  disabled={!bbBuilderLoaded}
+                  onPress={() => setBuilderBaseCount(Math.min(3, builderBaseCount + 1))}
+                >
+                  <Ionicons name="add" size={18} color={bbBuilderLoaded ? Colors.textPrimary : Colors.textMuted} />
+                </PressableRipple>
+              </View>
+            </SettingRow>
+            <SettingRow
+              icon="refresh-outline"
+title="Refresh Game Data"
+              desc="Reload the bundled game database"
+              compact
+              isLast
+              onPress={() => {
+                showDialog({
+                  title: 'Refresh Game Data',
+                  message: 'Reloads all game reference data (buildings, troops, heroes, spells, pets, siege machines, equipment, max levels, costs) from the clash-of-clans-data package bundled with the app. No web sources are used, so this is instant.',
+                  actions: [
+                    { label: 'Cancel', onPress: () => { } },
+                    { label: 'Reload', primary: true, onPress: async () => { await refreshGameData(); } },
+                  ],
+                });
+              }}
+            />
+          </SettingSection>
+
+          <SettingSection
+            meta={SECTION_META.app}
+            isOpen={expanded.app}
+            onToggle={() => toggleSection('app')}
+            badge="6"
+          >
+            <SettingRow
+              icon="cloud-outline"
+              title="Check for Updates"
+              desc={checkingUpdates ? 'Checking GitHub for the latest release…' : 'Compare your build against the latest GitHub release'}
+              compact
+              onPress={checkingUpdates ? undefined : handleCheckUpdates}
+            >
+              {checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
+            </SettingRow>
+            <SettingRow
+              icon="information-circle-outline"
+              title="About ClashPrime"
+              desc="What this app does, its features and sources"
+              compact
+              onPress={openAbout}
+            >
+              <Text style={styles.settingValue}>{appVersion}</Text>
               <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
             </SettingRow>
-          )}
-          <SettingRow
-            icon="add-circle-outline"
-            title={accounts.length === 0 ? 'Connect Account' : 'Add Account'}
-            desc="Connect a new player tag"
-            compact
-            onPress={() => {
-              setOnboardingTag('');
-              setOnboardingThLevel('');
-              setShowOnboarding(true);
-            }}
-          />
-          <SettingRow
-            icon="sync-outline"
-            title="Sync Now"
-            desc="Pull fresh data from the API"
-            compact
-            onPress={() => {
-              showDialog({
-                title: 'Sync Now',
-                message: 'Triggers an immediate sync of your player data from the Clash of Clans API. Use this if your stats seem outdated or after switching accounts.',
-                actions: [
-                  { label: 'Cancel', onPress: () => { } },
-                  { label: 'Sync', primary: true, onPress: () => { bumpTagVersion(); } },
-                ],
-              });
-            }}
-          />
-          <SettingRow
-            icon="rocket-outline"
-            title="Add Account (Full Setup)"
-            desc="Walk through the full setup for a new account"
-            compact
-            isLast
-            onPress={() => router.push('/onboarding?mode=add')}
-          />
-        </SettingCard>
-
-        <SectionHeader>Appearance</SectionHeader>
-        <SettingCard>
-          <SettingRow
-            icon="moon-outline"
-            title="Dark Mode"
-            desc="Switch between dark and light theme"
-            compact
-            isFirst
-          >
-            <Switch
-              value={isDark}
-              onValueChange={(v) => setThemeMode(v)}
-              trackColor={{ false: Colors.border, true: Colors.textMuted }}
-              thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
+            <SettingRow
+              icon="sparkles-outline"
+              title="What's New"
+              desc="Recent updates and improvements"
+              compact
+              onPress={openChangelog}
+            >
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            </SettingRow>
+            <SettingRow
+              icon="document-text-outline"
+              title="Privacy Policy"
+              desc="How your data is handled"
+              compact
+              onPress={openPrivacy}
             />
-          </SettingRow>
-          <SettingRow
-            icon="text-outline"
-            title="Clash Font"
-            desc={clashFontDesc}
-            compact
-            isLast
-          >
-            <View style={styles.fontChipRow}>
-              <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
-              <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
-              <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
-            </View>
-          </SettingRow>
-        </SettingCard>
+            <SettingRow
+              icon="heart-outline"
+              title="Credits"
+              desc="Made with love by Parzival"
+              compact
+              onPress={openCredits}
+            />
+            <SettingRow
+              icon="chatbubble-outline"
+title="Send Feedback"
+              desc="Report a bug or share an idea"
+              compact
+              onPress={openFeedback}
+              isLast
+            />
+          </SettingSection>
 
-        <SectionHeader>Discounts</SectionHeader>
-        <SettingCard>
-          <SettingRow
-            icon="business-outline"
-            title="Building Discounts"
-            desc={discountDesc(discounts.buildings)}
-            compact
-            onPress={() => setDiscountModalScope('buildings')}
-            isFirst
-          >
-            <View style={styles.discountRowRight}>
-              <View style={[styles.discountDot, discounts.buildings.costPercent > 0 || discounts.buildings.timePercent > 0 ? styles.discountDotActive : null]} />
-              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
-            </View>
-          </SettingRow>
-          <SettingRow
-            icon="shield-half-outline"
-            title="Army Discounts"
-            desc={discountDesc(discounts.army)}
-            compact
-            onPress={() => setDiscountModalScope('army')}
+          <SettingSection
+            meta={SECTION_META.developer}
+            isOpen={expanded.developer}
+            onToggle={() => toggleSection('developer')}
             isLast
+            badge="2"
           >
-            <View style={styles.discountRowRight}>
-              <View style={[styles.discountDot, discounts.army.costPercent > 0 || discounts.army.timePercent > 0 ? styles.discountDotActive : null]} />
-              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
-            </View>
-          </SettingRow>
-        </SettingCard>
-
-        <SectionHeader>Data &amp; Preferences</SectionHeader>
-        <SettingCard>
-          <SettingRow
-            icon="trash-outline"
-            title="Clear Cache"
-            desc="Remove all locally cached data"
-            compact
-            destructive
-            pillText="Destructive"
-            pillTopOffset={18}
-            pillRightOffset={-4}
-            onPress={handleClearCache}
-            isFirst
-          />
-
-          <SettingRow
-            icon="cloud-upload-outline"
-            title="Import Building Levels"
-            desc="Paste a Clash of Clans JSON Export to bulk-set levels"
-            compact
-            onPress={() => router.push('/import-export')}
-          />
-          <SettingRow
-            icon="hammer-outline"
-            title="Builder Count"
-            desc={builderVerified ? 'Auto-detected from JSON import' : 'Number of builders (2–6)'}
-            compact
-            onPress={() => { }}
-          >
-            <View style={styles.builderCountRow}>
-              <PressableRipple
-                style={styles.builderCountBtn}
-                onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
-              >
-                <Ionicons name="remove" size={18} color={Colors.textPrimary} />
-              </PressableRipple>
-              <Text style={styles.builderCountValue}>{builderCount}</Text>
-              <PressableRipple
-                style={styles.builderCountBtn}
-                onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
-              >
-                <Ionicons name="add" size={18} color={Colors.textPrimary} />
-              </PressableRipple>
-            </View>
-          </SettingRow>
-          <SettingRow
-            icon="construct-outline"
-            title="Builder Base Builders"
-            desc={`Builder Base builders (1–3)${(player?.builderHallLevel ?? 1) >= 6 ? ' · 2 granted at BH6' : ' · unlocks a 2nd at BH6'}`}
-            compact
-            onPress={() => { }}
-          >
-            <View style={styles.builderCountRow}>
-              <PressableRipple
-                style={styles.builderCountBtn}
-                onPress={() => setBuilderBaseCount(Math.max(1, builderBaseCount - 1))}
-              >
-                <Ionicons name="remove" size={18} color={Colors.textPrimary} />
-              </PressableRipple>
-              <Text style={styles.builderCountValue}>{builderBaseCount}</Text>
-              <PressableRipple
-                style={styles.builderCountBtn}
-                onPress={() => setBuilderBaseCount(Math.min(3, builderBaseCount + 1))}
-              >
-                <Ionicons name="add" size={18} color={Colors.textPrimary} />
-              </PressableRipple>
-            </View>
-          </SettingRow>
-          <SettingRow
-            icon="refresh-outline"
-            title="Refresh Game Data"
-            desc="Reload the bundled game database"
-            compact
-            onPress={() => {
-              showDialog({
-                title: 'Refresh Game Data',
-                message: 'Reloads all game reference data (buildings, troops, heroes, spells, pets, siege machines, equipment, max levels, costs) from the clash-of-clans-data package bundled with the app. No web sources are used, so this is instant.',
-                actions: [
-                  { label: 'Cancel', onPress: () => { } },
-                  { label: 'Reload', primary: true, onPress: async () => { await refreshGameData(); } },
-                ],
-              });
-            }}
-            isLast
-          />
-        </SettingCard>
-
-        <SectionHeader>App Management</SectionHeader>
-        <SettingCard>
-          <SettingRow
-            icon="cloud-outline"
-            title="Check for Updates"
-            desc={checkingUpdates ? 'Checking GitHub for the latest release…' : 'Compare your build against the latest GitHub release'}
-            compact
-            onPress={checkingUpdates ? undefined : handleCheckUpdates}
-            isFirst
-          >
-            {checkingUpdates ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
-          </SettingRow>
-          <SettingRow
-            icon="information-circle-outline"
-            title="About ClashPrime"
-            desc="What this app does, its features and sources"
-            compact
-            onPress={openAbout}
-          >
-            <Text style={styles.settingValue}>{appVersion}</Text>
-            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-          </SettingRow>
-          <SettingRow
-            icon="sparkles-outline"
-            title="What's New"
-            desc="Recent updates and improvements"
-            compact
-            onPress={openChangelog}
-          >
-            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-          </SettingRow>
-          <SettingRow
-            icon="document-text-outline"
-            title="Privacy Policy"
-            desc="How your data is handled"
-            compact
-            onPress={openPrivacy}
-          />
-          <SettingRow
-            icon="heart-outline"
-            title="Credits"
-            desc="Made with love by Parzival"
-            compact
-            onPress={openCredits}
-          />
-          <SettingRow
-            icon="chatbubble-outline"
-            title="Send Feedback"
-            desc="Report a bug or share an idea"
-            compact
-            onPress={openFeedback}
-            isLast
-          />
-        </SettingCard>
-
-        <SectionHeader>Developer</SectionHeader>
-        <SettingCard>
-          <SettingRow
-            icon="person-circle-outline"
-            title="Developer Info"
-            desc="About the developer behind ClashPrime"
-            compact
-            onPress={openDeveloper}
-            isFirst
-          >
-            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-          </SettingRow>
-          <SettingRow
-            icon="code-slash-outline"
-            title="Build Diagnostics"
-            desc="Technical build details for bug reports"
-            compact
-            onPress={openBuildDiagnostics}
-            isLast
-          >
-            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
-          </SettingRow>
-        </SettingCard>
+            <SettingRow
+              icon="person-circle-outline"
+              title="Developer Info"
+              desc="About the developer behind ClashPrime"
+              compact
+              onPress={openDeveloper}
+            >
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            </SettingRow>
+            <SettingRow
+              icon="code-slash-outline"
+title="Build Diagnostics"
+              desc="Technical build details for bug reports"
+              compact
+              onPress={openBuildDiagnostics}
+              isLast
+            >
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginLeft: 6 }} />
+            </SettingRow>
+          </SettingSection>
+        </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>ClashPrime {appVersion}</Text>
@@ -1709,21 +1820,33 @@ const styles = StyleSheet.create({
     ...Typography.largeTitle,
     color: Colors.textPrimary,
   },
-  sectionHeader: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
-  },
-  settingCard: {
-    marginBottom: Spacing.xl,
+settingSections: {
     marginHorizontal: Spacing.base,
+    marginBottom: Spacing.xl,
     gap: Spacing.xs,
-    borderRadius: Radius.xl * 1.25,
-    overflow: 'hidden'
+  },
+  settingBody: {
+    gap: Spacing.xs,
+  },
+  sectionSeparator: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+    marginVertical: Spacing.lg,
+  },
+  sectionBadge: {
+    minWidth: 32,
+    height: 32,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionBadgeText: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   settingValue: {
     ...Typography.footnote,
@@ -2557,6 +2680,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+builderCountBtnDisabled: {
+    opacity: 0.45,
+  },
+  builderCountBadgeBtn: {
+    backgroundColor: Colors.bgCardHover,
+  },
+  builderCountValueWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  builderCountBadge: {
+    marginTop: 1,
   },
   builderCountValue: {
     ...Typography.body,
