@@ -440,7 +440,7 @@ export default function BaseLibraryScreen() {
                   ]}
                 >
                   <Skeleton width={18} height={18} borderRadius={4} />
-                  <View style={styles.pillTextCol}>
+                  <View style={[styles.pillTextCol, styles.pillPlaceholderText]}>
                     <Skeleton width="70%" height={11} borderRadius={4} />
                     <Skeleton width="45%" height={9} borderRadius={4} />
                   </View>
@@ -755,6 +755,11 @@ const styles = StyleSheet.create({
   },
   pillPlaceholder: {
     gap: 6,
+  },
+  // The two placeholder bars sit where the pill's label and count go, which are
+  // one fontSize apart; without the nudge they read as a single tall block.
+  pillPlaceholderText: {
+    gap: 5,
   },
   pillTextCol: {
     flex: 1,
