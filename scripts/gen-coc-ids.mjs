@@ -61,6 +61,20 @@ addBuilder(bb.traps().get());
 addBuilder(bb.walls().get());
 addBuilder(bb.builderHall().get());
 
+// Crafted defenses are not standalone building rows in an export: they are
+// nested inside the Crafting Station as `types[]`, each with `modules[]` holding
+// the per-upgrade levels. Keep the defense IDs and the module IDs in separate
+// maps so a module is never mistaken for a defense. Only the phases that exist
+// in game carry a dataId; the rest are dataless placeholders.
+const craftedDefenseIds = new Map();
+const craftedModuleIds = new Map();
+for (const cd of hh.craftedDefenses ? hh.craftedDefenses().get() : []) {
+  if (cd.dataId != null) craftedDefenseIds.set(cd.dataId, cd.name);
+  for (const m of cd.modules ?? []) {
+    if (m.dataId != null) craftedModuleIds.set(m.dataId, m.name);
+  }
+}
+
 const emit = (map) => {
   const sorted = [...map.entries()].sort((a, b) => a[0] - b[0]);
   return sorted
@@ -84,6 +98,18 @@ lines.push('export const COC_BUILDER_BUILDING_IDS: Record<number, string> = {');
 lines.push(emit(builderIds));
 lines.push('};');
 lines.push('');
+lines.push('// Crafted defense dataId → name, for the `types[]` nested inside the');
+lines.push('// Crafting Station row.');
+lines.push('export const COC_CRAFTED_DEFENSE_IDS: Record<number, string> = {');
+lines.push(emit(craftedDefenseIds));
+lines.push('};');
+lines.push('');
+lines.push('// Crafted defense module dataId → stat name (Hitpoints, Damage, ...), for');
+lines.push('// the `modules[]` nested inside each `types[]` entry.');
+lines.push('export const COC_CRAFTED_MODULE_IDS: Record<number, string> = {');
+lines.push(emit(craftedModuleIds));
+lines.push('};');
+lines.push('');
 
 writeFileSync(outPath, lines.join('\n'));
-console.log(`Wrote ${outPath} (${homeIds.size} home + ${builderIds.size} builder IDs)`);
+console.log(`Wrote ${outPath} (${homeIds.size} home + ${builderIds.size} builder + ${craftedDefenseIds.size} crafted + ${craftedModuleIds.size} module IDs)`);
