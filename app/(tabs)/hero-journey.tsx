@@ -313,6 +313,17 @@ export default function HeroJourneyScreen() {
     ? filter
     : availableFilters[0]?.key ?? 'all';
 
+  // Pills are chunked into explicit rows rather than left to flex-wrap on a fixed
+  // percentage width, so each pill can be flex: 1 and fill its row exactly. The gap
+  // is the only spacing, and a partial trailing row spans it whole.
+  const pillRows = useMemo(() => {
+    const rows: typeof availableFilters[] = [];
+    for (let i = 0; i < availableFilters.length; i += PILL_COLUMNS) {
+      rows.push(availableFilters.slice(i, i + PILL_COLUMNS));
+    }
+    return rows;
+  }, [availableFilters]);
+
   const filtered = useMemo(() => {
     if (!journey) return [];
     if (activeFilter === 'all') return journey.milestones;
@@ -470,44 +481,48 @@ export default function HeroJourneyScreen() {
         <JourneySummary journey={journey} />
 
         <View style={styles.pillRow}>
-          {availableFilters.map((opt, oi) => {
-            const active = activeFilter === opt.key;
-            const count = filterCounts[opt.key] ?? 0;
-            const leadImage = opt.key === 'skins' ? skinLead : FILTER_IMAGES[opt.key];
-            return (
-              <PressableRipple
-                key={opt.key}
-                onPress={() => setFilter(opt.key)}
-                style={[
-                  styles.pill,
-                  pillCornerStyle(oi, availableFilters.length),
-                  active && styles.pillActive,
-                ]}
-                accessibilityRole="button"
-              >
-                {leadImage ? (
-                  <Image source={leadImage} style={styles.pillImg} resizeMode="contain" />
-                ) : (
-                  <RewardIcon
-                    kind={opt.lead}
-                    size={16}
-                    color={active ? Colors.bg : colors.textSecondary}
-                  />
-                )}
-                <View style={styles.pillTextCol}>
-                  <Text style={[styles.pillText, active && styles.pillTextActive]} numberOfLines={1}>
-                    {opt.label}
-                  </Text>
-                  <Text
-                    style={[styles.pillSubText, active && styles.pillSubTextActive]}
-                    numberOfLines={1}
+          {pillRows.map((row) => (
+            <View key={row[0].key} style={styles.pillLine}>
+              {row.map((opt) => {
+                const active = activeFilter === opt.key;
+                const count = filterCounts[opt.key] ?? 0;
+                const leadImage = opt.key === 'skins' ? skinLead : FILTER_IMAGES[opt.key];
+                return (
+                  <PressableRipple
+                    key={opt.key}
+                    onPress={() => setFilter(opt.key)}
+                    style={[
+                      styles.pill,
+                      pillCornerStyle(availableFilters.indexOf(opt), availableFilters.length),
+                      active && styles.pillActive,
+                    ]}
+                    accessibilityRole="button"
                   >
-                    {`${count} reward${count === 1 ? '' : 's'}`}
-                  </Text>
-                </View>
-              </PressableRipple>
-            );
-          })}
+                    {leadImage ? (
+                      <Image source={leadImage} style={styles.pillImg} resizeMode="contain" />
+                    ) : (
+                      <RewardIcon
+                        kind={opt.lead}
+                        size={16}
+                        color={active ? Colors.bg : colors.textSecondary}
+                      />
+                    )}
+                    <View style={styles.pillTextCol}>
+                      <Text style={[styles.pillText, active && styles.pillTextActive]} numberOfLines={1}>
+                        {opt.label}
+                      </Text>
+                      <Text
+                        style={[styles.pillSubText, active && styles.pillSubTextActive]}
+                        numberOfLines={1}
+                      >
+                        {`${count} reward${count === 1 ? '' : 's'}`}
+                      </Text>
+                    </View>
+                  </PressableRipple>
+                );
+              })}
+            </View>
+          ))}
         </View>
 
         {sectionGroups.length === 0 ? (
@@ -1093,22 +1108,19 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.xs,
     paddingHorizontal: Spacing.base,
     marginBottom: Spacing.md,
   },
+  pillLine: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
   pill: {
-    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
-    // decided purely by the container width and can never be pushed wider by the
-    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
-    // needs another 32% and so always wraps. The gap does the spacing -
-    // space-between would push a short final row to opposite edges and break the
-    // seamless block.
-    width: '32%',
-    flexGrow: 0,
-    flexShrink: 0,
+    // flex: 1 rather than a hardcoded percentage width, so a row of pills shares
+    // the row exactly (gap-only spacing) and a partial trailing row fills it.
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
