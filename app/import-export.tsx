@@ -18,7 +18,7 @@ import { useDialog } from '../src/components/AlertDialog';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../src/hooks/useBuilderBaseCount';
-import { parseCocExport, cocExportToBuildingLevels, normalizeTag, CocImportResult } from '../src/utils/cocExport';
+import { parseCocExport, cocExportToBuildingLevels, detectBuilderHutCount, normalizeTag, CocImportResult } from '../src/utils/cocExport';
 import { getBuildingEffectiveMax, getBuildingLevelImageSource , getTownHallImageSource } from '../src/utils/buildingImages';
 import { getCountAtTH, getBuildingCopies, toJsonName } from '../src/utils/buildingCopies';
 import { buildingUpgradeCosts, buildingUpgradeChainTimes, scheduleChains, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown } from '../src/utils/upgradeCosts';
@@ -68,7 +68,7 @@ export default function ImportExportScreen() {
   const playerThImage = getTownHallImageSource(player?.townHallLevel);
   const { show, Dialog } = useDialog();
   const { colors } = useTheme();
-  const { count: builderCount } = useBuilderCount();
+  const { count: builderCount, isVerified: buildersVerified, verifyBuilderCount } = useBuilderCount();
   const { count: builderBaseCount } = useBuilderBaseCount(player?.builderHallLevel);
 
   const [text, setText] = useState('');
@@ -76,6 +76,7 @@ export default function ImportExportScreen() {
   const [result, setResult] = useState<CocImportResult | null>(null);
   const [exportTag, setExportTag] = useState<string | null>(null);
   const [markInProgressDone, setMarkInProgressDone] = useState(false);
+  const [detectedHuts, setDetectedHuts] = useState<number | null>(null);
 
   const handleParse = (raw: string) => {
     const parsed = parseCocExport(raw);
@@ -83,11 +84,18 @@ export default function ImportExportScreen() {
       setError(parsed.error ?? 'Failed to parse export.');
       setResult(null);
       setExportTag(null);
+      setDetectedHuts(null);
       return;
     }
     setError(null);
-    setResult(cocExportToBuildingLevels(parsed.data));
+    const parsedResult = cocExportToBuildingLevels(parsed.data);
+    setResult(parsedResult);
     setExportTag(normalizeTag(parsed.data.tag) || null);
+
+    // Every export carries its Builder Hut rows, so read the count off it here
+    // and show the user what it implies. It is only written once the import is
+    // actually applied (doApply), so merely pasting a preview changes nothing.
+    setDetectedHuts(detectBuilderHutCount(parsedResult));
   };
 
   const handlePaste = async () => {
@@ -334,6 +342,9 @@ export default function ImportExportScreen() {
 
   const doApply = async (tag: string) => {
     if (!result || !player) return;
+    // The export knows the real hut count, so record it as verified against the
+    // account being written to - which is not always the active one.
+    if (detectedHuts) await verifyBuilderCount(detectedHuts, tag);
     const th = player.townHallLevel ?? 12;
     const bh = player.builderHallLevel ?? 1;
     const perBuilding = upgradeRows.map((row) => ({
@@ -645,6 +656,19 @@ export default function ImportExportScreen() {
                       warning: tagUnattached,
                     },
                     { key: 'matched', icon: 'checkmark-done-outline' as const, label: 'Copies to upgrade', value: `${totalChanged} in ${upgradeRows.length} building${upgradeRows.length === 1 ? '' : 's'}` },
+                    {
+                      key: 'huts',
+                      icon: 'hammer-outline' as const,
+                      label: 'Builder huts',
+                      value: detectedHuts === null
+                        ? 'Not in export'
+                        : detectedHuts === builderCount
+                          ? buildersVerified
+                            ? `${detectedHuts} (verified)`
+                            : `${detectedHuts} (verifies on apply)`
+                          : `${detectedHuts} — sets builders to ${detectedHuts}`,
+                      warning: detectedHuts !== null && detectedHuts !== builderCount,
+                    },
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
                     { key: 'unknown', icon: 'help-circle-outline' as const, label: 'Unknown IDs', value: String(result.unresolved.length), warning: result.unresolved.length > 0 },
                   ];
