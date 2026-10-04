@@ -298,6 +298,17 @@ export default function ArmiesScreen() {
     ? selectedTag
     : availableTags[0]?.key ?? 'All';
 
+  // Pills are chunked into explicit rows rather than left to flex-wrap on a fixed
+  // percentage width, so each pill can be flex: 1 and fill its row exactly. The gap
+  // is the only spacing, and a partial trailing row spans it whole.
+  const pillRows = useMemo(() => {
+    const rows: typeof availableTags[] = [];
+    for (let i = 0; i < availableTags.length; i += PILL_COLUMNS) {
+      rows.push(availableTags.slice(i, i + PILL_COLUMNS));
+    }
+    return rows;
+  }, [availableTags]);
+
   const currentArmies = activeTag === 'All'
     ? thArmies
     : thArmies.filter((a) => a.tags.includes(activeTag));
@@ -346,45 +357,49 @@ export default function ArmiesScreen() {
           {/* Tag filter pills */}
           <View style={styles.filterSection}>
             <View style={styles.pillRow}>
-              {availableTags.map((pill, ci) => {
-                const isActive = pill.key === activeTag;
-                const meta = tagMeta[pill.key];
-                return (
-                  <PressableRipple
-                    key={pill.key}
-                    onPress={() => { setSelectedTag(pill.key); setDisplayCount(PAGE_SIZE); }}
-                    style={[
-                      styles.pill,
-                      pillCornerStyle(ci, availableTags.length),
-                      isActive && styles.pillActive,
-                    ]}
-                  >
-                    {meta?.image != null ? (
-                      <Image source={meta.image} style={styles.pillImg} resizeMode="contain" />
-                    ) : (
-                      <Ionicons
-                        name={pill.icon}
-                        size={15}
-                        color={isActive ? Colors.bg : Colors.textSecondary}
-                      />
-                    )}
-                    <View style={styles.pillTextCol}>
-                      <Text
-                        style={[styles.pillText, isActive && styles.pillTextActive]}
-                        numberOfLines={1}
+              {pillRows.map((row) => (
+                <View key={row[0].key} style={styles.pillLine}>
+                  {row.map((pill) => {
+                    const isActive = pill.key === activeTag;
+                    const meta = tagMeta[pill.key];
+                    return (
+                      <PressableRipple
+                        key={pill.key}
+                        onPress={() => { setSelectedTag(pill.key); setDisplayCount(PAGE_SIZE); }}
+                        style={[
+                          styles.pill,
+                          pillCornerStyle(availableTags.indexOf(pill), availableTags.length),
+                          isActive && styles.pillActive,
+                        ]}
                       >
-                        {pill.label}
-                      </Text>
-                      <Text
-                        style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
-                        numberOfLines={1}
-                      >
-                        {`${meta?.count ?? 0} arm${(meta?.count ?? 0) === 1 ? 'y' : 'ies'}`}
-                      </Text>
-                    </View>
-                  </PressableRipple>
-                );
-              })}
+                        {meta?.image != null ? (
+                          <Image source={meta.image} style={styles.pillImg} resizeMode="contain" />
+                        ) : (
+                          <Ionicons
+                            name={pill.icon}
+                            size={15}
+                            color={isActive ? Colors.bg : Colors.textSecondary}
+                          />
+                        )}
+                        <View style={styles.pillTextCol}>
+                          <Text
+                            style={[styles.pillText, isActive && styles.pillTextActive]}
+                            numberOfLines={1}
+                          >
+                            {pill.label}
+                          </Text>
+                          <Text
+                            style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
+                            numberOfLines={1}
+                          >
+                            {`${meta?.count ?? 0} arm${(meta?.count ?? 0) === 1 ? 'y' : 'ies'}`}
+                          </Text>
+                        </View>
+                      </PressableRipple>
+                    );
+                  })}
+                </View>
+              ))}
             </View>
           </View>
 
@@ -560,20 +575,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   pillRow: {
+    gap: Spacing.xs,
+  },
+  pillLine: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.xs,
   },
   pill: {
-    // Fixed third-of-a-row basis with no grow and no shrink, so the wrap point is
-    // decided purely by the container width and can never be pushed wider by the
-    // pill's own content. 32% leaves room for the two 4px gaps; a fourth pill
-    // needs another 32% and so always wraps. The gap does the spacing -
-    // space-between would push a short final row to opposite edges and break the
-    // seamless block.
-    width: '32%',
-    flexGrow: 0,
-    flexShrink: 0,
+    // flex: 1 rather than a hardcoded percentage width, so a row of pills shares
+    // the row exactly (gap-only spacing) and a partial trailing row fills it.
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
