@@ -22,7 +22,6 @@ import {
   parseTimeToSeconds,
   formatCost as fmtCost,
   formatTime as fmtTime,
-  formatCompact,
 } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, getCountAtBH } from '../../src/utils/buildingCopies';
 import type { BuildingCopies } from '../../src/utils/buildingCopies';
@@ -43,6 +42,7 @@ import type { ScopeDiscount } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
 import { buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
 import BottomSheet from '../../src/components/BottomSheet';
+import { ItemCard } from '../../src/components/ItemCard';
 
 const COL_ABBREV: Record<string, string> = {
   'Damage per Second': 'DPS',
@@ -187,7 +187,7 @@ function renderResourceRows(
                 fontFamily: clashFontFamily(500),
               }}
             >
-              {showDiscounted ? applyCostDiscount(fmtCost(amt), discount) : fmtCost(amt)}
+              {discountedCost(amt, showDiscounted, discount)}
             </Text>
           </View>
         );
@@ -210,7 +210,240 @@ const NAME_FIX: Record<string, string> = {
   'Builder Hut': "Builder's Hut",
 };
 
-function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription, inSection, onOpen, inSheet }: {
+/** Two-letter fallback shown when a building has no image. */
+function getInitials(name: string): string {
+  return name.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+const isMaxed = (level: number, max: number) => level >= max;
+
+/** The halls gate themselves, so both villages list them under these names. */
+const isHallName = (name: string) => name === 'Town Hall' || name === 'Builder Hall';
+
+/** Highest level the package data carries for a building, e.g. 15 for the Town Hall. */
+function getGlobalMaxLevel(lookupName: string, fallback: number): number {
+  const levels = getBuildingAvailableLevels(lookupName);
+  const max = levels.length > 0 ? levels[levels.length - 1] : 0;
+  return max > 0 ? max : fallback;
+}
+
+/**
+ * Max level of a building in the active village. The halls self-gate — at TH/BH n
+ * the hall is level n — so they use the data's global max instead, which keeps
+ * the future halls (and their costs) visible to a mid-game player.
+ */
+function getSectionMaxLevel(name: string, maxLvl: number, isBB: boolean, th: number, bh: number): number {
+  const lookupName = NAME_FIX[name] ?? name;
+  if (isHallName(name)) return getGlobalMaxLevel(lookupName, maxLvl);
+  return maxLvl > 0 ? maxLvl : getBuildingEffectiveMax(lookupName, isBB ? bh : th);
+}
+
+const discountedCost = (amt: number, on: boolean, d: ScopeDiscount) =>
+  on ? applyCostDiscount(fmtCost(amt), d) : fmtCost(amt);
+const discountedTime = (sec: number, on: boolean, d: ScopeDiscount) =>
+  on ? applyTimeDiscount(fmtTime(sec), d) : fmtTime(sec);
+
+/** Stat table setup shared by the single-building card and the section. */
+function useBuildingStats(lookupName: string, isBB: boolean | undefined, discounts: ScopeDiscount) {
+  const buildingStats = useMemo(() => getBuildingDetail(lookupName, { builderBase: isBB }), [lookupName, isBB]);
+  const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
+  const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
+  return {
+    buildingStats,
+    statCols,
+    showDiscounted,
+    fmtTimeD: (sec: number) => discountedTime(sec, showDiscounted, discounts),
+    fmtCostD: (amt: number) => discountedCost(amt, showDiscounted, discounts),
+  };
+}
+
+/** Level grid cells (image + level badge, condensed with an ellipsis). */
+function renderLevelGridCells({ levels, expand, lookupName, fallbackName, isCurrent }: {
+  levels: any[];
+  expand: boolean;
+  lookupName: string;
+  fallbackName: string;
+  isCurrent: (lvl: number) => boolean;
+}) {
+  return condenseLevels(levels, 2, 3, expand).map((item) => {
+    if (item.kind === 'ellipsis') {
+      return (
+        <View key="ellipsis" style={styles.levelGridCell}>
+          <View style={styles.levelGridEllipsisWrap}>
+            <Text style={styles.levelGridEllipsisText}>...</Text>
+          </View>
+        </View>
+      );
+    }
+    const lvl = item.data.Level;
+    const cellSource = getBuildingLevelImageSource(lookupName, lvl);
+    const current = isCurrent(lvl);
+    return (
+      <View key={lvl} style={[styles.levelGridCell, current && styles.levelGridCellCurrent]}>
+        <View style={styles.levelGridImgWrap}>
+          {cellSource ? (
+            <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
+          ) : (
+            <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
+              <Text style={styles.levelGridFallbackText}>{getInitials(fallbackName)}</Text>
+            </View>
+          )}
+          <View style={[styles.levelGridBadge, current && styles.levelGridBadgeCurrent]}>
+            <Text style={styles.levelGridBadgeText}>{lvl}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  });
+}
+
+/** Per-level stats table. `richCost` adds the resource icon + colour to the Build Cost column. */
+function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted, discounts, richCost }: {
+  levels: any[];
+  expand: boolean;
+  statCols: string[];
+  isBB?: boolean;
+  isCurrent: (lvl: number) => boolean;
+  showDiscounted: boolean;
+  discounts: ScopeDiscount;
+  richCost?: boolean;
+}) {
+  const [viewportW, setViewportW] = useState(0);
+  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setViewportW(e.nativeEvent.layout.width)}>
+      <View style={[styles.buildingStatsTable, { minWidth: Math.max(viewportW || contentMinW, contentMinW) }]}>
+        <View style={styles.buildingStatRow}>
+          <View style={styles.buildingStatCellIcon}>
+            <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
+          </View>
+          {statCols.map((col: string) => {
+            const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
+            return (
+              <Text
+                key={col}
+                style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                numberOfLines={1}
+              >
+                {label}
+              </Text>
+            );
+          })}
+        </View>
+        {condenseLevels(levels, 2, 3, expand).map((item) => {
+          if (item.kind === 'ellipsis') {
+            return (
+              <View key="ellipsis" style={styles.buildingStatRow}>
+                <View style={[styles.buildingStatCell, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                  <Text style={{ color: Colors.textMuted, fontSize: 11 }}>...</Text>
+                </View>
+              </View>
+            );
+          }
+          const levelData = item.data;
+          const lvl = levelData.Level;
+          const current = isCurrent(lvl);
+          return (
+            <View key={lvl} style={[styles.buildingStatRow, current && styles.buildingStatRowCurrent]}>
+              <View style={styles.buildingStatCellIcon}>
+                <Text style={[styles.buildingStatLvlNum, current && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+              </View>
+              {statCols.map((col: string) => {
+                const val = levelData[col] ?? '—';
+                const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
+                const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
+                const resColor = richCost && col === 'Build Cost'
+                  ? BUILDING_RESOURCE_META[(levelData['Build Cost Resource'] as BuildingCostResource) ?? 'Unknown']?.color
+                  : undefined;
+                const displayVal = isDiscounted
+                  ? (col === 'Build Cost'
+                    ? applyCostDiscount(formatted, discounts)
+                    : applyTimeDiscount(String(val), discounts))
+                  : formatted;
+                if (richCost && col === 'Build Cost') {
+                  const res = (levelData['Build Cost Resource'] as BuildingCostResource) ?? 'Unknown';
+                  const icon = PACKAGE_RESOURCE_IMAGES[res];
+                  const color = isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary);
+                  return (
+                    <View
+                      key={col}
+                      style={[styles.buildingStatCell, styles.buildingStatCostCell, { minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                    >
+                      {icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
+                      <Text style={{ color, fontSize: 11, fontWeight: '500', fontFamily: clashFontFamily(500, 11) }} numberOfLines={1}>{displayVal}</Text>
+                    </View>
+                  );
+                }
+                return (
+                  <Text
+                    key={col}
+                    style={[styles.buildingStatCell, { color: isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary), minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                    numberOfLines={1}
+                  >
+                    {displayVal}
+                  </Text>
+                );
+              })}
+            </View>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+
+/** "Remaining" summary table. The section variant is denser and may add a Distributed column. */
+function RemainingTable({ variant, levelsText, byResource, timeText, distributedText, showDiscounted, discounts }: {
+  variant: 'card' | 'section';
+  levelsText: string;
+  byResource: Record<string, number>;
+  timeText: string;
+  distributedText?: string;
+  showDiscounted: boolean;
+  discounts: ScopeDiscount;
+}) {
+  const section = variant === 'section';
+  const headStyle = section ? styles.sectionRemainingHead : styles.remainingHead;
+  const cellStyle = section ? styles.sectionRemainingTotalCell : styles.remainingTotalCell;
+  return (
+    <View style={section ? styles.buildingSectionRemaining : styles.remainingTable}>
+      <View style={styles.remainingRow}>
+        <Text style={[headStyle, { flex: 1 }]}>Remaining</Text>
+        <Text style={[headStyle, { flex: 1 }]}>Cost</Text>
+        <Text style={[headStyle, { flex: 1 }]}>Time</Text>
+        {distributedText !== undefined && <Text style={[headStyle, { flex: 1 }]}>Distributed</Text>}
+      </View>
+      <View style={styles.remainingTotalRow}>
+        <Text style={[cellStyle, { flex: 1 }]}>{levelsText}</Text>
+        <View style={[cellStyle, { flex: 1 }]}>
+          {renderResourceRows(byResource, showDiscounted, discounts, section ? 10 : 11)}
+        </View>
+        <Text style={[cellStyle, { flex: 1 }]}>{timeText}</Text>
+        {distributedText !== undefined && <Text style={[cellStyle, { flex: 1 }]}>{distributedText}</Text>}
+      </View>
+    </View>
+  );
+}
+
+function ExpandToggle({ open, total, onPress }: { open: boolean; total: number; onPress: () => void }) {
+  return (
+    <PressableRipple style={styles.expandTableBtn} onPress={onPress}>
+      <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
+      <Text style={styles.expandTableText}>{open ? 'Show fewer' : `Show all ${total} levels`}</Text>
+    </PressableRipple>
+  );
+}
+
+function ActionButton({ label, onPress, onLongPress }: { label: string; onPress: () => void; onLongPress?: () => void }) {
+  return (
+    <PressableRipple style={styles.upgradeBtn} onPress={onPress} onLongPress={onLongPress}>
+      <Text style={styles.upgradeBtnText}>{label}</Text>
+      <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
+    </PressableRipple>
+  );
+}
+
+function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, discounts, isFirst, isLast, showDescription, inSection, onOpen, inSheet, hideHeader }: {
   name: string;
   copyIndex: number;
   count: number;
@@ -224,18 +457,18 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   inSection?: boolean;
   onOpen?: () => void;
   inSheet?: boolean;
+  /** Skip the item card, e.g. when the sheet header already shows the same row. */
+  hideHeader?: boolean;
 }) {
   const { setBuildingCopies } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
-  const [tableViewportW, setTableViewportW] = useState(0);
   const lookupName = NAME_FIX[name] ?? name;
 
-  const buildingStats = useMemo(() => getBuildingDetail(lookupName, { builderBase: isBB }), [lookupName, isBB]);
+  const { buildingStats, statCols, showDiscounted, fmtTimeD, fmtCostD } = useBuildingStats(lookupName, isBB, discounts);
 
   const currentLevel = copies.levels[copyIndex] ?? 0;
-  const progress = effectiveMax > 0 ? currentLevel / effectiveMax : 0;
-  const isFullyMaxed = currentLevel >= effectiveMax;
+  const isFullyMaxed = isMaxed(currentLevel, effectiveMax);
   const isLocked = currentLevel === 0;
 
   const mainImgSource = getBuildingLevelImageSource(lookupName, Math.max(currentLevel, 1));
@@ -262,10 +495,6 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
     const end = Math.min(allLevels.length, currentIdx + 2);
     displayLevels = allLevels.slice(start, end);
   }
-
-  const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
-  const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
-  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
   const remainingLevels = allLevels.filter((l: any) => l.Level > currentLevel && l.Level <= effectiveMax);
   let totalCost = 0;
@@ -294,40 +523,12 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
     const gridLevels = hideMaxLevelCell
       ? allLevels.slice(-3)
       : displayLevels;
-    const cells = condenseLevels(gridLevels, 2, 3, showFull).map((item) => {
-      if (item.kind === 'ellipsis') {
-        return (
-          <View key="ellipsis" style={styles.levelGridCell}>
-            <View style={styles.levelGridEllipsisWrap}>
-              <Text style={styles.levelGridEllipsisText}>...</Text>
-            </View>
-          </View>
-        );
-      }
-      const levelData = item.data;
-      const lvl = levelData.Level;
-      const cellSource = getBuildingLevelImageSource(lookupName, lvl);
-      const isCurrent = lvl === currentLevel;
-      return (
-        <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
-          <View style={styles.levelGridImgWrap}>
-            {cellSource ? (
-              <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
-            ) : (
-              <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
-                <Text style={styles.levelGridFallbackText}>
-                  {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                </Text>
-              </View>
-            )}
-            <View style={[styles.levelGridBadge, isCurrent && styles.levelGridBadgeCurrent]}>
-              <Text style={[styles.levelGridBadgeText]}>
-                {lvl}
-              </Text>
-            </View>
-          </View>
-        </View>
-      );
+    const cells = renderLevelGridCells({
+      levels: gridLevels,
+      expand: showFull,
+      lookupName,
+      fallbackName: name,
+      isCurrent: (lvl) => lvl === currentLevel,
     });
 
     if (hideMaxLevelCell) {
@@ -377,258 +578,83 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
       styles.itemCard,
       inSheet && styles.itemCardInSheet,
       inSection && styles.itemCardInSection,
-      inSheet && inSection && styles.itemCardCopyInSheet,
+      hideHeader && styles.itemCardBodyOnly,
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
     ]}>
-      <View style={[styles.itemRow, inSheet && !inSection && styles.itemCardRowInSheet]}>
-        <PressableRipple onPress={toggleExpanded} style={[styles.itemCardTouchable, { paddingLeft: Spacing.md }]}>
-          <View style={styles.itemRowInner}>
-            {mainImgSource ? (
-              <Image source={mainImgSource} style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
-            ) : (
-              <View style={[styles.itemIcon, isFirst && { borderTopLeftRadius: Radius.lg }, isLast && !expanded && { borderBottomLeftRadius: Radius.lg }]}>
-                <Text style={styles.itemIconText}>
-                  {name.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                </Text>
-              </View>
-            )}
-            <View style={styles.itemInfo}>
-              <View style={styles.itemNameRow}>
-                <Text style={styles.itemName} numberOfLines={1}>{name}</Text>
-                {count > 1 && (
-                  <View style={styles.copyCountChip}>
-                    <Text style={styles.copyCountChipText}>({copyIndex + 1})</Text>
-                  </View>
-                )}
-              </View>
-              {isLocked ? (
-                <Text style={styles.lockedText}>Locked</Text>
-              ) : inSection ? (
-                <View style={styles.itemProgressRow}>
-                  <View style={[styles.progressTrack, styles.progressTrackFlex]}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        {
-                          width: `${Math.min(progress, 1) * 100}%`,
-                          backgroundColor: isFullyMaxed ? Colors.warning : Colors.textSecondary,
-                        },
-                      ]}
-                    />
-                  </View>
-                  {hasRemaining && (
-                    <Text style={styles.itemProgressMeta} numberOfLines={1}>
-                      {showDiscounted ? applyCostDiscount(fmtCost(totalCost), discounts) : fmtCost(totalCost)}
-                      {' · '}
-                      {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
-                    </Text>
-                  )}
-                </View>
-              ) : (
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${Math.min(progress, 1) * 100}%`,
-                        backgroundColor: isFullyMaxed ? Colors.warning : Colors.textSecondary,
-                      },
-                    ]}
-                  />
-                </View>
-              )}
-            </View>
-          </View>
-        </PressableRipple>
-        <View style={styles.right}>
-          {isLocked ? (
-            <View style={styles.lockedBadge}>
-              <Text style={styles.lockedBadgeText}>Locked</Text>
-            </View>
-          ) : (
-            <View style={styles.rightBtns}>
-              <View style={[
-                styles.levelBadgeContainer,
-                isFullyMaxed && styles.levelBadgeMaxed,
-              ]}>
-                <Text style={[styles.levelBadgeText, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-                  {formatCompact(currentLevel)}
-                </Text>
-                <Text style={[styles.levelBadgeLabel, isFullyMaxed && styles.levelBadgeTextMaxed]}>
-                  / {formatCompact(effectiveMax)}
-                </Text>
-              </View>
-              {count > 1 && (
-                <View style={styles.quickBtnRow}>
-                  <PressableRipple
-                    onPress={() => setCopyLevel(Math.min(currentLevel + 1, effectiveMax))}
-                    onLongPress={() => setCopyLevel(effectiveMax)}
-                    disabled={isFullyMaxed}
-                    style={[styles.quickBtn, isFullyMaxed && styles.quickBtnDisabled]}
-                    hitSlop={4}
-                    accessibilityLabel={`Upgrade ${name} copy ${copyIndex + 1}. Hold to max out`}
-                    accessibilityRole="button"
-                  >
-                    <Ionicons name="chevron-up" size={14} color={isFullyMaxed ? Colors.textTertiary : Colors.textPrimary} />
-                  </PressableRipple>
-                  <PressableRipple
-                    onPress={() => setCopyLevel(Math.max(currentLevel - 1, 1))}
-                    disabled={currentLevel <= 1}
-                    style={[styles.quickBtn, currentLevel <= 1 && styles.quickBtnDisabled]}
-                    hitSlop={4}
-                    accessibilityLabel={`Downgrade ${name} copy ${copyIndex + 1}`}
-                    accessibilityRole="button"
-                  >
-                    <Ionicons name="chevron-down" size={14} color={currentLevel <= 1 ? Colors.textTertiary : Colors.textPrimary} />
-                  </PressableRipple>
-                </View>
-              )}
-            </View>
-          )}
-        </View>
-      </View>
+      {!hideHeader && (
+      <ItemCard
+        name={name}
+        subtitle={inSection ? `Copy ${copyIndex + 1}${isFullyMaxed ? '' : ` · ${fmtTimeD(totalTime)}`}` : undefined}
+        level={currentLevel}
+        maxLevel={effectiveMax}
+        iconSource={mainImgSource ?? undefined}
+        locked={isLocked}
+        costLabel={inSection && hasRemaining ? fmtCostD(totalCost) : undefined}
+        onPress={toggleExpanded}
+        isFirst={isFirst}
+        isLast={isLast && !expanded}
+        actionIcon={isFullyMaxed
+          ? count === 1 ? 'checkmark-circle' : undefined
+          : count > 1 ? 'chevron-up' : undefined}
+        onActionPress={count > 1 ? () => setCopyLevel(Math.min(currentLevel + 1, effectiveMax)) : undefined}
+        actionAccessibilityLabel={`Upgrade ${name} copy ${copyIndex + 1}`}
+        actionColor={isFullyMaxed && count === 1 ? Colors.warning : Colors.textPrimary}
+        actionIcon2={count > 1 && currentLevel > 1 ? 'chevron-down' : undefined}
+        onActionPress2={() => setCopyLevel(Math.max(currentLevel - 1, 1))}
+        actionAccessibilityLabel2={`Downgrade ${name} copy ${copyIndex + 1}`}
+        actionColor2={Colors.textPrimary}
+        subtitleWithBar
+        hideLevelBadge={isFullyMaxed}
+      />
+      )}
 
       {isLocked && effectiveMax > 0 && !inSection && (
         <View style={styles.expandedSection}>
           <Text style={styles.buildingDesc} numberOfLines={3}>This building is available at your Town Hall level. Tap to unlock it.</Text>
-          <PressableRipple style={styles.upgradeBtn} onPress={() => setCopyLevel(1)}>
-            <Text style={styles.upgradeBtnText}>Unlock {name}</Text>
-            <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-          </PressableRipple>
+          <ActionButton label={`Unlock ${name}`} onPress={() => setCopyLevel(1)} />
         </View>
       )}
 
       {!isLocked && !inSection && isExpanded && displayLevels.length > 0 && (
-        <View style={styles.expandedSection}>
+        <View style={[styles.expandedSection, hideHeader && styles.expandedSectionBodyOnly]}>
           {showDescription && buildingStats?.description ? (
             <Text style={styles.buildingDesc} numberOfLines={3}>{buildingStats.description}</Text>
           ) : null}
           {renderGrid()}
           {hasRemaining && (
-            <>
-              <View style={styles.remainingTable}>
-                <View style={styles.remainingRow}>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Remaining</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Cost</Text>
-                  <Text style={[styles.remainingHead, { flex: 1 }]}>Time</Text>
-                </View>
-                <View style={styles.remainingTotalRow}>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>{remainingLevels.length} levels</Text>
-                  <View style={[styles.remainingTotalCell, { flex: 1 }]}>
-                    {renderResourceRows(remainingByResource, showDiscounted, discounts)}
-                  </View>
-                  <Text style={[styles.remainingTotalCell, { flex: 1 }]}>
-                    {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts) : fmtTime(totalTime)}
-                  </Text>
-                </View>
-              </View>
-            </>
+            <RemainingTable
+              variant="card"
+              levelsText={`${remainingLevels.length} levels`}
+              byResource={remainingByResource}
+              timeText={fmtTimeD(totalTime)}
+              showDiscounted={showDiscounted}
+              discounts={discounts}
+            />
           )}
           {buildingStats && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
-              <View style={[styles.buildingStatsTable, { minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
-                <View style={styles.buildingStatRow}>
-                  <View style={styles.buildingStatCellIcon}>
-                    <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
-                  </View>
-                  {statCols.map((col: string) => {
-                    const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
-                    return (
-                      <Text
-                        key={col}
-                        style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
-                        numberOfLines={1}
-                      >
-                        {label}
-                      </Text>
-                    );
-                  })}
-                </View>
-                {condenseLevels(displayLevels, 2, 3, showFull).map((item) => {
-                  if (item.kind === 'ellipsis') {
-                    return (
-                      <View key="ellipsis" style={styles.buildingStatRow}>
-                        <View style={[styles.buildingStatCell, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
-                          <Text style={{ color: Colors.textMuted, fontSize: 11 }}>...</Text>
-                        </View>
-                      </View>
-                    );
-                  }
-                  const levelData = item.data;
-                  const lvl = levelData.Level;
-                  const isCurrentLevel = lvl === currentLevel;
-                  return (
-                    <View key={lvl} style={[styles.buildingStatRow, isCurrentLevel && styles.buildingStatRowCurrent]}>
-                      <View style={styles.buildingStatCellIcon}>
-                        <Text style={[styles.buildingStatLvlNum, isCurrentLevel && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
-                      </View>
-                      {
-                        statCols.map((col: string) => {
-                          const val = levelData[col] ?? '—';
-                          const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
-                          const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
-                          const resColor = col === 'Build Cost'
-                            ? BUILDING_RESOURCE_META[(levelData['Build Cost Resource'] as BuildingCostResource) ?? 'Unknown']?.color
-                            : undefined;
-                          const displayVal = isDiscounted
-                            ? (col === 'Build Cost'
-                              ? applyCostDiscount(formatted, discounts)
-                              : applyTimeDiscount(String(val), discounts))
-                            : formatted;
-                          if (col === 'Build Cost') {
-                            const res = (levelData['Build Cost Resource'] as BuildingCostResource) ?? 'Unknown';
-                            const icon = PACKAGE_RESOURCE_IMAGES[res];
-                            const color = isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary);
-                            return (
-                              <View
-                                key={col}
-                                style={[styles.buildingStatCell, styles.buildingStatCostCell, { minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
-                              >
-                                {icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
-                                <Text style={{ color, fontSize: 11, fontWeight: '500', fontFamily: clashFontFamily(500, 11) }} numberOfLines={1}>{displayVal}</Text>
-                              </View>
-                            );
-                          }
-                          return (
-                            <Text
-                              key={col}
-                              style={[styles.buildingStatCell, { color: isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary), minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
-                              numberOfLines={1}
-                            >
-                              {displayVal}
-                            </Text>
-                          );
-                        })}
-                    </View>
-                  );
-                })}
-              </View>
-            </ScrollView>
+            <StatsTable
+              levels={displayLevels}
+              expand={showFull}
+              statCols={statCols}
+              isBB={isBB}
+              isCurrent={(lvl) => lvl === currentLevel}
+              showDiscounted={showDiscounted}
+              discounts={discounts}
+              richCost
+            />
           )}
-          {showExpand && !showFull && (
-            <PressableRipple style={styles.expandTableBtn} onPress={() => setShowFull(true)}>
-              <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
-              <Text style={styles.expandTableText}>Show all {allLevels.length} levels</Text>
-            </PressableRipple>
-          )}
-          {showExpand && showFull && (
-            <PressableRipple style={styles.expandTableBtn} onPress={() => setShowFull(false)}>
-              <Ionicons name="chevron-up" size={14} color={Colors.textSecondary} />
-              <Text style={styles.expandTableText}>Show fewer</Text>
-            </PressableRipple>
+          {showExpand && (
+            <ExpandToggle open={showFull} total={allLevels.length} onPress={() => setShowFull(!showFull)} />
           )}
           {(hasRemaining || (currentLevel > 1 && !isFullyMaxed)) && (
             <View style={styles.upgradeRow}>
               {hasRemaining && (
-                <PressableRipple
-                  style={styles.upgradeBtn}
+                <ActionButton
+                  label={`Upgrade to Lv${currentLevel + 1}`}
                   onPress={() => setCopyLevel(currentLevel + 1)}
                   onLongPress={() => setCopyLevel(effectiveMax)}
-                >
-                  <Text style={styles.upgradeBtnText}>Upgrade to Lv{currentLevel + 1}</Text>
-                  <Ionicons name="arrow-forward" size={14} color={Colors.bg} />
-                </PressableRipple>
+                />
               )}
               {currentLevel > 1 && (
                 <PressableRipple
@@ -656,11 +682,9 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
 
 function LevelGroupPresets({
   value,
-  max,
   onUpgrade,
 }: {
   value: number;
-  max: number;
   onUpgrade: (count: number) => void;
 }) {
   const presets = [1, 10, 50, value];
@@ -695,7 +719,6 @@ function BuildingCollapsibleSection({
   isFirst,
   isLast,
   onOpen,
-  compact,
   groupByLevel,
   inSheet,
   children,
@@ -709,19 +732,17 @@ function BuildingCollapsibleSection({
   isFirst: boolean;
   isLast: boolean;
   onOpen?: () => void;
-  compact?: boolean;
   groupByLevel?: boolean;
   inSheet?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [showAllLevels, setShowAllLevels] = useState(false);
-  const [tableViewportW, setTableViewportW] = useState(0);
   const { setBuildingCopies } = usePlayer();
   const { count: builderCount } = useBuilderCount();
   const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
   const totalMax = copies.levels.length * effectiveMax;
-  const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
+  const isSectionMaxed = totalMax > 0 && isMaxed(totalLevel, totalMax);
   const isOpen = inSheet || open;
   const toggle = () => {
     if (inSheet) return;
@@ -778,65 +799,23 @@ function BuildingCollapsibleSection({
       {levelGroups.map((g, i) => {
         const isLastGroup = i === levelGroups.length - 1;
         const imgSource = getBuildingLevelImageSource(lookupName, g.level);
-        const groupProgress = effectiveMax > 0 ? g.level / effectiveMax : 0;
-        const isMaxed = g.level >= effectiveMax;
+        const groupMaxed = isMaxed(g.level, effectiveMax);
         return (
-          <View
+          <ItemCard
             key={g.level}
-            style={[
-              styles.itemCard,
-              inSheet && styles.itemCardInSheet,
-              inSheet && styles.itemCardCopyInSheet,
-              inSheet && styles.itemCardLevelGroupInSheet,
-              isLastGroup && { borderBottomLeftRadius: Radius.lg, borderBottomRightRadius: Radius.lg },
-            ]}
-          >
-            <View style={styles.itemRow}>
-              <View style={[styles.itemCardTouchable, { paddingLeft: Spacing.md }]}>
-                <View style={styles.itemRowInner}>
-                  {imgSource ? (
-                    <Image source={imgSource} style={[styles.itemIcon, isLastGroup && { borderBottomLeftRadius: Radius.lg }]} resizeMode="contain" />
-                  ) : (
-                    <View style={[styles.itemIcon, isLastGroup && { borderBottomLeftRadius: Radius.lg }]}>
-                      <Text style={styles.itemIconText}>
-                        {title.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.itemInfo}>
-                    <View style={styles.itemNameRow}>
-                      <Text style={styles.itemName} numberOfLines={1}>{title}</Text>
-                      <View style={styles.copyCountChip}>
-                        <Text style={styles.copyCountChipText}>×{g.numCopies}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.itemProgressRow}>
-                      <View style={[styles.progressTrack, styles.progressTrackFlex]}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            {
-                              width: `${Math.min(groupProgress, 1) * 100}%`,
-                              backgroundColor: isMaxed ? Colors.warning : Colors.textSecondary,
-                            },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                    <LevelGroupPresets
-                      value={g.numCopies}
-                      max={copies.levels.length}
-                      onUpgrade={(n) => upgradeLevelCopies(g.level, n)}
-                    />
-                  </View>
-                  <View style={styles.levelBadgeContainer}>
-                    <Text style={styles.levelBadgeText}>{formatCompact(g.level)}</Text>
-                    <Text style={styles.levelBadgeLabel}>/ {formatCompact(effectiveMax)}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
+            name={`${title} ×${g.numCopies}`}
+            level={g.level}
+            maxLevel={effectiveMax}
+            iconSource={imgSource ?? undefined}
+            isLast={isLastGroup}
+            hideLevelBadge={groupMaxed}
+            footer={groupMaxed ? undefined :
+              <LevelGroupPresets
+                value={g.numCopies}
+                onUpgrade={(n) => upgradeLevelCopies(g.level, n)}
+              />
+            }
+          />
         );
       })}
     </View>
@@ -844,10 +823,7 @@ function BuildingCollapsibleSection({
   const availableCopyLevels = copies.levels.filter((l) => l > 0);
   const icon = getBuildingLevelImageSource(lookupName, availableCopyLevels.length > 0 ? Math.min(...availableCopyLevels) : 1);
 
-  const buildingStats = useMemo(() => getBuildingDetail(lookupName, { builderBase: isBB }), [lookupName, isBB]);
-
-  const statCols = buildingStats ? buildingStats.statsColumns.filter((c: string) => c !== 'Level') : [];
-  const showDiscounted = (discounts.costPercent > 0 || discounts.timePercent > 0) && (statCols.includes('Build Cost') || statCols.includes('Build Time'));
+  const { buildingStats, statCols, showDiscounted, fmtTimeD } = useBuildingStats(lookupName, isBB, discounts);
 
   // Format large level counts as rounded thousands (e.g. 2000 -> "2K").
   const fmtLevels = (n: number): string => {
@@ -910,64 +886,27 @@ function BuildingCollapsibleSection({
     ? allLevels
     : allLevels.filter((l: any) => l.Level >= spanMin && l.Level <= spanMax);
   const mergedGridLevels = isSectionMaxed ? allLevels.slice(-3) : mergedDisplayLevels;
-  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
 
   return (
     <>
       {!inSheet && (
-        <PressableRipple
-          onPress={toggle}
-          style={[
-            styles.buildingSectionHeader,
-            compact && styles.buildingSectionHeaderCompact,
-            (isFirst || isOpen) && styles.buildingSectionHeaderFirst,
-            isLast && !isOpen && styles.buildingSectionHeaderLast,
-          ]}
-        >
-          <View style={[
-            styles.buildingSectionIcon,
-            (isFirst || isOpen) && styles.buildingSectionIconTopLeftRounded,
-            isLast && !isOpen && styles.buildingSectionIconBottomLeftRounded,
-          ]}>
-            {icon ? (
-              <Image source={icon} style={styles.buildingSectionIconImg} resizeMode="contain" />
-            ) : (
-              <Text style={styles.buildingSectionIconText}>
-                {title.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-              </Text>
-            )}
-          </View>
-          <View style={styles.buildingSectionText}>
-            <Text style={styles.buildingSectionTitle}>{title}</Text>
-            <View style={styles.buildingSectionDesc}>
-              <View style={styles.buildingSectionBar}>
-                <View
-                  style={[
-                    styles.buildingSectionFill,
-                    {
-                      width: `${Math.min(totalMax > 0 ? totalLevel / totalMax : 0, 1) * 100}%`,
-                      backgroundColor: isSectionMaxed ? Colors.warning : Colors.textPrimary,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          </View>
-          <View style={styles.buildingSectionBadges}>
-            <View style={styles.buildingSectionBadge}>
-              <Text style={styles.buildingSectionBadgeText}>{count}</Text>
-            </View>
-            <View style={[
-              styles.buildingSectionBadge,
-              (isFirst || isOpen) && styles.buildingSectionBadgeTopRightRounded,
-              isLast && !isOpen && styles.buildingSectionBadgeBottomRightRounded,
-              isSectionMaxed && styles.buildingSectionBadgeMaxed,
-            ]}>
-              <Text style={[styles.buildingSectionBadgeText, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>{fmtLevels(totalLevel)}</Text>
-              <Text style={[styles.buildingSectionBadgeLabel, isSectionMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {fmtLevels(totalMax)}</Text>
-            </View>
-          </View>
-        </PressableRipple>
+        <View style={{ marginHorizontal: 15 }}>
+          <ItemCard
+            name={title}
+            level={totalLevel}
+            maxLevel={totalMax}
+            iconSource={icon}
+            onPress={toggle}
+            isFirst={isFirst || isOpen}
+            isLast={isLast && !isOpen}
+            actionText={isSectionMaxed ? undefined : String(count)}
+            actionIcon={isSectionMaxed ? 'checkmark-circle' : undefined}
+            actionColor={Colors.warning}
+            actionPosition={isSectionMaxed ? 'after' : 'before'}
+            onActionPress={undefined}
+            hideLevelBadge={isSectionMaxed}
+          />
+        </View>
       )}
       {isOpen && (
         <View style={styles.buildingSectionBody}>
@@ -977,30 +916,15 @@ function BuildingCollapsibleSection({
           {(hasRemaining || !isSectionMaxed) && (
             <View style={styles.buildingSectionRemainingRow}>
               {hasRemaining && (
-                <View style={styles.buildingSectionRemaining}>
-                  <View style={styles.remainingRow}>
-                    <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Remaining</Text>
-                    <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Cost</Text>
-                    <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Time</Text>
-                    {builderCount > 0 && (
-                      <Text style={[styles.sectionRemainingHead, { flex: 1 }]}>Distributed</Text>
-                    )}
-                  </View>
-                  <View style={styles.remainingTotalRow}>
-                    <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>{fmtLevels(aggregate.remainingLevels)} levels</Text>
-                    <View style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
-                      {renderResourceRows(aggregate.byResource, showDiscounted, discounts, 10)}
-                    </View>
-                    <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
-                      {showDiscounted ? applyTimeDiscount(fmtTime(aggregate.totalTime), discounts) : fmtTime(aggregate.totalTime)}
-                    </Text>
-                    {builderCount > 0 && (
-                      <Text style={[styles.sectionRemainingTotalCell, { flex: 1 }]}>
-                        {showDiscounted ? applyTimeDiscount(fmtTime(distributedTime), discounts) : fmtTime(distributedTime)}
-                      </Text>
-                    )}
-                  </View>
-                </View>
+                <RemainingTable
+                  variant="section"
+                  levelsText={`${fmtLevels(aggregate.remainingLevels)} levels`}
+                  byResource={aggregate.byResource}
+                  timeText={fmtTimeD(aggregate.totalTime)}
+                  distributedText={builderCount > 0 ? fmtTimeD(distributedTime) : undefined}
+                  showDiscounted={showDiscounted}
+                  discounts={discounts}
+                />
               )}
               {!isSectionMaxed && (
                 <View style={styles.buildingSectionQuickBtns}>
@@ -1033,38 +957,12 @@ function BuildingCollapsibleSection({
             <View>
               <View style={styles.levelGridBorder}>
                 <View style={styles.levelGrid}>
-                  {condenseLevels(mergedGridLevels, 2, 3, showAllLevels).map((item) => {
-                    if (item.kind === 'ellipsis') {
-                      return (
-                        <View key="ellipsis" style={styles.levelGridCell}>
-                          <View style={styles.levelGridEllipsisWrap}>
-                            <Text style={styles.levelGridEllipsisText}>...</Text>
-                          </View>
-                        </View>
-                      );
-                    }
-                    const levelData = item.data;
-                    const lvl = levelData.Level;
-                    const cellSource = getBuildingLevelImageSource(lookupName, lvl);
-                    const isCurrent = copies.levels.includes(lvl);
-                    return (
-                      <View key={lvl} style={[styles.levelGridCell, isCurrent && styles.levelGridCellCurrent]}>
-                        <View style={styles.levelGridImgWrap}>
-                          {cellSource ? (
-                            <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
-                          ) : (
-                            <View style={[styles.levelGridImg, styles.levelGridImgFallback]}>
-                              <Text style={styles.levelGridFallbackText}>
-                                {title.split(/[\s.]+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                              </Text>
-                            </View>
-                          )}
-                          <View style={[styles.levelGridBadge, isCurrent && styles.levelGridBadgeCurrent]}>
-                            <Text style={styles.levelGridBadgeText}>{lvl}</Text>
-                          </View>
-                        </View>
-                      </View>
-                    );
+                  {renderLevelGridCells({
+                    levels: mergedGridLevels,
+                    expand: showAllLevels,
+                    lookupName,
+                    fallbackName: title,
+                    isCurrent: (lvl) => copies.levels.includes(lvl),
                   })}
                   {isSectionMaxed && (
                     <PressableRipple
@@ -1079,75 +977,18 @@ function BuildingCollapsibleSection({
                 </View>
               </View>
               {buildingStats && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
-                  <View style={[styles.buildingStatsTable, { minWidth: Math.max(tableViewportW || contentMinW, contentMinW) }]}>
-                    <View style={styles.buildingStatRow}>
-                      <View style={styles.buildingStatCellIcon}>
-                        <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
-                      </View>
-                      {statCols.map((col: string) => {
-                        const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
-                        return (
-                          <Text
-                            key={col}
-                            style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
-                            numberOfLines={1}
-                          >
-                            {label}
-                          </Text>
-                        );
-                      })}
-                    </View>
-                    {condenseLevels(mergedDisplayLevels, 2, 3, showAllLevels).map((item) => {
-                      if (item.kind === 'ellipsis') {
-                        return (
-                          <View key="ellipsis" style={styles.buildingStatRow}>
-                            <View style={[styles.buildingStatCell, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
-                              <Text style={{ color: Colors.textMuted, fontSize: 11 }}>...</Text>
-                            </View>
-                          </View>
-                        );
-                      }
-                      const levelData = item.data;
-                      const lvl = levelData.Level;
-                      const isCurrent = copies.levels.includes(lvl);
-                      return (
-                        <View key={lvl} style={[styles.buildingStatRow, isCurrent && styles.buildingStatRowCurrent]}>
-                          <View style={styles.buildingStatCellIcon}>
-                            <Text style={[styles.buildingStatLvlNum, isCurrent && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
-                          </View>
-                          {statCols.map((col: string) => {
-                            const val = levelData[col] ?? '—';
-                            const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
-                            const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
-                            const displayVal = isDiscounted
-                              ? (col === 'Build Cost'
-                                ? applyCostDiscount(formatted, discounts)
-                                : applyTimeDiscount(String(val), discounts))
-                              : formatted;
-                            return (
-                              <Text
-                                key={col}
-                                style={[styles.buildingStatCell, { color: isDiscounted ? Colors.warning : Colors.textSecondary, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
-                                numberOfLines={1}
-                              >
-                                {displayVal}
-                              </Text>
-                            );
-                          })}
-                        </View>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
+                <StatsTable
+                  levels={mergedDisplayLevels}
+                  expand={showAllLevels}
+                  statCols={statCols}
+                  isBB={isBB}
+                  isCurrent={(lvl) => copies.levels.includes(lvl)}
+                  showDiscounted={showDiscounted}
+                  discounts={discounts}
+                />
               )}
               {showLevelSpan && !isSectionMaxed && (
-                <PressableRipple style={styles.expandTableBtn} onPress={() => setShowAllLevels(!showAllLevels)}>
-                  <Ionicons name={showAllLevels ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
-                  <Text style={styles.expandTableText}>
-                    {showAllLevels ? 'Show fewer' : `Show all ${allLevels.length} levels`}
-                  </Text>
-                </PressableRipple>
+                <ExpandToggle open={showAllLevels} total={allLevels.length} onPress={() => setShowAllLevels(!showAllLevels)} />
               )}
             </View>
           )}
@@ -1187,10 +1028,10 @@ const PILL_COLUMNS = 2;
  * the block (single row, or a lone trailing pill), so each corner is tested
  * independently instead of by a single "is this a corner cell" branch.
  */
-function pillCornerStyle(index: number, total: number) {
+function pillCornerStyle(index: number, total: number, columns = PILL_COLUMNS) {
   const outer = Radius.xl * 1.25;
-  const firstRowCount = Math.min(PILL_COLUMNS, total);
-  const lastRowStart = Math.floor((total - 1) / PILL_COLUMNS) * PILL_COLUMNS;
+  const firstRowCount = Math.min(columns, total);
+  const lastRowStart = Math.floor((total - 1) / columns) * columns;
   return {
     ...(index === 0 && { borderTopLeftRadius: outer }),
     ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
@@ -1205,17 +1046,8 @@ function pillCornerStyle(index: number, total: number) {
  * there is no row wrapping to derive the position from.
  */
 function segCornerStyle(index: number, total: number) {
-  const outer = Radius.xl * 1.25;
-  return {
-    ...(index === 0 && {
-      borderTopLeftRadius: outer,
-      borderBottomLeftRadius: outer,
-    }),
-    ...(index === total - 1 && {
-      borderTopRightRadius: outer,
-      borderBottomRightRadius: outer,
-    }),
-  };
+  // A single row is a grid with as many columns as segments.
+  return pillCornerStyle(index, total, total);
 }
 
 type CondensedLevel = { kind: 'row'; data: any } | { kind: 'ellipsis' };
@@ -1278,12 +1110,24 @@ export default function BuildingsScreen() {
     ? selectedCat
     : availableCats[0] || '';
 
+  // Pills are chunked into explicit rows rather than left to flex-wrap on a fixed
+  // percentage width, so each pill can be flex: 1 and fill its row exactly. The gap
+  // is the only spacing, and a partial trailing row (the Walls pill) spans it whole.
+  const pillRows = useMemo(() => {
+    const rows: string[][] = [];
+    for (let i = 0; i < availableCats.length; i += PILL_COLUMNS) {
+      rows.push(availableCats.slice(i, i + PILL_COLUMNS));
+    }
+    return rows;
+  }, [availableCats]);
+
   // Each category pill leads with a real building the player actually owns in the
-  // active village, drawn at the highest level among its copies. Builder Base
-  // names are stored prefixed ("BB Cannon") and resolve through NAME_FIX and
-  // toPackageName, so the same lookup works for both villages.
+  // active village, drawn at the highest level among its copies, and counts how
+  // many of its types are already fully maxed. Builder Base names are stored
+  // prefixed ("BB Cannon") and resolve through NAME_FIX and toPackageName, so the
+  // same lookup works for both villages.
   const catMeta = useMemo(() => {
-    const out: Record<string, { image: number | null; types: number }> = {};
+    const out: Record<string, { image: number | null; types: number; maxed: number }> = {};
     for (const cat of SHOW_CATEGORIES) {
       const items = activeData[cat] ?? {};
       const owned = Object.entries(items).filter(([, data]) => {
@@ -1291,12 +1135,12 @@ export default function BuildingsScreen() {
         return entry != null && (entry.level ?? 0) > 0;
       });
       let image: number | null = null;
+      let levelImageFound = false;
+      let maxed = 0;
       for (const [name, data] of owned) {
         const lookupName = NAME_FIX[name] ?? name;
         const maxLvl = (data as any)[String(levelKey)]?.level ?? 0;
-        const effectiveMax = maxLvl > 0
-          ? maxLvl
-          : getBuildingEffectiveMax(lookupName, isBB ? bh : th);
+        const effectiveMax = getSectionMaxLevel(name, maxLvl, isBB, th, bh);
         const count = isBB ? getCountAtBH(lookupName, bh) : getCountAtTH(lookupName, th);
         const copies = getBuildingCopies(
           lookupName,
@@ -1307,21 +1151,26 @@ export default function BuildingsScreen() {
           player?.lastMaxedTH,
           isBB ? undefined : th,
         );
+        // A type counts as maxed once every copy sits at its max level, the same
+        // test the list uses to sort maxed buildings to the bottom.
+        if (copies.levels.length > 0 && effectiveMax > 0 && copies.levels.every((l) => l >= effectiveMax)) {
+          maxed++;
+        }
         // Highest level across the building's copies. A building the player has
         // none of yet (all copies locked at 0) is skipped, so the pill never shows
         // a level the account does not own.
         const maxCopyLevel = copies.levels.reduce((m, l) => (l > 0 && l > m ? l : m), 0);
-        if (maxCopyLevel > 0) {
+        if (!levelImageFound && maxCopyLevel > 0) {
           const src = getBuildingLevelImageSource(lookupName, maxCopyLevel);
           if (src) {
             image = src;
-            break;
+            levelImageFound = true;
           }
         }
         // Nothing placed yet: fall back to the generic building art.
-        if (image == null) image = getBuildingImageSource(lookupName) ?? null;
+        if (!levelImageFound && image == null) image = getBuildingImageSource(lookupName) ?? null;
       }
-      out[cat] = { image, types: owned.length };
+      out[cat] = { image, types: owned.length, maxed };
     }
     return out;
   }, [activeData, levelKey, isBB, th, bh, player]);
@@ -1364,9 +1213,7 @@ export default function BuildingsScreen() {
     for (const [name, entry] of entries) {
       const lookupName = NAME_FIX[name] ?? name;
       const maxLvl = (entry as any)[String(levelKey)]?.level ?? 0;
-      const effectiveMax = maxLvl > 0
-        ? maxLvl
-        : getBuildingEffectiveMax(lookupName, isBB ? bh : th);
+      const effectiveMax = getSectionMaxLevel(name, maxLvl, isBB, th, bh);
       const count = isBB ? getCountAtBH(lookupName, bh) : getCountAtTH(lookupName, th);
       const copies = getBuildingCopies(
         lookupName,
@@ -1474,45 +1321,21 @@ export default function BuildingsScreen() {
     const headerIcon = getBuildingLevelImageSource(lookupName, minLevel);
     const totalLevel = section.copies.levels.reduce((s, l) => s + l, 0);
     const totalMax = section.copies.levels.length * section.effectiveMax;
-    const isMaxed = totalMax > 0 && totalLevel >= totalMax;
-    const fmtHeaderLevels = (n: number): string => (n >= 1000 ? Math.round(n / 1000) + 'K' : n.toString());
     return (
-      <View style={styles.sheetHeaderRow}>
-        <View style={styles.sheetHeaderIcon}>
-          {headerIcon ? (
-            <Image source={headerIcon} style={styles.sheetHeaderIconImg} resizeMode="contain" />
-          ) : (
-            <Text style={styles.sheetHeaderIconText}>
-              {section.name.split(/[\s.]+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-            </Text>
-          )}
-        </View>
-        <View style={styles.sheetHeaderText}>
-          <Text style={styles.sheetHeaderTitle} numberOfLines={1}>{section.name}</Text>
-          <View style={styles.sheetHeaderBar}>
-            <View
-              style={[
-                styles.sheetHeaderFill,
-                {
-                  width: `${Math.min(totalMax > 0 ? totalLevel / totalMax : 0, 1) * 100}%`,
-                  backgroundColor: isMaxed ? Colors.warning : Colors.textPrimary,
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.sheetHeaderSubtitle} numberOfLines={1}>
-            {isBB ? `BH${bh} · ${section.count} ${section.count > 1 ? 'copies' : 'copy'}` : `TH${th} · ${section.count} ${section.count > 1 ? 'copies' : 'copy'}`}
-          </Text>
-        </View>
-        <View style={styles.sheetHeaderBadges}>
-          <View style={[styles.buildingSectionBadge, isMaxed && styles.buildingSectionBadgeMaxed]}>
-            <Text style={[styles.buildingSectionBadgeText, isMaxed && styles.buildingSectionBadgeTextMaxed]}>{fmtHeaderLevels(totalLevel)}</Text>
-            <Text style={[styles.buildingSectionBadgeLabel, isMaxed && styles.buildingSectionBadgeTextMaxed]}>/ {fmtHeaderLevels(totalMax)}</Text>
-          </View>
-          <PressableRipple onPress={() => setSheetName(null)} hitSlop={8} style={styles.sheetHeaderClose} accessibilityLabel="Close" accessibilityRole="button">
-            <Ionicons name="close" size={18} color={Colors.textPrimary} />
-          </PressableRipple>
-        </View>
+      <View style={{ flex: 1 }}>
+        <ItemCard
+          name={section.name}
+          level={totalLevel}
+          maxLevel={totalMax}
+          iconSource={headerIcon}
+          subtitle={`${isBB ? `BH${bh}` : `TH${th}`} · ${section.count} ${section.count > 1 ? 'copies' : 'copy'}`}
+          actionIcon="close"
+          actionColor={Colors.textPrimary}
+          onActionPress={() => setSheetName(null)}
+          actionAccessibilityLabel="Close"
+          subtitleWithBar
+          hideLevelBadge={totalMax > 0 && totalLevel >= totalMax}
+        />
       </View>
     );
   };
@@ -1530,7 +1353,6 @@ export default function BuildingsScreen() {
           discounts={discounts.buildings}
           isFirst={false}
           isLast={false}
-          compact
           groupByLevel={isWalls}
           inSheet
         >
@@ -1565,6 +1387,7 @@ export default function BuildingsScreen() {
         isLast={false}
         showDescription
         inSheet
+        hideHeader
       />
     );
   };
@@ -1638,41 +1461,45 @@ export default function BuildingsScreen() {
         )}
 
         <View style={styles.pillRow}>
-          {availableCats.map((cat, ci) => {
-            const isActive = cat === activeCat;
-            const meta = catMeta[cat];
-            return (
-              <PressableRipple
-                key={cat}
-                style={[
-                  styles.pill,
-                  pillCornerStyle(ci, availableCats.length),
-                  isActive && styles.pillActive,
-                ]}
-                onPress={() => setSelectedCat(cat)}
-              >
-                {meta?.image != null ? (
-                  <Image source={meta.image} style={styles.pillImg} resizeMode="contain" />
-                ) : (
-                  <CategoryIcon cat={cat} isActive={isActive} />
-                )}
-                <View style={styles.pillTextCol}>
-                  <Text
-                    style={[styles.pillText, isActive && styles.pillTextActive]}
-                    numberOfLines={1}
+          {pillRows.map((row) => (
+            <View key={row[0]} style={styles.pillLine}>
+              {row.map((cat) => {
+                const isActive = cat === activeCat;
+                const meta = catMeta[cat];
+                return (
+                  <PressableRipple
+                    key={cat}
+                    style={[
+                      styles.pill,
+                      pillCornerStyle(availableCats.indexOf(cat), availableCats.length),
+                      isActive && styles.pillActive,
+                    ]}
+                    onPress={() => setSelectedCat(cat)}
                   >
-                    {cat}
-                  </Text>
-                  <Text
-                    style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
-                    numberOfLines={1}
-                  >
-                    {`${meta?.types ?? 0} types`}
-                  </Text>
-                </View>
-              </PressableRipple>
-            );
-          })}
+                    {meta?.image != null ? (
+                      <Image source={meta.image} style={styles.pillImg} resizeMode="contain" />
+                    ) : (
+                      <CategoryIcon cat={cat} isActive={isActive} />
+                    )}
+                    <View style={styles.pillTextCol}>
+                      <Text
+                        style={[styles.pillText, isActive && styles.pillTextActive]}
+                        numberOfLines={1}
+                      >
+                        {cat}
+                      </Text>
+                      <Text
+                        style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
+                        numberOfLines={1}
+                      >
+                        {`${meta?.types ?? 0} types · ${meta?.maxed ?? 0} maxed`}
+                      </Text>
+                    </View>
+                  </PressableRipple>
+                );
+              })}
+            </View>
+          ))}
         </View>
 
         {buildingSections.map((section, idx) => {
@@ -1691,7 +1518,6 @@ export default function BuildingsScreen() {
                 discounts={discounts.buildings}
                 isFirst={isFirst}
                 isLast={isLast}
-                compact
                 groupByLevel={isWalls}
                 onOpen={() => setSheetName(section.name)}
               >
@@ -1826,23 +1652,20 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
   },
   pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.xs,
     paddingHorizontal: Spacing.base,
     marginTop: Spacing.sm,
     marginBottom: Spacing.md,
   },
+  pillLine: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
   pill: {
-    // Fixed half-of-a-row basis with no grow and no shrink, so the wrap point is
-    // decided purely by the container width and can never be pushed wider by the
-    // pill's own content. 48% leaves room for the 4px gap; a third pill needs
-    // another 48% and so always wraps. The gap does the spacing -
-    // space-between would push a short final row to opposite edges and break the
-    // seamless block.
-    width: '48%',
-    flexGrow: 0,
-    flexShrink: 0,
+    // flex: 1 rather than a hardcoded percentage width, so a pair of pills shares
+    // the row exactly (gap-only spacing) and a lone trailing pill fills the row.
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -1918,28 +1741,6 @@ const styles = StyleSheet.create({
   villageToggleTextActive: {
     color: Colors.bg,
   },
-  legendRow: {
-    flexDirection: 'row',
-    gap: Spacing.base,
-    marginTop: Spacing.sm,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendDotCurrent: {
-    backgroundColor: Colors.textPrimary,
-  },
-  legendText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-  },
   itemCard: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.xs,
@@ -1952,138 +1753,12 @@ const styles = StyleSheet.create({
     paddingLeft: 0,
     backgroundColor: Colors.bgCard,
   },
-  itemCardCopyInSheet: {
-    backgroundColor: Colors.bgCardHover,
-  },
-  itemCardLevelGroupInSheet: {
-    paddingRight: Spacing.md,
-  },
-  itemCardRowInSheet: {
-    backgroundColor: Colors.bgCardHover,
-    borderRadius: Radius.sm,
-    marginBottom: Spacing.sm,
-  },
   itemCardInSection: {
     marginHorizontal: 0,
   },
-  itemCardTouchable: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  itemRowInner: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: Spacing.md,
-  },
-  itemIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
-    overflow: 'hidden',
-  },
-  itemIconText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 52,
-  },
-  itemInfo: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  itemName: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  itemNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  copyCountChip: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  copyCountChipText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-    fontSize: 10,
-  },
-  levelBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: 2,
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: Colors.progressTrack,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressTrackFlex: {
-    flex: 1,
-  },
-  itemProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  itemProgressMeta: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  right: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  rightBtns: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingRight: Spacing.sm,
-  },
-  quickBtnRow: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  quickBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickBtnDisabled: {
-    opacity: 0.4,
-  },
-  counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: 6,
+  itemCardBodyOnly: {
+    marginBottom: 0,
+    backgroundColor: 'transparent',
   },
   presetRow: {
     flexDirection: 'row',
@@ -2106,56 +1781,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: 11,
     fontWeight: '600',
-  },
-  levelBadgeContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  levelBadgeMaxed: {
-    backgroundColor: Colors.warning,
-  },
-  levelBadgeText: {
-    ...Typography.headline,
-    color: Colors.textPrimary,
-    fontSize: 14,
-    lineHeight: 16,
-    fontWeight: '700',
-  },
-  levelBadgeLabel: {
-    ...Typography.caption,
-    color: Colors.textPrimary,
-    fontSize: 8,
-    opacity: 0.7,
-    lineHeight: 9,
-  },
-  levelBadgeTextMaxed: {
-    color: Colors.bg,
-  },
-  lockedBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  lockedBadgeText: {
-    ...Typography.footnote,
-    color: Colors.textMuted,
-    fontWeight: '600',
-    fontSize: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  lockedText: {
-    ...Typography.footnote,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-    marginTop: 2,
   },
   buildingDesc: {
     ...Typography.caption,
@@ -2187,14 +1812,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     textAlign: 'center',
     textAlignVertical: 'center',
-  },
-  remainingCell: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    textAlign: 'center',
-    fontSize: 11,
   },
   remainingTotalRow: {
     flexDirection: 'row',
@@ -2266,145 +1883,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     opacity: 0.85,
   },
-  sheetHeaderRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  sheetHeaderIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  sheetHeaderIconImg: {
-    width: 40,
-    height: 40,
-  },
-  sheetHeaderIconText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-  },
-  sheetHeaderText: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  sheetHeaderTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  sheetHeaderSubtitle: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 1,
-  },
-  sheetHeaderBar: {
-    height: 4,
-    backgroundColor: Colors.progressTrack,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginTop: 4,
-    marginBottom: 3,
-  },
-  sheetHeaderFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  sheetHeaderBadges: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  sheetHeaderClose: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buildingSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: Spacing.base,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
-    marginHorizontal: Spacing.base,
-    marginBottom: Spacing.xs,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.sm,
-  },
-  buildingSectionHeaderFirst: {
-    borderTopLeftRadius: Radius.xl * 1.25,
-    borderTopRightRadius: Radius.xl * 1.25,
-  },
-  buildingSectionHeaderCompact: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-  },
-  buildingSectionHeaderLast: {
-    borderBottomLeftRadius: Radius.xl * 1.25,
-    borderBottomRightRadius: Radius.xl * 1.25,
-  },
-  buildingSectionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  buildingSectionIconTopLeftRounded: {
-    borderTopLeftRadius: Radius.lg,
-  },
-  buildingSectionIconBottomLeftRounded: {
-    borderBottomLeftRadius: Radius.lg,
-  },
-  buildingSectionIconImg: {
-    width: 40,
-    height: 40,
-  },
-  buildingSectionIconText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-  },
-  buildingSectionText: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: 2,
-  },
-  buildingSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  buildingSectionDesc: {
-    justifyContent: 'flex-end',
-  },
-  buildingSectionBar: {
-    height: 4,
-    backgroundColor: Colors.progressTrack,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 2,
-  },
-  buildingSectionFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  buildingSectionBadges: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
   buildingSectionQuickBtn: {
     width: 36,
     height: 36,
@@ -2412,41 +1890,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  buildingSectionBadge: {
-    minWidth: 32,
-    height: 32,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xs,
-  },
-  buildingSectionBadgeMaxed: {
-    backgroundColor: Colors.warning,
-  },
-  buildingSectionBadgeTopRightRounded: {
-    borderTopRightRadius: Radius.lg,
-  },
-  buildingSectionBadgeBottomRightRounded: {
-    borderBottomRightRadius: Radius.lg,
-  },
-  buildingSectionBadgeText: {
-    fontSize: 14,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  buildingSectionBadgeTextMaxed: {
-    color: Colors.bg,
-  },
-  buildingSectionBadgeLabel: {
-    fontSize: 8,
-    lineHeight: 9,
-    color: Colors.textPrimary,
-    opacity: 0.7,
-    fontVariant: ['tabular-nums'],
   },
   buildingSectionBody: {
     paddingTop: 0,
@@ -2644,6 +2087,9 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
+  },
+  expandedSectionBodyOnly: {
+    borderTopWidth: 0,
   },
   expandTableBtn: {
     flexDirection: 'row',
