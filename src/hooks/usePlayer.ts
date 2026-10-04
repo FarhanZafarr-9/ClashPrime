@@ -232,6 +232,14 @@ export async function setBulkBuildingLevels(levels: Record<string, number>, acco
   await cachePlayer(player, accountTag);
 }
 
+/** Merge crafted-defense module levels (defense name → module name → level) for one account. */
+export async function setBulkCraftedLevels(levels: Record<string, Record<string, number>>, accountTag?: string): Promise<void> {
+  const player = await getCachedPlayer(accountTag);
+  if (!player) return;
+  player.craftedLevels = { ...(player.craftedLevels || {}), ...levels };
+  await cachePlayer(player, accountTag);
+}
+
 export interface BuildingCopiesPayload {
   name: string;
   levels: number[];
