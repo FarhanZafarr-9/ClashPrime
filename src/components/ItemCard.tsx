@@ -9,15 +9,28 @@ const lockedImage = require('../../assets/images/chiefs-journey/locked.png');
 
 interface Props {
   name: string;
-  level: number;
-  maxLevel: number;
+  /** Omitted only for plain rows, which show no level or progress at all. */
+  level?: number;
+  maxLevel?: number;
   thMaxLevel?: number | null;
+  /**
+   * 'progress' draws a level badge and a progress bar. 'plain' is a label/value
+   * row with neither, for stat lines and countdowns that have no levels to track.
+   */
+  variant?: 'progress' | 'plain';
   subtitle?: string;
+  /** Overrides the subtitle colour, e.g. to flag an expired countdown. */
+  subtitleColor?: string;
   costLabel?: string;
   costResources?: Record<string, number>;
   timeLabel?: string;
+  /** Right-hand value for plain rows. Strings get the row's value styling; nodes are rendered as-is. */
+  rightValue?: React.ReactNode;
+  rightValueColor?: string;
   icon?: string | number;
   iconSource?: ImageSourcePropType;
+  /** Ionicons glyph for the icon slot, used when there is no artwork to show. */
+  iconName?: keyof typeof Ionicons.glyphMap;
   onPress?: () => void;
   locked?: boolean;
   isFirst?: boolean;
@@ -47,19 +60,41 @@ interface Props {
   subtitleWithBar?: boolean;
   /** Extra content under the progress bar, e.g. a row of preset buttons. */
   footer?: React.ReactNode;
+  /** Slot at the far right of the row after the badges, e.g. a Town Hall image. */
+  trailing?: React.ReactNode;
+  /** Draws a dashed outline, for an "add" row that is not real data yet. */
+  dashed?: boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabel, costResources, timeLabel, icon, iconSource, onPress, locked, isFirst, isLast, actionIcon, actionText, onActionPress, actionPosition = 'after', actionColor, actionAccessibilityLabel, actionIcon2, actionText2, onActionPress2, actionPosition2 = 'after', actionColor2, actionAccessibilityLabel2, dimmed, hideLevelBadge, subtitleWithBar, footer }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progress', subtitle, subtitleColor, costLabel, costResources, timeLabel, rightValue, rightValueColor, icon, iconSource, iconName, onPress, locked, isFirst, isLast, actionIcon, actionText, onActionPress, actionPosition = 'after', actionColor, actionAccessibilityLabel, actionIcon2, actionText2, onActionPress2, actionPosition2 = 'after', actionColor2, actionAccessibilityLabel2, dimmed, hideLevelBadge, subtitleWithBar, footer, trailing, dashed }: Props) {
   const { colors } = useTheme();
-  const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : maxLevel;
-  const progress = effectiveMax > 0 ? level / effectiveMax : 0;
-  const isMaxed = level >= effectiveMax;
-  const levels = formatCompact(level);
+  const isPlain = variant === 'plain';
+  const currentLevel = level ?? 0;
+  const effectiveMax = thMaxLevel != null && thMaxLevel > 0 ? thMaxLevel : (maxLevel ?? 0);
+  const progress = effectiveMax > 0 ? currentLevel / effectiveMax : 0;
+  const isMaxed = !isPlain && currentLevel >= effectiveMax;
+  const levels = formatCompact(currentLevel);
   const max = formatCompact(effectiveMax);
+
+  // A subtitle and cost chips share one line when both are present, so a row
+  // never stacks three lines of text under the name. Without a subtitle the
+  // chips keep their own line above the progress bar.
+  const chipsInline = !isPlain && !!subtitle && !!costResources;
+  // With inline chips the bar line carries only the time; repeating the cost
+  // breakdown there would just print what the chips already show.
+  const barText = chipsInline
+    ? (timeLabel ?? '')
+    : [costLabel, timeLabel].filter(Boolean).join(' · ');
+  const subtitleWithChips = (
+    <View style={[styles.subtitleRow, subtitleWithBar && styles.subtitleRowWithBar]}>
+      <Text style={[styles.subtitle, styles.subtitleGrow]} numberOfLines={1}>{subtitle}</Text>
+      <ResourceCostChips byResource={costResources!} compact />
+    </View>
+  );
 
   const has1 = !!(actionIcon || actionText);
   const has2 = !!(actionIcon2 || actionText2);
-  const showLevelBadge = !hideLevelBadge;
+  const showLevelBadge = !isPlain && !hideLevelBadge;
   // The rightmost badge owns the card's bottom-right corner.
   const rightmost =
     has2 && actionPosition2 === 'after' ? 'a2'
@@ -105,6 +140,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
       onPress={onPress}
       style={[styles.card,
       { backgroundColor: colors.bgCard, opacity: locked ? 0.55 : dimmed ? 0.5 : 1 },
+      dashed && styles.cardDashed,
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }
       ]}
@@ -123,6 +159,8 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
             ) : (
               <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
             )
+          ) : iconName ? (
+            <Ionicons name={iconName} size={18} color={colors.textSecondary} />
           ) : (
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           )}
@@ -130,14 +168,22 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
 
         <View style={styles.middle}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          {isPlain ? (
+            subtitle ? <Text style={[styles.subtitle, subtitleColor ? { color: subtitleColor } : null]} numberOfLines={1}>{subtitle}</Text> : null
+          ) : (
+          <>
           {subtitle && subtitleWithBar ? (
-            <Text style={[styles.subtitle, { marginBottom: -8, marginTop: -4 }]} numberOfLines={1}>{subtitle}</Text>
+            chipsInline ? subtitleWithChips : (
+              <Text style={[styles.subtitle, { marginBottom: -8, marginTop: -4 }]} numberOfLines={1}>{subtitle}</Text>
+            )
           ) : null}
           {subtitle && !subtitleWithBar ? (
-            <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+            chipsInline ? subtitleWithChips : (
+              <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+            )
           ) : locked ? (
             <Text style={styles.lockedHint}>Not yet unlocked</Text>
-          ) : costResources ? (
+          ) : costResources && !chipsInline ? (
             <View>
               <ResourceCostChips byResource={costResources} compact />
               <View style={[styles.progressRow, { marginTop: 4 }]}>
@@ -157,7 +203,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
                 ) : null}
               </View>
             </View>
-          ) : costLabel || timeLabel ? (
+          ) : barText ? (
             <View style={styles.progressRow}>
               <View style={styles.progressTrack}>
                 <View
@@ -171,7 +217,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
                 />
               </View>
               <Text style={styles.timeLabel} numberOfLines={1}>
-                {[costLabel, timeLabel].filter(Boolean).join(' · ')}
+                {barText}
               </Text>
             </View>
           ) : (
@@ -189,11 +235,32 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
               </View>
             </View>
           )}
+          </>
+          )}
           {footer}
         </View>
 
-        <View style={[styles.right, badge1 || badge2 ? styles.rightWithAction : null]}>
-          {locked ? (
+        <View style={[styles.right, isPlain && styles.rightPlain, (badge1 || badge2 || rightValue != null) && !locked ? styles.rightWithAction : null]}>
+          {isPlain ? (
+            <>
+              {rightValue != null ? (
+                typeof rightValue === 'string' || typeof rightValue === 'number' ? (
+                  <Text
+                    style={[
+                      styles.rightValue,
+                      rightValueColor ? { color: rightValueColor } : null,
+                    ]}
+                  >
+                    {rightValue}
+                  </Text>
+                ) : rightValue
+              ) : null}
+              {actionPosition === 'before' ? badge1 : null}
+              {actionPosition2 === 'before' ? badge2 : null}
+              {actionPosition === 'after' ? badge1 : null}
+              {actionPosition2 === 'after' ? badge2 : null}
+            </>
+          ) : locked ? (
             <View style={styles.lockedBadge}>
               <Image source={lockedImage} style={styles.lockedBadgeImage} resizeMode="contain" />
             </View>
@@ -211,14 +278,14 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
                 <Text style={[
                   styles.levelBadgeText,
                   isMaxed && styles.levelBadgeTextMaxed,
-                  level > 1000 && { fontSize: 9, lineHeight: 10 }
+                  currentLevel > 1000 && { fontSize: 9, lineHeight: 10 }
                 ]}>
                   {levels}
                 </Text>
                 <Text style={[
                   styles.levelBadgeLabel,
                   isMaxed && styles.levelBadgeTextMaxed,
-                  level > 1000 && { fontSize: 7, lineHeight: 9 }
+                  currentLevel > 1000 && { fontSize: 7, lineHeight: 9 }
                 ]}>
                   / {max}
                 </Text>
@@ -229,6 +296,15 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, subtitle, costLabe
             </>
           )}
         </View>
+        {trailing != null ? (
+          <View style={[
+            styles.trailing,
+            isFirst && { borderTopRightRadius: Radius.lg },
+            isLast && rightmost == null && { borderBottomRightRadius: Radius.lg },
+          ]}>
+            {trailing}
+          </View>
+        ) : null}
       </View>
     </PressableRipple>
   );
@@ -244,6 +320,11 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: Colors.bgCardHover,
+  },
+  cardDashed: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: Colors.border,
   },
   row: {
     flexDirection: 'row',
@@ -284,6 +365,21 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: 2,
+  },
+  /** Pulls the row up so an inline chip line sits tight under the name. */
+  subtitleRowWithBar: {
+    marginTop: -2,
+    marginBottom: -10,
+  },
+  subtitleGrow: {
+    flex: 1,
+    marginTop: 0,
+  },
   progressContainer: {
     marginTop: 12,
     width: '100%',
@@ -321,6 +417,26 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center',
     minWidth: 50,
+  },
+  /** Plain rows size to their content, so an absent value leaves no dead space. */
+  rightPlain: {
+    minWidth: 0,
+  },
+  rightValue: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  trailing: {
+    width: 32,
+    height: 32,
+    marginLeft: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   rightWithAction: {
     flexDirection: 'row',
