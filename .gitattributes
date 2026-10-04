@@ -1,0 +1,4 @@
+# Normalize text files to LF in the repository so line endings do not depend on
+# each contributor's core.autocrlf. Binaries are detected automatically and left
+# untouched, which covers the .webp/.png/.ttf assets.
+* text=auto
