@@ -258,6 +258,10 @@ export default function ImportExportScreen() {
   const applyCount = upgradeRows.length;
   const totalChanged = upgradeRows.reduce((s, r) => s + r.changed, 0);
 
+  // A result parsed before `crafted` existed (Fast Refresh keeps the old state) has
+  // no such field, so read it defensively rather than trusting the shape.
+  const craftedDefs = result?.crafted ?? [];
+
   // Flatten each building into one row per distinct level transition so the list
   // reads cleanly when copies upgrade across different levels. Each variant keeps
   // its own count and summed cost/time.
@@ -669,6 +673,14 @@ export default function ImportExportScreen() {
                           : `${detectedHuts} — sets builders to ${detectedHuts}`,
                       warning: detectedHuts !== null && detectedHuts !== builderCount,
                     },
+                    ...(craftedDefs.length
+                      ? [{
+                        key: 'crafted',
+                        icon: 'shield-half-outline' as const,
+                        label: 'Crafted defenses',
+                        value: `${craftedDefs.length} detected (not imported)`,
+                      }]
+                      : []),
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
                     { key: 'unknown', icon: 'help-circle-outline' as const, label: 'Unknown IDs', value: String(result.unresolved.length), warning: result.unresolved.length > 0 },
                   ];
@@ -691,6 +703,37 @@ export default function ImportExportScreen() {
                   ));
                 })()}
               </View>
+
+              {craftedDefs.length > 0 ? (
+                <>
+                  <Text style={styles.sectionTitle}>Crafted defenses in export</Text>
+                  <View style={styles.rows}>
+                    {craftedDefs.map((c, i) => (
+                      <View
+                        key={`${c.dataId}-${i}`}
+                        style={[
+                          styles.row,
+                          i === 0 && styles.rowFirst,
+                          i === craftedDefs.length - 1 && styles.rowLast,
+                          i < craftedDefs.length - 1 && styles.rowBorder,
+                        ]}
+                      >
+                        <Ionicons name="shield-half-outline" size={15} color={Colors.textSecondary} />
+                        <Text style={styles.rowLabel}>{c.displayName}</Text>
+                        <Text style={[styles.rowBefore, { flex: 1, textAlign: 'right' }]} numberOfLines={2}>
+                          {c.modules.length
+                            ? c.modules.map((m) => `${m.name} ${m.level}`).join(' · ')
+                            : 'no modules recorded'}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.sectionHint}>
+                    Crafted defenses have their own per-module levels, which this app does not
+                    store yet, so they are reported here but not imported.
+                  </Text>
+                </>
+              ) : null}
 
               {upgradingRows.length > 0 ? (
                 <>
