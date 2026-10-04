@@ -34,6 +34,17 @@ import {
 } from '../../src/utils/buildingData';
 import type { BuildingCostResource } from '../../src/utils/buildingData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
+import {
+  getCraftedDefense,
+  normalizeModuleLevels,
+  effectiveLevel,
+  maxEffectiveLevel,
+  moduleMaxLevel,
+  statFor,
+  nextUpgrade,
+  getCraftedDefenseImage,
+} from '../../src/utils/craftedDefenses';
+import type { CraftedDefense, CraftedModuleLevels } from '../../src/utils/craftedDefenses';
 
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
@@ -153,6 +164,14 @@ const DEFAULT_COL_WIDTH = 56;
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
+/**
+ * Crafted defenses are not one of the package's flat building categories — they
+ * are upgraded per module off the Crafting Station — so they get their own pill
+ * and their own card list instead of being folded into `SHOW_CATEGORIES` (whose
+ * data assumes one `levels` ladder per building).
+ */
+const CRAFTED_CAT = 'Crafted Defenses';
+
 // Per-resource cost rows (icon image + colored amount), shared by the per-building
 // and per-section "Remaining" tables. Resources without a package icon fall back
 // to a colored dot.
@@ -202,6 +221,7 @@ const CATEGORY_ICONS: Record<string, { set: 'ion' | 'mc'; name: string }> = {
   'Traps': { set: 'mc', name: 'bomb' },
   'Army': { set: 'mc', name: 'sword-cross' },
   'Walls': { set: 'mc', name: 'wall' },
+  [CRAFTED_CAT]: { set: 'mc', name: 'anvil' },
 };
 
 const NAME_FIX: Record<string, string> = {
@@ -648,7 +668,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
             <ExpandToggle open={showFull} total={allLevels.length} onPress={() => setShowFull(!showFull)} />
           )}
           {(hasRemaining || (currentLevel > 1 && !isFullyMaxed)) && (
-            <View style={styles.upgradeRow}>
+<View style={[styles.upgradeRow, styles.craftedUpgradeRow]}>
               {hasRemaining && (
                 <ActionButton
                   label={`Upgrade to Lv${currentLevel + 1}`}
@@ -674,6 +694,183 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
               )}
             </View>
           )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+/** "both" reads as "Ground & Air" — the package's targetType, spelled out. */
+function targetTypeLabel(targetType?: string): string | null {
+  if (targetType === 'both') return 'Ground & Air';
+  if (targetType === 'ground') return 'Ground';
+  if (targetType === 'air') return 'Air';
+  return null;
+}
+
+/**
+ * One module of a crafted defense: the level it sits at, the stat that level
+ * reaches, and the cost/time of the next rung. The stepper moves this module
+ * only — a crafted defense has no directly editable level, its effective level
+ * is the sum of its modules.
+ */
+function CraftedModuleRow({ defense, moduleName, levels, onChange }: {
+  defense: CraftedDefense;
+  moduleName: string;
+  levels: CraftedModuleLevels;
+  onChange: (next: CraftedModuleLevels) => void;
+}) {
+  const module = defense.modules.find((m) => m.name === moduleName);
+  if (!module) return null;
+
+  const max = moduleMaxLevel(module);
+  const level = levels[moduleName] ?? 1;
+  const atMax = level >= max;
+  const next = nextUpgrade(defense, moduleName, level);
+  const stat = statFor(module, level);
+  const nextStat = next ? statFor(module, level + 1) : null;
+
+  const bump = (delta: number) =>
+    onChange({ ...levels, [moduleName]: Math.min(max, Math.max(1, level + delta)) });
+
+  return (
+    <View style={styles.craftedModuleRow}>
+      <View style={styles.craftedModuleInner}>
+        <View style={styles.craftedModuleHead}>
+          <View style={styles.craftedModuleHeadText}>
+            <Text style={styles.craftedModuleName} numberOfLines={1}>{module.name}</Text>
+            {module.controls ? (
+              <Text style={styles.craftedModuleControls} numberOfLines={1}>{module.controls}</Text>
+            ) : null}
+          </View>
+          <Text style={styles.craftedModuleStat} numberOfLines={1}>
+            {nextStat != null ? `${fmtCost(stat)} → ${fmtCost(nextStat)}` : fmtCost(stat)}
+          </Text>
+        </View>
+
+        <View style={styles.craftedStepper}>
+          <PressableRipple
+            style={[styles.craftedStepBtn, level <= 1 && styles.craftedStepBtnDisabled]}
+            onPress={() => bump(-1)}
+            accessibilityRole="button"
+            accessibilityLabel={`Downgrade ${module.name} on ${defense.name}`}
+          >
+            <Ionicons name="remove" size={16} color={Colors.bg} />
+          </PressableRipple>
+          <Text style={styles.craftedStepLevel}>{`Lv${level}/${max}`}</Text>
+          <PressableRipple
+            style={[styles.craftedStepBtn, atMax && styles.craftedStepBtnDisabled]}
+            onPress={() => bump(1)}
+            accessibilityRole="button"
+            accessibilityLabel={`Upgrade ${module.name} on ${defense.name}`}
+          >
+            <Ionicons name="add" size={16} color={Colors.bg} />
+          </PressableRipple>
+          <PressableRipple
+            style={[styles.craftedMaxBtn, atMax && styles.craftedStepBtnDisabled]}
+            onPress={() => onChange({ ...levels, [moduleName]: max })}
+            accessibilityRole="button"
+            accessibilityLabel={`Max ${module.name} on ${defense.name}`}
+          >
+            <Ionicons name="arrow-up-circle" size={16} color={Colors.bg} />
+          </PressableRipple>
+        </View>
+
+        <Text style={styles.craftedNext} numberOfLines={1}>
+          {next
+            ? `Next: ${next.buildCost > 0 ? `${fmtCost(next.buildCost)} ${next.buildCostResource} · ` : ''}${fmtTime(next.buildTimeSec)}`
+            : 'Fully upgraded'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A crafted defense, shown as one card per type. Exports never report how many
+ * copies a defense has, so a card stands for "the account has this type" and its
+ * header level is the derived effective level (the module sum), never a copy count.
+ */
+function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
+  defense: CraftedDefense;
+  levels: CraftedModuleLevels;
+  onChange: (next: CraftedModuleLevels) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const normalized = normalizeModuleLevels(defense, levels);
+  const current = effectiveLevel(defense, normalized);
+  const max = maxEffectiveLevel(defense);
+  const min = Math.max(1, defense.modules.length);
+  const isFullyMaxed = current >= max;
+
+  const allMaxed = defense.modules.reduce<Record<string, number>>((acc, m) => {
+    acc[m.name] = moduleMaxLevel(m);
+    return acc;
+  }, {});
+  const allMin = defense.modules.reduce<Record<string, number>>((acc, m) => {
+    acc[m.name] = 1;
+    return acc;
+  }, {});
+
+  const subtitle = [defense.size, targetTypeLabel(defense.targetType)].filter(Boolean).join(' · ');
+
+  return (
+    <View style={[
+      styles.itemCard,
+      isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+      isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+    ]}>
+      <ItemCard
+        name={defense.name}
+        subtitle={subtitle || undefined}
+        level={current}
+        maxLevel={max}
+        iconSource={getCraftedDefenseImage(defense.name, current) ?? undefined}
+        onPress={() => setExpanded((v) => !v)}
+        isFirst={isFirst}
+        isLast={isLast && !expanded}
+        actionIcon={isFullyMaxed ? 'checkmark-circle' : 'chevron-up'}
+        onActionPress={() => onChange(allMaxed)}
+        actionAccessibilityLabel={`Max all modules on ${defense.name}`}
+        actionColor={isFullyMaxed ? Colors.warning : Colors.textPrimary}
+        actionIcon2={current > min ? 'chevron-down' : undefined}
+        onActionPress2={() => onChange(allMin)}
+        actionAccessibilityLabel2={`Reset all modules on ${defense.name}`}
+        actionColor2={Colors.textPrimary}
+        subtitleWithBar
+        hideLevelBadge={isFullyMaxed}
+      />
+
+      {expanded && (
+        <View style={[styles.expandedSection, styles.craftedBody]}>
+          {defense.description ? (
+            <Text style={styles.craftedDesc} numberOfLines={3}>{defense.description}</Text>
+          ) : null}
+          {defense.modules.map((m) => (
+            <CraftedModuleRow
+              key={m.name}
+              defense={defense}
+              moduleName={m.name}
+              levels={normalized}
+              onChange={onChange}
+            />
+          ))}
+          <View style={styles.upgradeRow}>
+            {!isFullyMaxed && (
+              <ActionButton
+                label="Max all modules"
+                onPress={() => onChange(allMaxed)}
+              />
+            )}
+            {current > min && (
+              <PressableRipple style={styles.downgradeBtn} onPress={() => onChange(allMin)}>
+                <Ionicons name="arrow-back" size={16} color={Colors.bg} />
+              </PressableRipple>
+            )}
+          </View>
         </View>
       )}
     </View>
@@ -1073,7 +1270,7 @@ function formatCostShort(cost: number): string {
 export default function BuildingsScreen() {
   const router = useRouter();
   const { cat: initialCat } = useLocalSearchParams<{ cat?: string }>();
-  const { player, setBuildingCopies } = usePlayer();
+  const { player, setBuildingCopies, setCraftedLevels } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const { discounts } = useDiscounts();
   const th = player?.townHallLevel ?? 1;
@@ -1097,14 +1294,36 @@ export default function BuildingsScreen() {
   const activeData = isBB ? bbCategories : categories;
   const levelKey = isBB ? bh : th;
 
-  const availableCats = useMemo(() => SHOW_CATEGORIES.filter((cat) => {
-    const items = activeData[cat];
-    if (!items) return false;
-    return Object.entries(items).some(([, data]) => {
-      const entry = data[String(levelKey)];
-      return entry != null && (entry.level ?? 0) > 0;
+  // Crafted defenses the player actually owns, joined against the package data.
+  // The store is the source of truth (an import writes it); the package only
+  // supplies modules, max levels and stats. Names the package does not know are
+  // dropped rather than rendered half-populated.
+  const ownedCrafted = useMemo(() => {
+    const out: { defense: CraftedDefense; levels: CraftedModuleLevels }[] = [];
+    for (const [name, moduleLevels] of Object.entries(player?.craftedLevels ?? {})) {
+      const defense = getCraftedDefense(name);
+      if (!defense) continue;
+      out.push({ defense, levels: normalizeModuleLevels(defense, moduleLevels) });
+    }
+    return out.sort((a, b) => a.defense.name.localeCompare(b.defense.name));
+  }, [player?.craftedLevels]);
+
+  const availableCats = useMemo(() => {
+    const cats = SHOW_CATEGORIES.filter((cat) => {
+      const items = activeData[cat];
+      if (!items) return false;
+      return Object.entries(items).some(([, data]) => {
+        const entry = data[String(levelKey)];
+        return entry != null && (entry.level ?? 0) > 0;
+      });
     });
-  }), [activeData, levelKey]);
+    // The Crafting Station has no per-TH levels in the package, so there is no
+    // unlock level to gate on: the category is offered to every Home Village and
+    // explains itself (with an import prompt) until an import fills it in. It is
+    // Home Village only — nothing crafted exists in the Builder Base.
+    if (!isBB) cats.push(CRAFTED_CAT);
+    return cats;
+  }, [activeData, levelKey, isBB]);
 
   const activeCat = selectedCat && availableCats.includes(selectedCat)
     ? selectedCat
@@ -1172,8 +1391,22 @@ export default function BuildingsScreen() {
       }
       out[cat] = { image, types: owned.length, maxed };
     }
+    // The crafted pill shows the Crafting Station itself: it is the building the
+    // category is actually about, and it stays constant however many defenses
+    // the account owns (or, before an import, none at all).
+    if (!isBB) {
+      let maxed = 0;
+      for (const { defense, levels } of ownedCrafted) {
+        if (effectiveLevel(defense, levels) >= maxEffectiveLevel(defense)) maxed++;
+      }
+      out[CRAFTED_CAT] = {
+        image: getBuildingImageSource('Crafting Station') ?? null,
+        types: ownedCrafted.length,
+        maxed,
+      };
+    }
     return out;
-  }, [activeData, levelKey, isBB, th, bh, player]);
+  }, [activeData, levelKey, isBB, th, bh, player, ownedCrafted]);
 
   // The village switch leads with the halls the player are actually at.
   const thHallImage = getTownHallImageSource(th);
@@ -1502,7 +1735,31 @@ export default function BuildingsScreen() {
           ))}
         </View>
 
-        {buildingSections.map((section, idx) => {
+        {activeCat === CRAFTED_CAT && ownedCrafted.length === 0 && (
+          <View style={styles.craftedEmpty}>
+            <MaterialCommunityIcons name="anvil" size={22} color={Colors.textTertiary} />
+            <Text style={styles.craftedEmptyTitle}>No crafted defenses yet</Text>
+            <Text style={styles.craftedEmptyText}>
+              Crafted defenses are read from your account by pasting a Clash of Clans export.
+              Import one and every defense the Crafting Station made shows up here, with its
+              modules, stats and upgrade costs.
+            </Text>
+            <ActionButton label="Import an export" onPress={() => router.push('/import-export')} />
+          </View>
+        )}
+
+        {activeCat === CRAFTED_CAT && ownedCrafted.map(({ defense, levels }, idx) => (
+          <CraftedDefenseCard
+            key={defense.name}
+            defense={defense}
+            levels={levels}
+            onChange={(next) => setCraftedLevels({ [defense.name]: next })}
+            isFirst={idx === 0}
+            isLast={idx === ownedCrafted.length - 1}
+          />
+        ))}
+
+        {activeCat !== CRAFTED_CAT && buildingSections.map((section, idx) => {
           const isFirst = idx === 0;
           const isLast = idx === buildingSections.length - 1;
           const isWalls = section.name === 'Walls' || section.name === 'BB Walls';
@@ -2090,6 +2347,116 @@ const styles = StyleSheet.create({
   },
   expandedSectionBodyOnly: {
     borderTopWidth: 0,
+  },
+  // Crafted-defense module rows. Each row is its own block — the modules are
+  // upgraded independently, so they don't share a table the way building levels do.
+  // The body is padded to match the module rows; the expanded section itself has
+  // none, which would otherwise run the description and buttons into the edge.
+  craftedBody: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  craftedDesc: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: Spacing.sm,
+    lineHeight: 18,
+  },
+  craftedEmpty: {
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.xs,
+    padding: Spacing.base,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCard,
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  craftedEmptyTitle: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  craftedEmptyText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  craftedModuleRow: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  craftedModuleInner: {
+    paddingVertical: Spacing.sm,
+  },
+  craftedModuleHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  craftedModuleHeadText: {
+    flex: 1,
+  },
+  craftedModuleName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  craftedModuleControls: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  craftedModuleStat: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  craftedStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  craftedStepBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  craftedMaxBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.85,
+  },
+  craftedStepBtnDisabled: {
+    opacity: 0.35,
+  },
+  craftedStepLevel: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    minWidth: 48,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
+  craftedNext: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    marginTop: Spacing.sm,
+  },
+  craftedUpgradeRow: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   expandTableBtn: {
     flexDirection: 'row',
