@@ -31,6 +31,7 @@ interface PlayerContextValue {
   tagVersion: number;
   setBuildingCopies: (name: string, levels: number[], maxLevel: number) => Promise<void>;
   setBulkLevels: (levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => Promise<void>;
+  setCraftedLevels: (levels: Record<string, Record<string, number>>) => Promise<void>;
   applyLevelsToAccount: (tag: string, levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => Promise<void>;
   setLastMaxed: (th: number) => Promise<void>;
   activeAccount: StoredAccount | null;
@@ -50,6 +51,7 @@ const PlayerContext = createContext<PlayerContextValue>({
   refresh: async () => undefined,
   tagVersion: 0,
   setBuildingCopies: async () => {},
+  setCraftedLevels: async () => {},
   setBulkLevels: async () => {},
   applyLevelsToAccount: async () => {},  setLastMaxed: async () => {},
   activeAccount: null,
@@ -146,12 +148,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (cached) {
         data.buildingLevels = cached.buildingLevels;
         data.buildings = cached.buildings ?? data.buildings;
+        data.craftedLevels = cached.craftedLevels;
         data.lastMaxedTH = cached.lastMaxedTH;
       } else {
         const prev = playerRef.current;
         if (prev && prev.tag === tag) {
           data.buildingLevels = prev.buildingLevels;
           data.buildings = prev.buildings ?? data.buildings;
+          data.craftedLevels = prev.craftedLevels;
           data.lastMaxedTH = prev.lastMaxedTH;
         }
       }
@@ -319,6 +323,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setCraftedLevels = useCallback(async (levels: Record<string, Record<string, number>>) => {
+    setPlayer((prev) => {
+      const base = prev || {} as ClashPlayer;
+      const updated = { ...base, craftedLevels: { ...(base.craftedLevels || {}), ...levels } };
+      if (base.tag) cachePlayer(updated, base.tag);
+      return updated;
+    });
+  }, []);
+
   const setLastMaxed = useCallback(async (th: number) => {
     setPlayer((prev) => {
       const base = prev || {} as ClashPlayer;
@@ -366,6 +379,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     bumpTagVersion,
     setBuildingCopies,
     setBulkLevels,
+    setCraftedLevels,
     applyLevelsToAccount,
     setLastMaxed,
     activeAccount,
