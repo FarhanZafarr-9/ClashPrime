@@ -478,7 +478,10 @@ export default function HeroJourneyScreen() {
           </View>
         </View>
 
-        <JourneySummary journey={journey} />
+        <JourneySummary
+          journey={journey}
+          onPressNext={journey.currentMilestone && currentFilteredIndex >= 0 ? scrollToCurrent : undefined}
+        />
 
         <View style={styles.pillRow}>
           {pillRows.map((row) => (
@@ -570,73 +573,83 @@ export default function HeroJourneyScreen() {
   );
 }
 
-function JourneySummary({ journey }: { journey: HeroJourneyData }) {
+function JourneySummary({ journey, onPressNext }: { journey: HeroJourneyData; onPressNext?: () => void }) {
   const { colors } = useTheme();
   const complete = journey.thCap > 0 && journey.cumulativeLevels >= journey.thCap;
   const reachableTotal = journey.milestones.filter((m) => m.level <= journey.thCap).length;
   const thPercent = journey.thCap > 0 ? (journey.cumulativeLevels / journey.thCap) * 100 : 0;
+  const next = journey.currentMilestone;
+  const nextSpecial = next ? isSpecial(next) : false;
 
   return (
     <View style={[styles.summaryCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+      {/* Headline: the account-wide hero level total and how far through it is. */}
       <View style={styles.summaryLevelRow}>
         <View style={styles.summaryLevelGroup}>
           <Text style={[styles.summaryLevelBig, { color: colors.textPrimary }]}>{journey.cumulativeLevels}</Text>
-          <View>
+          <View style={styles.summaryLevelTextCol}>
             <Text style={styles.summaryLevelLabel}>Cumulative</Text>
-            <Text style={styles.summaryLevelSub}>
-              Hero Levels · Max {journey.thCap} at TH {journey.townHallLevel}
+            <Text style={styles.summaryLevelSub} numberOfLines={1}>
+              {`Hero Levels · max ${journey.thCap} at TH ${journey.townHallLevel}`}
             </Text>
           </View>
         </View>
-        <View style={[styles.summaryPercentPill, { backgroundColor: colors.bgSubtle }]}>
+        <View style={[styles.summaryPercentPill, { backgroundColor: colors.bgCardHover }]}>
           <Text style={styles.summaryPercentText}>{Math.round(thPercent)}%</Text>
         </View>
       </View>
 
-      <View style={styles.summaryBarWrap}>
+      <View style={[styles.summaryDivider, { backgroundColor: colors.borderSubtle }]} />
+
+      {/* This Town Hall's slice of the track, inset so it reads as its own band. */}
+      <View style={[styles.summaryBarWell, { backgroundColor: colors.bgCardHover }]}>
         <View style={[styles.summaryBarTrack, { backgroundColor: colors.progressTrack }]}>
           <View
             style={[
               styles.summaryBarFill,
               {
                 width: `${Math.max(0, Math.min(thPercent, 100))}%`,
-                backgroundColor: journey.currentMilestone && isSpecial(journey.currentMilestone) ? Colors.warning : colors.textSecondary,
+                backgroundColor: nextSpecial ? Colors.warning : colors.textSecondary,
               },
             ]}
           />
         </View>
-        <Text style={styles.summaryBarLabel}>
-          {complete
-            ? 'All rewards up to this Town Hall earned!'
-            : `Progress within TH ${journey.townHallLevel}: ${Math.round(thPercent)}%`}
+        <Text style={styles.summaryBarLabel} numberOfLines={1}>
+          {complete ? 'All rewards up to this Town Hall earned' : `within TH ${journey.townHallLevel}`}
         </Text>
       </View>
 
-      {journey.currentMilestone && (
-        <View style={[styles.nextCard, { backgroundColor: colors.bgSubtle }]}>
+      {/* The one actionable row in the card, so it is the one that opens. */}
+      {next && (
+        <PressableRipple
+          onPress={onPressNext}
+          disabled={!onPressNext}
+          style={[styles.nextCard, { backgroundColor: colors.bgCardHover }]}
+          accessibilityRole={onPressNext ? 'button' : undefined}
+          accessibilityLabel={onPressNext ? 'Scroll to current milestone' : undefined}
+        >
           <RewardIcon
-            kind={journey.currentMilestone.kind}
+            kind={next.kind}
             size={15}
-            color={isSpecial(journey.currentMilestone) ? Colors.warning : colors.textSecondary}
-            hero={journey.currentMilestone.hero}
+            color={nextSpecial ? Colors.warning : colors.textSecondary}
+            hero={next.hero}
           />
-          <Text style={styles.nextText} numberOfLines={2}>
-            <Text style={styles.nextLevel}>Lv {journey.currentMilestone.level}</Text> · {milestoneLabel(journey.currentMilestone)}
+          <Text style={[styles.nextText, { color: colors.textPrimary }]} numberOfLines={2}>
+            <Text style={styles.nextLevel}>{`Lv ${next.level}`}</Text>
+            {` · ${milestoneLabel(next)}`}
           </Text>
-        </View>
+          {onPressNext ? <Ionicons name="chevron-forward" size={14} color={colors.textTertiary} /> : null}
+        </PressableRipple>
       )}
 
-      <View style={styles.summaryChips}>
-        <View style={[styles.summaryChip, { backgroundColor: colors.bgSubtle }]}>
-          <Text style={styles.summaryChipText}>
-            {journey.unlockedCount}/{reachableTotal} rewards unlocked
-          </Text>
-        </View>
-        <View style={[styles.summaryChip, { backgroundColor: colors.bgSubtle }]}>
-          <Text style={styles.summaryChipText}>TH {journey.townHallLevel} · cap {journey.thCap}</Text>
-        </View>
-        {journey.oreChest && (
-          <View style={[styles.summaryChip, { backgroundColor: colors.bgSubtle }]}>
+      {/* Reference numbers, not actions, so they stay plain text. */}
+      <View style={styles.summaryMetaRow}>
+        <Text style={[styles.summaryMeta, { color: colors.textTertiary }]} numberOfLines={1}>
+          {`${journey.unlockedCount}/${reachableTotal} rewards unlocked`}
+        </Text>
+        {journey.oreChest ? (
+          <>
+            <Text style={[styles.summaryMeta, { color: colors.textTertiary }]}>·</Text>
             <ResourceCostChips
               byResource={{
                 'Shiny Ore': journey.oreChest.shiny,
@@ -645,8 +658,8 @@ function JourneySummary({ journey }: { journey: HeroJourneyData }) {
               }}
               compact
             />
-          </View>
-        )}
+          </>
+        ) : null}
       </View>
     </View>
   );
@@ -1026,6 +1039,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+    flex: 1,
+    minWidth: 0,
+  },
+  summaryLevelTextCol: {
+    flex: 1,
+    minWidth: 0,
   },
   summaryLevelBig: {
     ...Typography.title1,
@@ -1045,6 +1064,11 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     fontSize: 11,
   },
+  /** Separates the headline from the progress band; spacing alone read as one block. */
+  summaryDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.xs,
+  },
   summaryPercentPill: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
@@ -1056,8 +1080,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  summaryBarWrap: {
-    gap: 4,
+  summaryBarWell: {
+    gap: 6,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
   },
   summaryBarTrack: {
     height: 6,
@@ -1083,29 +1110,22 @@ const styles = StyleSheet.create({
   },
   nextText: {
     flex: 1,
-    ...Typography.footnote,
-    color: Colors.textSecondary,
+    ...Typography.subhead,
+    fontWeight: '600',
   },
   nextLevel: {
     fontWeight: '700',
     color: Colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  summaryChips: {
+  summaryMetaRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: Spacing.xs,
-    marginTop: Spacing.xs,
   },
-  summaryChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  summaryChipText: {
+  summaryMeta: {
     ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: 10,
+    fontSize: 11,
   },
   pillRow: {
     gap: Spacing.xs,
@@ -1127,7 +1147,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
+    // Lighter than the screen in dark and unchanged in light, so the pills read
+    // as raised tiles rather than holes in the background.
+    backgroundColor: Colors.bgCardHover,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
