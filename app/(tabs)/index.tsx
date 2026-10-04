@@ -1810,14 +1810,14 @@ export default function HomeScreen() {
                               </View>
                               <View style={styles.statRowText}>
                                 <Text style={styles.statRowLabel} numberOfLines={1}>{item.name}</Text>
-                                <Text style={styles.statRowSub}>Lv{item.currentLevel} <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} /> Lv{item.maxLevelAtPrevTH}</Text>
+                                <Text style={styles.statRowSub}>Lv{item.currentLevel} <Ionicons name="chevron-forward" size={10} color={Colors.textMuted} /> Lv{item.maxLevelAtPrevTH}</Text>
                               </View>
                               <View style={styles.statRowRight}>
                                 {costData ? (
                                   <>
                                     <ResourceCostChips byResource={costData.byResource ?? {}} compact />
                                     {formatCostBreakdown(costData.byResource) ? null : <Text style={styles.statRowValue}>{fmtCost(costData.cost)}</Text>}
-                                    {costData.timeSeconds > 0 && <Text style={styles.statRowValueSub}>{fmtTime(costData.timeSeconds)}</Text>}
+                                    {costData.timeSeconds > 0 && <Text style={[styles.statRowValueSub, { marginTop: 4 }]}>{fmtTime(costData.timeSeconds)}</Text>}
                                   </>
                                 ) : rushedCostsPending ? (
                                   <Text style={styles.statRowValue}>…</Text>
