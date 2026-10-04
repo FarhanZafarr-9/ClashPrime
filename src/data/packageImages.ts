@@ -2792,6 +2792,132 @@ export const PACKAGE_BUILDER_TROOP_IMAGES: Record<string, PackageItemImages> = {
   },
 };
 
+export const PACKAGE_CRAFTED_IMAGES: Record<string, PackageItemImages> = {
+  "Hook Tower": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/hook-tower/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/hook-tower/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/hook-tower/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/hook-tower/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/hook-tower/normal/level-4.webp'),
+    },
+  },
+  "Flame Spinner": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/flame-spinner/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/flame-spinner/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/flame-spinner/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/flame-spinner/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/flame-spinner/normal/level-4.webp'),
+    },
+  },
+  "Crusher Mortar": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/crusher-mortar/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/crusher-mortar/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/crusher-mortar/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/crusher-mortar/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/crusher-mortar/normal/level-4.webp'),
+    },
+  },
+  "Hero Bell": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/hero-bell/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/hero-bell/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/hero-bell/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/hero-bell/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/hero-bell/normal/level-4.webp'),
+    },
+  },
+  "Bomb Hive": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/bomb-hive/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/bomb-hive/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/bomb-hive/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/bomb-hive/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/bomb-hive/normal/level-4.webp'),
+    },
+  },
+  "Light Beam": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/light-beam/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/light-beam/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/light-beam/normal/level-2.webp'),
+      "21": 0,
+      "30": require('../../assets/package-images/images/home/crafted-defenses/light-beam/normal/level-4.webp'),
+    },
+  },
+  "Roaster": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-1.webp'),
+      "6": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-2.webp'),
+      "9": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-3.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-4.webp'),
+      "15": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-5.webp'),
+      "18": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-6.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-7.webp'),
+      "24": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-8.webp'),
+      "27": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-9.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/roaster/normal/level-10.webp'),
+    },
+  },
+  "Air Bombs": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-1.webp'),
+      "6": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-2.webp'),
+      "9": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-3.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-4.webp'),
+      "15": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-5.webp'),
+      "18": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-6.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-7.webp'),
+      "24": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-8.webp'),
+      "27": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-9.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/air-bombs/normal/level-10.webp'),
+    },
+  },
+  "Lava Launcher": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-1.webp'),
+      "7": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-2.webp'),
+      "11": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-3.webp'),
+      "15": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-4.webp'),
+      "19": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-5.webp'),
+      "23": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-6.webp'),
+      "27": require('../../assets/package-images/images/home/crafted-defenses/lava-launcher/normal/level-7.webp'),
+    },
+  },
+  "Hot Candle": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/hot-candle/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/hot-candle/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/hot-candle/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/hot-candle/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/hot-candle/normal/level-4.webp'),
+    },
+  },
+  "Hero Hunter": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/hero-hunter/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/hero-hunter/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/hero-hunter/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/hero-hunter/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/hero-hunter/normal/level-4.webp'),
+    },
+  },
+  "Cake-A-Pult": {
+    icon: require('../../assets/package-images/images/home/crafted-defenses/cake-a-pult/normal/level-1.webp'),
+    levels: {
+      "3": require('../../assets/package-images/images/home/crafted-defenses/cake-a-pult/normal/level-1.webp'),
+      "12": require('../../assets/package-images/images/home/crafted-defenses/cake-a-pult/normal/level-2.webp'),
+      "21": require('../../assets/package-images/images/home/crafted-defenses/cake-a-pult/normal/level-3.webp'),
+      "30": require('../../assets/package-images/images/home/crafted-defenses/cake-a-pult/normal/level-4.webp'),
+    },
+  },
+};
+
 export const PACKAGE_RESOURCE_IMAGES: Record<string, number> = {
   "Gold": require('../../assets/package-images/images/other/gold.webp'),
   "Elixir": require('../../assets/package-images/images/other/elixir.webp'),
