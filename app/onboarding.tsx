@@ -31,7 +31,7 @@ import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
 import { getTownHallImageSource } from '../src/utils/buildingImages';
 import { seedBuildingLevelsForTH } from '../src/utils/seedBuildingLevels';
-import { parseCocExport, cocExportToBuildingLevels, normalizeTag, type CocImportResult } from '../src/utils/cocExport';
+import { parseCocExport, cocExportToBuildingLevels, detectBuilderHutCount, normalizeTag, type CocImportResult } from '../src/utils/cocExport';
 import type { ClashPlayer } from '../src/types/clash';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -96,7 +96,7 @@ export default function OnboardingScreen() {
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
   const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
-  const { setBuilderCount } = useBuilderCount();
+  const { setBuilderCount, verifyBuilderCount } = useBuilderCount();
   const [step, setStep] = useState<'form' | 'import' | 'importToken' | 'profile' | 'thPicker' | 'builderHutPicker'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
@@ -111,6 +111,9 @@ export default function OnboardingScreen() {
   const [importResult, setImportResult] = useState<CocImportResult | null>(null);
   const [importTag, setImportTag] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  /** Builder huts found in the pasted export; seeds the picker when the user
+   *  goes through it instead of the import path. */
+  const [importedBuilderHuts, setImportedBuilderHuts] = useState<number | null>(null);
 
   const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
@@ -127,6 +130,9 @@ export default function OnboardingScreen() {
     const result = cocExportToBuildingLevels(parsed.data);
     setImportResult(result);
     setImportTag(normalizeTag(parsed.data.tag) || null);
+    const huts = detectBuilderHutCount(result);
+    setImportedBuilderHuts(huts);
+    if (huts) setOnboardingBuilderHuts(huts);
   };
 
   const handleImportPaste = async () => {
@@ -181,6 +187,15 @@ export default function OnboardingScreen() {
       await setPlayerTag(importTag!);
       await setApiToken(cleanToken);
       await cachePlayer(mergedPlayer, importTag!);
+
+      // The import path skips the builder hut step, so take the count from the
+      // export here — otherwise it stays at the default of 2 and every
+      // time-to-max estimate is wrong. Pass the tag explicitly: the account
+      // switch above has not settled into context by this render.
+      const detectedHuts = detectBuilderHutCount(importResult);
+      if (detectedHuts) {
+        await verifyBuilderCount(detectedHuts, importTag!);
+      }
 
       // Import provides all building levels + lastMaxedTH; skip profile/TH/builder steps
       router.replace('/(tabs)');
@@ -279,8 +294,11 @@ export default function OnboardingScreen() {
     setLoading(false);
   };
 
-  const handleBuilderHutNext = () => {
-    setBuilderCount(onboardingBuilderHuts);
+  const handleBuilderHutNext = async () => {
+    // Write against this account explicitly - on a first-time onboarding the
+    // active account in context may still be a different (previous) one.
+    const cleanTag = tag.trim().toUpperCase();
+    await setBuilderCount(onboardingBuilderHuts, cleanTag ? (cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`) : undefined);
     router.replace('/(tabs)');
   };
 
@@ -479,6 +497,12 @@ export default function OnboardingScreen() {
                     <View style={styles.summaryRow}>
                       <Text style={styles.summaryLabel}>In-progress upgrades</Text>
                       <Text style={styles.summaryValue}>{importResult.resolved.reduce((s: number, r: any) => s + r.timerRows.length, 0)}</Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Builder huts</Text>
+                      <Text style={styles.summaryValue}>
+                        {importedBuilderHuts ? `${importedBuilderHuts} detected` : 'Not in export'}
+                      </Text>
                     </View>
                   </View>
                 </View>
