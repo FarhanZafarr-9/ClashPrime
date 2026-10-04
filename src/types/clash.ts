@@ -265,5 +265,11 @@ export interface ClashPlayer {
   pets: Pet[];
   buildingLevels?: Record<string, number>;
   buildings?: PlayerBuilding[];
+  /** Crafted defenses the account owns: defense name → module name → level.
+   *  Kept out of `buildingLevels` because a crafted defense has no single level —
+   *  its game level is the sum of the module levels. Structurally identical to
+   *  CraftedLevels in utils/craftedDefenses (declared inline to keep types free of
+   *  util imports). */
+  craftedLevels?: Record<string, Record<string, number>>;
   lastMaxedTH?: number;
 }
