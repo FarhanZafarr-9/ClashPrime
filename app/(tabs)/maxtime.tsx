@@ -14,11 +14,11 @@ import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import { useBuildingExclusions } from '../../src/hooks/useBuildingExclusions';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
 import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
-import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getBuildingCategories, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
-import { getBuildingCopies, getCountAtTH } from '../../src/utils/buildingCopies';
-import { getBuildingEffectiveMax, getTownHallImageSource } from '../../src/utils/buildingImages';
+import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, computeBuilderBaseMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
+import { armyKey, PIPELINE_GATES, type ArmyPipeline } from '../../src/utils/exclusions';
 import { computeThReadiness } from '../../src/utils/thReadiness';
 import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
 import MaxtimeShareCard, { type MaxtimeShareData, type MaxtimePipeline } from '../../src/components/MaxtimeShareCard';
@@ -33,6 +33,17 @@ const PIPELINE_META: Record<PipelineKey, { title: string; icon: keyof typeof Ion
   'bb-builders': { title: 'BB Builders', icon: 'hammer-outline', desc: 'BB buildings & heroes — scheduled across BB builders' },
   'bb-lab': { title: 'Star Laboratory', icon: 'flask-outline', desc: 'BB troops — one research at a time' },
 };
+
+/** Pipelines that vanish entirely when their gating building is excluded. */
+const PIPELINE_GATE: Partial<Record<PipelineKey, string>> = {
+  lab: PIPELINE_GATES.lab,
+  pets: PIPELINE_GATES.pets,
+  equipment: PIPELINE_GATES.equipment,
+  'bb-lab': PIPELINE_GATES['bb-lab'],
+};
+
+/** Stand-in exclusion set: the full, un-skipped pipelines that skipped rows are listed from. */
+const NO_EXCLUSIONS = new Set<string>();
 
 const READINESS_PIPELINE_DESC: Record<string, string> = {
   lab: 'troops · spells · sieges',
@@ -100,6 +111,15 @@ function segCornerStyle(index: number, total: number) {
   };
 }
 
+/** Levels still to buy across rows, so exclusions are counted in levels rather than items. */
+function remainingLevels(items: PipelineItemRow[]): number {
+  return items.reduce((n, r) => n + Math.max(0, r.maxLevel - r.currentLevel), 0);
+}
+
+function levelsLabel(n: number): string {
+  return `${n} upgrade${n === 1 ? '' : 's'} excluded`;
+}
+
 function applyScope(timeSec: number, cost: number, byResource: Record<string, number>, scope: ScopeDiscount) {
   const t = Math.max(0, Math.round(timeSec * (1 - scope.timePercent / 100)));
   const c = Math.max(0, Math.round(cost * (1 - scope.costPercent / 100)));
@@ -126,7 +146,7 @@ export default function MaxTimeScreen() {
   const { player, loading, lastSync } = usePlayer();
   const { colors } = useTheme();
   const { count: builderCount, setBuilderCount, loaded: builderLoaded } = useBuilderCount();
-  const { excluded, toggleExcluded, setExcludedMany, clearExcluded, loaded: exclusionsLoaded } = useBuildingExclusions();
+  const { excluded, toggleExcluded, setExcludedMany, loaded: exclusionsLoaded } = useBuildingExclusions();
   const { discounts } = useDiscounts();
   const [details, setDetails] = useState<Record<string, TroopDetail | null> | null>(null);
   const [bbDetails, setBbDetails] = useState<Record<string, TroopDetail | null> | null>(null);
@@ -135,10 +155,11 @@ export default function MaxTimeScreen() {
   const [buildersExpanded, setBuildersExpanded] = useState(false);
   const [labExpanded, setLabExpanded] = useState(false);
   const [rushExpanded, setRushExpanded] = useState(false);
-  const [excludeOpen, setExcludeOpen] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [shareVillage, setShareVillage] = useState<'home' | 'builder'>('home');
   const [village, setVillage] = useState<'home' | 'builder'>('home');
+  // Row exclusion badges only show while editing; skipped rows stay marked either way.
+  const [editExclusions, setEditExclusions] = useState(false);
 
   const th = player?.townHallLevel ?? 1;
   const bh = player?.builderHallLevel ?? 1;
@@ -223,6 +244,18 @@ export default function MaxTimeScreen() {
     return computeBuilderBaseMaxTime({ player, bh, builderCount: bbBuilderCount, armyDetails: bbDetails, excludedBuildings: excluded });
   }, [player, bh, bbBuilderCount, bbDetails, excluded]);
 
+  // The same pipelines with nothing skipped. The screen renders from these so a
+  // skipped upgrade stays in its row list (badged) and can be restored in place.
+  const fullResult = useMemo(() => {
+    if (!player || !details) return null;
+    return computeMaxTime({ player, th, builderCount, armyDetails: details, excludedBuildings: NO_EXCLUSIONS });
+  }, [player, th, builderCount, details]);
+
+  const bbFullResult = useMemo(() => {
+    if (!player || !bbDetails) return null;
+    return computeBuilderBaseMaxTime({ player, bh, builderCount: bbBuilderCount, armyDetails: bbDetails, excludedBuildings: NO_EXCLUSIONS });
+  }, [player, bh, bbBuilderCount, bbDetails]);
+
   const readiness = useMemo(() => {
     if (!player) return null;
     return computeThReadiness(player, th, excluded);
@@ -284,43 +317,55 @@ export default function MaxTimeScreen() {
     if (!discounted || !result) return null;
     const image = (name: string) =>
       getBuildingItemImage(name, getBuildingMaxLevelAtTH(name, th) ?? 1) ?? undefined;
+    // Excluded pipelines drop out of the card too — a "0s" row reads like a bug.
+    const gated = new Set<string>(
+      [result.lab, result.builders, result.pets, result.equipment].filter((p) => p.gated).map((p) => p.key),
+    );
     const pipelines: MaxtimePipeline[] = [
       { key: 'lab', label: 'Laboratory', timeSec: discounted.lab.timeSec, image: image('Lab') },
       { key: 'builders', label: 'Builders', timeSec: discounted.builders.timeSec, image: image('Builder Hut') },
       ...(hasPets ? [{ key: 'pets', label: 'Pet House', timeSec: discounted.pets.timeSec, image: image('Pet House') }] : []),
       { key: 'equipment', label: 'Equipment', timeSec: discounted.equipment.timeSec, instant: discounted.equipment.timeSec <= 0, image: image('Blacksmith') },
-    ];
-    const upgradesLeft = result.lab.items.length + result.builders.items.length + result.pets.items.length;
+    ].filter((p) => !gated.has(p.key));
+    // Levels dropped by exclusions, so a partial time isn't read as the full max.
+    const skipped = fullResult
+      ? (['lab', 'builders', 'pets', 'equipment'] as const).reduce((n, k) => n + Math.max(0, remainingLevels(fullResult[k].items) - remainingLevels(result[k].items)), 0)
+      : 0;
     return {
       showBH: false,
       headlineLabel: 'Time to max',
       headlineTime: discounted.headlineTime,
-      headlineNote: `TH${th} · ${builderCount} builders · ${upgradesLeft} upgrades left`,
+      headlineNote: `TH${th} · ${builderCount} builders${skipped > 0 ? ` · ${levelsLabel(skipped)}` : ''}`,
       pipelines,
       resources: orderShareResources(discounted.totalByResource),
       subtitle: syncSubtitle,
     };
-  }, [discounted, result, th, builderCount, hasPets, syncSubtitle]);
+  }, [discounted, result, fullResult, th, builderCount, hasPets, syncSubtitle]);
 
   const bbShare = useMemo<MaxtimeShareData | null>(() => {
     if (!bbDiscounted || !bbResult) return null;
     const image = (name: string) =>
       getBuildingItemImage(name, getBuildingMaxLevelAtBH(name, bh) ?? 1, true) ?? undefined;
+    const gated = new Set<string>(
+      [bbResult.bbBuilders, bbResult.bbLab].filter((p) => p.gated).map((p) => p.key),
+    );
     const pipelines: MaxtimePipeline[] = [
       { key: 'bb-builders', label: 'Builder Hall', timeSec: bbDiscounted.bbBuilders.timeSec, image: image('Builder Hall') },
       { key: 'bb-lab', label: 'Star Laboratory', timeSec: bbDiscounted.bbLab.timeSec, image: image('Star Laboratory') },
-    ];
-    const upgradesLeft = bbResult.bbBuilders.items.length + bbResult.bbLab.items.length;
+    ].filter((p) => !gated.has(p.key));
+    const skipped = bbFullResult
+      ? (['bbBuilders', 'bbLab'] as const).reduce((n, k) => n + Math.max(0, remainingLevels(bbFullResult[k].items) - remainingLevels(bbResult[k].items)), 0)
+      : 0;
     return {
       showBH: true,
       headlineLabel: 'BB time to max',
       headlineTime: bbDiscounted.headlineTime,
-      headlineNote: `BH${bh} · ${bbBuilderCount} builders · ${upgradesLeft} upgrades left`,
+      headlineNote: `BH${bh} · ${bbBuilderCount} builders${skipped > 0 ? ` · ${levelsLabel(skipped)}` : ''}`,
       pipelines,
       resources: orderShareResources(bbDiscounted.totalByResource),
       subtitle: syncSubtitle,
     };
-  }, [bbDiscounted, bbResult, bh, bbBuilderCount, syncSubtitle]);
+  }, [bbDiscounted, bbResult, bbFullResult, bh, bbBuilderCount, syncSubtitle]);
 
   const activeShare = shareVillage === 'home' ? homeShare : bbShare;
 
@@ -382,31 +427,19 @@ export default function MaxTimeScreen() {
     return { cost, timeSec, byResource };
   }, [player, th, isMaxTh, discounts]);
 
-  const exclusionGroups = useMemo(() => {
-    if (!player) return [] as { category: string; buildings: { name: string; iconLevel: number; current: number; max: number }[] }[];
-    const cats = getBuildingCategories(th);
-    const groups: { category: string; buildings: { name: string; iconLevel: number; current: number; max: number }[] }[] = [];
-    for (const [cat, buildings] of Object.entries(cats)) {
-      const rows: { name: string; iconLevel: number; current: number; max: number }[] = [];
-      for (const [name, thData] of Object.entries(buildings)) {
-        const entry = thData[String(th)];
-        if (!entry || (entry.level ?? 0) <= 0) continue;
-        const effectiveMax = getBuildingEffectiveMax(name, th);
-        if (effectiveMax <= 0) continue;
-        const count = getCountAtTH(name, th);
-        const copies = getBuildingCopies(name, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, th);
-        const current = copies.levels.reduce((s, l) => s + l, 0);
-        const max = count * effectiveMax;
-        if (current >= max) continue;
-        const iconLevel = copies.levels.length > 0 ? Math.max(...copies.levels) : 1;
-        rows.push({ name, iconLevel, current, max });
-      }
-      if (rows.length > 0) groups.push({ category: cat, buildings: rows });
-    }
-    return groups;
-  }, [player, th]);
+  const fullPipelines = useMemo(() => {
+    if (!fullResult || !bbFullResult) return null;
+    return {
+      lab: fullResult.lab,
+      builders: fullResult.builders,
+      pets: fullResult.pets,
+      equipment: fullResult.equipment,
+      'bb-builders': bbFullResult.bbBuilders,
+      'bb-lab': bbFullResult.bbLab,
+    } as Record<PipelineKey, PipelineResult>;
+  }, [fullResult, bbFullResult]);
 
-  if (loading || !player || !builderLoaded || !bbBuilderLoaded || !exclusionsLoaded || !result || !discounted || !bbResult || !bbDiscounted || !pipelineDiscounted) {
+  if (loading || !player || !builderLoaded || !bbBuilderLoaded || !exclusionsLoaded || !result || !discounted || !bbResult || !bbDiscounted || !pipelineDiscounted || !fullPipelines) {
     return (
       <MaxTimeScreenSkeleton />
     );
@@ -414,25 +447,36 @@ export default function MaxTimeScreen() {
 
   const summaryTime = discounted ? formatTime(discounted.headlineTime) : '…';
 
-  const rowTimeSec = (row: PipelineItemRow, key: PipelineKey, scope: ScopeDiscount) => {
-    const itemScope = key === 'builders' || key === 'bb-builders' ? rowScope(row, heroNames, discounts) : scope;
-    return Math.max(0, Math.round(row.timeSec * (1 - itemScope.timePercent / 100)));
+  const isBuilderKey = (key: PipelineKey) => key === 'builders' || key === 'bb-builders';
+
+  /** Discount scope for one row: heroes and buildings share a builders pipeline but not a discount. */
+  const rowItemScope = (row: PipelineItemRow, key: PipelineKey, scope: ScopeDiscount) =>
+    isBuilderKey(key) ? rowScope(row, heroNames, discounts) : scope;
+
+  /**
+   * Whether a row is skipped, and why. A row is skipped by its own key (buildings
+   * by name, army items namespaced) or by the building gating it: Lab, Pet House,
+   * Blacksmith, Hero Hall / Builder Barracks. Gate-skipped rows can't be toggled
+   * on their own, the gating building has to be restored.
+   */
+  const rowExclusion = (row: PipelineItemRow, key: PipelineKey) => {
+    const isArmy = !(isBuilderKey(key) && !heroNames.has(row.name));
+    const ownKey = isArmy ? armyKey(row.name) : row.name;
+    const armyPipeline: ArmyPipeline | null = !isArmy
+      ? null
+      : key === 'builders' ? 'heroes' : key === 'bb-builders' ? 'bb-heroes' : key;
+    const gate = armyPipeline ? PIPELINE_GATES[armyPipeline] : undefined;
+    const gated = gate !== undefined && excluded.has(gate);
+    const own = excluded.has(ownKey);
+    return { ownKey, own, gate: gated ? gate : undefined, skipped: own || gated };
   };
 
-  const renderItems = (items: PipelineItemRow[], key: PipelineKey, scope: ScopeDiscount) =>
-    [...items]
-      .sort((a, b) => {
-        const ta = rowTimeSec(a, key, scope);
-        const tb = rowTimeSec(b, key, scope);
-        return ta - tb;
-      })
-      .map((row, i) => {
-        const itemScope = key === 'builders' || key === 'bb-builders' ? rowScope(row, heroNames, discounts) : scope;
-        const timeSec = rowTimeSec(row, key, scope);
-        const cost = Math.max(0, Math.round(row.cost * (1 - itemScope.costPercent / 100)));
-        const byResource: Record<string, number> = {};
-        for (const [r, v] of Object.entries(row.byResource)) byResource[r] = Math.max(0, Math.round(v * (1 - itemScope.costPercent / 100)));
-        const isBuilding = (key === 'builders' || key === 'bb-builders') && !heroNames.has(row.name);
+  const renderItems = (items: PipelineItemRow[], key: PipelineKey, scope: ScopeDiscount, roundLast = true) =>
+    items
+      .map((row) => ({ row, ex: rowExclusion(row, key), ...applyScope(row.timeSec, row.cost, row.byResource, rowItemScope(row, key, scope)) }))
+      .sort((a, b) => a.timeSec - b.timeSec)
+      .map(({ row, ex, timeSec, cost, byResource }, i) => {
+        const isBuilding = isBuilderKey(key) && !heroNames.has(row.name);
         const isBB = key === 'bb-builders' || key === 'bb-lab';
         const iconSource = isBuilding
           ? getBuildingItemImage(row.name, row.iconLevel, isBB)
@@ -448,7 +492,13 @@ export default function MaxTimeScreen() {
             costLabel={formatCostBreakdown(byResource) || formatCost(cost)}
             costResources={Object.keys(byResource).length > 0 ? byResource : undefined}
             timeLabel={timeSec > 0 ? formatTimeShort(timeSec) : ''}
-            isLast={i === items.length - 1}
+            isLast={roundLast && i === items.length - 1}
+            dimmed={ex.skipped}
+            actionIcon={ex.gate ? 'lock-closed' : ex.skipped ? 'close-circle' : editExclusions ? 'checkmark-circle-outline' : undefined}
+            actionColor={ex.skipped ? Colors.textTertiary : colors.textMuted}
+            actionPosition="after"
+            onActionPress={ex.gate || !editExclusions ? undefined : () => toggleExcluded(ex.ownKey)}
+            actionAccessibilityLabel={editExclusions && !ex.gate ? (ex.skipped ? `Include ${row.name}` : `Exclude ${row.name}`) : undefined}
           />
         );
       });
@@ -478,14 +528,56 @@ export default function MaxTimeScreen() {
     );
   };
 
+  const renderPipelinesHeader = () => (
+    <View style={[styles.sectionHeaderWrap, styles.pipelinesHeaderRow]}>
+      <View style={styles.pipelinesHeaderTitle}>
+        <SectionHeader title="Pipelines" />
+      </View>
+      <PressableRipple
+        onPress={() => setEditExclusions((v) => !v)}
+        hitSlop={8}
+        style={[styles.editToggle, editExclusions && styles.editToggleActive]}
+        accessibilityRole="button"
+        accessibilityLabel={editExclusions ? 'Done excluding upgrades' : 'Exclude upgrades'}
+      >
+        <Ionicons
+          name={editExclusions ? 'checkmark' : 'remove-circle-outline'}
+          size={14}
+          color={editExclusions ? Colors.bg : Colors.textSecondary}
+        />
+        <Text style={[styles.editToggleText, editExclusions && styles.editToggleTextActive]}>
+          {editExclusions ? 'Done' : 'Exclude'}
+        </Text>
+      </PressableRipple>
+    </View>
+  );
+
   const renderPipeline = (p: PipelineResult, scope: ScopeDiscount, isLast: boolean) => {
     const meta = PIPELINE_META[p.key];
     const isOpen = expanded[p.key];
     const d = pipelineDiscounted ? pipelineDiscounted[p.key] : null;
     const isEquipment = p.key === 'equipment';
+    // Excluded with the building that runs the pipeline (Lab, Pet House, …).
+    const gate = p.gated ? PIPELINE_GATE[p.key] : undefined;
+    const badge = gate ? 'Skipped' : isEquipment ? 'Instant' : d ? formatTimeShort(d.timeSec) : '…';
     // Only resources with real package art are shown, so the block is hidden
     // entirely rather than rendering an empty "Resources" heading.
     const pipelineResources = resourceRows(d ? d.byResource : p.byResource);
+    // Rows come from the un-skipped pipeline so skipped upgrades stay listed (badged)
+    // and can be restored in place; p itself only carries what still counts.
+    const rows = fullPipelines[p.key].items;
+    const skippedRows = rows.filter((r) => rowExclusion(r, p.key).skipped);
+    const skippedTotals = { timeSec: 0, byResource: {} as Record<string, number> };
+    for (const row of skippedRows) {
+      const t = applyScope(row.timeSec, row.cost, row.byResource, rowItemScope(row, p.key, scope));
+      skippedTotals.timeSec += t.timeSec;
+      for (const [r, v] of Object.entries(t.byResource)) skippedTotals.byResource[r] = (skippedTotals.byResource[r] ?? 0) + v;
+    }
+    // Own-key skips only: rows skipped through their gating building come back with it.
+    const restoreKeys = skippedRows.map((r) => rowExclusion(r, p.key)).filter((x) => x.own).map((x) => x.ownKey);
+    const note = gate
+      ? `Excluded with the ${gate}. Restore it in the ${p.key.startsWith('bb') ? 'BB ' : ''}Builders list to plan this pipeline again.`
+      : p.items.length === 0 ? 'Every upgrade here is skipped' : null;
     const buildingSplitSec = (sec: number, isHero = false) => {
       const pct = isHero ? discounts.army.timePercent : discounts.buildings.timePercent;
       return Math.max(0, Math.round(sec * (1 - pct / 100)));
@@ -512,68 +604,114 @@ export default function MaxTimeScreen() {
           icon={meta.icon}
           iconSource={headerIconSource ?? undefined}
           title={meta.title}
-          desc={meta.desc}
+          desc={gate ? `${gate} excluded — left out of the maxing timeline` : meta.desc}
           compact
           isFirst={isOpen}
           isLast={isLast && !isOpen}
           onPress={() => setExpanded((prev) => ({ ...prev, [p.key]: !prev[p.key] }))}
         >
-          <View style={styles.pipelineBadge}>
-            <Text style={styles.pipelineTime}>{isEquipment ? 'Instant' : d ? formatTimeShort(d.timeSec) : '…'}</Text>
+          <View style={styles.readinessChildren}>
+            {!isOpen && !gate && skippedRows.length > 0 && (
+              <View style={styles.headerBadge}>
+                <Text style={styles.headerBadgeMarker}>{`−${skippedRows.length}`}</Text>
+              </View>
+            )}
+            <View style={styles.headerBadge}>
+              <Text style={styles.pipelineTime}>{badge}</Text>
+            </View>
           </View>
         </SettingRow>
         {isOpen && (
           <View style={styles.pipelineBody}>
-            {p.items.length > 0 ? (
+            {rows.length === 0 ? (
+              <Text style={styles.emptyText}>Nothing left to upgrade</Text>
+            ) : (
               <>
                 <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Time</Text>
-                  <Text style={styles.summaryTime}>
-                    {isEquipment ? 'Instant' : formatTime(d ? d.timeSec : p.timeSec)}
-                  </Text>
-                  {p.split && (
-                    <View style={styles.splitList}>
-                      <View style={styles.splitRow}>
-                        <Text style={styles.splitLabel}>Buildings</Text>
-                        <Text style={styles.splitValue}>
-                          {formatTime(buildingSplitSec(p.split.buildingsOnlySec))}
-                        </Text>
-                      </View>
-                      <View style={styles.splitRow}>
-                        <Text style={styles.splitLabel}>Heroes</Text>
-                        <Text style={styles.splitValue}>
-                          {formatTime(buildingSplitSec(p.split.heroesOnlySec, true))}
-                        </Text>
-                      </View>
-                      {p.split.optimalHeroBuilders >= 0 && (
-                        <View style={styles.splitRow}>
-                          <View style={styles.splitLabelRow}>
-                            <Text style={styles.splitLabel}>Optimal split</Text>
-                            <View style={styles.splitAllocation}>
-                              <Text style={styles.splitAllocationText}>
-                                {`${p.split.optimalHeroBuilders}H / ${p.split.optimalBuildingBuilders}B`}
+                  {note ? (
+                    <Text style={styles.emptyText}>{note}</Text>
+                  ) : (
+                    <>
+                      <Text style={styles.summaryLabel}>Time</Text>
+                      <Text style={styles.summaryTime}>
+                        {isEquipment ? 'Instant' : formatTime(d ? d.timeSec : p.timeSec)}
+                      </Text>
+                      {p.split && (
+                        <View style={styles.splitList}>
+                          <View style={styles.splitRow}>
+                            <Text style={styles.splitLabel}>Buildings</Text>
+                            <Text style={styles.splitValue}>
+                              {formatTime(buildingSplitSec(p.split.buildingsOnlySec))}
+                            </Text>
+                          </View>
+                          <View style={styles.splitRow}>
+                            <Text style={styles.splitLabel}>Heroes</Text>
+                            <Text style={styles.splitValue}>
+                              {formatTime(buildingSplitSec(p.split.heroesOnlySec, true))}
+                            </Text>
+                          </View>
+                          {p.split.optimalHeroBuilders >= 0 && (
+                            <View style={styles.splitRow}>
+                              <View style={styles.splitLabelRow}>
+                                <Text style={styles.splitLabel}>Optimal split</Text>
+                                <View style={styles.splitAllocation}>
+                                  <Text style={styles.splitAllocationText}>
+                                    {`${p.split.optimalHeroBuilders}H / ${p.split.optimalBuildingBuilders}B`}
+                                  </Text>
+                                </View>
+                              </View>
+                              <Text style={styles.splitValue}>
+                                {formatTime(buildingSplitSec(p.split.optimalSec))}
                               </Text>
                             </View>
-                          </View>
-                          <Text style={styles.splitValue}>
-                            {formatTime(buildingSplitSec(p.split.optimalSec))}
-                          </Text>
+                          )}
                         </View>
                       )}
-                    </View>
+                      {pipelineResources.length > 0 && (
+                        <>
+                          <View style={styles.summaryDivider} />
+                          <Text style={styles.summaryLabel}>Resources</Text>
+                          {renderResourceGrid(pipelineResources)}
+                        </>
+                      )}
+                    </>
                   )}
-                  {pipelineResources.length > 0 && (
+                  {skippedRows.length > 0 && (
                     <>
                       <View style={styles.summaryDivider} />
-                      <Text style={styles.summaryLabel}>Resources</Text>
-                      {renderResourceGrid(pipelineResources)}
+                      <View style={styles.splitRow}>
+                        <View style={styles.splitLabelRow}>
+                          <View style={styles.splitAllocation}>
+                            <Text style={styles.splitAllocationText}>{skippedRows.length}</Text>
+                          </View>
+                          <Text style={styles.splitLabel}>Excluded time</Text>
+                        </View>
+                        <Text style={styles.splitValue}>
+                          {isEquipment ? 'Instant' : formatTime(skippedTotals.timeSec)}
+                        </Text>
+                      </View>
+                      {resourceRows(skippedTotals.byResource).length > 0 && (
+                        <>
+                          <Text style={styles.summaryLabel}>Excluded resources</Text>
+                          {renderResourceGrid(resourceRows(skippedTotals.byResource))}
+                        </>
+                      )}
                     </>
                   )}
                 </View>
-                {renderItems(p.items, p.key, scope)}
+                {/* With a Restore button below, the last row stays square so the two read as one block. */}
+                {renderItems(rows, p.key, scope, restoreKeys.length === 0)}
+                {restoreKeys.length > 0 && (
+                  <PressableRipple
+                    onPress={() => setExcludedMany(restoreKeys, false)}
+                    hitSlop={8}
+                    style={styles.exclusionResetBtn}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.exclusionResetText}>{`Restore ${restoreKeys.length} excluded`}</Text>
+                  </PressableRipple>
+                )}
               </>
-            ) : (
-              <Text style={styles.emptyText}>Nothing left to upgrade</Text>
             )}
             {!isLast && <View style={styles.sectionSeparator} />}
           </View>
@@ -660,21 +798,21 @@ export default function MaxTimeScreen() {
     return (
       <View style={styles.heroResourcesGrid}>
         {entries.map(([r, v], index, arr) => (
-            <View
-              key={r}
-              style={[
-                styles.heroResourceCell,
-                index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
-                index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
-                ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
-                index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
-              ]}
-            >
-              {PACKAGE_RESOURCE_IMAGES[r] ? (
-                <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
-              ) : null}
-              <Text style={[styles.heroResourceValue, { color: resourceColor(r) }]}>{formatCost(v)}</Text>
-            </View>
+          <View
+            key={r}
+            style={[
+              styles.heroResourceCell,
+              index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+              index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+              ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
+              index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+            ]}
+          >
+            {PACKAGE_RESOURCE_IMAGES[r] ? (
+              <Image source={PACKAGE_RESOURCE_IMAGES[r]} style={styles.heroResourceIcon} resizeMode="contain" />
+            ) : null}
+            <Text style={[styles.heroResourceValue, { color: resourceColor(r) }]}>{formatCost(v)}</Text>
+          </View>
         ))}
       </View>
     );
@@ -709,490 +847,380 @@ export default function MaxTimeScreen() {
         {showBB && (
           <View style={styles.villageToggleWrap}>
             <View style={styles.villageToggle}>
-            <PressableRipple
-              style={[
-                styles.villageToggleItem,
-                segCornerStyle(0, 2),
-                !isBB && styles.villageToggleActive,
-              ]}
-              onPress={() => setVillage('home')}
-            >
-              {thHallImage ? (
-                <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-              ) : (
-                <Ionicons
-                  name="home-outline"
-                  size={13}
-                  color={!isBB ? Colors.bg : Colors.textSecondary}
-                />
-              )}
-              <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>
-                {`TH${th}`}
-              </Text>
-            </PressableRipple>
-            <PressableRipple
-              style={[
-                styles.villageToggleItem,
-                segCornerStyle(1, 2),
-                isBB && styles.villageToggleActive,
-              ]}
-              onPress={() => setVillage('builder')}
-            >
-              {bhHallImage ? (
-                <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-              ) : (
-                <Ionicons
-                  name="hammer-outline"
-                  size={13}
-                  color={isBB ? Colors.bg : Colors.textSecondary}
-                />
-              )}
-              <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>
-                {`BH${bh}`}
-              </Text>
-            </PressableRipple>
+              <PressableRipple
+                style={[
+                  styles.villageToggleItem,
+                  segCornerStyle(0, 2),
+                  !isBB && styles.villageToggleActive,
+                ]}
+                onPress={() => setVillage('home')}
+              >
+                {thHallImage ? (
+                  <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+                ) : (
+                  <Ionicons
+                    name="home-outline"
+                    size={13}
+                    color={!isBB ? Colors.bg : Colors.textSecondary}
+                  />
+                )}
+                <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>
+                  {`TH${th}`}
+                </Text>
+              </PressableRipple>
+              <PressableRipple
+                style={[
+                  styles.villageToggleItem,
+                  segCornerStyle(1, 2),
+                  isBB && styles.villageToggleActive,
+                ]}
+                onPress={() => setVillage('builder')}
+              >
+                {bhHallImage ? (
+                  <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
+                ) : (
+                  <Ionicons
+                    name="hammer-outline"
+                    size={13}
+                    color={isBB ? Colors.bg : Colors.textSecondary}
+                  />
+                )}
+                <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>
+                  {`BH${bh}`}
+                </Text>
+              </PressableRipple>
             </View>
           </View>
         )}
 
         {!isBB && (
           <>
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>Estimated time to max</Text>
-          <Text style={styles.heroTime}>{summaryTime}</Text>
-          <Text style={styles.heroNote}>
-            Laboratory, builders & pets run in parallel — this is the longest pipeline
-          </Text>
-          {renderHeroResourceGrid(discounted.totalByResource)}
-        </View>
-
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="Builders" />
-        </View>
-        <View style={styles.builderCard}>
-          <View style={styles.builderTextBlock}>
-            <Text style={styles.builderTitle}>Builders</Text>
-            <Text style={styles.builderDesc}>Building & hero time is divided across these</Text>
-          </View>
-          <View style={styles.builderStepper}>
-            <Pressable
-              onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
-              disabled={builderCount <= 2}
-              style={[
-                styles.stepperBtn,
-                builderCount <= 2 && styles.stepperBtnDisabled,
-              ]}
-            >
-              <Ionicons name="remove" size={18} color={builderCount <= 2 ? Colors.textMuted : Colors.textPrimary} />
-            </Pressable>
-            <View style={styles.builderCountPill}>
-              <Text style={styles.builderCountText}>{builderCount}</Text>
+            <View style={styles.heroCard}>
+              <Text style={styles.heroLabel}>Estimated time to max</Text>
+              <Text style={styles.heroTime}>{summaryTime}</Text>
+              <Text style={styles.heroNote}>
+                Laboratory, builders & pets run in parallel — this is the longest pipeline
+              </Text>
+              {renderHeroResourceGrid(discounted.totalByResource)}
             </View>
-            <Pressable
-              onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
-              disabled={builderCount >= 6}
-              style={[
-                styles.stepperBtn,
-                builderCount >= 6 && styles.stepperBtnDisabled,
-              ]}
-            >
-              <Ionicons name="add" size={18} color={builderCount >= 6 ? Colors.textMuted : Colors.textPrimary} />
-            </Pressable>
-          </View>
-        </View>
 
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="Strategic Exclusions" />
-        </View>
-        <View style={styles.exclusionSection}>
-          <SettingRow
-            icon="ban-outline"
-            title="Excluded buildings"
-            desc={
-              excluded.size > 0
-                ? `${excluded.size} skipped from the maxing timeline`
-                : 'None — full max timeline'
-            }
-            compact
-            isFirst
-            isLast={!excludeOpen}
-            onPress={() => setExcludeOpen((o) => !o)}
-          >
-            <View style={styles.readinessChildren}>
-              <View style={styles.pipelineBadge}>
-                <Text style={styles.pipelineTime}>{excluded.size}</Text>
+            <View style={styles.sectionHeaderWrap}>
+              <SectionHeader title="Builders" />
+            </View>
+            <View style={styles.builderCard}>
+              <View style={styles.builderTextBlock}>
+                <Text style={styles.builderTitle}>Builders</Text>
+                <Text style={styles.builderDesc}>Building & hero time is divided across these</Text>
               </View>
-              <Ionicons
-                name={excludeOpen ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color={colors.textSecondary}
-              />
-            </View>
-          </SettingRow>
-          {excludeOpen && (
-            <View style={styles.exclusionBody}>
-              {exclusionGroups.map((g) => {
-                const names = g.buildings.map((b) => b.name);
-                const allExcluded = names.every((n) => excluded.has(n));
-                return (
-                  <View key={g.category} style={styles.exclusionGroup}>
-                    <View style={styles.exclusionCatHeader}>
-                      <Text style={styles.exclusionCatTitle}>{g.category}</Text>
-                      <PressableRipple
-                        onPress={() => setExcludedMany(names, !allExcluded)}
-                        hitSlop={8}
-                        style={styles.exclusionCatActionBtn}
-                        accessibilityRole="button"
-                      >
-                        <Text style={[styles.exclusionCatAction, { color: allExcluded ? Colors.textTertiary : colors.textSecondary }]}>
-                          {allExcluded ? 'Restore all' : 'Exclude all'}
-                        </Text>
-                      </PressableRipple>
-                    </View>
-                    <View style={styles.exclusionRows}>
-                      {g.buildings.map((b, i) => {
-                        const isExcluded = excluded.has(b.name);
-                        return (
-                          <PressableRipple
-                            key={b.name}
-                            onPress={() => toggleExcluded(b.name)}
-                            style={[
-                              styles.exclusionRow,
-                              { backgroundColor: colors.bgCardHover },
-                              i === 0 && styles.exclusionRowFirst,
-                              i === g.buildings.length - 1 && styles.exclusionRowLast,
-                            ]}
-                            accessibilityRole="button"
-                          >
-                            <Image
-                              source={getBuildingItemImage(b.name, b.iconLevel) ?? undefined}
-                              style={[styles.exclusionRowIcon, { opacity: isExcluded ? 0.45 : 1 }]}
-                              resizeMode="contain"
-                            />
-                            <View style={styles.exclusionRowText}>
-                              <Text style={[styles.exclusionRowName, { color: isExcluded ? colors.textTertiary : colors.textPrimary }]} numberOfLines={1}>
-                                {b.name}
-                              </Text>
-                              <Text style={styles.exclusionRowSub}>
-                                Lv {b.current}/{b.max}
-                                {isExcluded ? ' · skipped' : ''}
-                              </Text>
-                            </View>
-                            <Ionicons
-                              name={isExcluded ? 'close-circle' : 'checkmark-circle-outline'}
-                              size={22}
-                              color={isExcluded ? Colors.textTertiary : colors.textMuted}
-                            />
-                          </PressableRipple>
-                        );
-                      })}
-                    </View>
-                  </View>
-                );
-              })}
-              {exclusionGroups.length === 0 && (
-                <Text style={styles.exclusionEmpty}>Everything is already maxed</Text>
-              )}
-              {excluded.size > 0 && (
-                <PressableRipple
-                  onPress={clearExcluded}
-                  hitSlop={8}
-                  style={styles.exclusionResetBtn}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.exclusionResetText}>Reset all exclusions</Text>
-                </PressableRipple>
-              )}
-            </View>
-          )}
-        </View>
-
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="Pipelines" />
-        </View>
-        <View style={styles.pipelineSections}>
-          {renderPipeline(result.lab, discounts.army, false)}
-          {renderPipeline(result.builders, discounts.buildings, false)}
-          {hasPets ? renderPipeline(result.pets, discounts.army, false) : null}
-          {renderPipeline(result.equipment, discounts.army, true)}
-        </View>
-
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="TH Upgrade Readiness" />
-        </View>
-        <View style={styles.readinessSection}>
-          <SettingRow
-            icon="trending-up-outline"
-            title={readiness ? `Ready for TH${readiness.nextTh}?` : 'TH Upgrade Readiness'}
-            desc={readiness ? readiness.verdictLabel : ''}
-            compact
-            isFirst
-            isLast={!readinessOpen}
-            onPress={() => setReadinessOpen((o) => !o)}
-          >
-            {readiness && (
-              <View style={styles.pipelineBadge}>
-                <Text style={styles.pipelineTime}>{Math.round(readiness.score)}%</Text>
-              </View>
-            )}
-          </SettingRow>
-          {readinessOpen && readiness && (
-            <View style={styles.readinessBody}>
-              <View style={styles.readinessTop}>
-                <Text
+              <View style={styles.builderStepper}>
+                <Pressable
+                  onPress={() => setBuilderCount(Math.max(2, builderCount - 1))}
+                  disabled={builderCount <= 2}
                   style={[
-                    styles.readinessVerdict,
-                    { color: readiness.verdict === 'ready' ? Colors.success : readiness.verdict === 'almost' ? Colors.warning : Colors.destructive },
+                    styles.stepperBtn,
+                    builderCount <= 2 && styles.stepperBtnDisabled,
                   ]}
                 >
-                  {readiness.verdictLabel}
-                </Text>
-                <Text style={styles.readinessScore}>{Math.round(readiness.score)}%</Text>
+                  <Ionicons name="remove" size={18} color={builderCount <= 2 ? Colors.textMuted : Colors.textPrimary} />
+                </Pressable>
+                <View style={styles.builderCountPill}>
+                  <Text style={styles.builderCountText}>{builderCount}</Text>
+                </View>
+                <Pressable
+                  onPress={() => setBuilderCount(Math.min(6, builderCount + 1))}
+                  disabled={builderCount >= 6}
+                  style={[
+                    styles.stepperBtn,
+                    builderCount >= 6 && styles.stepperBtnDisabled,
+                  ]}
+                >
+                  <Ionicons name="add" size={18} color={builderCount >= 6 ? Colors.textMuted : Colors.textPrimary} />
+                </Pressable>
               </View>
-              <View style={styles.readinessTrack}>
-                <View style={[styles.readinessFill, { width: `${Math.max(2, readiness.score)}%` }]} />
-              </View>
-              <Text style={styles.readinessNote}>{readiness.note}</Text>
-              {readiness.nextUnlocks.length > 0 && (
-                <Text style={styles.readinessNext}>
-                  Unlocks at TH{readiness.nextTh}: {readiness.nextUnlocks.map((u) => u.value).join(' · ')}
-                </Text>
-              )}
             </View>
-          )}
-          {readinessOpen && readiness && (
-            <React.Fragment>
-              {readiness.pipelines.map((p, i) => {
-                const isBuilders = p.key === 'builders';
-                const isLab = p.key === 'lab';
-                const isOpen = isBuilders ? buildersExpanded : isLab ? labExpanded : false;
-                const isExpandable = isBuilders || isLab;
-                return (
-                  <React.Fragment key={p.key}>
-                    <SettingRow
-                      icon={PIPELINE_META[p.key].icon}
-                      title={PIPELINE_META[p.key].title}
-                      desc={READINESS_PIPELINE_DESC[p.key]}
-                      compact
-                      isFirst={i === 0}
-                      isLast={isOpen ? false : i === readiness.pipelines.length - 1}
-                      onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
-                    >
-                      <View style={styles.readinessChildren}>
-                        <View style={styles.pipelineBadge}>
-                          <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
-                        </View>
-                      </View>
-                    </SettingRow>
-                    {isExpandable && isOpen && (
-                      <View style={styles.pipelineExpandBody}>
-                        {p.children.map((c) => (
-                          <View key={c.key} style={styles.readinessCatRow}>
-                            <Text style={styles.readinessCatLabel}>{c.label}</Text>
-                            <View style={styles.readinessCatTrack}>
-                              <View style={[styles.readinessCatFill, { width: `${Math.max(2, c.pct)}%` }]} />
-                            </View>
-                            <Text style={styles.readinessCatPct}>{Math.round(c.pct)}%</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </React.Fragment>
-          )}
-          {readinessOpen && readiness && discounted && nextDiscounted && !isMaxTh && (
-            <React.Fragment>
+
+            {renderPipelinesHeader()}
+            <View style={styles.pipelineSections}>
+              {renderPipeline(result.lab, discounts.army, false)}
+              {renderPipeline(result.builders, discounts.buildings, false)}
+              {hasPets ? renderPipeline(result.pets, discounts.army, false) : null}
+              {renderPipeline(result.equipment, discounts.army, true)}
+            </View>
+
+            <View style={styles.sectionHeaderWrap}>
+              <SectionHeader title="TH Upgrade Readiness" />
+            </View>
+            <View style={styles.readinessSection}>
               <SettingRow
                 icon="trending-up-outline"
-                title={`Rush to TH${readiness.nextTh}`}
-                desc={`with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`}
+                title={readiness ? `Ready for TH${readiness.nextTh}?` : 'TH Upgrade Readiness'}
+                desc={readiness ? readiness.verdictLabel : ''}
                 compact
                 isFirst
-                isLast={!rushExpanded}
-                onPress={() => setRushExpanded((o) => !o)}
+                isLast={!readinessOpen}
+                onPress={() => setReadinessOpen((o) => !o)}
               >
-                <View style={styles.readinessChildren}>
+                {readiness && (
                   <View style={styles.pipelineBadge}>
-                    <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
+                    <Text style={styles.pipelineTime}>{Math.round(readiness.score)}%</Text>
                   </View>
-                </View>
+                )}
               </SettingRow>
-              {rushExpanded && (
-                <View style={styles.rushExpandBody}>
-                  {thUpgrade && (
-                    <ItemCard
-                      name="Town Hall"
-                      level={th}
-                      maxLevel={readiness.nextTh}
-                      thMaxLevel={readiness.nextTh}
-                      icon={getTownHallImageSource(readiness.nextTh) ?? undefined}
-                      costResources={thUpgrade.byResource}
-                      timeLabel={thUpgrade.timeSec > 0 ? formatTimeShort(thUpgrade.timeSec) : ''}
-                      isFirst
-                    />
-                  )}
-                  <Text style={styles.rushSectionLabel}>Time to finish</Text>
-                  <View style={styles.rushCompareHeader}>
-                    <Text style={styles.rushCompareCol}>Pipeline</Text>
-                    <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
-                    <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
-                    <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+              {readinessOpen && readiness && (
+                <View style={styles.readinessBody}>
+                  <View style={styles.readinessTop}>
+                    <Text
+                      style={[
+                        styles.readinessVerdict,
+                        { color: readiness.verdict === 'ready' ? Colors.success : readiness.verdict === 'almost' ? Colors.warning : Colors.destructive },
+                      ]}
+                    >
+                      {readiness.verdictLabel}
+                    </Text>
+                    <Text style={styles.readinessScore}>{Math.round(readiness.score)}%</Text>
                   </View>
-                  {[
-                    { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
-                    { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
-                    { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
-                    { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
-                  ].map((p) => (
-                    <View key={p.key} style={styles.rushCompareRow}>
-                      <Text style={styles.rushCompareLabel}>{p.label}</Text>
-                      <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
-                      <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
-                      <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
-                    </View>
-                  ))}
-                  <View style={styles.rushDivider} />
-                  <Text style={styles.rushSectionLabel}>Cost to finish</Text>
-                  <View style={styles.rushCompareHeader}>
-                    <Text style={styles.rushCompareCol}>Pipeline</Text>
-                    <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
-                    <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
-                    <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+                  <View style={styles.readinessTrack}>
+                    <View style={[styles.readinessFill, { width: `${Math.max(2, readiness.score)}%` }]} />
                   </View>
-                  {[
-                    { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
-                    { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
-                    { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
-                    { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
-                  ].map((p) => (
-                    <View key={p.key} style={styles.rushCompareRow}>
-                      <Text style={styles.rushCompareLabel}>{p.label}</Text>
-                      <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
-                      <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
-                      <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
-                    </View>
-                  ))}
-                  {resourceRows(nextDiscounted.totalByResource).length > 0 && (
-                    <View style={styles.rushCostResources}>
-                      <Text style={styles.rushNewItemsTitle}>Resources needed by TH{readiness.nextTh}</Text>
-                      {renderResourceGrid(resourceRows(nextDiscounted.totalByResource))}
-                    </View>
-                  )}
-                  <View style={styles.rushDivider} />
-                  <Text style={styles.rushNewItemsTitle}>New at TH{readiness.nextTh}</Text>
-                  {newGroups.length > 0 ? (
-                    newGroups.map((g) => (
-                      <View key={g.key} style={styles.newGroup}>
-                        <View style={styles.newGroupHeader}>
-                          <Text style={styles.newGroupTitle}>{g.title}</Text>
-                          <Text style={styles.newGroupCount}>{g.rows.length}</Text>
-                        </View>
-                        <View style={styles.newGroupCard}>
-                          {g.rows.map((r, i) => (
-                            <View
-                              key={`${r.key}-${i}`}
-                              style={[
-                                styles.newRow,
-                                i === 0 && styles.newRowFirst,
-                                i === g.rows.length - 1 && styles.newRowLast,
-                                i > 0 && styles.newRowBorder,
-                              ]}
-                            >
-                              {r.icon ? (
-                                <Image source={r.icon} style={styles.newRowIcon} resizeMode="contain" />
-                              ) : null}
-                              <View style={styles.newRowTextBlock}>
-                                <Text style={styles.newRowName} numberOfLines={1}>
-                                  {r.name}
-                                </Text>
-                                {r.type ? <Text style={styles.newRowType}>{r.type}</Text> : null}
-                              </View>
-                              <Text style={styles.newRowMeta}>{r.meta}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.rushNewItemLabel}>No new items</Text>
+                  <Text style={styles.readinessNote}>{readiness.note}</Text>
+                  {readiness.nextUnlocks.length > 0 && (
+                    <Text style={styles.readinessNext}>
+                      Unlocks at TH{readiness.nextTh}: {readiness.nextUnlocks.map((u) => u.value).join(' · ')}
+                    </Text>
                   )}
                 </View>
               )}
-            </React.Fragment>
-          )}
-          {readinessOpen && readiness && isMaxTh && (
-            <View style={styles.maxThCelebration}>
-              <Ionicons name="trophy" size={48} color={Colors.warning} />
-              <Text style={styles.maxThTitle}>Maximum Town Hall Reached!</Text>
-              <Text style={styles.maxThSubtitle}>Congratulations, Chief! 🎉</Text>
-              <Text style={styles.maxThBody}>
-                {"You've maxed out every building, troop, spell, hero, and pet."}
-                Your village stands complete — a testament to your dedication.
-              </Text>
-              <Text style={styles.maxThBody}>
-                Thank you for choosing ClashPrime for your journey.
-              </Text>
+              {readinessOpen && readiness && (
+                <React.Fragment>
+                  {readiness.pipelines.map((p, i) => {
+                    const isBuilders = p.key === 'builders';
+                    const isLab = p.key === 'lab';
+                    const isOpen = isBuilders ? buildersExpanded : isLab ? labExpanded : false;
+                    const isExpandable = isBuilders || isLab;
+                    return (
+                      <React.Fragment key={p.key}>
+                        <SettingRow
+                          icon={PIPELINE_META[p.key].icon}
+                          title={PIPELINE_META[p.key].title}
+                          desc={READINESS_PIPELINE_DESC[p.key]}
+                          compact
+                          isFirst={i === 0}
+                          isLast={isOpen ? false : i === readiness.pipelines.length - 1}
+                          onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
+                        >
+                          <View style={styles.readinessChildren}>
+                            <View style={styles.pipelineBadge}>
+                              <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
+                            </View>
+                          </View>
+                        </SettingRow>
+                        {isExpandable && isOpen && (
+                          <View style={styles.pipelineExpandBody}>
+                            {p.children.map((c) => (
+                              <View key={c.key} style={styles.readinessCatRow}>
+                                <Text style={styles.readinessCatLabel}>{c.label}</Text>
+                                <View style={styles.readinessCatTrack}>
+                                  <View style={[styles.readinessCatFill, { width: `${Math.max(2, c.pct)}%` }]} />
+                                </View>
+                                <Text style={styles.readinessCatPct}>{Math.round(c.pct)}%</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </React.Fragment>
+              )}
+              {readinessOpen && readiness && discounted && nextDiscounted && !isMaxTh && (
+                <React.Fragment>
+                  <SettingRow
+                    icon="trending-up-outline"
+                    title={`Rush to TH${readiness.nextTh}`}
+                    desc={`with current levels · ${formatTimeShort(nextDiscounted.headlineTime)} total`}
+                    compact
+                    isFirst
+                    isLast={!rushExpanded}
+                    onPress={() => setRushExpanded((o) => !o)}
+                  >
+                    <View style={styles.readinessChildren}>
+                      <View style={styles.pipelineBadge}>
+                        <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
+                      </View>
+                    </View>
+                  </SettingRow>
+                  {rushExpanded && (
+                    <View style={styles.rushExpandBody}>
+                      {thUpgrade && (
+                        <ItemCard
+                          name="Town Hall"
+                          level={th}
+                          maxLevel={readiness.nextTh}
+                          thMaxLevel={readiness.nextTh}
+                          icon={getTownHallImageSource(readiness.nextTh) ?? undefined}
+                          costResources={thUpgrade.byResource}
+                          timeLabel={thUpgrade.timeSec > 0 ? formatTimeShort(thUpgrade.timeSec) : ''}
+                          isFirst
+                        />
+                      )}
+                      <Text style={styles.rushSectionLabel}>Time to finish</Text>
+                      <View style={styles.rushCompareHeader}>
+                        <Text style={styles.rushCompareCol}>Pipeline</Text>
+                        <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
+                        <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
+                        <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+                      </View>
+                      {[
+                        { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
+                        { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
+                        { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
+                        { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
+                      ].map((p) => (
+                        <View key={p.key} style={styles.rushCompareRow}>
+                          <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                          <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
+                          <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
+                          <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
+                        </View>
+                      ))}
+                      <View style={styles.rushDivider} />
+                      <Text style={styles.rushSectionLabel}>Cost to finish</Text>
+                      <View style={styles.rushCompareHeader}>
+                        <Text style={styles.rushCompareCol}>Pipeline</Text>
+                        <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
+                        <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
+                        <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+                      </View>
+                      {[
+                        { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
+                        { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
+                        { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
+                        { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
+                      ].map((p) => (
+                        <View key={p.key} style={styles.rushCompareRow}>
+                          <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                          <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
+                          <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
+                          <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
+                        </View>
+                      ))}
+                      {resourceRows(nextDiscounted.totalByResource).length > 0 && (
+                        <View style={styles.rushCostResources}>
+                          <Text style={styles.rushNewItemsTitle}>Resources needed by TH{readiness.nextTh}</Text>
+                          {renderResourceGrid(resourceRows(nextDiscounted.totalByResource))}
+                        </View>
+                      )}
+                      <View style={styles.rushDivider} />
+                      <Text style={styles.rushNewItemsTitle}>New at TH{readiness.nextTh}</Text>
+                      {newGroups.length > 0 ? (
+                        newGroups.map((g) => (
+                          <View key={g.key} style={styles.newGroup}>
+                            <View style={styles.newGroupHeader}>
+                              <Text style={styles.newGroupTitle}>{g.title}</Text>
+                              <Text style={styles.newGroupCount}>{g.rows.length}</Text>
+                            </View>
+                            <View style={styles.newGroupCard}>
+                              {g.rows.map((r, i) => (
+                                <View
+                                  key={`${r.key}-${i}`}
+                                  style={[
+                                    styles.newRow,
+                                    i === 0 && styles.newRowFirst,
+                                    i === g.rows.length - 1 && styles.newRowLast,
+                                    i > 0 && styles.newRowBorder,
+                                  ]}
+                                >
+                                  {r.icon ? (
+                                    <Image source={r.icon} style={styles.newRowIcon} resizeMode="contain" />
+                                  ) : null}
+                                  <View style={styles.newRowTextBlock}>
+                                    <Text style={styles.newRowName} numberOfLines={1}>
+                                      {r.name}
+                                    </Text>
+                                    {r.type ? <Text style={styles.newRowType}>{r.type}</Text> : null}
+                                  </View>
+                                  <Text style={styles.newRowMeta}>{r.meta}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        ))
+                      ) : (
+                        <Text style={styles.rushNewItemLabel}>No new items</Text>
+                      )}
+                    </View>
+                  )}
+                </React.Fragment>
+              )}
+              {readinessOpen && readiness && isMaxTh && (
+                <View style={styles.maxThCelebration}>
+                  <Ionicons name="trophy" size={48} color={Colors.warning} />
+                  <Text style={styles.maxThTitle}>Maximum Town Hall Reached!</Text>
+                  <Text style={styles.maxThSubtitle}>Congratulations, Chief! 🎉</Text>
+                  <Text style={styles.maxThBody}>
+                    {"You've maxed out every building, troop, spell, hero, and pet."}
+                    Your village stands complete — a testament to your dedication.
+                  </Text>
+                  <Text style={styles.maxThBody}>
+                    Thank you for choosing ClashPrime for your journey.
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
           </>
         )}
 
         {isBB && (
           <>
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>Builder Base time to max</Text>
-          <Text style={styles.heroTime}>{formatTime(bbDiscounted.headlineTime)}</Text>
-          <Text style={styles.heroNote}>
-            BB builders & Star Laboratory run in parallel — this is the longest pipeline
-          </Text>
-          {renderHeroResourceGrid(bbDiscounted.totalByResource)}
-        </View>
-
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="Builders" />
-        </View>
-        <View style={styles.builderCard}>
-          <View style={styles.builderTextBlock}>
-            <Text style={styles.builderTitle}>BB Builders</Text>
-            <Text style={styles.builderDesc}>BB building & hero time is divided across these</Text>
-          </View>
-          <View style={styles.builderStepper}>
-            <Pressable
-              onPress={() => setBuilderBaseCount(Math.max(1, bbBuilderCount - 1))}
-              disabled={bbBuilderCount <= 1}
-              style={[
-                styles.stepperBtn,
-                bbBuilderCount <= 1 && styles.stepperBtnDisabled,
-              ]}
-            >
-              <Ionicons name="remove" size={18} color={bbBuilderCount <= 1 ? Colors.textMuted : Colors.textPrimary} />
-            </Pressable>
-            <View style={styles.builderCountPill}>
-              <Text style={styles.builderCountText}>{bbBuilderCount}</Text>
+            <View style={styles.heroCard}>
+              <Text style={styles.heroLabel}>Builder Base time to max</Text>
+              <Text style={styles.heroTime}>{formatTime(bbDiscounted.headlineTime)}</Text>
+              <Text style={styles.heroNote}>
+                BB builders & Star Laboratory run in parallel — this is the longest pipeline
+              </Text>
+              {renderHeroResourceGrid(bbDiscounted.totalByResource)}
             </View>
-            <Pressable
-              onPress={() => setBuilderBaseCount(Math.min(3, bbBuilderCount + 1))}
-              disabled={bbBuilderCount >= 3}
-              style={[
-                styles.stepperBtn,
-                bbBuilderCount >= 3 && styles.stepperBtnDisabled,
-              ]}
-            >
-              <Ionicons name="add" size={18} color={bbBuilderCount >= 3 ? Colors.textMuted : Colors.textPrimary} />
-            </Pressable>
-          </View>
-        </View>
 
-        <View style={styles.sectionHeaderWrap}>
-          <SectionHeader title="Pipelines" />
-        </View>
-        <View style={styles.pipelineSections}>
-          {renderPipeline(bbResult.bbBuilders, discounts.buildings, false)}
-          {renderPipeline(bbResult.bbLab, discounts.army, true)}
-        </View>
+            <View style={styles.sectionHeaderWrap}>
+              <SectionHeader title="Builders" />
+            </View>
+            <View style={styles.builderCard}>
+              <View style={styles.builderTextBlock}>
+                <Text style={styles.builderTitle}>BB Builders</Text>
+                <Text style={styles.builderDesc}>BB building & hero time is divided across these</Text>
+              </View>
+              <View style={styles.builderStepper}>
+                <Pressable
+                  onPress={() => setBuilderBaseCount(Math.max(1, bbBuilderCount - 1))}
+                  disabled={bbBuilderCount <= 1}
+                  style={[
+                    styles.stepperBtn,
+                    bbBuilderCount <= 1 && styles.stepperBtnDisabled,
+                  ]}
+                >
+                  <Ionicons name="remove" size={18} color={bbBuilderCount <= 1 ? Colors.textMuted : Colors.textPrimary} />
+                </Pressable>
+                <View style={styles.builderCountPill}>
+                  <Text style={styles.builderCountText}>{bbBuilderCount}</Text>
+                </View>
+                <Pressable
+                  onPress={() => setBuilderBaseCount(Math.min(3, bbBuilderCount + 1))}
+                  disabled={bbBuilderCount >= 3}
+                  style={[
+                    styles.stepperBtn,
+                    bbBuilderCount >= 3 && styles.stepperBtnDisabled,
+                  ]}
+                >
+                  <Ionicons name="add" size={18} color={bbBuilderCount >= 3 ? Colors.textMuted : Colors.textPrimary} />
+                </Pressable>
+              </View>
+            </View>
+
+            {renderPipelinesHeader()}
+            <View style={styles.pipelineSections}>
+              {renderPipeline(bbResult.bbBuilders, discounts.buildings, false)}
+              {renderPipeline(bbResult.bbLab, discounts.army, true)}
+            </View>
           </>
         )}
       </ScrollView>
@@ -1489,7 +1517,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.md,
     borderBottomLeftRadius: Radius.md,
     borderBottomRightRadius: Radius.md,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.sm,
   },
@@ -1571,100 +1599,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.md,
   },
-  exclusionSection: {
-    marginHorizontal: Spacing.base,
-    marginBottom: Spacing.xl,
-    gap: Spacing.xs,
-    borderRadius: Radius.xl * 1.25,
-    overflow: 'hidden',
-  },
-  exclusionBody: {
-    backgroundColor: Colors.bgCard,
-    borderTopLeftRadius: Radius.md,
-    borderTopRightRadius: Radius.md,
-    borderBottomLeftRadius: Radius.md,
-    borderBottomRightRadius: Radius.md,
-    paddingTop: Spacing.xs,
-    paddingBottom: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-  },
-  exclusionGroup: {
-    marginBottom: Spacing.sm,
-  },
-  exclusionCatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-    marginBottom: Spacing.xs,
-  },
-  exclusionCatTitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  exclusionCatActionBtn: {
-    paddingVertical: 2,
-  },
-  exclusionCatAction: {
-    ...Typography.caption,
-    fontWeight: '700',
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  exclusionRows: {
-    overflow: 'hidden',
-  },
-  exclusionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-    marginBottom: Spacing.xs,
-  },
-  exclusionRowFirst: {
-    borderTopLeftRadius: Radius.xl * 1.25,
-    borderTopRightRadius: Radius.xl * 1.25,
-  },
-  exclusionRowLast: {
-    borderBottomLeftRadius: Radius.xl * 1.25,
-    borderBottomRightRadius: Radius.xl * 1.25,
-  },
-  exclusionRowIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-  },
-  exclusionRowText: {
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  exclusionRowName: {
-    ...Typography.subhead,
-    fontWeight: '600',
-  },
-  exclusionRowSub: {
-    ...Typography.footnote,
-    color: Colors.textTertiary,
-    marginTop: 1,
-    fontVariant: ['tabular-nums'],
-  },
-  exclusionEmpty: {
-    ...Typography.subhead,
-    color: Colors.textTertiary,
-    textAlign: 'center',
-    paddingVertical: Spacing.md,
-  },
   exclusionResetBtn: {
     alignSelf: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.sm,
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
+    width: '100%',
+    alignItems: 'center',
   },
   exclusionResetText: {
     ...Typography.caption,
@@ -1708,6 +1652,52 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerBadge: {
+    minWidth: 32,
+    height: 32,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBadgeMarker: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  pipelinesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  pipelinesHeaderTitle: {
+    flex: 1,
+  },
+  editToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    height: 28,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgCardHover,
+  },
+  editToggleActive: {
+    backgroundColor: Colors.accent,
+  },
+  editToggleText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  editToggleTextActive: {
+    color: Colors.bg,
   },
   pipelineTime: {
     ...Typography.footnote,
