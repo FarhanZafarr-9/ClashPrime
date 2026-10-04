@@ -47,7 +47,9 @@
     "web": "expo start --web",
     "gen:images": "node scripts/gen-package-images.mjs",
     "gen:coc-ids": "node scripts/gen-coc-ids.mjs",
-    "sync:coc-data": "npm install clash-of-clans-data@latest && npm run gen:images && npm run gen:coc-ids",
+    "sync:coc-data": "npm install clash-of-clans-data@latest && npm run gen:images && npm run gen:coc-ids && npm run check:coc-data",
+    "check:coc-data": "node scripts/check-coc-data.mjs",
+    "sync:coc-data:accept": "node scripts/check-coc-data.mjs --update",
     "lint": "expo lint"
   },
   "private": true

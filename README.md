@@ -170,7 +170,7 @@ ClashPrime/
 │   ├── theme/              # Design system (colors, spacing, typography)
 │   ├── types/              # TypeScript interfaces
 │   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, heroJourney (Chief's Journey track), statImages, thReadiness, thMaxLevels, upgradeCosts (chain scheduling), zapquake (combo math), versionCheck, etc.
-├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs
+├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs, check-coc-data.mjs
 ├── images/                 # App icons and logos
 ```
 
@@ -209,9 +209,20 @@ npm run gen:coc-ids
 ### When `clash-of-clans-data` updates upstream
 
 ```bash
-npm run sync:coc-data   # installs latest package + regenerates images & ID mapping
-npx tsc --noEmit        # sanity check for schema changes
+npm run sync:coc-data         # installs latest package, regenerates images & ID mapping, then prints a change report
+npm run sync:coc-data:accept  # accepts the new data as the baseline (run after reviewing the report)
+npx tsc --noEmit              # sanity check for schema changes
 ```
+
+`sync:coc-data` ends with `check:coc-data`, which diffs the newly installed data against the
+baseline in `scripts/coc-data-baseline.json.gz` and reports what was added, removed and changed,
+with field-level diffs (e.g. `levels[2].stats.normal.dps  230 -> 220`). It compares against the
+committed baseline rather than the network, so it works offline and in CI. Run it on its own any
+time with `npm run check:coc-data`; add `--json` for machine-readable output or
+`--print home/troops/thrower.json` to dump one entity.
+
+`images` fields are excluded from the diff — they are asset paths, not game data — and key order is
+normalized, so only real data changes are reported.
 
 Then commit the regenerated `src/data/` files + lockfile, push, and tag the release (e.g. `v6.0.0`) so the in-app version checker picks it up.
 
