@@ -167,3 +167,16 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
     unresolved,
   };
 }
+
+/** How many Builder Huts the export describes, for useBuilderCount.
+ *
+ *  The export lists one Builder Hut row per copy (packed as `cnt`), so the copy
+ *  count is the player's hut count - 4 for `{"data":1000015,"lvl":1,"cnt":4}`.
+ *  Returns null when the export carries no Builder Hut row, or a count outside
+ *  the 2-6 range the app stores (6 = O.T.T.O.), so callers can tell "unknown"
+ *  apart from a detected value. */
+export function detectBuilderHutCount(result: CocImportResult): number | null {
+  const huts = result.resolved.find((r) => r.storeName === 'Builder Hut');
+  if (!huts) return null;
+  return huts.copies >= 2 && huts.copies <= 6 ? huts.copies : null;
+}
