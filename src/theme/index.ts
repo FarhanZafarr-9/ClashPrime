@@ -18,6 +18,9 @@ export const DarkColors = {
   accent: '#FFFFFF',
   accentSubtle: 'rgba(255,255,255,0.08)',
   accentGhost: 'rgba(255,255,255,0.04)',
+  /** Below accentGhost: for long bands like a pivot range, where a heavier tint
+   * would out-shout the current-level row it is meant to sit behind. */
+  accentFaint: 'rgba(255,255,255,0.02)',
   success: '#A0A0A0',
   successGhost: 'rgba(255,255,255,0.06)',
   warning: '#D4A359', // Premium gold theme color
@@ -45,6 +48,7 @@ export const LightColors = {
   accent: '#1C1C1E',
   accentSubtle: 'rgba(0,0,0,0.06)',
   accentGhost: 'rgba(0,0,0,0.03)',
+  accentFaint: 'rgba(0,0,0,0.018)',
   success: '#34C759',
   successGhost: 'rgba(52,199,89,0.12)',
   warning: '#D4A359', // Premium gold theme color
