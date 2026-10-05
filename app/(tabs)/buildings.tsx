@@ -371,8 +371,13 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
           const isPivotRow = pivotLevel === lvl;
           // Only a fully expanded table offers pivots: the condensed view already
           // elides rows behind an ellipsis, and the table scrolls horizontally, so
-          // a long-press there would be easy to miss.
+          // a long-press there would be easy to misfire.
           const pivotable = canPivotRow ? canPivotRow(lvl) : false;
+          // The levels the pivot covers, so the gold pivot row reads as the end of a
+          // range rather than an unrelated highlight. Gated on pivotLevel: with no
+          // pivot the bound is the max, which would match every remaining row.
+          // canPivotRow already excludes the current level and the max.
+          const inPivotRange = pivotLevel != null && pivotable && lvl < pivotLevel;
           return (
             <PressableRipple
               key={lvl}
@@ -380,7 +385,8 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
               style={[
                 styles.buildingStatRow,
                 current && styles.buildingStatRowCurrent,
-                !current && isPivotRow && { backgroundColor: Colors.warningGhost },
+                inPivotRange && styles.pivotRangeRow,
+                !current && isPivotRow && styles.pivotRow,
               ]}
             >
               <View style={styles.buildingStatCellIcon}>
@@ -450,7 +456,9 @@ function RemainingTable({ variant, levelsText, byResource, timeText, distributed
     <View style={section ? styles.buildingSectionRemaining : styles.remainingTable}>
       <View style={styles.remainingRow}>
         <View style={[headStyle, styles.remainingHeadRow, { flex: 1 }]}>
-          <Text style={{ color: pivoted ? Colors.warning : headStyle.color }}>Remaining</Text>
+          <Text style={[section ? styles.sectionRemainingHeadText : styles.remainingHeadText, { color: pivoted ? Colors.warning : Colors.textMuted }]}>
+            Remaining
+          </Text>
           {pivoted && onClearPivot && (
             <PressableRipple onPress={onClearPivot} hitSlop={8} style={styles.pivotClear} accessibilityLabel="Clear pivot" accessibilityRole="button">
               <Ionicons name="close" size={11} color={Colors.warning} />
@@ -2124,6 +2132,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'center',
   },
+  /**
+   * Typography half of remainingHead / sectionRemainingHead, for the one header
+   * that also holds a ✕. Those styles are split layout (padding, centring) from
+   * text because React Native does not inherit font or textTransform from a
+   * View, so a bare <Text> inside the header cell would lose the uppercase and
+   * fall back to body text.
+   */
+  remainingHeadText: {
+    ...Typography.caption,
+    fontWeight: '700',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    flex: 1,
+  },
   remainingTotalRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2235,6 +2259,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     textAlign: 'center',
     textAlignVertical: 'center',
+  },
+  /** Denser counterpart of remainingHeadText - see the note there. */
+  sectionRemainingHeadText: {
+    ...Typography.caption,
+    fontWeight: '700',
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    flex: 1,
   },
   sectionRemainingTotalCell: {
     ...Typography.caption,
@@ -2354,6 +2388,14 @@ const styles = StyleSheet.create({
   buildingStatRowCurrent: {
     backgroundColor: Colors.accentGhost,
   },
+  /** The pivot row and the levels it covers. The covered levels stay monochrome so
+   * the gold pivot row is the only coloured one. */
+  pivotRow: {
+    backgroundColor: Colors.warningGhost,
+  },
+  pivotRangeRow: {
+    backgroundColor: Colors.accentSubtle,
+  },
   buildingStatCellIcon: {
     width: 46,
     alignItems: 'center',
@@ -2402,7 +2444,7 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textTertiary,
     textAlign: 'center',
-    marginTop: Spacing.xs,
+    paddingVertical: Spacing.md,
   },
   pivotClear: {
     marginLeft: Spacing.xs,
