@@ -21,6 +21,9 @@ export const DarkColors = {
   success: '#A0A0A0',
   successGhost: 'rgba(255,255,255,0.06)',
   warning: '#D4A359', // Premium gold theme color
+  // Tint behind the pivot row and its Remaining header - enough to read as
+  // selected without competing with the current-level accent.
+  warningGhost: 'rgba(212,163,89,0.12)',
   destructive: '#666666',
   overlay: 'rgba(0,0,0,0.6)',
   shimmer: '#555555',
@@ -45,6 +48,7 @@ export const LightColors = {
   success: '#34C759',
   successGhost: 'rgba(52,199,89,0.12)',
   warning: '#D4A359', // Premium gold theme color
+  warningGhost: 'rgba(212,163,89,0.16)',
   destructive: '#FF3B30',
   overlay: 'rgba(0,0,0,0.4)',
   shimmer: '#B0B0B5',
