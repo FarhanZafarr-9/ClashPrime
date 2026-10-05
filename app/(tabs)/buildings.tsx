@@ -23,6 +23,7 @@ import {
   formatCost as fmtCost,
   formatTime as fmtTime,
 } from '../../src/utils/buildingImages';
+import { canPivot, isPivotable, pivotSpanLabel, resolvePivotBound } from '../../src/utils/upgradePivot';
 import { getBuildingCopies, getCountAtTH, getCountAtBH } from '../../src/utils/buildingCopies';
 import type { BuildingCopies } from '../../src/utils/buildingCopies';
 import {
@@ -318,7 +319,7 @@ function renderLevelGridCells({ levels, expand, lookupName, fallbackName, isCurr
 }
 
 /** Per-level stats table. `richCost` adds the resource icon + colour to the Build Cost column. */
-function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted, discounts, richCost }: {
+function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted, discounts, richCost, pivotLevel, onPivot, canPivotRow }: {
   levels: any[];
   expand: boolean;
   statCols: string[];
@@ -327,6 +328,10 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
   showDiscounted: boolean;
   discounts: ScopeDiscount;
   richCost?: boolean;
+  pivotLevel?: number | null;
+  onPivot?: (lvl: number) => void;
+  /** Whether a row is a valid pivot target - false outside the expanded table. */
+  canPivotRow?: (lvl: number) => boolean;
 }) {
   const [viewportW, setViewportW] = useState(0);
   const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
@@ -363,10 +368,23 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
           const levelData = item.data;
           const lvl = levelData.Level;
           const current = isCurrent(lvl);
+          const isPivotRow = pivotLevel === lvl;
+          // Only a fully expanded table offers pivots: the condensed view already
+          // elides rows behind an ellipsis, and the table scrolls horizontally, so
+          // a long-press there would be easy to miss.
+          const pivotable = canPivotRow ? canPivotRow(lvl) : false;
           return (
-            <View key={lvl} style={[styles.buildingStatRow, current && styles.buildingStatRowCurrent]}>
+            <PressableRipple
+              key={lvl}
+              onLongPress={pivotable && onPivot ? () => onPivot(lvl) : undefined}
+              style={[
+                styles.buildingStatRow,
+                current && styles.buildingStatRowCurrent,
+                !current && isPivotRow && { backgroundColor: Colors.warningGhost },
+              ]}
+            >
               <View style={styles.buildingStatCellIcon}>
-                <Text style={[styles.buildingStatLvlNum, current && styles.buildingStatLvlNumCurrent]}>{lvl}</Text>
+                <Text style={[styles.buildingStatLvlNum, current && styles.buildingStatLvlNumCurrent, !current && isPivotRow && styles.buildingStatLvlNumPivot]}>{lvl}</Text>
               </View>
               {statCols.map((col: string) => {
                 const val = levelData[col] ?? '—';
@@ -404,7 +422,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
                   </Text>
                 );
               })}
-            </View>
+            </PressableRipple>
           );
         })}
       </View>
@@ -413,7 +431,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
 }
 
 /** "Remaining" summary table. The section variant is denser and may add a Distributed column. */
-function RemainingTable({ variant, levelsText, byResource, timeText, distributedText, showDiscounted, discounts }: {
+function RemainingTable({ variant, levelsText, byResource, timeText, distributedText, showDiscounted, discounts, pivoted, onClearPivot }: {
   variant: 'card' | 'section';
   levelsText: string;
   byResource: Record<string, number>;
@@ -421,6 +439,9 @@ function RemainingTable({ variant, levelsText, byResource, timeText, distributed
   distributedText?: string;
   showDiscounted: boolean;
   discounts: ScopeDiscount;
+  /** Tint the header when the totals are capped below the max. */
+  pivoted?: boolean;
+  onClearPivot?: () => void;
 }) {
   const section = variant === 'section';
   const headStyle = section ? styles.sectionRemainingHead : styles.remainingHead;
@@ -428,7 +449,14 @@ function RemainingTable({ variant, levelsText, byResource, timeText, distributed
   return (
     <View style={section ? styles.buildingSectionRemaining : styles.remainingTable}>
       <View style={styles.remainingRow}>
-        <Text style={[headStyle, { flex: 1 }]}>Remaining</Text>
+        <View style={[headStyle, styles.remainingHeadRow, { flex: 1 }]}>
+          <Text style={{ color: pivoted ? Colors.warning : headStyle.color }}>Remaining</Text>
+          {pivoted && onClearPivot && (
+            <PressableRipple onPress={onClearPivot} hitSlop={8} style={styles.pivotClear} accessibilityLabel="Clear pivot" accessibilityRole="button">
+              <Ionicons name="close" size={11} color={Colors.warning} />
+            </PressableRipple>
+          )}
+        </View>
         <Text style={[headStyle, { flex: 1 }]}>Cost</Text>
         <Text style={[headStyle, { flex: 1 }]}>Time</Text>
         {distributedText !== undefined && <Text style={[headStyle, { flex: 1 }]}>Distributed</Text>}
@@ -483,6 +511,11 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   const { setBuildingCopies } = usePlayer();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
+  /**
+   * Level the Remaining totals stop at. Local to the card, so it resets with the
+   * card itself - a pivot is a reading of this visit, not a saved setting.
+   */
+  const [pivotLevel, setPivotLevel] = useState<number | null>(null);
   const lookupName = NAME_FIX[name] ?? name;
 
   const { buildingStats, statCols, showDiscounted, fmtTimeD, fmtCostD } = useBuildingStats(lookupName, isBB, discounts);
@@ -516,7 +549,18 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
     displayLevels = allLevels.slice(start, end);
   }
 
-  const remainingLevels = allLevels.filter((l: any) => l.Level > currentLevel && l.Level <= effectiveMax);
+  // The pivot replaces the cap on every remaining total below. The self-gated
+  // halls display one level past their max as a hint; that row is never a valid
+  // pivot target, which isPivotable() already rules out.
+  const pivot = resolvePivotBound(pivotLevel, currentLevel, effectiveMax);
+  const isPivoted = pivot !== effectiveMax;
+  const pivotEnabled = canPivot(currentLevel, effectiveMax);
+
+  // Long-pressing the pivot row again clears it, so the totals snap back to the
+  // max without hunting for the ✕.
+  const setPivot = (level: number) => setPivotLevel((prev) => (prev === level ? null : level));
+
+  const remainingLevels = allLevels.filter((l: any) => l.Level > currentLevel && l.Level <= pivot);
   let totalCost = 0;
   let totalTime = 0;
   const remainingByResource: Record<string, number> = {};
@@ -645,11 +689,13 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
           {hasRemaining && (
             <RemainingTable
               variant="card"
-              levelsText={`${remainingLevels.length} levels`}
+              levelsText={pivotSpanLabel(currentLevel, pivot)}
               byResource={remainingByResource}
               timeText={fmtTimeD(totalTime)}
               showDiscounted={showDiscounted}
               discounts={discounts}
+              pivoted={isPivoted}
+              onClearPivot={() => setPivotLevel(null)}
             />
           )}
           {buildingStats && (
@@ -662,10 +708,18 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
               showDiscounted={showDiscounted}
               discounts={discounts}
               richCost
+              pivotLevel={pivotLevel}
+              onPivot={setPivot}
+              canPivotRow={(lvl) => isPivotable(lvl, currentLevel, effectiveMax, showFull)}
             />
           )}
           {showExpand && (
             <ExpandToggle open={showFull} total={allLevels.length} onPress={() => setShowFull(!showFull)} />
+          )}
+          {pivotEnabled && showFull && (
+            <Text style={styles.pivotHint}>
+              {isPivoted ? `Long-press Lv${pivot} again, or tap ✕, to return to the max.` : 'Long-press a level to cap the Remaining totals there.'}
+            </Text>
           )}
           {(hasRemaining || (currentLevel > 1 && !isFullyMaxed)) && (
 <View style={[styles.upgradeRow, styles.craftedUpgradeRow]}>
@@ -2339,6 +2393,23 @@ const styles = StyleSheet.create({
   },
   buildingStatLvlNumCurrent: {
     color: Colors.textPrimary,
+  },
+  buildingStatLvlNumPivot: {
+    color: Colors.warning,
+    fontWeight: '700',
+  },
+  pivotHint: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+  },
+  pivotClear: {
+    marginLeft: Spacing.xs,
+  },
+  remainingHeadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   expandedSection: {
     paddingBottom: Spacing.sm,
