@@ -39,7 +39,11 @@ import {
   getCraftedDefense,
   normalizeModuleLevels,
   effectiveLevel,
+  isFullyMaxed,
   maxEffectiveLevel,
+  maxedModuleCount,
+  minEffectiveLevel,
+  costToMax,
   moduleMaxLevel,
   statFor,
   nextUpgrade,
@@ -865,8 +869,11 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
   const normalized = normalizeModuleLevels(defense, levels);
   const current = effectiveLevel(defense, normalized);
   const max = maxEffectiveLevel(defense);
-  const min = Math.max(1, defense.modules.length);
-  const isFullyMaxed = current >= max;
+  // Module count and the per-module ceiling, not the sum: maxing is per module.
+  const min = minEffectiveLevel(defense);
+  const isMaxed = isFullyMaxed(defense, normalized);
+  const { maxed: maxedCount, total: moduleTotal } = maxedModuleCount(defense, normalized);
+  const remaining = costToMax(defense, normalized);
 
   const allMaxed = defense.modules.reduce<Record<string, number>>((acc, m) => {
     acc[m.name] = moduleMaxLevel(m);
@@ -877,7 +884,10 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
     return acc;
   }, {});
 
-  const subtitle = [defense.size, targetTypeLabel(defense.targetType)].filter(Boolean).join(' · ');
+  const subtitleParts = [defense.size, targetTypeLabel(defense.targetType)];
+  // Partially maxed reads as neither done nor untouched, so name the split.
+  if (!isMaxed && maxedCount > 0) subtitleParts.push(`${maxedCount}/${moduleTotal} maxed`);
+  const subtitle = subtitleParts.filter(Boolean).join(' · ');
 
   return (
     <View style={[
@@ -894,16 +904,16 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
         onPress={() => setExpanded((v) => !v)}
         isFirst={isFirst}
         isLast={isLast && !expanded}
-        actionIcon={isFullyMaxed ? 'checkmark-circle' : 'chevron-up'}
+        actionIcon={isMaxed ? 'checkmark-circle' : 'chevron-up'}
         onActionPress={() => onChange(allMaxed)}
         actionAccessibilityLabel={`Max all modules on ${defense.name}`}
-        actionColor={isFullyMaxed ? Colors.warning : Colors.textPrimary}
+        actionColor={isMaxed ? Colors.warning : Colors.textPrimary}
         actionIcon2={current > min ? 'chevron-down' : undefined}
         onActionPress2={() => onChange(allMin)}
         actionAccessibilityLabel2={`Reset all modules on ${defense.name}`}
         actionColor2={Colors.textPrimary}
         subtitleWithBar
-        hideLevelBadge={isFullyMaxed}
+        hideLevelBadge={isMaxed}
       />
 
       {expanded && (
@@ -920,8 +930,15 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
               onChange={onChange}
             />
           ))}
-          <View style={styles.upgradeRow}>
-            {!isFullyMaxed && (
+          {remaining.anyPending && (
+              <Text style={styles.craftedCostToMax} numberOfLines={2}>
+                {`Max all: ${Object.entries(remaining.byResource)
+                  .map(([res, cost]) => `${fmtCost(cost)} ${res}`)
+                  .join(' + ')} · ${fmtTime(remaining.timeSec)}`}
+              </Text>
+            )}
+            <View style={styles.upgradeRow}>
+            {!isMaxed && (
               <ActionButton
                 label="Max all modules"
                 onPress={() => onChange(allMaxed)}
@@ -932,7 +949,7 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
                 <Ionicons name="arrow-back" size={16} color={Colors.bg} />
               </PressableRipple>
             )}
-          </View>
+            </View>
         </View>
       )}
     </View>
@@ -2590,6 +2607,12 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: Spacing.sm,
+  },
+  /** Total remaining spend to max every module, shown above the action row. */
+  craftedCostToMax: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
   },
   craftedUpgradeRow: {
     marginTop: Spacing.md,

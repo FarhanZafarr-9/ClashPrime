@@ -153,6 +153,68 @@ export const moduleMaxLevel = (m: CraftedModule): number => Math.max(1, m.upgrad
 /** Effective level with every module at level 1 — the defense as first crafted. */
 export const minEffectiveLevel = (d: CraftedDefense): number => Math.max(1, d.modules.length);
 
+/**
+ * True only when every module sits at its own ceiling. Deliberately not
+ * `effectiveLevel(d, lv) >= maxEffectiveLevel(d)`: the effective level is a sum,
+ * so scalar equality cannot tell `10/10/10` from an uneven spread that happens
+ * to total the same.
+ */
+export function isFullyMaxed(d: CraftedDefense, moduleLevels: CraftedModuleLevels | undefined): boolean {
+  const levels = normalizeModuleLevels(d, moduleLevels);
+  return d.modules.every((m) => levels[m.name] >= moduleMaxLevel(m));
+}
+
+/** How many modules are already at their ceiling, and how many exist. */
+export function maxedModuleCount(d: CraftedDefense, moduleLevels: CraftedModuleLevels | undefined): {
+  maxed: number;
+  total: number;
+} {
+  const levels = normalizeModuleLevels(d, moduleLevels);
+  const maxed = d.modules.filter((m) => levels[m.name] >= moduleMaxLevel(m)).length;
+  return { maxed, total: d.modules.length };
+}
+
+/** The remaining cost of maxing, summed per resource across every module. */
+export interface CraftedCostToMax {
+  /** False when every module is already maxed. */
+  anyPending: boolean;
+  /** Currency → total spend to bring all modules to their ceiling. */
+  byResource: Record<string, number>;
+  /** Summed build time of the remaining upgrades. */
+  timeSec: number;
+  /** Remaining Sparky Stones across all modules. */
+  sparkyStones: number;
+  /** Upgrade steps still to buy, counted per module. */
+  steps: number;
+}
+
+/**
+ * What is left to spend to max a defense. Each module's ladder uses a single
+ * resource throughout, so costs aggregate cleanly by resource name. Level 1 is
+ * the free base the station produces, so only levels above the current one are
+ * counted.
+ */
+export function costToMax(d: CraftedDefense, moduleLevels: CraftedModuleLevels | undefined): CraftedCostToMax {
+  const levels = normalizeModuleLevels(d, moduleLevels);
+  const byResource: Record<string, number> = {};
+  let timeSec = 0;
+  let sparkyStones = 0;
+  let steps = 0;
+  for (const m of d.modules) {
+    const from = levels[m.name];
+    const max = moduleMaxLevel(m);
+    for (let lv = from + 1; lv <= max; lv++) {
+      const up = upgradeFor(m, lv);
+      if (!up) continue;
+      steps++;
+      byResource[up.buildCostResource] = (byResource[up.buildCostResource] ?? 0) + up.buildCost;
+      timeSec += up.buildTimeSec;
+      sparkyStones += up.sparkyStones;
+    }
+  }
+  return { anyPending: steps > 0, byResource, timeSec, sparkyStones, steps };
+}
+
 /** Effective level with every module maxed. */
 export const maxEffectiveLevel = (d: CraftedDefense): number =>
   d.modules.reduce((sum, m) => sum + moduleMaxLevel(m), 0);
