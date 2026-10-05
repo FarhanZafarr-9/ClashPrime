@@ -49,3 +49,12 @@ export function resolvePivotBound(pivot: number | null | undefined, currentLevel
 export function pivotSpanLabel(currentLevel: number, bound: number): string {
   return `${Math.max(0, bound - currentLevel)} lvls`;
 }
+
+/**
+ * The bare count, for headers too narrow for the unit. The Remaining column
+ * shares its width with Cost and Time, and the ✕ steals a little more, so the
+ * full label wraps to a second line there.
+ */
+export function pivotSpanCount(currentLevel: number, bound: number): number {
+  return Math.max(0, bound - currentLevel);
+}
