@@ -997,6 +997,8 @@ function BuildingCollapsibleSection({
 }) {
   const [open, setOpen] = useState(false);
   const [showAllLevels, setShowAllLevels] = useState(false);
+  /** Section-level pivot for the aggregate Remaining table - see below. */
+  const [sectionPivotLevel, setSectionPivotLevel] = useState<number | null>(null);
   const { setBuildingCopies } = usePlayer();
   const { count: builderCount } = useBuilderCount();
   const totalLevel = copies.levels.reduce((s, l) => s + l, 0);
@@ -1084,6 +1086,20 @@ function BuildingCollapsibleSection({
 
   const { buildingStats, statCols, showDiscounted, fmtTimeD } = useBuildingStats(lookupName, isBB, discounts);
 
+  /**
+   * Section-level pivot. The aggregate sums each copy's own remaining levels, so
+   * capping it is well defined: every copy stops at the same level, since they
+   * share one level table and one max. Gated on the lowest copy level, which is
+   * the longest chain and therefore the strictest test of whether a pivot means
+   * anything here.
+   */
+  const posLevels = copies.levels.filter((l) => l > 0);
+  const minCopyLevel = posLevels.length > 0 ? Math.min(...posLevels) : 1;
+  const sectionPivotBound = resolvePivotBound(sectionPivotLevel, minCopyLevel, effectiveMax);
+  const sectionIsPivoted = sectionPivotBound !== effectiveMax;
+  const setSectionPivot = (level: number) =>
+    setSectionPivotLevel((prev) => (prev === level ? null : level));
+
   // Format large level counts as rounded thousands (e.g. 2000 -> "2K").
   const fmtLevels = (n: number): string => {
     if (n >= 1000) return Math.round(n / 1000) + 'K';
@@ -1102,7 +1118,7 @@ function BuildingCollapsibleSection({
       .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
     for (const lvl of copies.levels) {
       if (lvl <= 0) continue;
-      const rem = allLevels.filter((l: any) => l.Level > lvl && l.Level <= effectiveMax);
+      const rem = allLevels.filter((l: any) => l.Level > lvl && l.Level <= sectionPivotBound);
       remainingLevels += rem.length;
       for (const l of rem) {
         if (l['Build Cost']) {
@@ -1115,7 +1131,7 @@ function BuildingCollapsibleSection({
       }
     }
     return { remainingLevels, totalCost, totalTime, byResource };
-  }, [title, copies, effectiveMax, buildingStats]);
+  }, [title, copies, effectiveMax, buildingStats, sectionPivotBound]);
 
   // Wall-clock time to finish all remaining levels across every copy, using the
   // chosen builder count. Per-copy serial chains are LPT bin-packed across the
@@ -1135,8 +1151,6 @@ function BuildingCollapsibleSection({
   const availableLevels = getBuildingAvailableLevels(lookupName);
   const allLevels: any[] = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
     .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
-  const posLevels = copies.levels.filter((l) => l > 0);
-  const minCopyLevel = posLevels.length > 0 ? Math.min(...posLevels) : 1;
   const maxCopyLevel = posLevels.length > 0 ? Math.max(...posLevels) : effectiveMax;
   const spanMin = Math.max(1, minCopyLevel - 1);
   const spanMax = Math.max(maxCopyLevel, Math.min(effectiveMax, maxCopyLevel + 2));
@@ -1183,6 +1197,8 @@ function BuildingCollapsibleSection({
                   distributedText={builderCount > 0 ? fmtTimeD(distributedTime) : undefined}
                   showDiscounted={showDiscounted}
                   discounts={discounts}
+                  pivoted={sectionIsPivoted}
+                  onClearPivot={() => setSectionPivotLevel(null)}
                 />
               )}
               {!isSectionMaxed && (
@@ -1244,10 +1260,18 @@ function BuildingCollapsibleSection({
                   isCurrent={(lvl) => copies.levels.includes(lvl)}
                   showDiscounted={showDiscounted}
                   discounts={discounts}
+                  pivotLevel={sectionPivotLevel}
+                  onPivot={setSectionPivot}
+                  canPivotRow={(lvl) => isPivotable(lvl, minCopyLevel, effectiveMax, showAllLevels)}
                 />
               )}
               {showLevelSpan && !isSectionMaxed && (
                 <ExpandToggle open={showAllLevels} total={allLevels.length} onPress={() => setShowAllLevels(!showAllLevels)} />
+              )}
+              {sectionIsPivoted && !isSectionMaxed && (
+                <Text style={styles.pivotHint}>
+                  Long-press Lv{sectionPivotBound} again, or tap ✕, to return to the max.
+                </Text>
               )}
             </View>
           )}
@@ -2388,13 +2412,13 @@ const styles = StyleSheet.create({
   buildingStatRowCurrent: {
     backgroundColor: Colors.accentGhost,
   },
-  /** The pivot row and the levels it covers. The covered levels stay monochrome so
-   * the gold pivot row is the only coloured one. */
+  /** The pivot row and the levels it covers. The covered levels stay monochrome and
+   * lighter than the current-level row, so that row keeps the eye. */
   pivotRow: {
     backgroundColor: Colors.warningGhost,
   },
   pivotRangeRow: {
-    backgroundColor: Colors.accentSubtle,
+    backgroundColor: Colors.accentFaint,
   },
   buildingStatCellIcon: {
     width: 46,
