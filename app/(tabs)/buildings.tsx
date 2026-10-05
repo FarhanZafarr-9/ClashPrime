@@ -1102,6 +1102,7 @@ function BuildingCollapsibleSection({
               maxLevel={effectiveMax}
               iconSource={imgSource ?? undefined}
               hideLevelBadge={groupMaxed}
+              isLast={groupMaxed}
               actionIcon={groupMaxed ? 'checkmark-circle' : undefined}
 
             />
