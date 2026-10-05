@@ -35,6 +35,7 @@ import { ItemCard } from '../../src/components/ItemCard';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
+import { canPivot, isPivotable, pivotSpanLabel, resolvePivotBound } from '../../src/utils/upgradePivot';
 
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -180,6 +181,12 @@ export default function PlayerProfileScreen() {
 
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
   const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
+  /**
+   * Level the Remaining totals stop at, per entity. Long-pressing a row in a
+   * fully expanded stats table sets it; it is cleared with the sheet so the
+   * totals always come back at the max.
+   */
+  const [pivotLevels, setPivotLevels] = useState<Record<string, number>>({});
   const [tableViewportW, setTableViewportW] = useState(0);
 
   type StatPill = { icon?: keyof typeof Ionicons.glyphMap; image?: number; value: string };
@@ -666,6 +673,26 @@ export default function PlayerProfileScreen() {
 
     const currentLevel = detail.currentLevel ?? 0;
     const showFull = showFullLevels[name] || false;
+    /**
+     * The level Remaining stops at. The cap is null for Builder Base units and
+     * equipment with no Town Hall ceiling, so the last visible level stands in.
+     */
+    const lastVisibleLevel = visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? currentLevel;
+    const remainingMax = maxReachable != null ? maxReachable : lastVisibleLevel;
+    const pivot = resolvePivotBound(pivotLevels[name], currentLevel, remainingMax);
+    const isPivoted = pivot !== remainingMax;
+    const pivotEnabled = canPivot(currentLevel, remainingMax);
+
+    const setPivot = (level: number) => {
+      setPivotLevels((prev) => {
+        const next = { ...prev };
+        // Long-pressing the pivot row again clears it, so the totals snap back to
+        // the max without hunting for the ✕.
+        if (next[name] === level) delete next[name];
+        else next[name] = level;
+        return next;
+      });
+    };
 
     let displayLevels: TroopDetail['levels'];
     if (showFull || visibleDetailLevels.length <= 3) {
@@ -801,8 +828,9 @@ export default function PlayerProfileScreen() {
             return `${Math.floor(s / 60)}m`;
           };
 
-          const remainingLevels = visibleDetailLevels.filter((l) => l.level > currentLevel && (maxReachable != null ? l.level <= maxReachable : true));
-          const resourceSums = sumLevelCostsByResource(visibleDetailLevels, currentLevel, maxReachable);
+          // The pivot replaces the cap on every remaining total below.
+          const remainingLevels = visibleDetailLevels.filter((l) => l.level > currentLevel && l.level <= pivot);
+          const resourceSums = sumLevelCostsByResource(visibleDetailLevels, currentLevel, pivot);
           const totalCost = resourceSums.reduce((s, r) => s + r.amount, 0);
           let totalTime = 0;
           for (const lvl of remainingLevels) {
@@ -853,7 +881,22 @@ export default function PlayerProfileScreen() {
               {hasRemaining && (
                 <View style={[styles.panelTable, { borderColor: colors.border, marginBottom: Spacing.md }]}>
                   <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted, flex: 1 }]}>Remaining ({remainingLevels.length} lvls)</Text>
+                    <View style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
+                      <Text style={{ color: isPivoted ? colors.warning : colors.textMuted }}>
+                        Remaining ({pivotSpanLabel(currentLevel, pivot)})
+                      </Text>
+                      {isPivoted && (
+                        <PressableRipple
+                          onPress={() => setPivot(pivot)}
+                          hitSlop={8}
+                          style={styles.pivotClear}
+                          accessibilityLabel="Clear pivot"
+                          accessibilityRole="button"
+                        >
+                          <Ionicons name="close" size={11} color={colors.warning} />
+                        </PressableRipple>
+                      )}
+                    </View>
                     <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
                     <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
                   </View>
@@ -866,7 +909,7 @@ export default function PlayerProfileScreen() {
                             {ri === 0 && (
                               <LevelRange
                                 from={currentLevel}
-                                to={maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
+to={pivot}
                                 color={colors.textSecondary}
                               />
                             )}
@@ -947,9 +990,21 @@ export default function PlayerProfileScreen() {
                   </View>
                   {displayLevels.map((l) => {
                     const isCurrentRow = l.level === currentLevel;
+                    const isPivotRow = pivotLevels[name] === l.level;
+                    // Only a fully expanded table offers pivots: the condensed view
+                    // already elides rows behind an ellipsis, and the table scrolls
+                    // horizontally, so a long-press there would be easy to miss.
+                    const canPivotRow = isPivotable(l.level, currentLevel, remainingMax, showFull);
                     return (
-                      <View key={l.level} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle, borderBottomColor: colors.border }, isCurrentRow && { backgroundColor: colors.accentGhost }]}>
-                        <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 28 }]}>{l.level}</Text>
+                      <PressableRipple
+                        key={l.level}
+                        onLongPress={canPivotRow ? () => setPivot(l.level) : undefined}
+                        style={[
+                          styles.panelTableRow,
+                          { backgroundColor: isCurrentRow ? colors.accentGhost : isPivotRow ? colors.warningGhost : colors.bgSubtle, borderBottomColor: colors.border },
+                        ]}
+                      >
+                        <Text style={[styles.panelTableCell, { color: isPivotRow ? colors.warning : colors.textSecondary, minWidth: 28, fontWeight: isPivotRow ? '700' : undefined }]}>{l.level}</Text>
                         {isTroopLike ? (
                           <>
                             <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.dps}</Text>
@@ -979,9 +1034,14 @@ export default function PlayerProfileScreen() {
                         {showLabColumn && (
                           <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 72 }]}>{l.labLevel ?? '—'}</Text>
                         )}
-                      </View>
+                      </PressableRipple>
                     );
                   })}
+                  {pivotEnabled && showFull && (
+                    <Text style={[styles.pivotHint, { color: colors.textTertiary }]}>
+                      {isPivoted ? 'Long-press Lv' + pivot + ' again, or tap ✕, to return to the max.' : 'Long-press a level to cap the Remaining totals there.'}
+                    </Text>
+                  )}
                 </View>
               </ScrollView>
               {visibleDetailLevels.length > 3 && (
@@ -1659,6 +1719,13 @@ export default function PlayerProfileScreen() {
               delete next[sheetName];
               return next;
             });
+            // A pivot is a reading of this visit, not a saved setting: it goes when
+            // the sheet does, so the totals always reopen at the max.
+            setPivotLevels((prev) => {
+              const next = { ...prev };
+              delete next[sheetName];
+              return next;
+            });
           }
         }}
         header={sheetName ? renderSheetHeader(sheetName) : undefined}
@@ -1964,6 +2031,14 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '600',
+  },
+  pivotHint: {
+    ...Typography.caption,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+  },
+  pivotClear: {
+    marginLeft: Spacing.xs,
   },
   panelTable: {
     borderWidth: 0.75,
