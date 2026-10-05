@@ -969,9 +969,10 @@ function LevelGroupPresets({
     <View style={styles.presetRow}>
       {presets.map((p, i) => {
           const isAll = labels[i] === 'All';
+          const label = labels[i];
           return (
             <PressableRipple
-              key={labels[i]}
+              key={label}
               style={[
                 styles.presetBtn,
                 isAll && styles.presetBtnAll,
@@ -979,11 +980,20 @@ function LevelGroupPresets({
               ]}
               onPress={() => onUpgrade(Math.min(p, value))}
               disabled={value <= 0}
-              accessibilityLabel={`Upgrade ${labels[i]}`}
+              accessibilityLabel={`Upgrade ${label}`}
             >
-              <Text style={styles.presetBtnText} numberOfLines={1}>
-                {labels[i]}
-              </Text>
+              {isAll ? (
+                <Text style={styles.presetBtnText} numberOfLines={1}>
+                  {label}
+                </Text>
+              ) : (
+                <View style={styles.presetBtnContent}>
+                  <Ionicons name="add" size={12} color={Colors.textSecondary} />
+                  <Text style={styles.presetBtnText} numberOfLines={1}>
+                    {label.replace('+', '')}
+                  </Text>
+                </View>
+              )}
             </PressableRipple>
           );
         })}
@@ -1080,8 +1090,7 @@ function BuildingCollapsibleSection({
 
   const buildLevelGroups = () => (
     <View>
-      {levelGroups.map((g, i) => {
-        const isLastGroup = i === levelGroups.length - 1;
+      {levelGroups.map((g, _i) => {
         const imgSource = getBuildingLevelImageSource(lookupName, g.level);
         const groupMaxed = isMaxed(g.level, effectiveMax);
         return (
@@ -1092,7 +1101,6 @@ function BuildingCollapsibleSection({
               level={g.level}
               maxLevel={effectiveMax}
               iconSource={imgSource ?? undefined}
-              isLast={isLastGroup}
               hideLevelBadge={groupMaxed}
               actionIcon={groupMaxed ? 'checkmark-circle' : undefined}
 
@@ -2133,6 +2141,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginTop: 8,
+    marginHorizontal: 12
   },
   presetBtn: {
     flex: 1,
@@ -2145,10 +2154,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
   presetBtnAll: {
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.textPrimary,
   },
   presetBtnDisabled: {
     opacity: 0.4,
+  },
+  presetBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
   },
   presetBtnText: {
     color: Colors.textSecondary,
