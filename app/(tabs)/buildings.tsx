@@ -981,7 +981,7 @@ function LevelGroupPresets({
               disabled={value <= 0}
               accessibilityLabel={`Upgrade ${labels[i]}`}
             >
-              <Text style={[styles.presetBtnText, isAll && { fontWeight: '700' }]} numberOfLines={1}>
+              <Text style={styles.presetBtnText} numberOfLines={1}>
                 {labels[i]}
               </Text>
             </PressableRipple>
@@ -2145,7 +2145,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
   presetBtnAll: {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.bgCardHover,
   },
   presetBtnDisabled: {
     opacity: 0.4,
