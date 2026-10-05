@@ -35,7 +35,7 @@ import { ItemCard } from '../../src/components/ItemCard';
 import { useGameData } from '../../src/hooks/useGameData';
 import { useDiscounts } from '../../src/hooks/useDiscounts';
 import { applyCostDiscount, applyTimeDiscount } from '../../src/utils/discountUtils';
-import { canPivot, isPivotable, pivotSpanLabel, resolvePivotBound } from '../../src/utils/upgradePivot';
+import { canPivot, isPivotable, pivotSpanCount, resolvePivotBound } from '../../src/utils/upgradePivot';
 
 import { EmptyState } from '../../src/components/EmptyState';
 import { ProfileScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -881,9 +881,9 @@ export default function PlayerProfileScreen() {
               {hasRemaining && (
                 <View style={[styles.panelTable, { borderColor: colors.border, marginBottom: Spacing.md }]}>
                   <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                    <View style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
-                      <Text style={{ color: isPivoted ? colors.warning : colors.textMuted }}>
-                        Remaining ({pivotSpanLabel(currentLevel, pivot)})
+                    <View style={[styles.panelTableCell, styles.remainingHeaderCell, { backgroundColor: colors.bgCard }]}>
+                      <Text numberOfLines={1} style={[styles.remainingHeaderText, { color: isPivoted ? colors.warning : colors.textMuted }]}>
+                        Remaining · {pivotSpanCount(currentLevel, pivot)}
                       </Text>
                       {isPivoted && (
                         <PressableRipple
@@ -991,6 +991,11 @@ to={pivot}
                   {displayLevels.map((l) => {
                     const isCurrentRow = l.level === currentLevel;
                     const isPivotRow = pivotLevels[name] === l.level;
+                    // The levels the pivot covers, so the gold pivot row reads as the end of a
+                    // range rather than an unrelated highlight. Gated on isPivoted:
+                    // with no pivot the bound is the max, which would match every
+                    // remaining row and tint the whole table.
+                    const inPivotRange = isPivoted && l.level > currentLevel && l.level < pivot;
                     // Only a fully expanded table offers pivots: the condensed view
                     // already elides rows behind an ellipsis, and the table scrolls
                     // horizontally, so a long-press there would be easy to miss.
@@ -1001,10 +1006,11 @@ to={pivot}
                         onLongPress={canPivotRow ? () => setPivot(l.level) : undefined}
                         style={[
                           styles.panelTableRow,
-                          { backgroundColor: isCurrentRow ? colors.accentGhost : isPivotRow ? colors.warningGhost : colors.bgSubtle, borderBottomColor: colors.border },
+                          { borderBottomColor: colors.border },
+                          isCurrentRow ? { backgroundColor: colors.accentGhost } : isPivotRow && styles.pivotRow, inPivotRange && styles.pivotRangeRow,
                         ]}
                       >
-                        <Text style={[styles.panelTableCell, { color: isPivotRow ? colors.warning : colors.textSecondary, minWidth: 28, fontWeight: isPivotRow ? '700' : undefined }]}>{l.level}</Text>
+                        <Text style={[styles.panelTableCell, { minWidth: 28 }, isPivotRow ? styles.pivotLvl : { color: colors.textSecondary }]}>{l.level}</Text>
                         {isTroopLike ? (
                           <>
                             <Text style={[styles.panelTableCell, { color: colors.textSecondary, minWidth: 36 }]}>{l.dps}</Text>
@@ -2035,7 +2041,7 @@ const styles = StyleSheet.create({
   pivotHint: {
     ...Typography.caption,
     textAlign: 'center',
-    marginTop: Spacing.xs,
+    paddingVertical: Spacing.md,
   },
   pivotClear: {
     marginLeft: Spacing.xs,
@@ -2093,6 +2099,38 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  /**
+   * The Remaining header carries a ✕ once a pivot is set, so it is a row rather
+   * than a cell. Layout lives on the View and the header typography on the Text -
+   * React Native does not inherit font or textTransform from a View to a Text.
+   */
+  remainingHeaderCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  remainingHeaderText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    flex: 1,
+  },
+  /**
+   * The pivot row sits next to the current-level row, so it gets its own tint and
+   * a bolder level number rather than borrowing the current-row accent.
+   */
+  pivotRow: {
+    backgroundColor: Colors.warningGhost,
+  },
+  /** Levels between the current one and the pivot - the ones it now totals.
+   * Monochrome, so the gold pivot row stays the only coloured row. */
+  pivotRangeRow: {
+    backgroundColor: Colors.accentSubtle,
+  },
+  pivotLvl: {
+    color: Colors.warning,
+    fontWeight: '700',
   },
   sheetHeaderRow: {
     flex: 1,
