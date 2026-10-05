@@ -2124,9 +2124,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warningGhost,
   },
   /** Levels between the current one and the pivot - the ones it now totals.
-   * Monochrome, so the gold pivot row stays the only coloured row. */
+   * Monochrome and lighter than the current-level row, so that row stays the most
+   * prominent thing in the table. */
   pivotRangeRow: {
-    backgroundColor: Colors.accentSubtle,
+    backgroundColor: Colors.accentFaint,
   },
   pivotLvl: {
     color: Colors.warning,
