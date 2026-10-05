@@ -967,20 +967,26 @@ function LevelGroupPresets({
   const labels = ['+1', '+10', '+50', 'All'];
   return (
     <View style={styles.presetRow}>
-      {presets.map((p, i) => (
-        <PressableRipple
-          key={labels[i]}
-          style={[
-            styles.presetBtn,
-            (value <= 0 || (p === value && labels[i] !== 'All')) && styles.presetBtnDisabled,
-          ]}
-          onPress={() => onUpgrade(Math.min(p, value))}
-          disabled={value <= 0}
-          accessibilityLabel={`Upgrade ${labels[i]}`}
-        >
-          <Text style={styles.presetBtnText}>{labels[i]}</Text>
-        </PressableRipple>
-      ))}
+      {presets.map((p, i) => {
+          const isAll = labels[i] === 'All';
+          return (
+            <PressableRipple
+              key={labels[i]}
+              style={[
+                styles.presetBtn,
+                isAll && styles.presetBtnAll,
+                (value <= 0 || (p === value && !isAll)) && styles.presetBtnDisabled,
+              ]}
+              onPress={() => onUpgrade(Math.min(p, value))}
+              disabled={value <= 0}
+              accessibilityLabel={`Upgrade ${labels[i]}`}
+            >
+              <Text style={[styles.presetBtnText, isAll && { fontWeight: '700' }]} numberOfLines={1}>
+                {labels[i]}
+              </Text>
+            </PressableRipple>
+          );
+        })}
     </View>
   );
 }
@@ -1079,21 +1085,23 @@ function BuildingCollapsibleSection({
         const imgSource = getBuildingLevelImageSource(lookupName, g.level);
         const groupMaxed = isMaxed(g.level, effectiveMax);
         return (
-          <ItemCard
-            key={g.level}
-            name={`${title} ×${g.numCopies}`}
-            level={g.level}
-            maxLevel={effectiveMax}
-            iconSource={imgSource ?? undefined}
-            isLast={isLastGroup}
-            hideLevelBadge={groupMaxed}
-            footer={groupMaxed ? undefined :
-              <LevelGroupPresets
-                value={g.numCopies}
-                onUpgrade={(n) => upgradeLevelCopies(g.level, n)}
-              />
-            }
-          />
+          <>
+            <ItemCard
+              key={g.level}
+              name={`${title} ×${g.numCopies}`}
+              level={g.level}
+              maxLevel={effectiveMax}
+              iconSource={imgSource ?? undefined}
+              isLast={isLastGroup}
+              hideLevelBadge={groupMaxed}
+              actionIcon={groupMaxed ? 'checkmark-circle' : undefined}
+
+            />
+            {!groupMaxed && <LevelGroupPresets
+              value={g.numCopies}
+              onUpgrade={(n) => upgradeLevelCopies(g.level, n)}
+            />}
+          </>
         );
       })}
     </View>
@@ -2123,16 +2131,21 @@ const styles = StyleSheet.create({
   presetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    marginTop: 6,
+    gap: 4,
+    marginTop: 8,
   },
   presetBtn: {
-    paddingHorizontal: 8,
-    height: 24,
+    flex: 1,
+    minWidth: 0,
+    height: 28,
     borderRadius: Radius.sm,
     backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 0,
+  },
+  presetBtnAll: {
+    backgroundColor: 'transparent',
   },
   presetBtnDisabled: {
     opacity: 0.4,
