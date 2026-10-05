@@ -694,18 +694,53 @@ export default function PlayerProfileScreen() {
       });
     };
 
-    let displayLevels: TroopDetail['levels'];
-    if (showFull || visibleDetailLevels.length <= 3) {
-      displayLevels = visibleDetailLevels;
-    } else {
-      const currentIdx = visibleDetailLevels.findIndex((l) => l.level === currentLevel);
+    const currentIdx = visibleDetailLevels.findIndex((l) => l.level === currentLevel);
+    /**
+     * Heroes run to ~110 levels, so at a mid-game level most of the expanded table
+     * is history the player will not look at again - and a pivot target is always
+     * above the current level, so those rows cannot be picked either. Fold the
+     * expanded table to the current level upward.
+     *
+     * Troops top out around 15 and equipment around 27, where the same cut would
+     * hide most of a short table for no gain, so they keep the full range. This is
+     * a size judgement, not a category rule - heroes are simply where it applies.
+     *
+     * Purely presentational: Remaining reads from visibleDetailLevels, and the
+     * Level Appearance grid already excludes heroes.
+     */
+    const trimHeroHistory = isHero && showFull;
+    // Rows below the current level that the expanded table hides. Zero when the
+    // table is condensed, the entity is not a hero, or the level is not in the
+    // table at all.
+    const hiddenLevelCount = trimHeroHistory && currentIdx > 0 ? currentIdx : 0;
+    /** The rows an expanded hero table shows. Also drives the toggle's count. */
+    const expandedLevels = (): TroopDetail['levels'] => {
       if (currentIdx < 0) {
-        displayLevels = visibleDetailLevels.slice(0, 2);
-      } else {
-        const start = Math.max(0, currentIdx - 1);
-        const end = Math.min(visibleDetailLevels.length, currentIdx + 2);
-        displayLevels = visibleDetailLevels.slice(start, end);
+        // Level not in the table (unowned or off the TH cap): nothing to trim
+        // against, so show the start rather than hiding rows on a guess.
+        return visibleDetailLevels;
       }
+      if (currentIdx >= visibleDetailLevels.length - 1) {
+        // Maxed, or one level from it. Trimming upward would leave nothing, so
+        // keep the last few levels instead of an empty table.
+        return visibleDetailLevels.slice(Math.max(0, currentIdx - 2));
+      }
+      // Keep the current level as the anchor - it is the row the range band and
+      // the pivot hint both read against.
+      return visibleDetailLevels.slice(currentIdx);
+    };
+
+    let displayLevels: TroopDetail['levels'];
+    if (trimHeroHistory) {
+      displayLevels = expandedLevels();
+    } else if (showFull || visibleDetailLevels.length <= 3) {
+      displayLevels = visibleDetailLevels;
+    } else if (currentIdx < 0) {
+      displayLevels = visibleDetailLevels.slice(0, 2);
+    } else {
+      const start = Math.max(0, currentIdx - 1);
+      const end = Math.min(visibleDetailLevels.length, currentIdx + 2);
+      displayLevels = visibleDetailLevels.slice(start, end);
     }
 
     const pills = formatStatPills(detail.info);
@@ -959,6 +994,11 @@ to={pivot}
                 </View>
               )}
               <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
+              {hiddenLevelCount > 0 && (
+                <Text style={[styles.foldedLevelsNote, { color: colors.textTertiary }]}>
+                  {hiddenLevelCount} earlier {hiddenLevelCount === 1 ? 'level' : 'levels'} hidden
+                </Text>
+              )}
               {legendEntries.length > 0 && (
                 <View style={{ marginBottom: Spacing.sm }}>
                   {legendEntries.map((e, li) => (
@@ -1057,7 +1097,7 @@ to={pivot}
                 >
                   <Ionicons name={showFull ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textSecondary} />
                   <Text style={styles.expandTableText}>
-                    {showFull ? 'Show fewer' : `Show all ${visibleDetailLevels.length} levels`}
+                    {showFull ? 'Show fewer' : `Show all ${isHero ? expandedLevels().length : visibleDetailLevels.length} levels`}
                   </Text>
                 </PressableRipple>
               )}
@@ -2042,6 +2082,14 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     textAlign: 'center',
     paddingVertical: Spacing.md,
+  },
+  /**
+   * Sits under the Level Stats heading. A hero can hide dozens of rows, and
+   * without this the trimmed table reads as missing data rather than a fold.
+   */
+  foldedLevelsNote: {
+    ...Typography.caption,
+    marginTop: 2,
   },
   pivotClear: {
     marginLeft: Spacing.xs,
