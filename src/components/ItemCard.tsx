@@ -278,14 +278,14 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progres
                 <Text style={[
                   styles.levelBadgeText,
                   isMaxed && styles.levelBadgeTextMaxed,
-                  currentLevel > 1000 && { fontSize: 9, lineHeight: 10 }
+                  currentLevel > 100 && { fontSize: 9, lineHeight: 10 }
                 ]}>
                   {levels}
                 </Text>
                 <Text style={[
                   styles.levelBadgeLabel,
                   isMaxed && styles.levelBadgeTextMaxed,
-                  currentLevel > 1000 && { fontSize: 7, lineHeight: 9 }
+                  currentLevel > 100 && { fontSize: 7, lineHeight: 9 }
                 ]}>
                   / {max}
                 </Text>
