@@ -9,11 +9,11 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 ## Features
 
 - **Home Dashboard** — overview of your village with progress cards, quick actions, **League section** (badge, bonus, loot, star bonus, ore), quick stats, and a **Progress Achieved dialog** that also tracks Builder Base troop and hero progress
-- **Time to Max** — dedicated tab with four parallel Home Village pipelines (**Lab**, **Builders**, **Pets**, **Equipment**) showing remaining upgrade time & resources per category, plus a **Builder Base section** (headline time to max, BB builder count stepper, and **BB Builders** / **Star Lab** pipelines); **chain-scheduled builder time** (LPT bin-packing of serial upgrade chains) so a single long hero upgrade correctly bounds the result, with a combined Builder Gold/Elixir chip and combined wall cost chips
-- **Import / Export** — bulk import building levels from a CoC JSON export covering **Home Village and Builder Base**; shows **only real upgrades** (skips buildings already at target), per-copy current levels, a builders pipeline with chain-scheduled time & resource breakdown (Builder Base upgrades timed against their own builders — auto 2 at Builder Hall 6, max 3), spaced upgrade cards with proper corner rounding, and in-game resource icons on upgrade rows
-- **Multi-Account** — add and switch between multiple player tags from Settings or the Home dashboard. Each account keeps its own building levels, saved bases, and favorites. Shared data (events, troop details) is fetched once.
-- **Army** — troops, heroes, spells, pets, equipment (including Builder Base items) with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns
-- **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles. Multi-copy buildings (Cannons, Walls, Traps, etc.) are grouped into collapsible sections with per-copy level tracking, aggregated remaining cost/time, and quick upgrade/downgrade controls
+- **Time to Max** — **Home / Builder Base switch** (hall-art pills) over parallel pipelines (**Lab**, **Builders**, **Pets**, **Equipment** at home; **BB Builders** / **Star Lab** on Builder Base) showing remaining upgrade time & resources per category, with a headline time, split rows and a resource chip grid; **chain-scheduled builder time** (LPT bin-packing of serial upgrade chains) so a single long hero upgrade correctly bounds the result. **In-place strategic exclusions** — toggle *Exclude* on the Pipelines header to skip any building or single army item straight from its row (gate items like the Lab, Hero Hall, Pet House, Blacksmith, Star Lab and Builder Barracks are marked and can't be toggled alone), with excluded time/resources surfaced in the summary and a Restore button. A **rush-to-TH+1 comparison** shows next-TH time & cost in rounded zebra tables, and the new-unlock rows carry each item's unlocking building/level with its upgrade cost & time (plus extra buildable copies)
+- **Import / Export** — bulk import building levels from a CoC JSON export covering **Home Village and Builder Base**, plus **crafted-defense module levels**; shows **only real upgrades** (skips buildings already at target), per-copy current levels, a builders pipeline with chain-scheduled time & resource breakdown (Builder Base upgrades timed against their own builders — auto 2 at Builder Hall 6, max 3), spaced upgrade cards with proper corner rounding, in-game resource icons on upgrade rows, and an auto-detected **Builder Hut count** in the parse summary that sets (with a verified floor) the builders for the account being applied to
+- **Multi-Account** — add and switch between multiple player tags from Settings or the Home dashboard. Each account keeps its own building levels, crafted-defense modules, saved bases, favorites, **builder counts** (Home and Builder Base) and **last-synced time** (shown in the account switcher). Shared data (events, troop details) is fetched once.
+- **Army** — troops, heroes, spells, pets, equipment (including Builder Base items) with images, level stats tables (with acronym legend), progress tracking, and discount-aware cost/time columns; a **Home / Builder Base switch** splits the chip rows, and hero level tables **fold to your current level** (with an "N earlier levels hidden" caption) so long hero ranges stay readable
+- **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles. Multi-copy buildings (Cannons, Walls, Traps, etc.) are grouped into collapsible sections with per-copy level tracking, aggregated remaining cost/time, and quick upgrade/downgrade controls. Includes a **Crafted Defenses** category (Crafting Station) with per-module steppers, effective-level sprites and cost-to-max, category pills two-per-row, and a village switch. Any **Remaining** total (single card, grouped section or Army sheet) can be **capped to a chosen level** by long-pressing a level row — the header turns gold with a one-tap clear
 - **Events** — upcoming in-game events with countdown timers and progress bars
 - **War** — live war tracking with per-member attack dots and defense shields, plus live Clan War League rounds (expandable per-member breakdowns, W/L/D per round) and a searchable war history split into regular wars and CWL
 - **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback. Loads from the on-device snapshot first (3-day TTL) and refreshes in the background, so returning to the tab is instant
@@ -25,7 +25,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Giant Arrow** — plan the Archer Queen's arrow on a base screenshot: tap/drag start and end pins, pick a path color, auto-save/restore on device, and share the finished plan as a high-res PNG (3x capture) from the editor or fullscreen viewer. A **Rocket Backpack** mode (Dragon Duke) reuses the canvas with a center pivot so the dash line always runs through the base center
 - **6th Builder (B.O.B.)** — Builder Base planner that turns your player profile into an ordered, resource-feasible schedule for all seven B.O.B. unlock requirements (3 gear-ups, troop lvl 18, defence lvl 9, BM+Copter 45, B.O.B Control 5): requirement checklist (3 gear-up toggles persist locally), machine timeline grouped by bb-builder / star-lab with per-chain ETA and cost badges, storage-feasibility cascades that auto-insert storage upgrades, Builder Hall gate chains, Clock Tower value, and "what is blocking you" callouts
 - **Awards** — standalone tab with star summary and village-filtered achievement list, filtered through the same seamless pill grid used by Bases, Armies and Hero Journey (Town Hall and Builder Hall art per village, award counts on each pill)
-- **Settings** — API token, dark mode, discounts, account management, plus a **What's New changelog** with a hero header and collapsible release cards (version chips, item counts, "Latest" badge), About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
+- **Settings** — API token, dark mode, discounts, account management, and a **What's New changelog**, all in collapsible section headers (icon, description and count badge) that expand in place; About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
 - **Onboarding** — guided first-run flow with an image-based Town Hall picker and an Add Account (Full Setup) flow
 - **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding, and an ongoing notification with an **Android-native per-second countdown** that keeps ticking even when the app is killed (zero battery) plus sound/vibration on finish
 - **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection
@@ -41,6 +41,16 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Buildings and Army** — Builder Base categories with Town Hall gating, redesigned category pills and village switch, redesigned Army chips, and unit/hero/spell/siege/pet/equipment icons on every army card.
 - **Home and Time to Max** — the account switcher is a seamless block, rushed/locked troops and spells use their in-game icons, and Time to Max gains a Builder Base section.
 - **Polish** — onboarding export guide step and chevron icons, a shared builder-count store so every screen stays in sync, account switching re-fetches the right player, tidied tab order, Clash font defaults to "All", and Android edge-to-edge with a hidden status bar.
+- **Crafted Defenses** — a new Buildings category for the Crafting Station's defenses. These have no single level: each **module** (Hitpoints, Damage, Seconds Active, …) upgrades on its own 1–10 ladder and the level shown is their **sum**. Cards expand into per-module steppers with next-level stats and cost, tiered sprites chosen by effective level, per-module max detection and a **Max all / reset**. The empty state tells you to import an export to populate it.
+- **Import: builder huts & crafted defenses** — pasted exports are now scanned for the Builder Hut count (shown in the summary and applied with a verified floor) and for Crafted Station defenses, previewed with sprites, effective levels and raw per-module levels — including defenses the package data doesn't know yet.
+- **Upgrade pivot** — long-press a level row in any fully expanded stats table (a building card, a grouped multi-copy section's aggregate, or an army item sheet) to cap the **Remaining** totals at that level instead of the max. The chosen row and range band tint gold, the Remaining header shows the span and a ✕ to clear.
+- **Account-aware builders** — Home and Builder Base builder counts are stored **per account** and keyed to the import baseline, so switching accounts no longer bleeds one village's builders into another's Time to Max.
+- **Account switcher** — every account row shows its own **"Synced hh:mm"**, and the Home header tagline no longer doubles as the session sync readout.
+- **Collapsible Settings** — the six Settings groups collapse into tappable headers with an icon, description and count badge, matching the Time to Max pipeline pattern.
+- **Shared ItemCard** — Home Quick Stats, Backlog and Active Timers, plus Buildings copy/section/level rows, all render through one card with action badges (edit, dismiss, checkmark), footers, plain label/value rows and a hideable level badge.
+- **Row-filling filter pills** — filter pills across Bases, Armies, Hero Journey and Awards size to fill their rows; Buildings and Army put pills two-per-row, and Army / Bases / Time to Max share a **Home ↔ Builder Base switch** built from hall-art pills.
+- **Time to Max** — strategic exclusions are edited in-place on pipeline rows (down to a single troop), gated pipelines report their excluded time/resources with a Restore action, the summary uses a headline tabular time and alloc-chip split, and the rush comparison uses rounded zebra tables with richer new-unlock rows (unlocking building/level + cost/time, and extra copies).
+- **Smaller fixes** — hero level tables fold to your current level ("N earlier levels hidden"), the Hero Journey summary card gets distinct inner surfaces, the Base library shows skeleton filter pills while loading instead of "0 bases", an "unused" war-stars asset required by the All-pill is restored, and preview builds get their own application id.
 
 ## What's New (v6.1.0)
 
@@ -107,6 +117,7 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Community armies | ClashArmies | Devalue-format REST fetch with 3-day snapshot |
 | Troop, hero, spell, pet, equipment & siege machine details (levels, costs, stats, images) | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Building images, levels, TH max, copy counts (Home & Builder Base) | clash-of-clans-data (npm) | Bundled package data (canonical) |
+| Crafted-defense modules, effective levels & tiered sprites | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | **Max Town Hall** | clash-of-clans-data (npm) | **Derived from `townHallRequired` across all building levels** (falls back to 18) |
 | League loot/bonus/ore info | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Events | clash.ninja | Runtime HTML scraper |
@@ -147,7 +158,7 @@ ClashPrime/
 │       ├── events.tsx      # Events
 │       ├── bases.tsx       # Base Library
 │       ├── armies.tsx      # Army Library (ClashArmies)
-│       ├── maxtime.tsx     # Time to Max (4 Home pipelines + Builder Base: headings, stepper, BB pipelines)
+│       ├── maxtime.tsx     # Time to Max (Home/BB switch: pipelines, in-place exclusions, rush comparison)
 │       ├── hero-journey.tsx# Chief's Journey rewards track (quests, ore, equipment, potions, books, runes, skins)
 │       ├── saved.tsx       # Saved & Favorites
 │       ├── war.tsx         # War & CWL
@@ -155,7 +166,7 @@ ClashPrime/
 │       ├── zapquaker.tsx   # Zapquaker combo calculator
 │       ├── giantarrow.tsx  # Giant Arrow / Rocket Backpack path planner on base screenshots
 │       ├── bob.tsx         # 6th Builder (B.O.B.) unlock planner
-│       └── settings.tsx    # Settings (collapsible What's New changelog)
+│       └── settings.tsx    # Settings (collapsible section headers + What's New changelog)
 ├── src/
 │   ├── api/                # API clients and scrapers
 │   │   ├── clash.ts        # CoC API client
@@ -164,13 +175,13 @@ ClashPrime/
 │   │   ├── troopDetail.ts  # TroopDetail types (levels from package)
 │   │   ├── eventsScraper.ts# Events scraper
 │   │   └── newsScraper.ts  # In-game news scraper
-│   ├── components/         # Shared UI components
-│   ├── data/               # Static data (packageImages.ts, cocBuildingIds.ts, entityReference.ts)
-│   ├── hooks/              # Player context and storage
+│   ├── components/         # Shared UI components (ItemCard, bottom-sheet panels, skeletons, …)
+│   ├── data/               # Static data (packageImages.ts incl. crafted-defense tiers, cocBuildingIds.ts incl. crafted/module IDs, entityReference.ts)
+│   ├── hooks/              # Player context, per-account builder count, storage
 │   ├── theme/              # Design system (colors, spacing, typography)
 │   ├── types/              # TypeScript interfaces
-│   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, heroJourney (Chief's Journey track), statImages, thReadiness, thMaxLevels, upgradeCosts (chain scheduling), zapquake (combo math), versionCheck, etc.
-├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs, check-coc-data.mjs
+│   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, craftedDefenses (module levels, effective level, cost-to-max), exclusions (pipeline exclusions & gates), heroJourney (Chief's Journey track), statImages, thReadiness, thMaxLevels, upgradeCosts (chain scheduling), upgradePivot (level-capped Remaining), zapquake (combo math), versionCheck, etc.
+├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs (emits crafted-defense/module ID maps), check-coc-data.mjs
 ├── images/                 # App icons and logos
 ```
 
