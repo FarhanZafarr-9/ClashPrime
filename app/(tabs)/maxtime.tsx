@@ -1070,62 +1070,56 @@ export default function MaxTimeScreen() {
                         />
                       )}
                       <Text style={styles.rushSectionLabel}>Time to finish</Text>
-                      <View style={styles.rushCompareHeader}>
-                        <Text style={styles.rushCompareCol}>Pipeline</Text>
-                        <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
-                        <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
-                        <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
-                      </View>
-                      {[
-                        { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
-                        { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
-                        { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
-                        { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
-                      ].map((p, i) => (
-                        <View
-                          key={p.key}
-                          style={[
-                            styles.rushCompareRow,
-                            i === 0 && { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
-                            i % 2 === 1 && { backgroundColor: Colors.bgSubtle },
-                            i === 3 && { borderBottomLeftRadius: Radius.sm, borderBottomRightRadius: Radius.sm, borderBottomWidth: 0 },
-                          ]}
-                        >
-                          <Text style={styles.rushCompareLabel}>{p.label}</Text>
-                          <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
-                          <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
-                          <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
+                      <View style={styles.rushTable}>
+                        <View style={styles.rushCompareHeader}>
+                          <Text style={styles.rushCompareCol}>Pipeline</Text>
+                          <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
+                          <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
+                          <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
                         </View>
-                      ))}
+                        {[
+                          { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
+                          { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
+                          { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
+                          { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
+                        ].map((p, i) => (
+                          <View
+                            key={p.key}
+                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.bgSubtle }]}
+                          >
+                            <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                            <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
+                            <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
+                            <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
+                          </View>
+                        ))}
+                      </View>
                       <View style={styles.rushDivider} />
                       <Text style={styles.rushSectionLabel}>Cost to finish</Text>
-                      <View style={styles.rushCompareHeader}>
-                        <Text style={styles.rushCompareCol}>Pipeline</Text>
-                        <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
-                        <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
-                        <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
-                      </View>
-                      {[
-                        { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
-                        { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
-                        { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
-                        { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
-                      ].map((p, i) => (
-                        <View
-                          key={p.key}
-                          style={[
-                            styles.rushCompareRow,
-                            i === 0 && { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
-                            i % 2 === 1 && { backgroundColor: Colors.bgSubtle },
-                            i === 3 && { borderBottomLeftRadius: Radius.sm, borderBottomRightRadius: Radius.sm, borderBottomWidth: 0 },
-                          ]}
-                        >
+                      <View style={styles.rushTable}>
+                        <View style={styles.rushCompareHeader}>
+                          <Text style={styles.rushCompareCol}>Pipeline</Text>
+                          <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
+                          <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
+                          <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+                        </View>
+                        {[
+                          { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
+                          { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
+                          { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
+                          { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
+                        ].map((p, i) => (
+                          <View
+                            key={p.key}
+                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.bgSubtle }]}
+                          >
                           <Text style={styles.rushCompareLabel}>{p.label}</Text>
                           <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
                           <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
                           <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
                         </View>
                       ))}
+                      </View>
                       {resourceRows(nextDiscounted.totalByResource).length > 0 && (
                         <View style={styles.rushCostResources}>
                           <Text style={styles.rushNewItemsTitle}>Resources needed by TH{readiness.nextTh}</Text>
@@ -1847,13 +1841,18 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     gap: Spacing.xs,
   },
+  rushTable: {
+    marginHorizontal: Spacing.sm,
+    borderRadius: Radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSubtle,
+    overflow: 'hidden',
+  },
   rushCompareHeader: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     backgroundColor: Colors.bgSubtle,
-    borderTopLeftRadius: Radius.sm,
-    borderTopRightRadius: Radius.sm,
   },
   rushSectionLabel: {
     ...Typography.caption,
