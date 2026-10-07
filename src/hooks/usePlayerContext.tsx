@@ -12,6 +12,7 @@ import {
   setActiveAccountTag,
   migrateToMultiAccount,
   ensureAccountRegistered,
+  markAccountSynced,
   shouldAutoRefresh,
   setAutoRefreshTimestamp,
   setBulkBuildingLevels,
@@ -164,6 +165,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setNeedsLastMaxed(!data.lastMaxedTH);
       await cachePlayer(data);
       await ensureAccountRegistered({ tag, name: data.name, townHallLevel: data.townHallLevel });
+      await markAccountSynced(tag);
       setLastSync(new Date());
       await refreshAccounts();
       // Update auto-refresh timestamp on successful fetch
@@ -238,6 +240,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       data.lastMaxedTH = th;
       await cachePlayer(data, tag);
       await ensureAccountRegistered({ tag, name: data.name, townHallLevel: data.townHallLevel });
+      await markAccountSynced(tag);
       await refreshAccounts();
       finish();
       if (doSwitch) await switchAccount(tag);
