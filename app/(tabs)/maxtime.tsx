@@ -1081,8 +1081,16 @@ export default function MaxTimeScreen() {
                         { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
                         { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
                         { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
-                      ].map((p) => (
-                        <View key={p.key} style={styles.rushCompareRow}>
+                      ].map((p, i) => (
+                        <View
+                          key={p.key}
+                          style={[
+                            styles.rushCompareRow,
+                            i === 0 && { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
+                            i % 2 === 1 && { backgroundColor: Colors.bgSubtle },
+                            i === 3 && { borderBottomLeftRadius: Radius.sm, borderBottomRightRadius: Radius.sm, borderBottomWidth: 0 },
+                          ]}
+                        >
                           <Text style={styles.rushCompareLabel}>{p.label}</Text>
                           <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
                           <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
@@ -1102,8 +1110,16 @@ export default function MaxTimeScreen() {
                         { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
                         { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
                         { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
-                      ].map((p) => (
-                        <View key={p.key} style={styles.rushCompareRow}>
+                      ].map((p, i) => (
+                        <View
+                          key={p.key}
+                          style={[
+                            styles.rushCompareRow,
+                            i === 0 && { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
+                            i % 2 === 1 && { backgroundColor: Colors.bgSubtle },
+                            i === 3 && { borderBottomLeftRadius: Radius.sm, borderBottomRightRadius: Radius.sm, borderBottomWidth: 0 },
+                          ]}
+                        >
                           <Text style={styles.rushCompareLabel}>{p.label}</Text>
                           <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
                           <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
@@ -1835,6 +1851,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
+    backgroundColor: Colors.bgSubtle,
+    borderTopLeftRadius: Radius.sm,
+    borderTopRightRadius: Radius.sm,
   },
   rushSectionLabel: {
     ...Typography.caption,
@@ -1860,6 +1879,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
+    backgroundColor: Colors.bgCard,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderSubtle,
   },
   rushCompareLabel: {
     flex: 1,
