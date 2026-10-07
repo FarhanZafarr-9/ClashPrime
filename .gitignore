@@ -42,3 +42,6 @@ src/data/.cache/
 # generated native folders
 /ios
 /android
+
+# ShipStudio metadata
+.shipstudio/
