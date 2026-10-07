@@ -182,6 +182,7 @@ export interface StoredAccount {
   townHallLevel: number;
   addedAt: string;
   lastUsedAt: string;
+  lastSyncedAt?: string;
 }
 
 export interface TimerReminder {
