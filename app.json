@@ -17,8 +17,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.clashprime.app",
-      "predictiveBackGestureEnabled": false,
-      "edgeToEdgeEnabled": true
+      "predictiveBackGestureEnabled": false
     },
     "androidStatusBar": {
       "hidden": true,
