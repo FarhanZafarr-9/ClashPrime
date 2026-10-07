@@ -1372,9 +1372,7 @@ export default function HomeScreen() {
               </View>
             </View>
             <Text style={styles.timestamp}>
-              {lastSync
-                ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : 'The Prime Clash experience, like never before'}
+              {'The Prime Clash experience'}
             </Text>
           </View>
 
@@ -2147,9 +2145,16 @@ export default function HomeScreen() {
                     <View style={styles.switcherItemNameRow}>
                       <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
                     </View>
-                    <Text style={styles.switcherItemTag} numberOfLines={1}>
-                      {`${thLabel} · ${acct.tag}`}
-                    </Text>
+                    <View style={styles.switcherItemSubRow}>
+                      <Text style={styles.switcherItemTag} numberOfLines={1}>
+                        {`${thLabel} · ${acct.tag}`}
+                      </Text>
+                      {acct.lastSyncedAt && (
+                        <Text style={styles.switcherItemSynced} numberOfLines={1}>
+                          {`Synced ${new Date(acct.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        </Text>
+                      )}
+                    </View>
                   </View>
                   {isSyncing && (
                     <View style={styles.switcherSyncingBadge}>
@@ -2262,7 +2267,7 @@ export default function HomeScreen() {
                         </View>
                         <View style={styles.progressRowBadge}>
                           <Text style={styles.progressRowBadgeBefore}>{Math.round(c.before * 100)}%</Text>
-                          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+                          <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
                           <Text style={styles.progressRowBadgeAfter}>{Math.round(c.after * 100)}%</Text>
                         </View>
                       </View>
@@ -2301,7 +2306,7 @@ export default function HomeScreen() {
                         <View style={{ flex: 1 }} />
                         <Text style={styles.progressLevelCellValue}>
                           <Text style={styles.progressRowBefore}>Lv{u.before}</Text>
-                          <Ionicons name="chevron-forward" size={10} color={Colors.textMuted} />
+                          <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
                           <Text style={styles.progressRowAfter}>Lv{u.after}</Text>
                         </Text>
                       </View>
@@ -2555,6 +2560,19 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     marginTop: 1,
+    flexShrink: 1,
+  },
+  switcherItemSubRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  switcherItemSynced: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: 1,
+    flexShrink: 0,
   },
   switcherSyncingBadge: {
     width: 40,
