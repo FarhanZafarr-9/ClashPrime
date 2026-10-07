@@ -415,6 +415,25 @@ export default function MaxTimeScreen() {
     };
   }, [nextResult, discounts]);
 
+  // The Pet House row only earns its place when there is something to actually do
+  // at the current or next Town Hall; otherwise it is a permanent zero row.
+  const petsRowTime = hasPets && ((discounted?.pets.timeSec ?? 0) > 0 || (nextDiscounted?.pets.timeSec ?? 0) > 0);
+  const petsRowCost = hasPets && ((discounted?.pets.cost ?? 0) > 0 || (nextDiscounted?.pets.cost ?? 0) > 0);
+
+  type RushRow = { key: string; label: string; cur: number; next: number; instant?: boolean };
+  const rushTimeRows: RushRow[] = discounted && nextDiscounted ? [
+    { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
+    { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
+    ...(petsRowTime ? [{ key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec }] : []),
+    { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
+  ] : [];
+  const rushCostRows: RushRow[] = discounted && nextDiscounted ? [
+    { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
+    { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
+    ...(petsRowCost ? [{ key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost }] : []),
+    { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
+  ] : [];
+
   const thUpgrade = useMemo(() => {
     if (!player || isMaxTh) return null;
     const data = getTownHallUpgrade(th + 1);
@@ -728,6 +747,19 @@ export default function MaxTimeScreen() {
     type: string | undefined;
   }
 
+  /**
+   * "1 -> max" range for new-unlock rows. Built from StyleSheet styles so the
+   * Clash font (applied by the StyleSheet.create patch) reaches these labels,
+   * which inline styles would bypass.
+   */
+  const renderLevelRange = (from: number | string, to: number | string) => (
+    <View style={styles.newRowMetaRange}>
+      <Text style={styles.newRowMetaText}>{from}</Text>
+      <Ionicons name="chevron-forward" size={10} color={Colors.textTertiary} />
+      <Text style={styles.newRowMetaText}>{to}</Text>
+    </View>
+  );
+
   const newGroups = (readiness?.nextUnlocks ?? [])
     .filter(u => u.label !== 'levels')
     .map((u, gi) => {
@@ -770,13 +802,11 @@ export default function MaxTimeScreen() {
                     ? 'Starry Ore Troop'
                     : `${costResource} Troop`
             : kind;
-        const levelLabel = (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[Typography.caption, { color: Colors.textTertiary }]}>1</Text>
-            <Ionicons name="chevron-forward" size={10} color={Colors.textTertiary} style={{ marginHorizontal: 2 }} />
-            <Text style={[Typography.caption, { color: Colors.textTertiary }]}>{maxLvl}</Text>
-          </View>
-        );
+        const levelLabel = maxLvl != null && maxLvl > 1
+          ? renderLevelRange(1, maxLvl)
+          : maxLvl != null
+            ? <Text style={styles.newRowMetaText}>{`${maxLvl} Max`}</Text>
+            : undefined;
         return {
           key: name,
           name,
@@ -790,7 +820,14 @@ export default function MaxTimeScreen() {
           key: `${d.name}-${d.nextMax}-${gi}`,
           name: d.name,
           icon: (getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name)) ?? undefined,
-          meta: `${d.count > 1 ? `×${d.count} ` : ''}+${d.levels} \u2192 ${d.nextMax}`,
+          meta: (
+            <View style={styles.newRowMetaRange}>
+              {d.count > 1 ? <Text style={styles.newRowMetaText}>{`×${d.count}`}</Text> : null}
+              <Text style={styles.newRowMetaText}>{`+${d.levels}`}</Text>
+              <Ionicons name="chevron-forward" size={10} color={Colors.textTertiary} />
+              <Text style={styles.newRowMetaText}>{d.nextMax}</Text>
+            </View>
+          ),
           type: undefined,
         });
       }
@@ -1077,15 +1114,10 @@ export default function MaxTimeScreen() {
                           <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
                           <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
                         </View>
-                        {[
-                          { key: 'lab', label: 'Laboratory', cur: discounted.lab.timeSec, next: nextDiscounted.lab.timeSec },
-                          { key: 'builders', label: 'Builders', cur: discounted.builders.timeSec, next: nextDiscounted.builders.timeSec },
-                          { key: 'pets', label: 'Pet House', cur: discounted.pets.timeSec, next: nextDiscounted.pets.timeSec },
-                          { key: 'equipment', label: 'Equipment', cur: discounted.equipment.timeSec, next: nextDiscounted.equipment.timeSec, instant: true },
-                        ].map((p, i) => (
+                        {rushTimeRows.map((p, i) => (
                           <View
                             key={p.key}
-                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.bgSubtle }]}
+                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.accentSubtle }]}
                           >
                             <Text style={styles.rushCompareLabel}>{p.label}</Text>
                             <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
@@ -1103,22 +1135,17 @@ export default function MaxTimeScreen() {
                           <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
                           <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
                         </View>
-                        {[
-                          { key: 'lab', label: 'Laboratory', cur: discounted.lab.cost, next: nextDiscounted.lab.cost },
-                          { key: 'builders', label: 'Builders', cur: discounted.builders.cost, next: nextDiscounted.builders.cost },
-                          { key: 'pets', label: 'Pet House', cur: discounted.pets.cost, next: nextDiscounted.pets.cost },
-                          { key: 'equipment', label: 'Equipment', cur: discounted.equipment.cost, next: nextDiscounted.equipment.cost },
-                        ].map((p, i) => (
+                        {rushCostRows.map((p, i) => (
                           <View
                             key={p.key}
-                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.bgSubtle }]}
+                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.accentSubtle }]}
                           >
-                          <Text style={styles.rushCompareLabel}>{p.label}</Text>
-                          <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
-                          <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
-                          <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
-                        </View>
-                      ))}
+                            <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                            <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
+                            <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
+                            <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
+                          </View>
+                        ))}
                       </View>
                       {resourceRows(nextDiscounted.totalByResource).length > 0 && (
                         <View style={styles.rushCostResources}>
@@ -1155,7 +1182,11 @@ export default function MaxTimeScreen() {
                                     </Text>
                                     {r.type ? <Text style={styles.newRowType}>{r.type}</Text> : null}
                                   </View>
-                                  <Text style={styles.newRowMeta}>{r.meta}</Text>
+                                  <View style={styles.newRowMeta}>
+                                    {typeof r.meta === 'string'
+                                      ? <Text style={styles.newRowMetaText}>{r.meta}</Text>
+                                      : r.meta}
+                                  </View>
                                 </View>
                               ))}
                             </View>
@@ -1843,15 +1874,16 @@ const styles = StyleSheet.create({
   },
   rushTable: {
     marginHorizontal: Spacing.sm,
+    marginVertical: Spacing.xs,
     borderRadius: Radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderSubtle,
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   rushCompareHeader: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     backgroundColor: Colors.bgSubtle,
   },
   rushSectionLabel: {
@@ -1877,7 +1909,7 @@ const styles = StyleSheet.create({
   rushCompareRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     backgroundColor: Colors.bgCard,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.borderSubtle,
@@ -1993,6 +2025,15 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   newRowMeta: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  newRowMetaRange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  newRowMetaText: {
     ...Typography.footnote,
     color: Colors.textTertiary,
     fontWeight: '700',
