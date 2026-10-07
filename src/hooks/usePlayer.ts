@@ -94,6 +94,14 @@ export async function removeAccount(tag: string): Promise<void> {
   }
 }
 
+export async function markAccountSynced(tag: string): Promise<void> {
+  const accounts = await getAccounts();
+  const idx = accounts.findIndex((a) => a.tag === tag);
+  if (idx < 0) return;
+  accounts[idx].lastSyncedAt = new Date().toISOString();
+  await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
 export async function getActiveAccountTag(): Promise<string | null> {
   return AsyncStorage.getItem(ACTIVE_ACCOUNT_KEY);
 }
