@@ -1,4 +1,6 @@
-import { APP_VERSION } from '../constants/appVersion';
+import Constants from 'expo-constants';
+
+const APP_VERSION = (Constants.expoConfig as { version?: string } | null)?.version ?? '0.0.0';
 
 const GITHUB_API = 'https://api.github.com/repos/FarhanZafarr-9/ClashPrime/tags';
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
