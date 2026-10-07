@@ -43,7 +43,7 @@ interface WarScreenData {
 
 interface CwlRoundWar {
   round: number;
-  war: ClanWar;
+  war: ClanWar | null;
 }
 
 interface CwlLeagueData {
@@ -345,7 +345,7 @@ function WarScreenSkeleton() {
         <View style={[styles.skeletonGroup, { backgroundColor: colors.bgCardHover }]}>
           {[0, 1, 2].map((r) => (
             <View key={r} style={[styles.skeletonTableRow, r < 2 && { borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
-              <View style={{ width: 76, paddingHorizontal: Spacing.xs }}>
+              <View style={{ width: 108, paddingLeft: Spacing.lg, paddingRight: Spacing.xs, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: colors.border }}>
                 <Skeleton width={50} height={10} borderRadius={3} />
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
@@ -537,16 +537,17 @@ export default function WarScreen() {
           for (const warTag of round?.warTags ?? []) {
             if (!warTag || warTag === '#0' || seen.has(warTag)) continue;
             seen.add(warTag);
-            try {
-              const war = await api.getCwlWar(warTag);
-              if (war && (war.clan?.tag === clanTag || war.opponent?.tag === clanTag)) {
-                wars.push({ round: roundIdx + 1, war });
-              }
-            } catch {
-              // ignore individual CWL war failures
+            const war = await api.getCwlWar(warTag).catch(() => null);
+            if (war && (war.clan?.tag === clanTag || war.opponent?.tag === clanTag)) {
+              wars.push({ round: roundIdx + 1, war });
             }
           }
         }
+        const collectedRounds = new Set(wars.map((w) => w.round));
+        for (let r = 1; r <= rounds.length; r++) {
+          if (!collectedRounds.has(r)) wars.push({ round: r, war: null });
+        }
+        wars.sort((a, b) => a.round - b.round);
         cwl = { season: leagueGroup?.season ?? null, wars };
       }
       setCwlLeague(cwl);
@@ -725,7 +726,11 @@ export default function WarScreen() {
                   {cwlLeague.season}{cwlLeague.season ? ' · ' : ''}{cwlLeague.wars.length} round{cwlLeague.wars.length === 1 ? '' : 's'}
                 </Text>
                 {cwlLeague.wars.map(({ round, war }, i) => (
-                  <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+                  war ? (
+                    <CwlRoundCard key={`${round}-${war.endTime}`} round={round} war={war} myClanTag={clanTag} myPlayerTag={myPlayerTag} player={player} now={now} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+                  ) : (
+                    <CwlPendingRoundCard key={`round-${round}`} round={round} isFirst={i === 0} isLast={i === cwlLeague.wars.length - 1} />
+                  )
                 ))}
               </>
             )}
@@ -1107,31 +1112,25 @@ function CwlRoundCard({ round, war, myClanTag, myPlayerTag, player, now, isFirst
           )}
         </View>
         <View style={styles.logInfo}>
-          <View style={styles.cwlRoundTitleRow}>
-            <Text style={styles.logClanName} numberOfLines={1}>{theirs.name}</Text>
-            <View style={styles.cwlRoundBadge}>
-              <Text style={styles.cwlRoundBadgeText}>R{round}</Text>
-            </View>
-          </View>
+          <Text style={styles.logClanName} numberOfLines={1}>{theirs.name}</Text>
           <Text style={styles.logDetail} numberOfLines={1}>
             {detail}
             {!isPreparation ? ` · ${mine.attacks ?? 0}/${war.teamSize} attacks` : ''}
           </Text>
         </View>
         <View style={styles.cwlRoundRight}>
+          <View style={styles.cwlRoundBadge}>
+            <Text style={styles.cwlRoundBadgeText}>R{round}</Text>
+          </View>
           {result ? (
             <View style={[styles.logResultBadge, { backgroundColor: result.bg }]}>
               <Text style={[styles.logResultText, { color: result.color }]}>{result.label}</Text>
             </View>
           ) : (
-            <View style={styles.countdownChip}>
-              <Ionicons name={isPreparation ? 'hourglass-outline' : 'flame-outline'} size={12} color={Colors.textSecondary} />
-              <Text style={styles.countdownText}>
-                {isPreparation ? 'Prep' : 'In War'}
-              </Text>
+            <View style={[styles.logResultBadge, { backgroundColor: isPreparation ? 'rgba(255,183,77,0.15)' : 'rgba(244,67,54,0.15)' }]}>
+              <Ionicons name={isPreparation ? 'hourglass-outline' : 'flame-outline'} size={14} color={isPreparation ? '#FFB74D' : '#f44336'} />
             </View>
           )}
-          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textMuted} />
         </View>
       </PressableRipple>
       {expanded && (
@@ -1139,6 +1138,35 @@ function CwlRoundCard({ round, war, myClanTag, myPlayerTag, player, now, isFirst
           <CurrentWarSection war={war} now={now} isCwl myClanTag={myClanTag} myPlayerTag={myPlayerTag} player={player} embedded />
         </View>
       )}
+    </View>
+  );
+}
+
+function CwlPendingRoundCard({ round, isFirst, isLast }: { round: number; isFirst?: boolean; isLast?: boolean }) {
+  return (
+    <View
+      style={[
+        styles.cwlRoundCard,
+        { opacity: 0.6 },
+        isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
+        isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
+      ]}
+    >
+      <View style={[styles.itemIconTile,
+        isFirst && { borderTopLeftRadius: Radius.lg },
+        isLast && { borderBottomLeftRadius: Radius.lg },
+      ]}>
+        <Ionicons name="hourglass-outline" size={18} color={Colors.textTertiary} />
+      </View>
+      <View style={styles.logInfo}>
+        <Text style={styles.logClanName} numberOfLines={1}>Awaiting matchup</Text>
+        <Text style={styles.logDetail} numberOfLines={1}>Not started yet</Text>
+      </View>
+      <View style={styles.cwlRoundRight}>
+        <View style={styles.cwlRoundBadge}>
+          <Text style={styles.cwlRoundBadgeText}>R{round}</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -2066,10 +2094,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   itemIconImage: {
-    width: 34,
-    height: 34,
+    width: 30,
+    height: 30,
   },
-  logInfo: { flex: 1, gap: 2 },
+  logInfo: { flex: 1, justifyContent: 'space-between', alignSelf: 'stretch', paddingVertical: 1 },
   logClanName: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '600' },
   logDetail: { ...Typography.footnote, color: Colors.textTertiary },
   logStars: { ...Typography.body, fontWeight: '700' },
@@ -2096,18 +2124,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  cwlRoundTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
   cwlRoundBadge: {
-    paddingHorizontal: 7,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
   },
