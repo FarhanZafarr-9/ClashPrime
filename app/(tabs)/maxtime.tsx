@@ -724,7 +724,7 @@ export default function MaxTimeScreen() {
     key: string;
     name: string;
     icon: number | undefined;
-    meta: string | undefined;
+    meta: string | undefined | React.ReactNode;
     type: string | undefined;
   }
 
@@ -770,7 +770,13 @@ export default function MaxTimeScreen() {
                     ? 'Starry Ore Troop'
                     : `${costResource} Troop`
             : kind;
-        const levelLabel = maxLvl != null && maxLvl > 1 ? `1→${maxLvl}` : maxLvl != null ? `${maxLvl} Max` : undefined;
+        const levelLabel = (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[Typography.caption, { color: Colors.textTertiary }]}>1</Text>
+            <Ionicons name="chevron-forward" size={10} color={Colors.textTertiary} style={{ marginHorizontal: 2 }} />
+            <Text style={[Typography.caption, { color: Colors.textTertiary }]}>{maxLvl}</Text>
+          </View>
+        );
         return {
           key: name,
           name,
