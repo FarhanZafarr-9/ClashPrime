@@ -13,8 +13,8 @@ import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import { useBuildingExclusions } from '../../src/hooks/useBuildingExclusions';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
-import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, getArmyItem, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
-import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getTownHallUpgrade, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
+import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
+import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getTownHallUpgrade, getBuildingDetail, getBuildingItem, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { computeMaxTime, computeBuilderBaseMaxTime, type PipelineResult, type PipelineItemRow, type PipelineKey } from '../../src/utils/maxTime';
@@ -41,6 +41,48 @@ const PIPELINE_GATE: Partial<Record<PipelineKey, string>> = {
   equipment: PIPELINE_GATES.equipment,
   'bb-lab': PIPELINE_GATES['bb-lab'],
 };
+
+/**
+ * Troops unlock by reaching a Barracks/Dark Barracks level ("Unlocked Unit"),
+ * spells by a Spell Factory/Dark Spell Factory level ("Unlocked Spell"). That
+ * level's build cost/time is the real "unlock cost" for the item, so index it
+ * once and reuse it for the new-item rows.
+ */
+const ARMY_UNLOCK_SOURCES: { building: string; field: 'Unlocked Unit' | 'Unlocked Spell' }[] = [
+  { building: 'Barracks', field: 'Unlocked Unit' },
+  { building: 'Dark Barracks', field: 'Unlocked Unit' },
+  { building: 'Spell Factory', field: 'Unlocked Spell' },
+  { building: 'Dark Spell Factory', field: 'Unlocked Spell' },
+];
+
+interface ArmyUnlockInfo { building: string; level: number; cost: string; time: string }
+
+let armyUnlockIndex: Map<string, ArmyUnlockInfo> | null = null;
+
+function getArmyUnlockIndex(): Map<string, ArmyUnlockInfo> {
+  if (armyUnlockIndex) return armyUnlockIndex;
+  const index = new Map<string, ArmyUnlockInfo>();
+  for (const src of ARMY_UNLOCK_SOURCES) {
+    const detail = getBuildingDetail(src.building);
+    if (!detail) continue;
+    for (const lvl of detail.levels) {
+      const raw = lvl[src.field];
+      const units: unknown[] = Array.isArray(raw) ? raw : raw != null ? [raw] : [];
+      for (const u of units) {
+        if (typeof u !== 'string' || index.has(u)) continue;
+        const cost = typeof lvl['Build Cost'] === 'number' && lvl['Build Cost'] > 0
+          ? `${formatCost(lvl['Build Cost'])} ${lvl['Build Cost Resource'] ?? ''}`.trim()
+          : '';
+        const time = typeof lvl['Build Time'] === 'string' && lvl['Build Time'] !== '-' && lvl['Build Time'] !== '—'
+          ? lvl['Build Time']
+          : '';
+        index.set(u, { building: src.building, level: lvl.Level, cost, time });
+      }
+    }
+  }
+  armyUnlockIndex = index;
+  return index;
+}
 
 /** Stand-in exclusion set: the full, un-skipped pipelines that skipped rows are listed from. */
 const NO_EXCLUSIONS = new Set<string>();
@@ -744,7 +786,7 @@ export default function MaxTimeScreen() {
     name: string;
     icon: number | undefined;
     meta: string | undefined | React.ReactNode;
-    type: string | undefined;
+    subtitle?: string;
   }
 
   /**
@@ -760,6 +802,39 @@ export default function MaxTimeScreen() {
     </View>
   );
 
+  /** "Cost · Time" for a newly unlocked (or newly-copyable) building. Traps
+   * place instantly, so they only ever show a cost. */
+  const buildingUnlockInfo = (name: string): string | undefined => {
+    const lvl = getBuildingDetail(name)?.levels?.[0];
+    if (!lvl) return undefined;
+    const isTrap = getBuildingItem(name)?.category === 'trap';
+    const cost = typeof lvl['Build Cost'] === 'number' && lvl['Build Cost'] > 0
+      ? `${formatCost(lvl['Build Cost'])} ${lvl['Build Cost Resource'] ?? ''}`.trim()
+      : '';
+    const time = !isTrap && typeof lvl['Build Time'] === 'string' && lvl['Build Time'] !== '-' && lvl['Build Time'] !== '—'
+      ? lvl['Build Time']
+      : '';
+    const parts = [cost, time].filter(Boolean);
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
+
+  /**
+   * For troops/spells: the unlocking Barracks/Spell Factory level plus that
+   * upgrade's cost and time. Heroes (and any unmapped item) fall back to the
+   * gating building level from their own data.
+   */
+  const armyUnlockInfo = (name: string): string | undefined => {
+    const unlock = getArmyUnlockIndex().get(name);
+    if (unlock) {
+      const parts = [`${unlock.building} ${unlock.level}`, unlock.cost, unlock.time].filter(Boolean);
+      return parts.join(' · ');
+    }
+    const lvl = details?.[name]?.levels?.[0];
+    if (!lvl) return undefined;
+    const lab = lvl.labLevel ? `Hero Hall ${lvl.labLevel}` : '';
+    return lab || undefined;
+  };
+
   const newGroups = (readiness?.nextUnlocks ?? [])
     .filter(u => u.label !== 'levels')
     .map((u, gi) => {
@@ -770,38 +845,12 @@ export default function MaxTimeScreen() {
           : u.label === 'heroes'
             ? 'Heroes'
             : u.label === 'buildings'
-              ? 'New Buildings'
+              ? 'New Buildings & Traps'
               : u.value.includes('army')
                 ? 'Army Levels'
                 : 'Building Levels';
       const rows: NewItemRow[] = (u.names ?? []).map((name) => {
         const maxLvl = isArmy ? getMaxLevelAtTH(name, readiness!.nextTh) : null;
-        const troopDetail = details?.[name];
-        const costResource = isArmy
-          ? troopDetail?.levels?.find((l) => l.costResource)?.costResource
-          : undefined;
-        const category = isArmy ? getArmyItem(name)?.category : undefined;
-        const kind =
-          category === 'spell' ? 'Spell'
-            : category === 'siege-machine' ? 'Siege Machine'
-              : category === 'hero' ? 'Hero'
-                : category === 'pet' ? 'Pet'
-                  : category === 'hero-equipment' ? 'Equipment'
-                    : category ? 'Troop'
-                      : undefined;
-        const typeLabel = kind === 'Spell'
-          ? `${costResource ?? 'Elixir'} Spell`
-          : kind === 'Troop' && costResource
-            ? costResource.includes('Dark')
-              ? 'Dark Elixir Troop'
-              : costResource.includes('Shiny')
-                ? 'Ore Troop'
-                : costResource.includes('Glowing')
-                  ? 'Glowing Ore Troop'
-                  : costResource.includes('Starry')
-                    ? 'Starry Ore Troop'
-                    : `${costResource} Troop`
-            : kind;
         const levelLabel = maxLvl != null && maxLvl > 1
           ? renderLevelRange(1, maxLvl)
           : maxLvl != null
@@ -812,7 +861,7 @@ export default function MaxTimeScreen() {
           name,
           icon: (isArmy ? getArmyItemImage(name) : getBuildingItemImage(name)) ?? undefined,
           meta: levelLabel,
-          type: typeLabel,
+          subtitle: armyUnlockInfo(name),
         };
       });
       for (const d of u.details ?? []) {
@@ -820,15 +869,17 @@ export default function MaxTimeScreen() {
           key: `${d.name}-${d.nextMax}-${gi}`,
           name: d.name,
           icon: (getBuildingItemImage(d.name, d.nextMax) ?? getBuildingItemImage(d.name)) ?? undefined,
-          meta: (
-            <View style={styles.newRowMetaRange}>
-              {d.count > 1 ? <Text style={styles.newRowMetaText}>{`×${d.count}`}</Text> : null}
-              <Text style={styles.newRowMetaText}>{`+${d.levels}`}</Text>
-              <Ionicons name="chevron-forward" size={10} color={Colors.textTertiary} />
-              <Text style={styles.newRowMetaText}>{d.nextMax}</Text>
-            </View>
-          ),
-          type: undefined,
+          meta: d.kind === 'copy'
+            ? `+${d.count} ${d.count === 1 ? 'copy' : 'copies'}`
+            : (
+              <View style={styles.newRowMetaRange}>
+                {d.count > 1 ? <Text style={styles.newRowMetaText}>{`×${d.count}`}</Text> : null}
+                {d.nextMax > 1
+                  ? renderLevelRange(1, d.nextMax)
+                  : <Text style={styles.newRowMetaText}>{`${d.nextMax}`}</Text>}
+              </View>
+            ),
+          subtitle: buildingUnlockInfo(d.name),
         });
       }
       return { key: `${u.label}-${gi}`, title, rows };
@@ -1180,7 +1231,9 @@ export default function MaxTimeScreen() {
                                     <Text style={styles.newRowName} numberOfLines={1}>
                                       {r.name}
                                     </Text>
-                                    {r.type ? <Text style={styles.newRowType}>{r.type}</Text> : null}
+                                    {r.subtitle ? (
+                                      <Text style={styles.newRowSubtitle} numberOfLines={1}>{r.subtitle}</Text>
+                                    ) : null}
                                   </View>
                                   <View style={styles.newRowMeta}>
                                     {typeof r.meta === 'string'
@@ -1902,7 +1955,7 @@ const styles = StyleSheet.create({
   rushCompareCol: {
     flex: 1,
     ...Typography.caption,
-    color: Colors.textMuted,
+    color: Colors.textPrimary,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -1923,7 +1976,7 @@ const styles = StyleSheet.create({
   rushCompareVal: {
     flex: 1,
     ...Typography.footnote,
-    color: Colors.textPrimary,
+    color: Colors.textSecondary,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
     textAlign: 'center',
@@ -2019,8 +2072,8 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  newRowType: {
-    ...Typography.footnote,
+  newRowSubtitle: {
+    ...Typography.caption,
     color: Colors.textTertiary,
     marginTop: 1,
   },
