@@ -33,7 +33,7 @@ export interface ThReadiness {
     label: string;
     value: string;
     names?: string[];
-    details?: { name: string; count: number; levels: number; nextMax: number }[];
+    details?: { name: string; count: number; levels: number; nextMax: number; kind?: 'new' | 'copy' }[];
   }[];
   criticalPipeline: 'lab' | 'builders' | 'pets';
   criticalPipelinePct: number;
@@ -321,7 +321,7 @@ export function computeThReadiness(player: ClashPlayer, th: number, excludedBuil
   const catsNow = getBuildingCategories(th);
   let newBuildings = 0;
   let extraLevels = 0;
-  const newBuildingDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
+  const newBuildingDetails: { name: string; count: number; levels: number; nextMax: number; kind: 'new' | 'copy' }[] = [];
   const extraLevelDetails: { name: string; count: number; levels: number; nextMax: number }[] = [];
   for (const [cat, buildings] of Object.entries(catsNext)) {
     for (const [name, thData] of Object.entries(buildings)) {
@@ -332,14 +332,28 @@ export function computeThReadiness(player: ClashPlayer, th: number, excludedBuil
       if (nextMax <= 0) continue;
       if (curMax <= 0) {
         newBuildings += count;
-        if (count > 0) newBuildingDetails.push({ name, count, levels: nextMax - 1, nextMax });
-      } else if (nextMax > curMax) {
-        const levelDelta = nextMax - curMax;
-        extraLevels += count * levelDelta;
-        extraLevelDetails.push({ name, count, levels: levelDelta, nextMax });
+        if (count > 0) newBuildingDetails.push({ name, count, levels: nextMax - 1, nextMax, kind: 'new' });
+      } else {
+        if (nextMax > curMax) {
+          const levelDelta = nextMax - curMax;
+          extraLevels += count * levelDelta;
+          extraLevelDetails.push({ name, count, levels: levelDelta, nextMax });
+        }
+        // An already-owned building gaining additional buildable copies at the
+        // next TH. Walls scale by dozens per TH, so they are left out.
+        const curCount = getCountAtTH(name, th);
+        if (cat !== 'Walls' && count > curCount) {
+          newBuildings += count - curCount;
+          newBuildingDetails.push({ name, count: count - curCount, levels: 0, nextMax, kind: 'copy' });
+        }
       }
     }
   }
+  // Newly unlocked buildings first, then extra copies by decreasing count.
+  newBuildingDetails.sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === 'new' ? -1 : 1;
+    return b.count - a.count;
+  });
   if (newBuildings > 0) nextUnlocks.push({ label: 'buildings', value: `+${newBuildings} building`, details: newBuildingDetails } as const);
   // Sort extra levels: Army buildings first, then others by category priority
   const ARMY_BUILDINGS = ['Army Camp', 'Barracks', 'Clan Castle', 'Lab', 'Hero Hall', 'Spell Factory', 'Dark Barracks', 'Dark Spell Factory', 'Blacksmith', 'Workshop', 'Pet House'];
