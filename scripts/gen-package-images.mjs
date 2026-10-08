@@ -12,39 +12,97 @@ if (!existsSync(localImagesDir)) {
   mkdirSync(localImagesDir, { recursive: true });
 }
 
+// Every packaged image is downscaled so its longest edge never exceeds this and
+// re-encoded to lossy WebP. Nothing in the app renders these above ~40dp (share
+// cards reach 70dp), so ~128px keeps them sharp on 3x screens at a fraction of
+// the package's original size.
+const MAX_EDGE = 128;
+const WEBP_OPTS = { quality: 80, effort: 4 };
+
+// Files are written once and skipped if present; pass --force to re-process an
+// existing assets/package-images tree (e.g. after changing MAX_EDGE/WEBP_OPTS).
+const force = process.argv.includes('--force');
+
 const pkgRoot = join(root, 'node_modules', 'clash-of-clans-data');
 
-async function ensureWebp(pkgRelPath) {
-  const src = join(pkgRoot, pkgRelPath);
-  const dstRel = pkgRelPath.replace(/\.png$/i, '.webp');
-  const dst = join(localImagesDir, dstRel);
-  const dstDir = dirname(dst);
-  if (!existsSync(dstDir)) mkdirSync(dstDir, { recursive: true });
-  if (!existsSync(dst)) {
-    // Much of the package (all of images/home/crafted-defenses) ships WebP bytes
-    // under a .png name. sharp sniffs the extension here and rejects those, so
-    // check the RIFF/WEBP header and copy the bytes as-is; only genuinely
-    // non-WebP sources get re-encoded.
-    const buf = readFileSync(src);
-    const isWebp =
+const dstRelOf = (pkgRelPath) => pkgRelPath.replace(/\.png$/i, '.webp');
+
+// The same source file is referenced from multiple entries (e.g. Hog Glider
+// level 16 reuses level-15.png, the Battle Machine icon is used by two maps).
+// Memoize per destination so each file is processed once per run.
+const processed = new Map();
+
+function writeProcessed(src, dst, pkgRelPath) {
+  if (processed.has(dst)) return processed.get(dst);
+  const job = processImage(src, dst, pkgRelPath);
+  processed.set(dst, job);
+  return job;
+}
+
+async function processImage(src, dst, pkgRelPath) {
+  mkdirSync(dirname(dst), { recursive: true });
+  let buf, meta, isWebp;
+  try {
+    buf = readFileSync(src);
+    meta = await sharp(buf).metadata();
+    isWebp =
       buf.length > 12 &&
       buf.subarray(0, 4).toString('latin1') === 'RIFF' &&
       buf.subarray(8, 12).toString('latin1') === 'WEBP';
-    if (isWebp) {
-      writeFileSync(dst, buf);
+  } catch {
+    // A few upstream files are not images at all — e.g.
+    // images/home/crafted-defenses/light-beam/normal/level-3.png is a saved
+    // 404 HTML page. Skip them, but keep a previously generated file if one
+    // exists so a regenerated packageImages.ts never points at a missing asset.
+    console.warn(`skipping unreadable package image: ${pkgRelPath}`);
+    return existsSync(dst);
+  }
+  let out;
+  try {
+    if (meta.width > MAX_EDGE || meta.height > MAX_EDGE) {
+      // Oversized art (some icons ship at 2048x2048): scale the longest edge
+      // down to MAX_EDGE, preserving aspect ratio, then re-encode lossy.
+      out = await sharp(buf)
+        .resize(MAX_EDGE, MAX_EDGE, { fit: 'inside', withoutEnlargement: true, kernel: 'lanczos3' })
+        .webp(WEBP_OPTS)
+        .toBuffer();
+    } else if (isWebp) {
+      // Fits within the cap and is already WebP (much of the package ships
+      // WebP bytes under a .png name): copy byte-for-byte to avoid a quality loss.
+      out = buf;
     } else {
-      try {
-        await sharp(src).webp().toFile(dst);
-      } catch {
-        // A few upstream files are not images at all — e.g.
-        // images/home/crafted-defenses/light-beam/normal/level-3.png is a saved
-        // 404 HTML page. Skip those instead of failing the whole run.
-        console.warn(`skipping unreadable package image: ${pkgRelPath}`);
-        return null;
+      out = await sharp(buf).webp(WEBP_OPTS).toBuffer();
+    }
+  } catch (err) {
+    console.warn(`encode failed for ${pkgRelPath}: ${String(err.message).split('\n')[0]}`);
+    return existsSync(dst);
+  }
+  // Encode first, then write from the buffer with retries: sharp's own file
+  // target intermittently fails to open on Windows ("Invalid argument") while
+  // the same file writes fine through fs — Defender/indexer transient locks.
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      writeFileSync(dst, out);
+      return true;
+    } catch (err) {
+      if (attempt === 5) {
+        console.warn(`write failed for ${pkgRelPath}: ${err.code ?? err.message}`);
+        return existsSync(dst);
       }
+      await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
     }
   }
-  return `../../assets/package-images/${dstRel}`;
+  return false;
+}
+
+async function ensureWebp(pkgRelPath) {
+  const dstRel = dstRelOf(pkgRelPath);
+  const dst = join(localImagesDir, dstRel);
+  const relPath = `../../assets/package-images/${dstRel}`;
+  if (!force && existsSync(dst)) return relPath;
+  const src = join(pkgRoot, pkgRelPath);
+  const ok = await writeProcessed(src, dst, pkgRelPath);
+  return ok ? relPath : null;
 }
 
 const addTo = (map, list, name, icon, levels) => {

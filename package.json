@@ -46,6 +46,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "gen:images": "node scripts/gen-package-images.mjs",
+    "gen:images:force": "node scripts/gen-package-images.mjs --force",
+    "preview:cap": "node scripts/preview-image-cap.mjs",
     "gen:coc-ids": "node scripts/gen-coc-ids.mjs",
     "sync:coc-data": "npm install clash-of-clans-data@latest && npm run gen:images && npm run gen:coc-ids && npm run check:coc-data",
     "check:coc-data": "node scripts/check-coc-data.mjs",
