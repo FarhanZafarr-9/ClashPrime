@@ -107,8 +107,8 @@ async function ensureWebp(pkgRelPath) {
 
 const addTo = (map, list, name, icon, levels) => {
   if (map.has(name)) {
-    // Same display name exists in both villages (e.g. "Baby Dragon"): merge the
-    // level sprites (first wins per level) and keep the first icon.
+    // Same display name seen twice within one village: merge the level sprites
+    // (first wins per level) and keep the first icon.
     const existing = map.get(name);
     for (const k of Object.keys(levels)) if (!(k in existing.levels)) existing.levels[k] = levels[k];
     return;
@@ -217,8 +217,6 @@ collect(hh.pets().get());
 collect(hh.heroes().get());
 collect(hh.heroEquipment().get());
 collect(hh.siegeMachines().get());
-collect(bb.troops().get());
-collect(bb.heroes().get());
 
 collectBuilding(hh.townHall().get());
 collectBuilding(hh.defenses().get());
@@ -248,9 +246,9 @@ collectBuilderBuilding(bb.builderHall().get());
 
 collectCraftedDefenses(hh.craftedDefenses ? hh.craftedDefenses().get() : []);
 
-// Builder troops/heroes keep their own village sprites (separate from the
-// name-merged home map) so shared display names like "Baby Dragon" still show
-// their Builder Base visuals.
+// Builder troops/heroes go only into their own map (never merged into the home
+// map by name), so a shared display name like "Baby Dragon" can't pick up
+// Builder Base level sprites in PACKAGE_IMAGES.
 collectBuilderTroops(bb.troops().get());
 collectBuilderTroops(bb.heroes().get());
 

@@ -359,8 +359,8 @@ export function getSuperTroopNames(): string[] {
  * Bundled package image (require'd asset) for an army item. Returns the
  * level-specific sprite when `level` matches one, otherwise the item icon.
  * Builder Base units use their own village sprites when `builderBase` is set
- * (shared display names, e.g. "Baby Dragon", are otherwise overridden by the
- * Home Village copy). Returns null when the package ships no image (callers
+ * (the home map never contains Builder Base entries, so a shared display name
+ * like "Baby Dragon" always resolves to the right village). Returns null when the package ships no image (callers
  * keep the network fallback).
  */
 export function getArmyItemImage(name: string, level?: number | null, builderBase = false): number | null {
