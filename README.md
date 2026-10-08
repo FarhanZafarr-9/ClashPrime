@@ -181,7 +181,7 @@ ClashPrime/
 │   ├── theme/              # Design system (colors, spacing, typography)
 │   ├── types/              # TypeScript interfaces
 │   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, craftedDefenses (module levels, effective level, cost-to-max), exclusions (pipeline exclusions & gates), heroJourney (Chief's Journey track), statImages, thReadiness, thMaxLevels, upgradeCosts (chain scheduling), upgradePivot (level-capped Remaining), zapquake (combo math), versionCheck, etc.
-├── scripts/                # Generators: gen-package-images.mjs, gen-coc-ids.mjs (emits crafted-defense/module ID maps), check-coc-data.mjs
+├── scripts/                # Generators: gen-package-images.mjs (128px WebP shrink → packageImages.ts), gen-coc-ids.mjs (emits crafted-defense/module ID maps), check-coc-data.mjs, preview-image-cap.mjs (shrink QA previews)
 ├── images/                 # App icons and logos
 ```
 
@@ -213,9 +213,17 @@ npx expo start --ios
 # Generate packageImages.ts (bundled images for troops, heroes, spells, pets, equipment, siege machines, buildings)
 npm run gen:images
 
+# Same, but re-encode even when the outputs already exist (after a failure, or to apply new encode settings)
+npm run gen:images:force
+
+# Render side-by-side original vs capped previews (assets/shrink-preview/preview.html) for visual QA
+npm run preview:cap
+
 # Generate cocBuildingIds.ts (building ID mapping for API)
 npm run gen:coc-ids
 ```
+
+`gen-package-images.mjs` re-encodes every source sprite to WebP (quality 80, effort 4) capped at **128 px** on the longest edge — well above the largest on-screen use (~210 physical px @3x for the 70 dp home hall art) — shrinking the packed tree from ~45 MB to ~7 MB. Each output is written at most once per run even when several entries share a source, and file writes are retried so a transient lock (e.g. Windows Defender) can't drop a `require` from the generated map; if a rewrite fails but the output already exists, the existing file is kept. Sources that fail to decode (e.g. an HTML error page from upstream) are skipped with a warning instead of emitting a broken entry.
 
 ### When `clash-of-clans-data` updates upstream
 
