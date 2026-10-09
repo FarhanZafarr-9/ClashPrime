@@ -1,5 +1,19 @@
-import React from 'react';
-import { View, Text, ScrollView, Modal, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Modal,
+  StyleSheet,
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+  Animated,
+  type ImageSourcePropType,
+  type DimensionValue,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Spacing, Radius, useTheme } from '../theme';
@@ -7,34 +21,98 @@ import { Typography, Spacing, Radius, useTheme } from '../theme';
 interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
+  onShow?: () => void;
   title?: string;
   subtitle?: string;
   icon?: keyof typeof Ionicons.glyphMap;
   iconSource?: ImageSourcePropType;
   header?: React.ReactNode;
+  maxHeight?: DimensionValue;
+  style?: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }
 
 export default function BottomSheet({
   visible,
   onClose,
+  onShow,
   title,
   subtitle,
   icon,
   iconSource,
   header,
+  maxHeight = '72%',
+  style,
+  contentContainerStyle,
   children,
 }: BottomSheetProps) {
   const { colors, isDark } = useTheme();
+  const translateY = useState(() => new Animated.Value(600))[0];
+  const backdropOpacity = useState(() => new Animated.Value(0))[0];
+
+  const onDismissing = () => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: 600,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const onPresented = () => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.overlay}>
-        <PressableRipple
-          style={[styles.backdrop, { backgroundColor: isDark ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.45)' }]}
-          onPress={onClose}
-        />
-        <View style={[styles.card, { backgroundColor: colors.bgCard }]}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => {
+        onDismissing();
+        onClose();
+      }}
+      onShow={() => {
+        onPresented();
+        onShow?.();
+      }}
+      onDismiss={onDismissing}
+      statusBarTranslucent
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.overlay}
+      >
+        <Animated.View
+          style={[styles.backdrop, { backgroundColor: isDark ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.45)', opacity: backdropOpacity }]}
+        >
+          <PressableRipple style={styles.backdropPress} onPress={onClose} />
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.card,
+            { backgroundColor: colors.bgCard, transform: [{ translateY }], maxHeight },
+            style,
+          ]}
+        >
           <View style={styles.grabberWrap}>
             <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           </View>
@@ -62,11 +140,11 @@ export default function BottomSheet({
               </>
             )}
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, contentContainerStyle]}>
             {children}
           </ScrollView>
-        </View>
-      </View>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -83,9 +161,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  backdropPress: {
+    flex: 1,
+  },
   card: {
     width: '100%',
-    maxHeight: '72%',
     borderTopLeftRadius: Radius.xl * 1.25,
     borderTopRightRadius: Radius.xl * 1.25,
     overflow: 'hidden',
