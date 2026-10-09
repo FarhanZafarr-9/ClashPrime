@@ -7,7 +7,7 @@ import { useFonts } from 'expo-font';
 import { PlayerProvider } from '../src/hooks/usePlayerContext';
 import { GameDataProvider } from '../src/hooks/useGameData';
 import { TimerProvider } from '../src/hooks/useTimerContext';
-import { useTheme, loadTheme, loadClashFontPref, setClashFontLoaded, useClashFontPref } from '../src/theme';
+import { useTheme, loadTheme, loadClashFontPref, setClashFontLoaded, useClashFontPref, loadGlobalLevelsPref } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
 import { loadDiscounts } from '../src/hooks/useDiscounts';
 import * as SplashScreen from 'expo-splash-screen';
@@ -31,6 +31,7 @@ export default function RootLayout() {
     (async () => {
       await loadTheme();
       await loadClashFontPref();
+      await loadGlobalLevelsPref();
       await loadDiscounts();
       const token = await getApiToken();
       if (!token) {
