@@ -152,7 +152,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
                 >
                   <TabIcon
                     icon={TAB_ICONS[tab] ?? { set: 'ion', name: 'ellipse-outline' }}
-                    color={isActive ? Colors.bg : Colors.textMuted}
+                    color={isActive ? Colors.bgCard : Colors.textTertiary}
                   />
                 </PressableRipple>
               );
