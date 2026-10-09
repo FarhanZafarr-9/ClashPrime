@@ -1,6 +1,6 @@
 {
   "name": "clashprime",
-  "version": "6.3.0",
+  "version": "6.5.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
