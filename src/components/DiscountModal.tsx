@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  Modal,
   StyleSheet,
   ScrollView,
   TextInput,
 } from 'react-native';
 import PressableRipple from './PressableRipple';
+import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 import type { ScopeDiscount } from '../hooks/useDiscounts';
@@ -142,28 +142,15 @@ export default function DiscountModal({
 }: DiscountModalProps) {
   const isBuildings = scope === 'buildings';
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.overlay}>
-        <PressableRipple style={styles.backdrop} onPress={onClose} />
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="pricetag-outline" size={18} color={Colors.textPrimary} />
-              </View>
-              <View>
-                <Text style={styles.cardTitle}>{isBuildings ? 'Building Discounts' : 'Army Discounts'}</Text>
-                <Text style={styles.cardSubtitle}>
-                  {isBuildings ? 'Applies to building costs & build times' : 'Applies to research costs & upgrade times'}
-                </Text>
-              </View>
-            </View>
-            <PressableRipple onPress={onClose} hitSlop={8} style={styles.closeBtn}>
-              <Ionicons name="close" size={18} color={Colors.textTertiary} />
-            </PressableRipple>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={isBuildings ? 'Building Discounts' : 'Army Discounts'}
+      subtitle={isBuildings ? 'Applies to building costs & build times' : 'Applies to research costs & upgrade times'}
+      icon="pricetag-outline"
+      contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+    >
+          <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
             {isBuildings ? (
               <DiscountSection
                 cost={buildings.costPercent}
@@ -185,75 +172,14 @@ export default function DiscountModal({
             <Ionicons name="refresh-outline" size={14} color={Colors.textMuted} />
             <Text style={styles.resetText}>Reset all discounts</Text>
           </PressableRipple>
-        </View>
-      </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  card: {
-    width: '88%',
-    maxHeight: '82%',
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+  scroll: {
     flexShrink: 1,
-  },
-  cardIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-  },
-  cardSubtitle: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    marginTop: 1,
-    maxWidth: 240,
-  },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.bgSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexGrow: 0,
   },
   scrollBody: {
     padding: Spacing.lg,
