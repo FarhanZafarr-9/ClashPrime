@@ -20,6 +20,11 @@ export interface ScrapedBase {
   votes?: number;
   hotScore?: number;
   recentDownloads?: number;
+  /** Which catalogue produced the record — merged Home snapshots mix both. */
+  source?: 'clashly' | 'clash-bases';
+  /** clash-bases presentation metadata; absent on ClashLy-only records. */
+  description?: string | null;
+  builder?: string | null;
 }
 
 export interface ScrapeResult {
