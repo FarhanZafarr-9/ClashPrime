@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { StyleSheet, type StyleProp, type ViewStyle, type AccessibilityRole } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle, type AccessibilityRole, type AccessibilityState } from 'react-native';
 import { TouchableRipple } from 'react-native-paper';
 
 interface Props {
@@ -10,8 +10,11 @@ interface Props {
   children?: ReactNode;
   disabled?: boolean;
   rippleColor?: string;
+  /** iOS pressed background (react-native-paper underlay); Android uses the ripple. */
+  underlayColor?: string;
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
 }
 
 export default function PressableRipple({
@@ -22,8 +25,10 @@ export default function PressableRipple({
   children,
   disabled,
   rippleColor,
+  underlayColor,
   accessibilityLabel,
   accessibilityRole,
+  accessibilityState,
 }: Props) {
   const flat = StyleSheet.flatten(style);
 
@@ -36,8 +41,10 @@ export default function PressableRipple({
       hitSlop={hitSlop}
       disabled={disabled}
       rippleColor={rippleColor}
+      underlayColor={underlayColor}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
     >
       <>{children}</>
     </TouchableRipple>
