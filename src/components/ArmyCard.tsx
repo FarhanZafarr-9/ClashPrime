@@ -142,6 +142,14 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
           <Ionicons name="arrow-up-circle" size={14} color={colors.textSecondary} />
           <Text style={styles.score}>{army.score}</Text>
         </View>
+        {onFavorite ? (
+          <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
+            <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
+          </PressableRipple>
+        ) : null}
+        <PressableRipple onPress={onSave} hitSlop={8} style={styles.actionBtn}>
+          <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={18} color={isSaved ? colors.textPrimary : colors.textTertiary} />
+        </PressableRipple>
       </View>
 
       {/* Troops */}
@@ -194,32 +202,34 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
         </View>
       )}
 
-      {/* Actions */}
-      <View style={styles.actionsRow}>
-        <View style={styles.spacer} />
-        <PressableRipple onPress={onSave} hitSlop={8} style={styles.actionBtn}>
-          <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={18} color={isSaved ? colors.textPrimary : colors.textTertiary} />
-        </PressableRipple>
-        <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
-          <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
-        </PressableRipple>
-        {onShare && (
-          <PressableRipple onPress={onShare} hitSlop={8} style={styles.actionBtn}>
-            <Ionicons name="share-outline" size={18} color={colors.textTertiary} />
+      <View style={styles.footerRow}>
+        {onShareCard ? (
+          <PressableRipple
+            onPress={onShareCard}
+            hitSlop={8}
+            style={styles.iconBtn}
+            underlayColor={Colors.bgElevated}
+          >
+            <Ionicons name="image-outline" size={18} color={Colors.textSecondary} />
           </PressableRipple>
-        )}
-        {onShareCard && (
-          <PressableRipple onPress={onShareCard} hitSlop={8} style={styles.actionBtn}>
-            <Ionicons name="image-outline" size={18} color={colors.textTertiary} />
+        ) : null}
+        {onCopy ? (
+          <PressableRipple onPress={onCopy} style={styles.copyBtn}>
+            <Ionicons name="copy-outline" size={14} color={Colors.bg} />
+            <Text style={styles.copyBtnText}>Copy Army</Text>
           </PressableRipple>
-        )}
+        ) : null}
+        {onShare ? (
+          <PressableRipple
+            onPress={onShare}
+            hitSlop={8}
+            style={styles.iconBtn}
+            underlayColor={Colors.bgElevated}
+          >
+            <Ionicons name="share-outline" size={18} color={Colors.textSecondary} />
+          </PressableRipple>
+        ) : null}
       </View>
-      {onCopy && (
-        <PressableRipple onPress={onCopy} style={styles.copyBtn}>
-          <Ionicons name="copy-outline" size={14} color={Colors.bg} />
-          <Text style={styles.copyBtnText}>Copy Army</Text>
-        </PressableRipple>
-      )}
     </PressableRipple>
   );
 }
@@ -412,22 +422,30 @@ const styles = StyleSheet.create({
     height: 15,
     flexShrink: 0,
   },
-  actionsRow: {
+  actionBtn: {
+    padding: Spacing.xs,
+    alignSelf: 'center',
+  },
+  footerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.md,
     marginTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     paddingTop: Spacing.sm,
   },
-  actionBtn: {
-    padding: Spacing.xs,
-  },
-  spacer: {
-    flex: 1,
+  iconBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+    borderRadius: 6,
+    borderStyle: 'dashed',
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardHover,
   },
   copyBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -435,7 +453,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textPrimary,
     paddingVertical: Spacing.md,
     borderRadius: 6,
-    marginTop: Spacing.md,
   },
   copyBtnText: {
     ...Typography.caption,
