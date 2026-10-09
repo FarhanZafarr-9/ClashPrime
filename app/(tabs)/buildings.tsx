@@ -7,10 +7,11 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, clashFontFamily } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, clashFontFamily, useGlobalLevels } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import {
   getBuildingLevelImageSource,
@@ -521,6 +522,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   hideHeader?: boolean;
 }) {
   const { setBuildingCopies } = usePlayer();
+  const { enabled: showGlobalLevels } = useGlobalLevels();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
   /**
@@ -545,7 +547,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   // visible to hint their next upgrade.
   const viewCap = name === 'Town Hall' || name === 'Builder Hall' ? effectiveMax + 1 : effectiveMax;
   const allLevels: any[] = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
-    .filter((l: any) => effectiveMax <= 0 || l.Level <= viewCap);
+    .filter((l: any) => showGlobalLevels || effectiveMax <= 0 || l.Level <= viewCap);
   const showExpand = allLevels.length > 3;
   const isExpanded = inSheet || expanded;
 
@@ -1030,6 +1032,7 @@ function BuildingCollapsibleSection({
 }) {
   const [open, setOpen] = useState(false);
   const [showAllLevels, setShowAllLevels] = useState(false);
+  const { enabled: showGlobalLevels } = useGlobalLevels();
   /** Section-level pivot for the aggregate Remaining table - see below. */
   const [sectionPivotLevel, setSectionPivotLevel] = useState<number | null>(null);
   const { setBuildingCopies } = usePlayer();
@@ -1184,7 +1187,7 @@ function BuildingCollapsibleSection({
   // highest (clamped to effectiveMax); "show all" expands to the full range.
   const availableLevels = getBuildingAvailableLevels(lookupName);
   const allLevels: any[] = (buildingStats?.levels ?? availableLevels.map((l) => ({ Level: l })))
-    .filter((l: any) => effectiveMax <= 0 || l.Level <= effectiveMax);
+    .filter((l: any) => showGlobalLevels || effectiveMax <= 0 || l.Level <= effectiveMax);
   const maxCopyLevel = posLevels.length > 0 ? Math.max(...posLevels) : effectiveMax;
   const spanMin = Math.max(1, minCopyLevel - 1);
   const spanMax = Math.max(maxCopyLevel, Math.min(effectiveMax, maxCopyLevel + 2));
@@ -1355,16 +1358,6 @@ function pillCornerStyle(index: number, total: number, columns = PILL_COLUMNS) {
     ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
     ...(index === total - 1 && { borderBottomRightRadius: outer }),
   };
-}
-
-/**
- * The same seamless treatment for a single horizontal row of segments (the
- * Home Village / Builder Base switch). Only the two ends are outer corners, so
- * there is no row wrapping to derive the position from.
- */
-function segCornerStyle(index: number, total: number) {
-  // A single row is a grid with as many columns as segments.
-  return pillCornerStyle(index, total, total);
 }
 
 type CondensedLevel = { kind: 'row'; data: any } | { kind: 'ellipsis' };
@@ -1767,50 +1760,15 @@ export default function BuildingsScreen() {
         </View>
 
         {showBB && (
-          <View style={styles.villageToggle}>
-            <PressableRipple
-              style={[
-                styles.villageToggleItem,
-                segCornerStyle(0, 2),
-                !isBB && styles.villageToggleActive,
-              ]}
-              onPress={() => setVillage('home')}
-            >
-              {thHallImage ? (
-                <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-              ) : (
-                <Ionicons
-                  name="home-outline"
-                  size={13}
-                  color={!isBB ? Colors.bg : Colors.textSecondary}
-                />
-              )}
-              <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>
-                {`TH${th}`}
-              </Text>
-            </PressableRipple>
-            <PressableRipple
-              style={[
-                styles.villageToggleItem,
-                segCornerStyle(1, 2),
-                isBB && styles.villageToggleActive,
-              ]}
-              onPress={() => setVillage('builder')}
-            >
-              {bhHallImage ? (
-                <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-              ) : (
-                <Ionicons
-                  name="hammer-outline"
-                  size={13}
-                  color={isBB ? Colors.bg : Colors.textSecondary}
-                />
-              )}
-              <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>
-                {`BH${bh}`}
-              </Text>
-            </PressableRipple>
-          </View>
+          <SegmentedSwitch
+            style={styles.villageToggle}
+            options={[
+              { key: 'home', image: thHallImage, icon: 'home-outline', label: `TH${th}` },
+              { key: 'builder', image: bhHallImage, icon: 'hammer-outline', label: `BH${bh}` },
+            ]}
+            value={village}
+            onChange={setVillage}
+          />
         )}
 
         <View style={styles.pillRow}>
@@ -2085,38 +2043,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   villageToggle: {
-    flexDirection: 'row',
     alignSelf: 'center',
-    gap: 4,
     marginTop: Spacing.sm,
-    padding: 3,
-    borderRadius: Radius.xl * 1.25,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  villageToggleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-  },
-  villageToggleImg: {
-    width: 16,
-    height: 16,
-  },
-  villageToggleActive: {
-    backgroundColor: Colors.textPrimary,
-  },
-  villageToggleText: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  villageToggleTextActive: {
-    color: Colors.bg,
   },
   itemCard: {
     marginHorizontal: Spacing.base,
