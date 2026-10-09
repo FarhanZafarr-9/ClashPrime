@@ -9,11 +9,12 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { SPELL_STAT_ICONS } from '../../src/utils/statImages';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, useTheme, clashFontFamily } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme, clashFontFamily, useGlobalLevels } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import {
   getMaxLevelAtTH,
@@ -134,26 +135,6 @@ function parseUnlockRequirements(raw: string): { source: string; cost?: string; 
   return [{ source: text, kind: 'other' }];
 }
 
-/**
- * Outer corners of the Home / Builder Base switch, so the two segments read as
- * one segmented control. Only the two ends are outer, matching the Buildings and
- * Time to Max tabs. Distinct from `chipCornerStyle` above, which lays out a
- * three-column grid where the middle chips have no outer corners at all.
- */
-function segCornerStyle(index: number, total: number) {
-  const outer = Radius.xl * 1.25;
-  return {
-    ...(index === 0 && {
-      borderTopLeftRadius: outer,
-      borderBottomLeftRadius: outer,
-    }),
-    ...(index === total - 1 && {
-      borderTopRightRadius: outer,
-      borderBottomRightRadius: outer,
-    }),
-  };
-}
-
 export default function PlayerProfileScreen() {
   const { player, loading, refresh } = usePlayer();
   const { siegeMachineNames, superTroopNames, petNames } = useGameData();
@@ -181,6 +162,7 @@ export default function PlayerProfileScreen() {
 
   const [details, setDetails] = useState<Record<string, TroopDetail | null>>({});
   const [showFullLevels, setShowFullLevels] = useState<Record<string, boolean>>({});
+  const { enabled: showGlobalLevels } = useGlobalLevels();
   /**
    * Level the Remaining totals stop at, per entity. Long-pressing a row in a
    * fully expanded stats table sets it; it is cleared with the sheet so the
@@ -593,6 +575,10 @@ export default function PlayerProfileScreen() {
   // at that TH — never the player's own building level); equipment by the
   // player's Blacksmith; Builder Base units by their Star Lab at the BH.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
+    // Global levels setting: show every level the package carries, unlocked past
+    // the Town Hall / Blacksmith / Star Lab clamp. Remaining totals below still
+    // use the TH-based maxReachable, so progress logic is unaffected.
+    if (showGlobalLevels) return detail.levels;
     const isHero = entityRef(detail.name)?.category === 'heroes';
     const isBB = isBuilderBaseName();
     if (isBB) {
@@ -1226,52 +1212,17 @@ to={pivot}
         </View>
 
         {showBB && (
-          <View style={styles.villageToggleWrap}>
-            <View style={styles.villageToggle}>
-              <PressableRipple
-                style={[
-                  styles.villageToggleItem,
-                  segCornerStyle(0, 2),
-                  village === 'home' && styles.villageToggleActive,
-                ]}
-                onPress={() => setActiveTab(homeTabs[0]?.key ?? 'troops')}
-              >
-                {thHallImage ? (
-                  <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-                ) : (
-                  <Ionicons
-                    name="home-outline"
-                    size={13}
-                    color={village === 'home' ? Colors.bg : Colors.textSecondary}
-                  />
-                )}
-                <Text style={[styles.villageToggleText, village === 'home' && styles.villageToggleTextActive]}>
-                  {`TH${th}`}
-                </Text>
-              </PressableRipple>
-              <PressableRipple
-                style={[
-                  styles.villageToggleItem,
-                  segCornerStyle(1, 2),
-                  village === 'builder' && styles.villageToggleActive,
-                ]}
-                onPress={() => setActiveTab(bbTabs[0]?.key ?? 'bhTroops')}
-              >
-                {bhHallImage ? (
-                  <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-                ) : (
-                  <Ionicons
-                    name="hammer-outline"
-                    size={13}
-                    color={village === 'builder' ? Colors.bg : Colors.textSecondary}
-                  />
-                )}
-                <Text style={[styles.villageToggleText, village === 'builder' && styles.villageToggleTextActive]}>
-                  {`BH${bhLevel}`}
-                </Text>
-              </PressableRipple>
-            </View>
-          </View>
+          <SegmentedSwitch
+            style={styles.villageToggleWrap}
+            options={[
+              { key: 'home', image: thHallImage, icon: 'home-outline', label: `TH${th}` },
+              { key: 'builder', image: bhHallImage, icon: 'hammer-outline', label: `BH${bhLevel}` },
+            ]}
+            value={village}
+            onChange={(v) =>
+              setActiveTab(v === 'home' ? (homeTabs[0]?.key ?? 'troops') : (bbTabs[0]?.key ?? 'bhTroops'))
+            }
+          />
         )}
 
         <View style={styles.tabsContainer}>
@@ -1827,38 +1778,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.xs,
     marginBottom: Spacing.xs,
-  },
-  villageToggle: {
-    flexDirection: 'row',
-    gap: 4,
-    padding: 3,
-    borderRadius: Radius.xl * 1.25,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  villageToggleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-  },
-  villageToggleImg: {
-    width: 16,
-    height: 16,
-  },
-  villageToggleActive: {
-    backgroundColor: Colors.textPrimary,
-  },
-  villageToggleText: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  villageToggleTextActive: {
-    color: Colors.bg,
   },
   tabsContainer: {
     gap: Spacing.xs,
