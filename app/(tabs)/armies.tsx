@@ -28,7 +28,6 @@ import ArmyShareCard from '../../src/components/ArmyShareCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SAVED_ARMIES_KEY = 'clashprime_saved_armies';
-const ARMY_FAVORITES_KEY = 'clashprime_army_favorites';
 
 interface SavedArmy {
   id: string;
@@ -56,19 +55,6 @@ async function saveArmy(army: SavedArmy): Promise<void> {
 async function removeSavedArmy(id: string): Promise<void> {
   const list = await getSavedArmies();
   await AsyncStorage.setItem(SAVED_ARMIES_KEY, JSON.stringify(list.filter((b) => b.id !== id)));
-}
-
-async function getArmyFavorites(): Promise<string[]> {
-  const raw = await AsyncStorage.getItem(ARMY_FAVORITES_KEY);
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
-}
-
-async function toggleArmyFavorite(id: string): Promise<boolean> {
-  const favs = await getArmyFavorites();
-  const idx = favs.indexOf(id);
-  if (idx >= 0) { favs.splice(idx, 1); await AsyncStorage.setItem(ARMY_FAVORITES_KEY, JSON.stringify(favs)); return false; }
-  else { favs.push(id); await AsyncStorage.setItem(ARMY_FAVORITES_KEY, JSON.stringify(favs)); return true; }
 }
 
 const ARMY_TAG_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -141,7 +127,6 @@ export default function ArmiesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savedArmies, setSavedArmies] = useState<SavedArmy[]>([]);
-  const [armyFavorites, setArmyFavorites] = useState<Set<string>>(new Set());
 
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
@@ -208,12 +193,8 @@ export default function ArmiesScreen() {
   }, [loadArmies]);
 
   const loadSavedData = useCallback(async () => {
-    const [sArmies, aFavs] = await Promise.all([
-      getSavedArmies(),
-      getArmyFavorites(),
-    ]);
+    const sArmies = await getSavedArmies();
     setSavedArmies(sArmies);
-    setArmyFavorites(new Set(aFavs));
   }, []);
 
   useEffect(() => {
@@ -225,16 +206,6 @@ export default function ArmiesScreen() {
     })();
     return () => { cancelled = true; };
   }, [loadArmies, loadSavedData]);
-
-  const handleArmyFavorite = async (id: number) => {
-    const key = String(id);
-    const isFav = armyFavorites.has(key);
-    const newFavs = new Set(armyFavorites);
-    if (isFav) newFavs.delete(key);
-    else newFavs.add(key);
-    setArmyFavorites(newFavs);
-    await toggleArmyFavorite(key);
-  };
 
   const handleSaveArmy = async (army: ClashArmy) => {
     const id = String(army.id);
@@ -417,7 +388,6 @@ export default function ArmiesScreen() {
               />
             ) : (
               visibleArmies.map((army) => {
-                const isFav = armyFavorites.has(String(army.id));
                 const isSavedArmy = savedArmies.some((s) => s.id === String(army.id));
                 return (
                   <ArmyCard
@@ -426,9 +396,7 @@ export default function ArmiesScreen() {
                     unitsById={unitsById}
                     equipmentById={equipmentById}
                     petsById={petsById}
-                    isFavorite={isFav}
                     isSaved={isSavedArmy}
-                    onFavorite={() => handleArmyFavorite(army.id)}
                     onSave={() => handleSaveArmy(army)}
                     onShare={() => handleShareArmy(army)}
                     onShareCard={() => openShareCard(army)}
