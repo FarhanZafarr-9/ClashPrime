@@ -5,20 +5,20 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  Modal,
   Platform,
-  KeyboardAvoidingView,
   Image,
   ActivityIndicator,
+  type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import { SettingRow } from '../../src/components/SettingRow';
+import BottomSheet from '../../src/components/BottomSheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
 import { getStringAsync, setStringAsync } from 'expo-clipboard';
-import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref, useGlobalLevels } from '../../src/theme';
 import { Chip } from '../../src/components/Chip';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
@@ -48,6 +48,7 @@ import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import DiscountModal from '../../src/components/DiscountModal';
 import OnboardingModal from '../../src/components/OnboardingModal';
 import Constants from 'expo-constants';
+import { DATA_SOURCE_GROUPS, SUPERCELL_NOTICE } from '../../src/data/attribution';
 import { Switch } from 'react-native-paper'
 const heartImg = require('../../images/heart.png') as any;
 
@@ -119,20 +120,6 @@ interface ContentAction {
   primary?: boolean;
 }
 
-const DATA_SOURCES: { name: string; use: string; url: string }[] = [
-  { name: 'Clash of Clans API', use: 'Player stats & progress', url: 'https://developer.clashofclans.com' },
-  { name: 'RoyaleAPI', use: 'Developer proxy for dynamic-IP setups', url: 'https://docs.royaleapi.com/proxy.html' },
-  { name: 'ClashLy', use: 'Base layout library & ratings', url: 'https://clashly.com' },
-  { name: 'ClashArmies', use: 'Community army compositions & sharing', url: 'https://clasharmies.com' },
-  { name: 'clash-of-clans-data (npm)', use: 'Troop, hero, spell, pet, equipment, siege machine & building data (levels, costs, stats, images)', url: 'https://www.npmjs.com/package/clash-of-clans-data' },
-  { name: 'clash.ninja', use: 'In-game events & TH max levels (fallback)', url: 'https://clash.ninja' },
-  { name: 'Zapquaker', use: 'Zap & Quake combo calculator (inspiration for the Zapquaker tab)', url: 'https://zapquaker.netlify.app/' },
-  { name: 'Otaku Planner', use: 'Giant Arrow path planner (inspiration for the Giant Arrow tab)', url: 'https://otakuplanner.com/tools/coc-arrow-path' },
-];
-
-const SUPERCELL_NOTICE =
-  'This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell and Supercell is not responsible for it. For more information see Supercell\u2019s Fan Content Policy: www.supercell.com/fan-content-policy.';
-
 const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   {
     title: 'Overview',
@@ -144,7 +131,7 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Third-Party Services',
-    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building/troop/hero/spell/pet/equipment data, events and community armies is fetched from public sources including ClashLy, ClashArmies, clash.ninja and the clash-of-clans-data npm package (canonical Supercell data).',
+    body: 'Player data is retrieved from the official Clash of Clans API using your token. Reference content such as base layouts, building/troop/hero/spell/pet/equipment data, events and community armies is fetched from public sources including ClashLy, Clash Bases, ClashArmies, clash.ninja and the clash-of-clans-data npm package (canonical Supercell data).',
   },
   {
     title: 'Local Storage',
@@ -163,6 +150,18 @@ const PRIVACY_SECTIONS: { title: string; body: string }[] = [
 const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
+  {
+    version: '6.3.0',
+    date: 'October 8, 2026',
+    items: [
+      'Base Library now merges ClashLy with the clash-bases catalogue for Home Village layouts — every card gets a real base name, description, builder credit and tags where the catalogue has them, new Progress and Fun category pills surface layout styles ClashLy never tagged, and duplicates across the two sources are collapsed by their official in-game layout link. Builder Base stays on ClashLy.',
+      'Base cards simplified: the Apply Layout button now sits between a share-card image icon and a share icon, the bookmark replaces the duplicate heart (favoriting stays in the Saved tab), and tag chips hide whatever just restates the card\u2019s own category.',
+      'Army cards match: the heart gives way to a single bookmark, and the share-card image and share icons now flank the Copy Army button (favoriting stays in the Saved tab).',
+      'A Both / ClashLy / Clash Bases source switch sits beside the village selector (Home Village only), so either catalogue can be browsed on its own instead of being buried under the other\u2019s volume.',
+      'Onboarding ends on a Data & Credits slide listing every public source the app draws from (with tappable links and the Supercell notice) before entering the app.',
+      'Packed package art capped at 128px WebP — roughly 85% smaller install footprint with no visible quality loss.',
+    ],
+  },
   {
     version: '6.2.0',
     date: 'September 29, 2026',
@@ -468,6 +467,7 @@ export default function SettingsScreen() {
   const [apiToken, setApiTokenState] = useState('');
   const { isDark, setThemeMode } = useTheme();
   const { pref: fontPref, setClashFontPref } = useClashFontPref();
+  const { enabled: globalLevels, setShowGlobalLevels: setGlobalLevelsPref } = useGlobalLevels();
   const clashFontDesc = fontPref === 'off'
     ? 'Use the system font'
     : fontPref === 'titles'
@@ -484,6 +484,9 @@ export default function SettingsScreen() {
 
   const [contentVisible, setContentVisible] = useState(false);
   const [contentTitle, setContentTitle] = useState('');
+  const [contentSubtitle, setContentSubtitle] = useState('');
+  const [contentIcon, setContentIcon] = useState<keyof typeof Ionicons.glyphMap | undefined>(undefined);
+  const [contentIconSource, setContentIconSource] = useState<ImageSourcePropType | undefined>(undefined);
   const [contentBody, setContentBody] = useState<React.ReactNode>(null);
   const [contentIsChangelog, setContentIsChangelog] = useState(false);
   const [changelogExpanded, setChangelogExpanded] = useState<Record<string, boolean>>({});
@@ -583,8 +586,18 @@ export default function SettingsScreen() {
     setTimeout(() => modalInputRef.current?.focus(), 300);
   };
 
-  const showContent = (title: string, body: React.ReactNode, actions: ContentAction[]) => {
+  const showContent = (
+    title: string,
+    body: React.ReactNode,
+    actions: ContentAction[],
+    subtitle?: string,
+    icon?: keyof typeof Ionicons.glyphMap,
+    iconSource?: ImageSourcePropType,
+  ) => {
     setContentTitle(title);
+    setContentSubtitle(subtitle ?? '');
+    setContentIcon(icon);
+    setContentIconSource(iconSource);
     setContentBody(body);
     setContentIsChangelog(false);
     setContentActions(actions.length ? actions : [{ label: 'Close' }]);
@@ -635,6 +648,7 @@ export default function SettingsScreen() {
       if (!online) {
         showDialog({
           title: 'No Internet Connection',
+          subtitle: 'GitHub was unreachable',
           message: 'Could not reach GitHub to check for updates. Check your Wi-Fi or mobile data, then try again.',
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
@@ -645,6 +659,7 @@ export default function SettingsScreen() {
       if (hasUpdate) {
         showDialog({
           title: 'Update Available',
+          subtitle: `v${v} is out — you're on v${currentVersion}`,
           message: `A new version of ClashPrime (v${v}) has been published — you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
           actions: [
             { label: 'Later', onPress: () => { } },
@@ -654,12 +669,14 @@ export default function SettingsScreen() {
       } else if (v !== currentVersion) {
         showDialog({
           title: "You're Ahead of the Releases",
+          subtitle: 'Running an unreleased development build',
           message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build — nothing to update.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
       } else {
         showDialog({
           title: "You're Up to Date",
+          subtitle: `ClashPrime v${currentVersion} is the latest`,
           message: `ClashPrime v${currentVersion} matches the latest published release. Check back later for new versions.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
@@ -667,6 +684,7 @@ export default function SettingsScreen() {
     } catch {
       showDialog({
         title: 'Update Check Failed',
+        subtitle: 'GitHub unreachable or rate-limited',
         message: 'Could not check for updates right now. This can happen if GitHub is rate-limiting or temporarily unavailable — please try again in a moment.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
@@ -874,21 +892,12 @@ export default function SettingsScreen() {
       'About ClashPrime',
       (
         <View>
-          <View style={styles.creditHero}>
-            <View style={styles.creditAvatar}>
-              <Ionicons name="shield" size={26} color={Colors.textPrimary} />
+          {updateAvailable && (
+            <View style={styles.aboutUpdateRow}>
+              <Ionicons name="cloud-download-outline" size={14} color={Colors.warning} />
+              <Text style={styles.updateBadgeText}>v{latestVersion} available</Text>
             </View>
-            <View style={styles.creditHeroText}>
-              <Text style={styles.creditName}>ClashPrime {appVersion}</Text>
-              {updateAvailable && (
-                <View style={styles.updateBadge}>
-                  <Ionicons name="cloud-download-outline" size={12} color={Colors.warning} />
-                  <Text style={styles.updateBadgeText}>v{latestVersion} available</Text>
-                </View>
-              )}
-              <Text style={styles.creditHandle}>Premium Clash of Clans companion</Text>
-            </View>
-          </View>
+          )}
           <Text style={styles.creditBlurb}>
             ClashPrime is an unofficial, community-built companion for Clash of Clans. It brings your village progress, war performance and favorite game references together in one clean, fast app — no ads, no clutter, just the data that matters.
           </Text>
@@ -908,14 +917,18 @@ export default function SettingsScreen() {
               </View>
             </View>
           ))}
-          <Text style={styles.creditSectionTitle}>Data sources</Text>
-          {DATA_SOURCES.map((s) => (
-            <View style={styles.creditSourceRow} key={s.name}>
-              <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
-              <View style={styles.creditSourceText}>
-                <Text style={styles.creditSourceName}>{s.name}</Text>
-                <Text style={styles.creditSourceUse}>{s.use}</Text>
-              </View>
+          {DATA_SOURCE_GROUPS.map((g) => (
+            <View key={g.key}>
+              <Text style={styles.creditSectionTitle}>{g.label}</Text>
+              {g.sources.map((s) => (
+                <View style={styles.creditSourceRow} key={s.name}>
+                  <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+                  <View style={styles.creditSourceText}>
+                    <Text style={styles.creditSourceName}>{s.name}</Text>
+                    <Text style={styles.creditSourceUse}>{s.use}</Text>
+                  </View>
+                </View>
+              ))}
             </View>
           ))}
           <Text style={styles.policyTitle}>Disclaimer</Text>
@@ -929,6 +942,8 @@ export default function SettingsScreen() {
         { label: 'View on GitHub', primary: true, onPress: () => openURL('https://github.com/FarhanZafarr-9/ClashPrime') },
         { label: 'Close' },
       ],
+      `v${appVersion} · Premium Clash of Clans companion`,
+      'shield',
     );
   };
 
@@ -937,28 +952,23 @@ export default function SettingsScreen() {
       'Credits',
       (
         <View>
-          <View style={styles.creditHero}>
-            <View style={styles.creditAvatar}>
-              <Ionicons name="logo-github" size={26} color={Colors.textPrimary} />
-            </View>
-            <View style={styles.creditHeroText}>
-              <Text style={styles.creditName}>Farhan Zafar</Text>
-              <Text style={styles.creditHandle}>@FarhanZafarr-9</Text>
-            </View>
-          </View>
           <Text style={styles.creditBlurb}>
             ClashPrime is an unofficial Clash of Clans companion, built to give players a clean, fast way to track progress and discover bases.
           </Text>
-          <Text style={styles.creditSectionTitle}>Data sources</Text>
-          {DATA_SOURCES.map((s) => (
-            <PressableRipple key={s.name} onPress={() => openURL(s.url)} style={styles.creditSourceRow} hitSlop={4}>
-              <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
-              <View style={styles.creditSourceText}>
-                <Text style={styles.creditSourceName}>{s.name}</Text>
-                <Text style={styles.creditSourceUse}>{s.use}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} style={styles.creditSourceIcon} />
-            </PressableRipple>
+          {DATA_SOURCE_GROUPS.map((g) => (
+            <View key={g.key}>
+              <Text style={styles.creditSectionTitle}>{g.label}</Text>
+              {g.sources.map((s) => (
+                <PressableRipple key={s.name} onPress={() => openURL(s.url)} style={styles.creditSourceRow} hitSlop={4}>
+                  <Ionicons name="link-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
+                  <View style={styles.creditSourceText}>
+                    <Text style={styles.creditSourceName}>{s.name}</Text>
+                    <Text style={styles.creditSourceUse}>{s.use}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} style={styles.creditSourceIcon} />
+                </PressableRipple>
+              ))}
+            </View>
           ))}
           <Text style={styles.creditNotice}>{SUPERCELL_NOTICE}</Text>
           <View style={styles.creditMadeRow}>
@@ -976,6 +986,8 @@ export default function SettingsScreen() {
         },
         { label: 'Close' },
       ],
+      'Farhan Zafar · @FarhanZafarr-9',
+      'logo-github',
     );
   };
 
@@ -993,6 +1005,8 @@ export default function SettingsScreen() {
         </View>
       ),
       [{ label: 'Close', primary: true }],
+      'What ClashPrime collects and why',
+      'shield-checkmark-outline',
     );
   };
 
@@ -1021,12 +1035,14 @@ export default function SettingsScreen() {
         },
         { label: 'Close' },
       ],
+      'Bugs, feature ideas, or just a hello',
+      'chatbubble-ellipses-outline',
     );
   };
 
   const openChangelog = () => {
     setChangelogExpanded({ [CHANGELOG[0].version]: true });
-    showContent('What\u2019s New', null, [{ label: 'Close', primary: true }]);
+    showContent('What\u2019s New', null, [{ label: 'Close', primary: true }], 'Latest changes in ClashPrime', 'sparkles-outline');
     setContentIsChangelog(true);
   };
 
@@ -1035,15 +1051,6 @@ export default function SettingsScreen() {
       'Developer Info',
       (
         <View>
-          <View style={styles.creditHero}>
-            <View style={styles.devAvatar}>
-              <Image source={{ uri: DEV_AVATAR_URL }} style={styles.devAvatarImg} />
-            </View>
-            <View style={styles.creditHeroText}>
-              <Text style={styles.creditName}>Farhan Zafar</Text>
-              <Text style={styles.creditHandle}>@FarhanZafarr-9</Text>
-            </View>
-          </View>
           <Text style={styles.devTagline}>
             every pixel intentional · every commit counts · every detail ships
           </Text>
@@ -1087,6 +1094,9 @@ export default function SettingsScreen() {
         },
         { label: 'Close', primary: true },
       ],
+      'Farhan Zafar · @FarhanZafarr-9',
+      undefined,
+      { uri: DEV_AVATAR_URL },
     );
   };
 
@@ -1122,6 +1132,8 @@ export default function SettingsScreen() {
         { label: 'Copy Info', primary: true, onPress: () => setStringAsync(rows.map((r) => `${r.label}: ${r.value}`).join('\n')) },
         { label: 'Close' },
       ],
+      'Technical build details for bug reports',
+      'code-slash-outline',
     );
   };
 
@@ -1235,7 +1247,7 @@ export default function SettingsScreen() {
             meta={SECTION_META.appearance}
             isOpen={expanded.appearance}
             onToggle={() => toggleSection('appearance')}
-            badge="2"
+            badge="3"
           >
             <SettingRow
               icon="moon-outline"
@@ -1255,13 +1267,26 @@ export default function SettingsScreen() {
               title="Clash Font"
               desc={clashFontDesc}
               compact
-              isLast
             >
               <View style={styles.fontChipRow}>
                 <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
                 <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
                 <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
               </View>
+            </SettingRow>
+            <SettingRow
+              icon="globe-outline"
+              title="Show Global Levels"
+              desc="Show levels beyond your Town Hall"
+              compact
+              isLast
+            >
+              <Switch
+                value={globalLevels}
+                onValueChange={(v) => setGlobalLevelsPref(v)}
+                trackColor={{ false: Colors.border, true: Colors.textMuted }}
+                thumbColor={globalLevels ? Colors.textPrimary : Colors.bgCard}
+              />
             </SettingRow>
           </SettingSection>
 
@@ -1502,28 +1527,14 @@ export default function SettingsScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <Modal
+      <BottomSheet
         visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-        statusBarTranslucent
+        onClose={() => setModalVisible(false)}
         onShow={() => modalInputRef.current?.focus()}
+        icon={modalType === 'tag' ? 'person-outline' : 'key-outline'}
+        title={modalTitle}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <PressableRipple style={styles.modalBackdrop} onPress={() => setModalVisible(false)} />
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconWrap}>
-              <Ionicons
-                name={modalType === 'tag' ? 'person-outline' : 'key-outline'}
-                size={22}
-                color={Colors.textPrimary}
-              />
-            </View>
-            <Text style={styles.modalTitle}>{modalTitle}</Text>
+        <View style={styles.modalContent}>
             <View style={styles.modalHint}>
               {modalType === 'tag' ? (
                 <Text style={styles.modalHintText}>
@@ -1567,6 +1578,7 @@ export default function SettingsScreen() {
                 placeholderTextColor={Colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
+                secureTextEntry={modalType === 'token'}
                 keyboardAppearance="dark"
               />
               {modalType === 'token' && (
@@ -1598,28 +1610,18 @@ export default function SettingsScreen() {
               </PressableRipple>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      </BottomSheet>
 
-      <Modal
+      <BottomSheet
         visible={contentVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setContentVisible(false)}
-        statusBarTranslucent
+        onClose={() => setContentVisible(false)}
+        maxHeight="92%"
+        title={contentTitle}
+        subtitle={contentSubtitle || undefined}
+        icon={contentIcon}
+        iconSource={contentIconSource}
+        contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.contentOverlay}
-        >
-          <PressableRipple style={styles.contentBackdrop} onPress={() => setContentVisible(false)} />
-          <View style={styles.contentCard}>
-            <View style={styles.contentHeader}>
-              <Text style={styles.contentTitle}>{contentTitle}</Text>
-              <PressableRipple onPress={() => setContentVisible(false)} style={styles.contentClose} hitSlop={8}>
-                <Ionicons name="close" size={20} color={Colors.textTertiary} />
-              </PressableRipple>
-            </View>
             <ScrollView
               style={[styles.contentBody, contentIsChangelog && styles.contentBodyTall]}
               contentContainerStyle={styles.contentBodyInner}
@@ -1650,9 +1652,7 @@ export default function SettingsScreen() {
                 </PressableRipple>
               ))}
             </View>
-          </View>
-              </KeyboardAvoidingView>
-      </Modal>
+      </BottomSheet>
 
       <OnboardingModal
         visible={showOnboarding}
@@ -1682,21 +1682,11 @@ export default function SettingsScreen() {
         handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
       />
 
-      <Modal visible={switchModalVisible} transparent animationType="fade" onRequestClose={() => setSwitchModalVisible(false)} statusBarTranslucent>
-        <PressableRipple style={styles.switchOverlay} onPress={() => setSwitchModalVisible(false)}>
-          <View style={styles.switchCard}>
-            <View style={styles.switchHeader}>
-              <View style={styles.switchHeaderIcon}>
-                <Ionicons name="swap-horizontal-outline" size={18} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.switchHeaderText}>
-                <Text style={styles.switchTitle}>Accounts</Text>
-                <Text style={styles.switchSubtitle}>Tap to switch · hold to remove</Text>
-              </View>
-            </View>
+      <BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch · hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: 0 }}>
+        <View style={styles.switchCard}>
+          {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
 
-            {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
-
+          <ScrollView style={styles.switchList} showsVerticalScrollIndicator={false}>
             {accounts.map((acct) => {
               const isActive = acct.tag === activeAccount?.tag;
               const isSyncing = acct.tag === syncingTag;
@@ -1763,9 +1753,10 @@ export default function SettingsScreen() {
                 </PressableRipple>
               );
             })}
+          </ScrollView>
 
-            <PressableRipple
-              style={styles.switchAdd}
+          <PressableRipple
+            style={styles.switchAdd}
               onPress={() => {
                 setSwitchModalVisible(false);
                 setOnboardingTag('');
@@ -1781,8 +1772,7 @@ export default function SettingsScreen() {
               <Text style={styles.switchCloseText}>Close</Text>
             </PressableRipple>
           </View>
-        </PressableRipple>
-      </Modal>
+      </BottomSheet>
 
       <DiscountModal
         visible={discountModalScope !== null}
@@ -1893,57 +1883,12 @@ settingSections: {
   discountDotActive: {
     backgroundColor: Colors.warning,
   },
-  switchOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.65)',
-  },
   switchCard: {
-    alignSelf: 'stretch',
-    marginHorizontal: 20,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    padding: Spacing.base,
     gap: Spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
   },
-  switchHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  switchHeaderIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  switchHeaderText: {
-    flex: 1,
-    alignSelf: 'stretch',
-    justifyContent: 'space-between',
-  },
-  switchTitle: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-    lineHeight: 22,
-  },
-  switchSubtitle: {
-    ...Typography.caption,
-    color: Colors.textMuted,
+  switchList: {
+    flexGrow: 0,
+    maxHeight: 380,
   },
   switchEmpty: {
     ...Typography.subhead,
@@ -1956,7 +1901,6 @@ settingSections: {
     alignItems: 'center',
     gap: Spacing.sm,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
   },
   switchItemActive: {
@@ -2130,41 +2074,8 @@ settingSections: {
     height: 12,
     marginBottom: 1,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
   modalContent: {
-    alignSelf: 'stretch',
-    marginHorizontal: 20,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    padding: Spacing.xl,
     gap: Spacing.sm,
-  },
-  modalIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  modalTitle: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
   },
   modalHint: {
     ...Typography.caption,
@@ -2273,45 +2184,6 @@ settingSections: {
     color: Colors.bg,
     fontWeight: '600',
   },
-  contentOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  contentCard: {
-    alignSelf: 'stretch',
-    marginHorizontal: 20,
-    maxHeight: '80%',
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  contentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  contentTitle: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-  },
-  contentClose: {
-    padding: Spacing.xs,
-  },
   contentBody: {
     maxHeight: 360,
   },
@@ -2319,7 +2191,9 @@ settingSections: {
     maxHeight: 520,
   },
   contentBodyInner: {
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     gap: Spacing.base,
   },
   contentActions: {
@@ -2348,51 +2222,26 @@ settingSections: {
   contentBtnTextPrimary: {
     color: Colors.bg,
   },
-  creditHero: {
+  aboutUpdateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-  },
-  creditAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  creditHeroText: {
-    gap: 2,
-  },
-  updateBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    gap: Spacing.sm,
+    alignSelf: 'flex-start',
     backgroundColor: Colors.warning + '20',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
-    marginTop: 4,
+    marginBottom: Spacing.base,
   },
   updateBadgeText: {
     ...Typography.caption,
     color: Colors.warning,
     fontWeight: '700',
   },
-  creditName: {
-    ...Typography.headline,
-    color: Colors.textPrimary,
-  },
-  creditHandle: {
-    ...Typography.subhead,
-    marginTop: Spacing.md,
-    color: Colors.textTertiary,
-  },
   creditBlurb: {
     ...Typography.subhead,
     color: Colors.textSecondary,
     lineHeight: 20,
-    marginTop: Spacing.base,
     marginBottom: Spacing.lg,
   },
   creditSectionTitle: {
@@ -2834,21 +2683,6 @@ builderCountBtnDisabled: {
     color: Colors.textSecondary,
     flex: 1,
     lineHeight: 20,
-  },
-  devAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  devAvatarImg: {
-    width: 52,
-    height: 52,
   },
   devTagline: {
     ...Typography.caption,
