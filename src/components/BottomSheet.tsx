@@ -116,7 +116,7 @@ export default function BottomSheet({
           <View style={styles.grabberWrap}>
             <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           </View>
-          <View style={[styles.cardHeader, { borderBottomColor: colors.border }]}>
+          <View style={[styles.cardHeader, { borderBottomColor: colors.border }, header && { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, }]}>
             {header !== undefined ? (
               header
             ) : (
