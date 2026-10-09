@@ -17,11 +17,12 @@ interface Props {
   downloads?: number;
   year?: number | null;
   updated?: boolean;
-  isFavorite?: boolean;
+  description?: string | null;
+  builder?: string | null;
+  source?: 'clashly' | 'clash-bases';
   isSaved?: boolean;
   hasLink?: boolean;
   onCopy?: () => void;
-  onFavorite?: () => void;
   onSave?: () => void;
   onShare?: () => void;
   onShareCard?: () => void;
@@ -79,11 +80,12 @@ export function BaseCard({
   downloads,
   year,
   updated,
-  isFavorite,
+  description,
+  builder,
+  source,
   isSaved,
   hasLink,
   onCopy,
-  onFavorite,
   onSave,
   onShare,
   onShareCard,
@@ -127,6 +129,11 @@ export function BaseCard({
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
+            {source ? (
+              <Text style={styles.source} numberOfLines={1}>
+                {source === 'clash-bases' ? 'Clash Bases' : 'ClashLy'}
+              </Text>
+            ) : null}
           </View>
           <View style={styles.actionRow}>
             <PressableRipple onPress={onSave} hitSlop={8} style={styles.actionBtn}>
@@ -136,34 +143,64 @@ export function BaseCard({
                 color={isSaved ? Colors.textPrimary : Colors.textTertiary}
               />
             </PressableRipple>
-            <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
-              <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={18}
-                color={isFavorite ? Colors.textPrimary : Colors.textTertiary}
-              />
-            </PressableRipple>
-            <PressableRipple onPress={onShare} hitSlop={8} style={styles.actionBtn}>
-              <Ionicons name="share-outline" size={18} color={Colors.textTertiary} />
-            </PressableRipple>
-            {onShareCard ? (
-              <PressableRipple onPress={onShareCard} hitSlop={8} style={styles.actionBtn}>
-                <Ionicons name="image-outline" size={18} color={Colors.textTertiary} />
-              </PressableRipple>
-            ) : null}
           </View>
         </View>
-        {hasLink ? (
-          <PressableRipple onPress={onCopy} style={styles.copyBtn}>
-            <Ionicons name="copy-outline" size={14} color={Colors.bg} />
-            <Text style={styles.copyText}>Copy Layout</Text>
-          </PressableRipple>
-        ) : (
-          <View style={[styles.copyBtn, styles.copyBtnDisabled]}>
-            <Ionicons name="copy-outline" size={14} color={Colors.textMuted} />
-            <Text style={[styles.copyText, styles.copyTextDisabled]}>No Link Available</Text>
+        {/* clash-bases entries carry a real name, a short description, free-form
+            tags and a builder credit; ClashLy-only records have none of this, so
+            the block collapses and the card stays compact. */}
+        {(description || tags.length > 0 || builder) ? (
+          <View style={styles.metaBlock}>
+            {description ? (
+              <Text style={styles.description} numberOfLines={2}>{description}</Text>
+            ) : null}
+            {tags.length > 0 ? (
+              <View style={styles.tagRow}>
+                {tags.slice(0, 4).map((t) => (
+                  <View key={t} style={styles.tagChip}>
+                    <Text style={styles.tagText} numberOfLines={1}>{t}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {builder ? (
+              <Text style={styles.builder} numberOfLines={1}>{`by ${builder}`}</Text>
+            ) : null}
           </View>
-        )}
+        ) : null}
+        {/* Apply sits between two dashed icon squares: the share-card image on
+            the left, the plain share on the right. Both light up to the card
+            surface while pressed. */}
+        <View style={styles.footerRow}>
+          {onShareCard ? (
+            <PressableRipple
+              onPress={onShareCard}
+              hitSlop={8}
+              style={styles.iconBtn}
+              underlayColor={Colors.bgElevated}
+            >
+              <Ionicons name="image-outline" size={18} color={Colors.textSecondary} />
+            </PressableRipple>
+          ) : null}
+          {hasLink ? (
+            <PressableRipple onPress={onCopy} style={styles.applyBtn}>
+              <Ionicons name="open-outline" size={14} color={Colors.bg} />
+              <Text style={styles.applyText}>Apply Layout</Text>
+            </PressableRipple>
+          ) : (
+            <View style={[styles.applyBtn, styles.applyBtnDisabled]}>
+              <Ionicons name="open-outline" size={14} color={Colors.textMuted} />
+              <Text style={[styles.applyText, styles.applyTextDisabled]}>No Link Available</Text>
+            </View>
+          )}
+          <PressableRipple
+            onPress={onShare}
+            hitSlop={8}
+            style={styles.iconBtn}
+            underlayColor={Colors.bgElevated}
+          >
+            <Ionicons name="share-outline" size={18} color={Colors.textSecondary} />
+          </PressableRipple>
+        </View>
       </View>
     </View>
   );
@@ -272,6 +309,12 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 20,
   },
+  source: {
+    ...Typography.caption,
+    fontSize: 10,
+    color: Colors.textMuted,
+    marginTop: 1,
+  },
   actionRow: {
     flexDirection: 'row',
     gap: Spacing.xs,
@@ -279,10 +322,46 @@ const styles = StyleSheet.create({
   actionBtn: {
     padding: Spacing.xs,
   },
-  favBtn: {
-    padding: Spacing.xs,
+  metaBlock: {
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
   },
-  copyBtn: {
+  description: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    lineHeight: 16,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  tagChip: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.accentGhost,
+  },
+  tagText: {
+    ...Typography.caption,
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  builder: {
+    ...Typography.caption,
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    // Stretch (the default) so the icon buttons take the Apply row's exact
+    // height instead of growing taller with their own vertical padding.
+  },
+  applyBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -291,15 +370,25 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
   },
-  copyBtnDisabled: {
+  applyBtnDisabled: {
     backgroundColor: Colors.bgSubtle,
   },
-  copyText: {
+  applyText: {
     ...Typography.subhead,
     color: Colors.bg,
     fontWeight: '600',
   },
-  copyTextDisabled: {
+  applyTextDisabled: {
     color: Colors.textMuted,
+  },
+  iconBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    borderStyle: 'dashed',
+    borderWidth: 0.75,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardHover,
   },
 });
