@@ -25,10 +25,24 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Giant Arrow** — plan the Archer Queen's arrow on a base screenshot: tap/drag start and end pins, pick a path color, auto-save/restore on device, and share the finished plan as a high-res PNG (3x capture) from the editor or fullscreen viewer. A **Rocket Backpack** mode (Dragon Duke) reuses the canvas with a center pivot so the dash line always runs through the base center
 - **6th Builder (B.O.B.)** — Builder Base planner that turns your player profile into an ordered, resource-feasible schedule for all seven B.O.B. unlock requirements (3 gear-ups, troop lvl 18, defence lvl 9, BM+Copter 45, B.O.B Control 5): requirement checklist (3 gear-up toggles persist locally), machine timeline grouped by bb-builder / star-lab with per-chain ETA and cost badges, storage-feasibility cascades that auto-insert storage upgrades, Builder Hall gate chains, Clock Tower value, and "what is blocking you" callouts
 - **Awards** — standalone tab with star summary and village-filtered achievement list, filtered through the same seamless pill grid used by Bases, Armies and Hero Journey (Town Hall and Builder Hall art per village, award counts on each pill)
-- **Settings** — API token, dark mode, discounts, account management, and a **What's New changelog**, all in collapsible section headers (icon, description and count badge) that expand in place; About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
-- **Onboarding** — guided first-run flow with an image-based Town Hall picker and an Add Account (Full Setup) flow
+- **Settings** — API token, dark mode, discounts, account management, a **Show Global Levels** display toggle (expand level tables past your Town Hall), and a **What's New changelog**, all in collapsible section headers (icon, description and count badge) that expand in place; every dialog opens as a bottom sheet. About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
+- **Onboarding** — guided first-run flow with an image-based Town Hall picker, an Add Account (Full Setup) flow, masked token entry with per-step loading art, and a **Data & Credits** slide that lists every public source before entering the app
 - **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding, and an ongoing notification with an **Android-native per-second countdown** that keeps ticking even when the app is killed (zero battery) plus sound/vibration on finish
 - **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection
+
+## What's New (v6.5.0)
+
+- **Bottom-sheet dialogs everywhere** — every Settings dialog now slides up as a bottom sheet with its title, subtitle and icon in the shared sheet header: the player tag / API token edit sheet, the About, What's New, Privacy, Credits, Feedback and Developer content sheets, the account switcher, the discount modal and the onboarding modal.
+- **Show Global Levels** — a new **Settings → Appearance** toggle expands the Buildings and Army level tables to the game's full global max instead of stopping at your Town Hall. Display-only — progress, maxed badges and Remaining totals still count against your Town Hall.
+- **Shared village switch** — one shared component now drives the Home / Builder Base switch across Army, Buildings, Time to Max and Bases.
+- **Redesigned base and army cards** — base cards swap the duplicate heart for a single bookmark (favoriting stays in the Saved tab), group **Apply Layout** between a share-card image icon and a share icon, and hide tag chips that just restate the card's own category; army cards match, with the bookmark replacing the heart and flanking the **Copy Army** button.
+- **Onboarding polish** — every step shows loading art while work is in flight, the API token field is masked, the builder-hut picker lays out two per row, the Town Hall picker's **Next** button stays visible (disabled until you pick), and the flow ends on a **Data & Credits** slide listing every public source with tappable links and the Supercell notice.
+- **Smaller install** — packed package art is capped at 128px WebP, roughly 85% smaller footprint with no visible quality loss.
+
+## What's New (v6.3.0)
+
+- **Merged base catalogues** — the Base Library now merges ClashLy with the static [clash-bases](https://github.com/nschmeller/clash-bases) catalogue for Home Village layouts: real base names, descriptions, builder credits and tags where the catalogue has them, new **Progress** and **Fun** category pills, and duplicates across the two sources collapsed by their official in-game layout link. Builder Base stays on ClashLy.
+- **Source switch** — a **Both / ClashLy / Clash Bases** switch beside the village selector (Home Village only) browses either catalogue on its own.
 
 ## What's New (v6.2.0)
 
@@ -178,7 +192,7 @@ ClashPrime/
 │   │   ├── eventsScraper.ts# Events scraper
 │   │   └── newsScraper.ts  # In-game news scraper
 │   ├── components/         # Shared UI components (ItemCard, bottom-sheet panels, skeletons, …)
-│   ├── data/               # Static data (packageImages.ts incl. crafted-defense tiers, cocBuildingIds.ts incl. crafted/module IDs, entityReference.ts)
+│   ├── data/               # Static data (packageImages.ts incl. crafted-defense tiers, cocBuildingIds.ts incl. crafted/module IDs, attribution.ts, entityReference.ts)
 │   ├── hooks/              # Player context, per-account builder count, storage
 │   ├── theme/              # Design system (colors, spacing, typography)
 │   ├── types/              # TypeScript interfaces
