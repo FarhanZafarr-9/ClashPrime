@@ -151,15 +151,25 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: '6.5.0',
+    date: 'October 9, 2026',
+    items: [
+      'Every settings dialog now opens as a bottom sheet — the player tag / API token edit sheet, the About / What\u2019s New / Privacy / Credits / Feedback / Developer content sheets, the account switcher, the discount modal and the onboarding modal all slide up with their title, subtitle and icon in the sheet header.',
+      'New Show Global Levels toggle under Settings \u2192 Appearance: Buildings and Army level tables expand to the game\u2019s full global max instead of stopping at your Town Hall. Display-only \u2014 progress, maxed badges and Remaining totals still count against your Town Hall.',
+      'Onboarding polished: every step shows loading art while work is in flight, the API token field is masked, the builder-hut picker lays out two per row, and the Town Hall picker\u2019s Next button stays visible (disabled until you pick).',
+      'The Home / Builder Base switch is now one shared component across Army, Buildings, Time to Max and Bases.',
+      'Base cards simplified: the Apply Layout button now sits between a share-card image icon and a share icon, the bookmark replaces the duplicate heart (favoriting stays in the Saved tab), and tag chips hide whatever just restates the card\u2019s own category.',
+      'Army cards match: the heart gives way to a single bookmark, and the share-card image and share icons now flank the Copy Army button (favoriting stays in the Saved tab).',
+      'Onboarding ends on a Data & Credits slide listing every public source the app draws from (with tappable links and the Supercell notice) before entering the app.',
+      'Packed package art capped at 128px WebP — roughly 85% smaller install footprint with no visible quality loss.',
+    ],
+  },
+  {
     version: '6.3.0',
     date: 'October 8, 2026',
     items: [
       'Base Library now merges ClashLy with the clash-bases catalogue for Home Village layouts — every card gets a real base name, description, builder credit and tags where the catalogue has them, new Progress and Fun category pills surface layout styles ClashLy never tagged, and duplicates across the two sources are collapsed by their official in-game layout link. Builder Base stays on ClashLy.',
-      'Base cards simplified: the Apply Layout button now sits between a share-card image icon and a share icon, the bookmark replaces the duplicate heart (favoriting stays in the Saved tab), and tag chips hide whatever just restates the card\u2019s own category.',
-      'Army cards match: the heart gives way to a single bookmark, and the share-card image and share icons now flank the Copy Army button (favoriting stays in the Saved tab).',
       'A Both / ClashLy / Clash Bases source switch sits beside the village selector (Home Village only), so either catalogue can be browsed on its own instead of being buried under the other\u2019s volume.',
-      'Onboarding ends on a Data & Credits slide listing every public source the app draws from (with tappable links and the Supercell notice) before entering the app.',
-      'Packed package art capped at 128px WebP — roughly 85% smaller install footprint with no visible quality loss.',
     ],
   },
   {
