@@ -188,6 +188,55 @@ export function useClashFontPref() {
   };
 }
 
+// Display preference: unlock every level row in Buildings/Army level tables up
+// to the game's global max instead of clamping to the player's Town Hall.
+// Purely presentational — progress checks (maxed badges, remaining totals,
+// +level buttons) still count against the Town Hall's actual max.
+let showGlobalLevelsPref = false;
+
+export function getShowGlobalLevels() {
+  return showGlobalLevelsPref;
+}
+
+export async function loadGlobalLevelsPref() {
+  try {
+    const val = await AsyncStorage.getItem('clashprime_global_levels');
+    if (val === 'on' || val === 'off') {
+      showGlobalLevelsPref = val === 'on';
+      notify();
+    }
+  } catch (e) {
+    console.warn('Failed to load global levels preference', e);
+  }
+}
+
+export async function setShowGlobalLevels(enabled: boolean) {
+  showGlobalLevelsPref = enabled;
+  try {
+    await AsyncStorage.setItem('clashprime_global_levels', enabled ? 'on' : 'off');
+  } catch (e) {
+    console.warn('Failed to save global levels preference', e);
+  }
+  notify();
+}
+
+export function useGlobalLevels() {
+  const [enabled, setEnabled] = useState(showGlobalLevelsPref);
+
+  useEffect(() => {
+    const l = () => setEnabled(showGlobalLevelsPref);
+    listeners.add(l);
+    return () => {
+      listeners.delete(l);
+    };
+  }, []);
+
+  return {
+    enabled,
+    setShowGlobalLevels,
+  };
+}
+
 // Proxy for the Colors object to dynamically return values based on current theme state
 export const Colors = new Proxy({}, {
   get(target, prop) {
