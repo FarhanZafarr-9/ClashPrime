@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
@@ -17,8 +18,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getStringAsync } from 'expo-clipboard';
-import { getMaxTownHall } from '../src/utils/buildingData';
+import { openURL } from 'expo-linking';
+import { getMaxTownHall, getBuildingItemImage, getBuildingMaxLevelAtTH } from '../src/utils/buildingData';
 import { Colors, Typography, Spacing, Radius } from '../src/theme';
+import { DATA_SOURCE_GROUPS, SUPERCELL_NOTICE } from '../src/data/attribution';
 import {
   setPlayerTag,
   setApiToken,
@@ -91,13 +94,32 @@ function StepCard({
   );
 }
 
+function OnboardingLoading({
+  image,
+  title,
+  subtitle,
+}: {
+  image: ImageSourcePropType;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={styles.loadingState}>
+      <Image source={image} style={styles.loadingImage} resizeMode="contain" />
+      <Text style={styles.loadingTitle}>{title}</Text>
+      <Text style={styles.loadingSubtitle}>{subtitle}</Text>
+      <ActivityIndicator size="small" color={Colors.textPrimary} style={styles.loadingSpinner} />
+    </View>
+  );
+}
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const { mode, th: thParam } = useLocalSearchParams<{ mode?: string; th?: string }>();
   const { player: contextPlayer, setBulkLevels, setLastMaxed, refresh, refreshAccounts } = usePlayer();
   const { show: showDialog, Dialog } = useDialog();
   const { setBuilderCount, verifyBuilderCount } = useBuilderCount();
-  const [step, setStep] = useState<'form' | 'import' | 'importToken' | 'profile' | 'thPicker' | 'builderHutPicker'>(mode === 'reset' ? 'thPicker' : 'form');
+  const [step, setStep] = useState<'form' | 'import' | 'importToken' | 'profile' | 'thPicker' | 'builderHutPicker' | 'attribution'>(mode === 'reset' ? 'thPicker' : 'form');
   const [playerData, setPlayerData] = useState<ClashPlayer | null>(null);
   const [token, setToken] = useState('');
   const [tag, setTag] = useState('');
@@ -117,6 +139,12 @@ export default function OnboardingScreen() {
 
   const currentTh = mode === 'reset' ? Number(thParam) || getMaxTownHall() : playerData?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
+
+  const plannedTh = parseInt(onboardingThLevel, 10) || currentTh;
+  const builderHutIcon = getBuildingItemImage(
+    'Builder Hut',
+    getBuildingMaxLevelAtTH('Builder Hut', plannedTh) ?? 1,
+  ) ?? require('../assets/images/chiefs-journey/icon.png');
 
   const handleParseImport = (raw: string) => {
     const parsed = parseCocExport(raw);
@@ -198,7 +226,8 @@ export default function OnboardingScreen() {
       }
 
       // Import provides all building levels + lastMaxedTH; skip profile/TH/builder steps
-      router.replace('/(tabs)');
+      setStep('attribution');
+      setLoading(false);
     } catch (e: any) {
       setError(e.message || 'Failed to connect. Check your token.');
       showDialog({
@@ -299,7 +328,7 @@ export default function OnboardingScreen() {
     // active account in context may still be a different (previous) one.
     const cleanTag = tag.trim().toUpperCase();
     await setBuilderCount(onboardingBuilderHuts, cleanTag ? (cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`) : undefined);
-    router.replace('/(tabs)');
+    setStep('attribution');
   };
 
   return (
@@ -364,6 +393,7 @@ export default function OnboardingScreen() {
                   placeholderTextColor={Colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  secureTextEntry
                   editable={!loading}
                 />
                 <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
@@ -548,6 +578,7 @@ export default function OnboardingScreen() {
                   placeholderTextColor={Colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  secureTextEntry
                   editable={!loading}
                 />
                 <PressableRipple style={styles.inputIcon} onPress={async () => { const t = await getStringAsync(); if (t) setToken(t); }} hitSlop={8}>
@@ -660,29 +691,35 @@ export default function OnboardingScreen() {
               </ScrollView>
             )}
             {loading && (
-              <View style={styles.loadingState}>
-                <ActivityIndicator size="small" color={Colors.textPrimary} />
-                <Text style={styles.loadingStateText}>Fetching profile…</Text>
-              </View>
+              <OnboardingLoading
+                image={require('../assets/icon.png')}
+                title="Fetching your profile"
+                subtitle="Getting your village ready…"
+              />
             )}
           </View>
         ) : step === 'thPicker' ? (
           <View style={styles.content}>
             {!loading && (
               <View style={styles.hero}>
-                <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
+                <Image
+                  source={require('../assets/images/chiefs-journey/icon.png')}
+                  style={styles.heroIcon}
+                  resizeMode="contain"
+                />
                 <Text style={styles.title}>Building Levels</Text>
                 <Text style={styles.subtitle}>Set your starting point for building tracking</Text>
               </View>
             )}
             {loading ? (
-              <View style={styles.loadingState}>
-                <ActivityIndicator size="small" color={Colors.textPrimary} />
-                <Text style={styles.loadingStateText}>Saving…</Text>
-              </View>
+              <OnboardingLoading
+                image={require('../assets/images/chiefs-journey/icon.png')}
+                title="Setting things up"
+                subtitle="Saving your starting point…"
+              />
             ) : (
               <>
-                <Text style={styles.thLabel}>What was your last fully maxed Town Hall?</Text>
+                <Text style={styles.thLabel}>Pick a starting reference point for your progress</Text>
                 <View style={styles.thGrid}>
                   {thOptions.map((th, index, arr) => {
                     const thImg = getTownHallImageSource(th);
@@ -695,7 +732,7 @@ export default function OnboardingScreen() {
                           isSelected && styles.thCellSelected,
                           index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
                           index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
-                          index === arr.length - 2 && index % 2 === 0 && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                          ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && arr.length % 2 === 1) ) && { borderBottomLeftRadius: Radius.xl * 1.25 },
                           index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                         ]}
                         onPress={() => setOnboardingThLevel(String(th))}
@@ -710,7 +747,7 @@ export default function OnboardingScreen() {
                   })}
                 </View>
                 <Text style={styles.thHint}>
-                  You&apos;re on TH{currentTh}. Pick the last Town Hall you&apos;ve fully maxed.
+                  You&apos;re on TH{currentTh}. You can change this later manually or by importing your data.
                 </Text>
                 <View style={styles.thPickerActions}>
                   <PressableRipple
@@ -719,57 +756,118 @@ export default function OnboardingScreen() {
                   >
                     <Text style={[styles.profileBtnText, styles.profileBtnTextGhost]}>Back</Text>
                   </PressableRipple>
-                  {onboardingThLevel && (
-                    <PressableRipple
-                      style={styles.profileBtn}
-                      onPress={() => handleThPick(parseInt(onboardingThLevel, 10))}
-                    >
-                      <Text style={styles.profileBtnText}>Next</Text>
-                    </PressableRipple>
-                  )}
+                  <PressableRipple
+                    style={[styles.profileBtn, !onboardingThLevel && styles.btnDisabled]}
+                    onPress={() => handleThPick(parseInt(onboardingThLevel, 10))}
+                    disabled={!onboardingThLevel}
+                  >
+                    <Text style={styles.profileBtnText}>Next</Text>
+                  </PressableRipple>
                 </View>
               </>
             )}
           </View>
+        ) : step === 'attribution' ? (
+          <ScrollView
+            style={styles.formScroll}
+            contentContainerStyle={styles.formScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.hero}>
+              <Image
+                source={require('../assets/images/chiefs-journey/Builder.png')}
+                style={styles.heroIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.title}>Data &amp; Credits</Text>
+              <Text style={styles.subtitle}>Where ClashPrime&apos;s content comes from</Text>
+            </View>
+
+            <View style={styles.form}>
+              <Text style={styles.attributeIntro}>
+                ClashPrime is an independent companion app. Your player data comes from the official
+                Clash of Clans API, and reference content is drawn from these public projects — each
+                remains the work of its own authors.
+              </Text>
+
+              {DATA_SOURCE_GROUPS.map((g) => (
+                <View key={g.key} style={styles.attributeGroup}>
+                  <Text style={styles.attributeGroupLabel}>{g.label}</Text>
+                  {g.sources.map((s, i) => (
+                    <PressableRipple
+                      key={s.name}
+                      style={[
+                        styles.attributeRow,
+                        i === 0 && styles.attributeRowFirst,
+                        i === g.sources.length - 1 && styles.attributeRowLast,
+                        i > 0 && styles.attributeRowDivider,
+                      ]}
+                      onPress={() => openURL(s.url)}
+                      hitSlop={4}
+                    >
+                      <Ionicons name="link-outline" size={15} color={Colors.textTertiary} style={styles.attributeIcon} />
+                      <View style={styles.attributeText}>
+                        <Text style={styles.attributeName} numberOfLines={1}>{s.name}</Text>
+                        <Text style={styles.attributeUse} numberOfLines={1}>{s.use}</Text>
+                      </View>
+                      <Ionicons name="open-outline" size={14} color={Colors.textMuted} />
+                    </PressableRipple>
+                  ))}
+                </View>
+              ))}
+
+              <Text style={styles.attributeNotice}>{SUPERCELL_NOTICE}</Text>
+
+              <PressableRipple style={styles.btn} onPress={() => router.replace('/(tabs)')}>
+                <Text style={styles.btnText}>Get Started</Text>
+              </PressableRipple>
+            </View>
+          </ScrollView>
         ) : (
           <View style={styles.content}>
             {!loading && (
               <View style={styles.hero}>
-                <Ionicons name="hammer-outline" size={48} color={Colors.textPrimary} />
+                <Image source={builderHutIcon} style={styles.heroIcon} resizeMode="contain" />
                 <Text style={styles.title}>Builder Huts</Text>
                 <Text style={styles.subtitle}>How many Builder Huts do you have?</Text>
               </View>
             )}
             {loading ? (
-              <View style={styles.loadingState}>
-                <ActivityIndicator size="small" color={Colors.textPrimary} />
-                <Text style={styles.loadingStateText}>Saving…</Text>
-              </View>
+              <OnboardingLoading
+                image={require('../assets/images/chiefs-journey/Builder.png')}
+                title="Setting things up"
+                subtitle="Saving your building levels…"
+              />
             ) : (
               <>
                 <Text style={styles.thLabel}>Select your builder hut count</Text>
-                <View style={styles.chipRow}>
-                  {[2, 3, 4, 5, 6].map((n) => (
-                    <PressableRipple
-                      key={n}
-                      style={[
-                        styles.hutChip,
-                        onboardingBuilderHuts === n && styles.hutChipSelected
-                      ]}
-                      onPress={() => setOnboardingBuilderHuts(n)}
-                    >
-                      <Text style={[
-                        styles.hutChipText,
-                        onboardingBuilderHuts === n && styles.hutChipTextSelected
-                      ]}>
-                        {n === 6 ? '6 (OTTO)' : String(n)}
-                      </Text>
-                    </PressableRipple>
-                  ))}
+                <View style={styles.thGrid}>
+                  {[2, 3, 4, 5].map((n, index, arr) => {
+                    const isSelected = onboardingBuilderHuts === n;
+                    return (
+                      <PressableRipple
+                        key={n}
+                        style={[
+                          styles.thCell,
+                          isSelected && styles.thCellSelected,
+                          index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                          index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                          ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && arr.length % 2 === 1) ) && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                          index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+                        ]}
+                        onPress={() => setOnboardingBuilderHuts(n)}
+                      >
+                        <Image source={builderHutIcon} style={styles.thImg} resizeMode="contain" />
+                        <Text style={[
+                          styles.thText,
+                          isSelected && styles.thTextSelected
+                        ]}>
+                          {String(n)}
+                        </Text>
+                      </PressableRipple>
+                    );
+                  })}
                 </View>
-                <Text style={styles.thHint}>
-                  6 builder huts = O.T.T.O. Hut (Builder Base)
-                </Text>
                 <View style={styles.thPickerActions}>
                   <PressableRipple
                     style={[styles.profileBtn, styles.profileBtnGhost]}
@@ -826,6 +924,11 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 24,
     marginBottom: Spacing.md,
+  },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    marginBottom: Spacing.sm,
   },
   title: {
     ...Typography.largeTitle,
@@ -936,7 +1039,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepNumEmph: {
-    backgroundColor: Colors.warning,
+    backgroundColor: Colors.textPrimary,
     borderWidth: 0,
     borderBottomLeftRadius: Radius.sm,
   },
@@ -1008,7 +1111,25 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.sm,
+  },
+  loadingImage: {
+    width: 96,
+    height: 96,
+    marginBottom: Spacing.lg,
+  },
+  loadingTitle: {
+    ...Typography.title2,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  loadingSubtitle: {
+    ...Typography.subhead,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+  },
+  loadingSpinner: {
+    marginTop: Spacing.xl,
   },
   thHint: {
     ...Typography.caption,
@@ -1179,10 +1300,6 @@ const styles = StyleSheet.create({
   profileBtnTextGhost: {
     color: Colors.textSecondary,
   },
-  loadingStateText: {
-    ...Typography.subhead,
-    color: Colors.textSecondary,
-  },
   thCell: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1205,40 +1322,10 @@ const styles = StyleSheet.create({
   },
   thCellSelected: {
     backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
-    borderWidth: 2,
   },
   thTextSelected: {
     color: Colors.bg,
     fontWeight: '700',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  hutChip: {
-    minWidth: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCard,
-  },
-  hutChipSelected: {
-    backgroundColor: Colors.textPrimary,
-  },
-  hutChipText: {
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  hutChipTextSelected: {
-    color: Colors.bg,
   },
   importBtn: {
     flexDirection: 'row',
@@ -1261,7 +1348,7 @@ const styles = StyleSheet.create({
   btnRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    marginTop: Spacing.sm,
+    marginVertical: Spacing.sm,
   },
   ghostBtn: {
     flex: 1,
@@ -1326,6 +1413,7 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     ...Typography.caption,
     color: Colors.textMuted,
+    marginTop: 4
   },
   cardContent: {
     gap: Spacing.xs,
@@ -1347,5 +1435,65 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  attributeIntro: {
+    ...Typography.footnote,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: Spacing.sm,
+  },
+  attributeGroup: {
+    marginTop: Spacing.lg,
+    gap:Spacing.xs
+  },
+  attributeGroupLabel: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+  },
+  attributeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.bgCardHover,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius:4,
+  },
+  attributeRowFirst: {
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+  },
+  attributeRowLast: {
+    borderBottomLeftRadius: Radius.lg,
+    borderBottomRightRadius: Radius.lg,
+  },
+  attributeRowDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderSubtle,
+  },
+  attributeIcon: {
+    marginTop: 1,
+  },
+  attributeText: {
+    flex: 1,
+  },
+  attributeName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  attributeUse: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+  },
+  attributeNotice: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    lineHeight: 16,
+    marginTop: Spacing.md,
   },
 });
