@@ -15,10 +15,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { BaseCard } from '../../src/components/BaseCard';
+import SegmentedSwitch, { type SegmentedSwitchOption } from '../../src/components/SegmentedSwitch';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
-import { scrapeBasesForTH, scrapeBasesForBH, getCachedBases } from '../../src/api/baseScraper';
+import {
+  scrapeBasesForTH,
+  scrapeBasesForBH,
+  getCachedBases,
+  getStoredSourceFilter,
+  setStoredSourceFilter,
+  type BaseSourceFilter,
+} from '../../src/api/baseScraper';
 import { getMaxTownHall, getBuildingItemImage } from '../../src/utils/buildingData';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { BasesScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -26,9 +34,7 @@ import SharePreviewModal, { useShareCardWidth } from '../../src/components/share
 import BaseShareCard from '../../src/components/BaseShareCard';
 import {
   getSavedBases,
-  getFavorites,
   saveBase,
-  toggleFavorite,
 } from '../../src/hooks/usePlayer';
 import type { SavedBase } from '../../src/hooks/usePlayer';
 
@@ -40,6 +46,8 @@ const CATEGORY_MAP: Record<string, string> = {
   cwl: 'CWL',
   funny: 'Funny',
   builder: 'Builder',
+  progress: 'Progress',
+  general: 'Home Village',
 };
 
 const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -49,6 +57,10 @@ const CATEGORY_PILLS: { key: string; label: string; icon: keyof typeof Ionicons.
   { key: 'Farming', label: 'Farming', icon: 'leaf-outline' },
   { key: 'Hybrid', label: 'Hybrid', icon: 'layers-outline' },
   { key: 'CWL', label: 'CWL', icon: 'medal-outline' },
+  // clash-bases-only categories: pills drop automatically on hall levels (and
+  // on Builder Base) where no layout carries the type.
+  { key: 'Progress', label: 'Progress', icon: 'construct-outline' },
+  { key: 'Fun', label: 'Fun', icon: 'happy-outline' },
 ];
 
 /**
@@ -59,6 +71,12 @@ function matchesCategory(base: ScrapedBase, key: string): boolean {
   if (key === 'All') return true;
   return base.type === key.toLowerCase() || CATEGORY_MAP[base.type] === key;
 }
+
+const SOURCE_OPTIONS: SegmentedSwitchOption<BaseSourceFilter>[] = [
+  { key: 'both', icon: 'albums-outline', label: 'Both' },
+  { key: 'clashly', icon: 'flame-outline', label: 'ClashLy' },
+  { key: 'clash-bases', icon: 'library-outline', label: 'Clash Bases' },
+];
 
 const PILL_COLUMNS = 3;
 
@@ -85,25 +103,6 @@ function pillCornerStyle(index: number, total: number) {
   };
 }
 
-/**
- * The same seamless treatment for a single horizontal row of segments (the
- * Home Village / Builder Base switch). Only the two ends are outer corners, so
- * there is no row wrapping to derive the position from.
- */
-function segCornerStyle(index: number, total: number) {
-  const outer = Radius.xl * 1.25;
-  return {
-    ...(index === 0 && {
-      borderTopLeftRadius: outer,
-      borderBottomLeftRadius: outer,
-    }),
-    ...(index === total - 1 && {
-      borderTopRightRadius: outer,
-      borderBottomRightRadius: outer,
-    }),
-  };
-}
-
 export default function BaseLibraryScreen() {
   const { player } = usePlayer();
   const { colors } = useTheme();
@@ -113,7 +112,22 @@ export default function BaseLibraryScreen() {
   const [loading, setLoading] = useState(true);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [savedBases, setSavedBases] = useState<SavedBase[]>([]);
-  const [baseFavorites, setBaseFavorites] = useState<Set<string>>(new Set());
+
+  // Which catalogues feed the Home Village list. ClashLy's volume (700+ per
+  // mid TH) buries the clash-bases entries deep in the year sections, so the
+  // toggle is the only practical way to browse one source's curation.
+  const [sourceFilter, setSourceFilterState] = useState<BaseSourceFilter>('both');
+  useEffect(() => {
+    let cancelled = false;
+    getStoredSourceFilter().then((f) => {
+      if (!cancelled) setSourceFilterState(f);
+    });
+    return () => { cancelled = true; };
+  }, []);
+  const changeSourceFilter = useCallback((f: BaseSourceFilter) => {
+    setSourceFilterState(f);
+    setStoredSourceFilter(f);
+  }, []);
 
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
@@ -180,12 +194,8 @@ export default function BaseLibraryScreen() {
   }, [loadBases]);
 
   const loadSavedData = useCallback(async () => {
-    const [saved, favs] = await Promise.all([
-      getSavedBases(),
-      getFavorites(),
-    ]);
+    const saved = await getSavedBases();
     setSavedBases(saved);
-    setBaseFavorites(new Set(favs));
   }, []);
 
   useEffect(() => {
@@ -204,8 +214,11 @@ export default function BaseLibraryScreen() {
     for (const group of Object.values(baseData.groups)) {
       bases.push(...group);
     }
-    return bases;
-  }, [baseData]);
+    // Builder Base snapshots are ClashLy-only, so the source filter only ever
+    // applies to Home Village data.
+    if (sourceFilter === 'both' || baseData.village !== 'home') return bases;
+    return bases.filter((b) => b.source === sourceFilter);
+  }, [baseData, sourceFilter]);
 
   // Each category pill leads with a real layout from the scraped results, so the
   // pill is recognisable by the base art rather than a generic glyph, and carries
@@ -256,15 +269,6 @@ export default function BaseLibraryScreen() {
 
   const isSaved = (detailUrl: string) => savedBases.some((b) => b.url === detailUrl);
 
-  const handleFavorite = async (detailUrl: string) => {
-    const isFav = baseFavorites.has(detailUrl);
-    const newFavs = new Set(baseFavorites);
-    if (isFav) newFavs.delete(detailUrl);
-    else newFavs.add(detailUrl);
-    setBaseFavorites(newFavs);
-    await toggleFavorite(detailUrl);
-  };
-
   const handleSave = async (base: ScrapedBase) => {
     const newBase: SavedBase = {
       id: base.detail_url,
@@ -290,8 +294,9 @@ export default function BaseLibraryScreen() {
   const handleShare = async (base: ScrapedBase) => {
     try {
       const category = CATEGORY_MAP[base.type] || base.type;
+      const sourceName = base.source === 'clash-bases' ? 'Clash Bases' : 'ClashLy';
       await Share.share({
-        message: `${base.title} · ${category} ${base.village === 'builder' ? 'BH' : 'TH'}${base.th_level} base layout from ClashLy\n${base.detail_url}`,
+        message: `${base.title} · ${category} ${base.village === 'builder' ? 'BH' : 'TH'}${base.th_level} base layout from ${sourceName}\n${base.detail_url}`,
         title: base.title,
       });
     } catch {
@@ -299,9 +304,10 @@ export default function BaseLibraryScreen() {
     }
   };
 
-  const [prevResetCat, setPrevResetCat] = useState(activeCategory);
-  if (prevResetCat !== activeCategory) {
-    setPrevResetCat(activeCategory);
+  const [prevResetKey, setPrevResetKey] = useState(`${activeCategory}|${sourceFilter}`);
+  const resetKey = `${activeCategory}|${sourceFilter}`;
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     setDisplayCount(PAGE_SIZE);
   }
 
@@ -363,67 +369,53 @@ export default function BaseLibraryScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
-          {loading ? null : <Text style={styles.subtitle}>{hallLabel}{hallLevel} layouts from ClashLy</Text>}
+          {loading ? null : (
+            <Text style={styles.subtitle}>
+              {selectedVillage === 'home'
+                ? `${hallLabel}${hallLevel} layouts · ${
+                    sourceFilter === 'both'
+                      ? 'ClashLy + Clash Bases'
+                      : sourceFilter === 'clashly'
+                        ? 'from ClashLy'
+                        : 'from Clash Bases'
+                  }`
+                : `${hallLabel}${hallLevel} layouts from ClashLy`}
+            </Text>
+          )}
         </View>
         <PressableRipple onPress={fetchBases} hitSlop={12} style={styles.refreshBtn}>
           <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
         </PressableRipple>
       </View>
 
-      {/* Village toggle: same compact hall pills as the Time to Max and Army tabs,
-          rather than a full-width two-line filter row. */}
-      {showBuilderBase && (
-        <View style={styles.villageToggleWrap}>
-          <View style={styles.villageToggle}>
-            <PressableRipple
-              onPress={() => setSelectedVillage('home')}
-              style={[
-                styles.villageToggleItem,
-                segCornerStyle(0, 2),
-                selectedVillage === 'home' && styles.villageToggleActive,
+      {/* Village + source switches: the same compact hall pills as the Time to
+          Max and Army tabs. The source filter only applies to Home Village
+          (Builder Base is ClashLy-only), so it sits under the village switch
+          only there. */}
+      {!loading && (
+        <View style={styles.switchesWrap}>
+          {showBuilderBase && (
+            <SegmentedSwitch
+              options={[
+                { key: 'home', image: thHallImage, icon: 'home-outline', label: `TH${thLevel}` },
+                { key: 'builder', image: bhHallImage, icon: 'hammer-outline', label: `BH${bhLevel}` },
               ]}
-            >
-              {thHallImage ? (
-                <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-              ) : (
-                <Ionicons
-                  name="home-outline"
-                  size={13}
-                  color={selectedVillage === 'home' ? Colors.bg : Colors.textSecondary}
-                />
-              )}
-              <Text style={[styles.villageToggleText, selectedVillage === 'home' && styles.villageToggleTextActive]}>
-                {`TH${thLevel}`}
-              </Text>
-            </PressableRipple>
-            <PressableRipple
-              onPress={() => setSelectedVillage('builder')}
-              style={[
-                styles.villageToggleItem,
-                segCornerStyle(1, 2),
-                selectedVillage === 'builder' && styles.villageToggleActive,
-              ]}
-            >
-              {bhHallImage ? (
-                <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-              ) : (
-                <Ionicons
-                  name="hammer-outline"
-                  size={13}
-                  color={selectedVillage === 'builder' ? Colors.bg : Colors.textSecondary}
-                />
-              )}
-              <Text style={[styles.villageToggleText, selectedVillage === 'builder' && styles.villageToggleTextActive]}>
-                {`BH${bhLevel}`}
-              </Text>
-            </PressableRipple>
-          </View>
+              value={selectedVillage}
+              onChange={(v) => setSelectedVillage(v)}
+            />
+          )}
+          {selectedVillage === 'home' && (
+            <SegmentedSwitch
+              options={SOURCE_OPTIONS}
+              value={sourceFilter}
+              onChange={changeSourceFilter}
+            />
+          )}
         </View>
       )}
 
       {/* Category filter */}
       <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Category</Text>
         <View style={styles.pillRow}>
           {loading ? (
             // The counts come from the scrape, so until it lands every pill would
@@ -535,7 +527,6 @@ export default function BaseLibraryScreen() {
                     <Text style={styles.yearCount}> · {section.bases.length}</Text>
                   </Text>
                   {section.bases.map((scrapedBase) => {
-                    const isFav = baseFavorites.has(scrapedBase.detail_url);
                     const isSavedBase = isSaved(scrapedBase.detail_url);
                     return (
                       <BaseCard
@@ -550,10 +541,11 @@ export default function BaseLibraryScreen() {
                         downloads={scrapedBase.votes}
                         year={scrapedBase.year}
                         updated={scrapedBase.updated}
-                        hasLink={scrapedBase.has_link}
-                        isFavorite={isFav}
+                        description={scrapedBase.description}
+                        builder={scrapedBase.builder}
+                        source={scrapedBase.source}
                         isSaved={isSavedBase}
-                        onFavorite={() => handleFavorite(scrapedBase.detail_url)}
+                        hasLink={scrapedBase.has_link}
                         onCopy={() => handleCopy(scrapedBase)}
                         onSave={() => handleSave(scrapedBase)}
                         onShare={() => handleShare(scrapedBase)}
@@ -570,8 +562,15 @@ export default function BaseLibraryScreen() {
                   <View key={i} style={{ borderRadius: Radius.lg, borderWidth: 0.75, borderColor: colors.border, backgroundColor: colors.bgCard, overflow: 'hidden' }}>
                     <View style={{ width: '100%', aspectRatio: 1.6, backgroundColor: colors.bgSubtle }} />
                     <View style={{ padding: Spacing.base, gap: Spacing.sm }}>
-                      <Skeleton width="60%" height={16} borderRadius={4} />
-                      <Skeleton width="100%" height={38} borderRadius={8} />
+                      <View>
+                        <Skeleton width="60%" height={16} borderRadius={4} />
+                        <Skeleton width={54} height={9} borderRadius={4} style={{ marginTop: 4 }} />
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+                        <Skeleton width={60} height={44} borderRadius={Radius.md} />
+                        <Skeleton style={{ flex: 1 }} height={44} borderRadius={Radius.md} />
+                        <Skeleton width={60} height={44} borderRadius={Radius.md} />
+                      </View>
                     </View>
                   </View>
                 ))}
@@ -672,55 +671,16 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '500',
   },
+  switchesWrap: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
+  },
   filterSection: {
     paddingHorizontal: Spacing.base,
     paddingBottom: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  filterLabel: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-    paddingHorizontal: Spacing.xs,
-  },
-  villageToggleWrap: {
-    alignSelf: 'center',
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  villageToggle: {
-    flexDirection: 'row',
-    gap: 4,
-    padding: 3,
-    borderRadius: Radius.xl * 1.25,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  villageToggleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-  },
-  villageToggleActive: {
-    backgroundColor: Colors.textPrimary,
-  },
-  villageToggleImg: {
-    width: 16,
-    height: 16,
-  },
-  villageToggleText: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  villageToggleTextActive: {
-    color: Colors.bg,
   },
   pillRow: {
     gap: Spacing.xs,
