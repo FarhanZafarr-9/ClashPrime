@@ -7,6 +7,7 @@ import { SectionHeader } from '../../src/components/SectionHeader';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
 import PressableRipple from '../../src/components/PressableRipple';
+import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
@@ -133,24 +134,6 @@ function resourceLabel(resource: string): string {
   return RESOURCE_META[resource as CostResource]?.label
     ?? BUILDING_RESOURCE_META[resource as BuildingCostResource]?.label
     ?? resource;
-}
-
-/**
- * Outer corners of the Home / Builder Base switch, so the two segments read as
- * one segmented control. Only the two ends are outer, matching the Buildings tab.
- */
-function segCornerStyle(index: number, total: number) {
-  const outer = Radius.xl * 1.25;
-  return {
-    ...(index === 0 && {
-      borderTopLeftRadius: outer,
-      borderBottomLeftRadius: outer,
-    }),
-    ...(index === total - 1 && {
-      borderTopRightRadius: outer,
-      borderBottomRightRadius: outer,
-    }),
-  };
 }
 
 /** Levels still to buy across rows, so exclusions are counted in levels rather than items. */
@@ -414,22 +397,14 @@ export default function MaxTimeScreen() {
   const shareCardWidth = useShareCardWidth();
 
   const shareVillageToggle = (
-    <View style={styles.villageToggle}>
-      <PressableRipple
-        style={[styles.villageToggleItem, segCornerStyle(0, 2), shareVillage === 'home' && styles.villageToggleActive]}
-        onPress={() => setShareVillage('home')}
-      >
-        <Ionicons name="home-outline" size={13} color={shareVillage === 'home' ? Colors.bg : Colors.textSecondary} />
-        <Text style={[styles.villageToggleText, shareVillage === 'home' && styles.villageToggleTextActive]}>Home</Text>
-      </PressableRipple>
-      <PressableRipple
-        style={[styles.villageToggleItem, segCornerStyle(1, 2), shareVillage === 'builder' && styles.villageToggleActive]}
-        onPress={() => setShareVillage('builder')}
-      >
-        <Ionicons name="hammer-outline" size={13} color={shareVillage === 'builder' ? Colors.bg : Colors.textSecondary} />
-        <Text style={[styles.villageToggleText, shareVillage === 'builder' && styles.villageToggleTextActive]}>Builder Base</Text>
-      </PressableRipple>
-    </View>
+    <SegmentedSwitch
+      options={[
+        { key: 'home', icon: 'home-outline', label: 'Home' },
+        { key: 'builder', icon: 'hammer-outline', label: 'Builder Base' },
+      ]}
+      value={shareVillage}
+      onChange={setShareVillage}
+    />
   );
 
   const nextResult = useMemo(() => {
@@ -939,52 +914,15 @@ export default function MaxTimeScreen() {
         </View>
 
         {showBB && (
-          <View style={styles.villageToggleWrap}>
-            <View style={styles.villageToggle}>
-              <PressableRipple
-                style={[
-                  styles.villageToggleItem,
-                  segCornerStyle(0, 2),
-                  !isBB && styles.villageToggleActive,
-                ]}
-                onPress={() => setVillage('home')}
-              >
-                {thHallImage ? (
-                  <Image source={thHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-                ) : (
-                  <Ionicons
-                    name="home-outline"
-                    size={13}
-                    color={!isBB ? Colors.bg : Colors.textSecondary}
-                  />
-                )}
-                <Text style={[styles.villageToggleText, !isBB && styles.villageToggleTextActive]}>
-                  {`TH${th}`}
-                </Text>
-              </PressableRipple>
-              <PressableRipple
-                style={[
-                  styles.villageToggleItem,
-                  segCornerStyle(1, 2),
-                  isBB && styles.villageToggleActive,
-                ]}
-                onPress={() => setVillage('builder')}
-              >
-                {bhHallImage ? (
-                  <Image source={bhHallImage} style={styles.villageToggleImg} resizeMode="contain" />
-                ) : (
-                  <Ionicons
-                    name="hammer-outline"
-                    size={13}
-                    color={isBB ? Colors.bg : Colors.textSecondary}
-                  />
-                )}
-                <Text style={[styles.villageToggleText, isBB && styles.villageToggleTextActive]}>
-                  {`BH${bh}`}
-                </Text>
-              </PressableRipple>
-            </View>
-          </View>
+          <SegmentedSwitch
+            style={styles.villageToggleWrap}
+            options={[
+              { key: 'home', image: thHallImage, icon: 'home-outline', label: `TH${th}` },
+              { key: 'builder', image: bhHallImage, icon: 'hammer-outline', label: `BH${bh}` },
+            ]}
+            value={village}
+            onChange={setVillage}
+          />
         )}
 
         {!isBB && (
@@ -1398,38 +1336,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: Spacing.xs,
     marginBottom: Spacing.lg,
-  },
-  villageToggle: {
-    flexDirection: 'row',
-    gap: 4,
-    padding: 3,
-    borderRadius: Radius.xl * 1.25,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  villageToggleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-  },
-  villageToggleImg: {
-    width: 16,
-    height: 16,
-  },
-  villageToggleActive: {
-    backgroundColor: Colors.textPrimary,
-  },
-  villageToggleText: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  villageToggleTextActive: {
-    color: Colors.bg,
   },
   shareActions: {
     flexDirection: 'row',
