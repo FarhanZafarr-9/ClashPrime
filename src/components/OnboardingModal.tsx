@@ -3,17 +3,16 @@ import {
   View,
   Text,
   TextInput,
-  Modal,
-  KeyboardAvoidingView,
   Image,
-  Platform,
   StyleSheet,
+  type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from './PressableRipple';
+import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 import { getTownHallImageSource } from '../utils/buildingImages';
-import { getMaxTownHall } from '../utils/buildingData';
+import { getMaxTownHall, getBuildingMaxLevelAtTH, getBuildingItemImage } from '../utils/buildingData';
 import type { CocImportResult } from '../utils/cocExport';
 import { getStringAsync } from 'expo-clipboard';
 import { getApiToken } from '../hooks/usePlayer';
@@ -88,6 +87,25 @@ export default function OnboardingModal({
 
   const currentTh = onboardingPlayer?.townHallLevel || getMaxTownHall();
   const thOptions = Array.from({ length: currentTh - 1 }, (_, i) => i + 2);
+  const builderHutIcon =
+    getBuildingItemImage('Builder Hut', getBuildingMaxLevelAtTH('Builder Hut', currentTh) ?? 1) ??
+    require('../../assets/images/chiefs-journey/icon.png');
+
+  const STEP_HEADER: Record<
+    'tag' | 'import' | 'importToken' | 'profile' | 'builderCount' | 'thPicker',
+    { title: string; subtitle?: string; icon?: keyof typeof Ionicons.glyphMap; iconSource?: ImageSourcePropType }
+  > = {
+    tag: { title: 'Add Account', subtitle: "Enter your player tag. We'll fetch the profile for you.", icon: 'person-add-outline' },
+    import: { title: 'Import JSON Export', subtitle: 'Paste your Coc JSON Export for compelete buildings data.', icon: 'document-text-outline' },
+    importToken: { title: 'API Token', subtitle: 'Enter your CoC API token to complete the import.', icon: 'key-outline' },
+    profile: { title: 'Confirm Profile', subtitle: 'Does this look like your account?', icon: 'person-outline' },
+    builderCount: { title: 'Builder Count', subtitle: 'How many builders do you have in Home Village?', iconSource: builderHutIcon },
+    thPicker: {
+      title: 'Last Maxed Town Hall',
+      subtitle: 'Pick the last Town Hall you fully/partially maxed. This sets base building levels.',
+      iconSource: require('../../assets/images/chiefs-journey/icon.png'),
+    },
+  };
 
   const handleTokenContinue = () => {
     const trimmed = tokenInput.trim();
@@ -125,34 +143,18 @@ export default function OnboardingModal({
     }
   };
 
-  const adjustBuilderCount = (delta: number) => {
-    const next = Math.min(6, Math.max(2, onboardingBuilderCount + delta));
-    setOnboardingBuilderCount(next);
-  };
-
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      statusBarTranslucent
+      onClose={onClose}
+      maxHeight="92%"
+      title={STEP_HEADER[step].title}
+      subtitle={STEP_HEADER[step].subtitle}
+      icon={STEP_HEADER[step].icon}
+      iconSource={STEP_HEADER[step].iconSource}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.overlay}
-      >
         {step === 'tag' && (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.icon}>
-                <Ionicons name="person-add-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.title}>Add Account</Text>
-                <Text style={styles.desc}>{"Enter your player tag. We'll fetch the profile for you."}</Text>
-              </View>
-            </View>
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>Player Tag</Text>
               <TextInput
@@ -191,15 +193,6 @@ export default function OnboardingModal({
 
         {step === 'import' && (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.icon}>
-                <Ionicons name="document-text-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.title}>Import JSON Export</Text>
-                <Text style={styles.desc}>Paste your Coc JSON Export for compelete buildings data.</Text>
-              </View>
-            </View>
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>Paste JSON Export</Text>
               <TextInput
@@ -262,15 +255,6 @@ export default function OnboardingModal({
 
         {step === 'importToken' && (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.icon}>
-                <Ionicons name="key-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.title}>API Token</Text>
-                <Text style={styles.desc}>Enter your CoC API token to complete the import.</Text>
-              </View>
-            </View>
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>API Token</Text>
               <View style={styles.inputRow}>
@@ -282,6 +266,7 @@ export default function OnboardingModal({
                   placeholderTextColor={Colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  secureTextEntry
                 />
                 <PressableRipple style={styles.inputIcon} onPress={handleTokenPaste} hitSlop={8}>
                   <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
@@ -305,15 +290,6 @@ export default function OnboardingModal({
 
         {step === 'profile' && onboardingPlayer && (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.icon}>
-                <Ionicons name="person-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.title}>Confirm Profile</Text>
-                <Text style={styles.desc}>Does this look like your account?</Text>
-              </View>
-            </View>
             <View style={styles.profileCard}>
               <View style={styles.profileCardRow}>
                 <View style={styles.profileCardIconWrap}>
@@ -360,23 +336,29 @@ export default function OnboardingModal({
 
         {step === 'builderCount' && onboardingPlayer && (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.icon}>
-                <Ionicons name="hammer-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.title}>Builder Count</Text>
-                <Text style={styles.desc}>How many builders do you have in Home Village?</Text>
-              </View>
-            </View>
-            <View style={styles.builderCountRow}>
-              <PressableRipple style={styles.builderCountBtn} onPress={() => adjustBuilderCount(-1)}>
-                <Ionicons name="remove" size={18} color={Colors.textPrimary} />
-              </PressableRipple>
-              <Text style={styles.builderCountValue}>{onboardingBuilderCount}</Text>
-              <PressableRipple style={styles.builderCountBtn} onPress={() => adjustBuilderCount(1)}>
-                <Ionicons name="add" size={18} color={Colors.textPrimary} />
-              </PressableRipple>
+            <View style={styles.thGrid}>
+              {[2, 3, 4, 5].map((n, index, arr) => {
+                const isSelected = onboardingBuilderCount === n;
+                return (
+                  <PressableRipple
+                    key={n}
+                    style={[
+                      styles.thCell,
+                      isSelected && styles.thCellSelected,
+                      index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                      index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
+                      ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && arr.length % 2 === 1) ) && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                      index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+                    ]}
+                    onPress={() => setOnboardingBuilderCount(n)}
+                  >
+                    <Image source={builderHutIcon} style={styles.thImg} resizeMode="contain" />
+                    <Text style={[styles.thText, isSelected && styles.thTextSelected]}>
+                      {String(n)}
+                    </Text>
+                  </PressableRipple>
+                );
+              })}
             </View>
             <View style={styles.actions}>
               <PressableRipple style={[styles.btn, styles.btnGhost]} onPress={() => setStep('profile')}>
@@ -391,15 +373,6 @@ export default function OnboardingModal({
 
         {step === 'thPicker' && onboardingPlayer && (
           <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.icon}>
-                <Ionicons name="hammer-outline" size={24} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.title}>Last Maxed Town Hall</Text>
-                <Text style={styles.desc}>{"Pick the last Town Hall you fully/partially maxed. This sets base building levels."}</Text>
-              </View>
-            </View>
             <View style={styles.thGrid}>
               {thOptions.map((th, index, arr) => {
                 const isSelected = onboardingThLevel === String(th);
@@ -411,7 +384,7 @@ export default function OnboardingModal({
                       isSelected && styles.thCellSelected,
                       index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
                       index === 1 && { borderTopRightRadius: Radius.xl * 1.25 },
-                      index === arr.length - 2 && index % 2 === 0 && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                      ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && arr.length % 2 === 1) ) && { borderBottomLeftRadius: Radius.xl * 1.25 },
                       index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
                     ]}
                     onPress={() => setOnboardingThLevel(String(th))}
@@ -435,54 +408,13 @@ export default function OnboardingModal({
             </View>
           </View>
         )}
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
   card: {
-    alignSelf: 'stretch',
-    marginHorizontal: 20,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    padding: Spacing.xl,
     gap: Spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-  },
-  desc: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    lineHeight: 16,
   },
   inputGroup: {
     width: '100%',
@@ -644,27 +576,6 @@ const styles = StyleSheet.create({
     color: Colors.destructive,
     marginTop: Spacing.sm,
   },
-  builderCountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    justifyContent: 'center',
-  },
-  builderCountBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  builderCountValue: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    minWidth: 24,
-    textAlign: 'center',
-  },
   thGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -685,8 +596,6 @@ const styles = StyleSheet.create({
   },
   thCellSelected: {
     backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
-    borderWidth: 2,
   },
   thImg: {
     width: 32,
