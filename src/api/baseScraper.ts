@@ -1,6 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ScrapedBase, ScrapeResult, Village } from '../types/bases';
+import { getClashBasesForTH, layoutPayload, type ClashBasesEntry } from './clashBases';
 
+/**
+ * Base Library data layer. Home Village snapshots merge two independent
+ * catalogues — ClashLy's live API (popularity metrics, Builder Base coverage is
+ * ClashLy-only) and the static clash-bases catalogue (names, descriptions,
+ * builder credits, tags) — deduplicated by OpenLayout payload. Snapshots are
+ * cached per village/hall, so the merge runs at most once per TTL.
+ */
 const CLASHLY_API = 'https://api.clashly.app';
 const CLASHLY_APP_ID = '923673396b6e8649e9ed06ea63a3828f';
 // Snapshots are trusted for three days. Anything older is still painted first (so
@@ -154,12 +162,135 @@ function layoutToBase(layout: ClashLyLayout, level: number, village: Village): S
     updated: false,
     rating_out_of_5: 0,
     views: layout.downloadCount,
-    views_raw: formatNumber(layout.downloadCount),
-    tags: [mapBaseTag(layout.baseTag)],
+    views_raw: layout.downloadCount > 0 ? formatNumber(layout.downloadCount) : '',
+    tags: withoutCategoryTag([mapBaseTag(layout.baseTag)], layout.baseTag),
     votes: layout.votes,
     hotScore: layout.hotScore,
     recentDownloads: layout.recentDownloads,
+    source: 'clashly',
   };
+}
+
+/** clash-bases type labels lowercased into the tags the Bases tab groups by. */
+const CLASH_BASES_TYPE_MAP: Record<string, string> = {
+  War: 'war',
+  Trophy: 'trophy',
+  Farm: 'farming',
+  Hybrid: 'hybrid',
+  Progress: 'progress',
+  Fun: 'funny',
+  'Home Village': 'general',
+};
+
+/** Display label per stored type — the shapes CATEGORY_MAP in bases.tsx maps onto. */
+const TYPE_LABELS: Record<string, string> = {
+  war: 'War',
+  trophy: 'Trophy',
+  farming: 'Farming',
+  hybrid: 'Hybrid',
+  cwl: 'CWL',
+  funny: 'Funny',
+  builder: 'Builder',
+  progress: 'Progress',
+  general: 'Home Village',
+};
+
+/**
+ * Drops tags that merely restate the base's own category — inside the War pill
+ * a "war" chip on every card says nothing. Signal tags stay: cross-category
+ * tags ("war" on a Hybrid base), style tags (anti-3-star, fwa) and everything
+ * else the catalogue thought worth recording.
+ */
+function withoutCategoryTag(tags: string[], type: string): string[] {
+  const label = (TYPE_LABELS[type] ?? type).toLowerCase();
+  return tags.filter((t) => {
+    const low = t.toLowerCase();
+    return low !== type && low !== label;
+  });
+}
+
+function clashBasesEntryToBase(entry: ClashBasesEntry, level: number): ScrapedBase {
+  const addedYear = entry.added ? new Date(entry.added).getFullYear() : NaN;
+  const type = CLASH_BASES_TYPE_MAP[entry.type] ?? 'general';
+  return {
+    id: `clash-bases-${entry.id}`,
+    type,
+    th_level: level,
+    village: 'home',
+    title: entry.name,
+    detail_url: entry.link,
+    preview_image_url: entry.image,
+    full_image_url: entry.image,
+    game_copy_link: entry.link,
+    has_link: true,
+    year: Number.isNaN(addedYear) ? null : addedYear,
+    updated: false,
+    rating_out_of_5: 0,
+    views: 0,
+    views_raw: '',
+    tags: withoutCategoryTag(entry.tags ?? [], type),
+    source: 'clash-bases',
+    description: entry.description || null,
+    builder: entry.builder || null,
+  };
+}
+
+/**
+ * Merges the clash-bases catalogue into the ClashLy results for one Home Village
+ * hall. The two sources are independent (clash-bases mirrors cocbases.com,
+ * basemelon.com and blueprintcoc.com, not ClashLy), so overlap is small but real:
+ * when the same layout appears in both — identical OpenLayout payload — the
+ * ClashLy record is kept for its live download/vote metrics and enriched with
+ * the clash-bases presentation (name, description, builder credit, tags).
+ * Builder Base stays ClashLy-only; clash-bases has no BH coverage.
+ */
+async function mergeWithClashBases(
+  clashlyBases: ScrapedBase[],
+  level: number
+): Promise<ScrapedBase[]> {
+  let entries: ClashBasesEntry[];
+  try {
+    entries = await getClashBasesForTH(level);
+  } catch {
+    return clashlyBases;
+  }
+
+  const byPayload = new Map<string, ScrapedBase>();
+  const deduped: ScrapedBase[] = [];
+  for (const base of clashlyBases) {
+    const payload = layoutPayload(base.detail_url);
+    if (payload) {
+      // ClashLy itself re-lists the same layout occasionally (identical
+      // OpenLayout payload); the first occurrence is the highest-hotScore one
+      // thanks to the pagination order, so later dupes are dropped.
+      if (byPayload.has(payload)) continue;
+      byPayload.set(payload, base);
+    }
+    deduped.push(base);
+  }
+
+  const seen = new Set(byPayload.keys());
+  const merged = [...deduped];
+  for (const entry of entries) {
+    const payload = layoutPayload(entry.link);
+    const existing = payload ? byPayload.get(payload) : undefined;
+    if (existing) {
+      existing.title = entry.name;
+      existing.description = entry.description || null;
+      existing.builder = entry.builder || null;
+      existing.tags = withoutCategoryTag(
+        [...new Set([...(existing.tags ?? []), ...(entry.tags ?? [])])],
+        existing.type
+      );
+      continue;
+    }
+    if (payload) {
+      if (seen.has(payload)) continue;
+      seen.add(payload);
+    }
+    merged.push(clashBasesEntryToBase(entry, level));
+  }
+  return merged;
 }
 
 async function scrapeBases(
@@ -192,7 +323,9 @@ async function scrapeBases(
     else skip += limit;
   }
 
-  const bases = allLayouts.map((l) => layoutToBase(l, level, village));
+  const clashlyBases = allLayouts.map((l) => layoutToBase(l, level, village));
+  const bases =
+    village === 'home' ? await mergeWithClashBases(clashlyBases, level) : clashlyBases;
 
   const groups: Record<string, ScrapedBase[]> = {};
   for (const base of bases) {
@@ -240,4 +373,24 @@ export async function clearBaseCache(village?: Village, level?: number): Promise
     );
     await AsyncStorage.multiRemove(baseKeys);
   }
+}
+
+/** Which catalogues the Bases tab shows for Home Village. */
+export type BaseSourceFilter = 'both' | 'clashly' | 'clash-bases';
+
+const SOURCE_FILTER_KEY = 'bases_source_pref';
+
+export async function getStoredSourceFilter(): Promise<BaseSourceFilter> {
+  try {
+    const raw = await AsyncStorage.getItem(SOURCE_FILTER_KEY);
+    return raw === 'clashly' || raw === 'clash-bases' ? raw : 'both';
+  } catch {
+    return 'both';
+  }
+}
+
+export async function setStoredSourceFilter(filter: BaseSourceFilter): Promise<void> {
+  try {
+    await AsyncStorage.setItem(SOURCE_FILTER_KEY, filter);
+  } catch {}
 }
