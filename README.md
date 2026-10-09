@@ -16,7 +16,7 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 - **Buildings** — expandable cards showing all 80+ buildings with level model progression, stat tables (Home Village + Builder Base), and per-building discount toggles. Multi-copy buildings (Cannons, Walls, Traps, etc.) are grouped into collapsible sections with per-copy level tracking, aggregated remaining cost/time, and quick upgrade/downgrade controls. Includes a **Crafted Defenses** category (Crafting Station) with per-module steppers, effective-level sprites and cost-to-max, category pills two-per-row, and a village switch. Any **Remaining** total (single card, grouped section or Army sheet) can be **capped to a chosen level** by long-pressing a level row — the header turns gold with a one-tap clear
 - **Events** — upcoming in-game events with countdown timers and progress bars
 - **War** — live war tracking with per-member attack dots and defense shields, plus live Clan War League rounds (expandable per-member breakdowns, W/L/D per round) and a searchable war history split into regular wars and CWL
-- **Base Library** — browse TH-level base layouts from ClashLy, grouped by year and sorted by popularity, paginated with end-of-list feedback. Loads from the on-device snapshot first (3-day TTL) and refreshes in the background, so returning to the tab is instant
+- **Base Library** — browse Home Village and Builder Base layouts from two merged catalogues: ClashLy's live API (popularity metrics, ratings, Builder Base coverage) plus the static [clash-bases](https://github.com/nschmeller/clash-bases) catalogue (real base names, descriptions, builder credits, tags and Progress/Fun categories), deduplicated by official in-game layout link. A Both / ClashLy / Clash Bases source switch beneath the village selector browses either catalogue alone. Grouped by year and sorted by popularity, paginated with end-of-list feedback. Loads from the on-device snapshot first (3-day TTL) and refreshes in the background, so returning to the tab is instant
 - **Army Library** — community army compositions from ClashArmies with TH-level filtering, save/favorite, in-game copy, share card, and end-of-list feedback. Same cache-first loading as the Base Library
 - **Hero Journey** — the Chief's Journey rewards track from TH7 to TH18 (quests, ore, hero equipment, potions, books, runes and Majestic skins) as milestones grouped into collapsible Town Hall sections, with claimed badges, lock icons, owned-hero portraits in the section headers and a shortcut that flags the next milestone you can claim
 - **Discount System** — modal with per-scope (Buildings / Army) cost and time reduction sliders, preset pills, custom percentage input, and instant preview across all tabs
@@ -113,7 +113,7 @@ Uses the official Clash of Clans API via the [RoyaleAPI proxy](https://docs.roya
 | Data | Source | Method |
 |------|--------|--------|
 | Player data | CoC API | REST fetch (Bearer token) |
-| Base layouts | ClashLy API | REST fetch (Parse server), 3-day on-device snapshot |
+| Base layouts (Home & Builder Base) | ClashLy API + clash-bases | ClashLy: REST fetch (Parse server). clash-bases: static `bases.json` from GitHub raw, merged by layout payload. 3-day on-device snapshot |
 | Community armies | ClashArmies | Devalue-format REST fetch with 3-day snapshot |
 | Troop, hero, spell, pet, equipment & siege machine details (levels, costs, stats, images) | clash-of-clans-data (npm) | Bundled package data (canonical) |
 | Building images, levels, TH max, copy counts (Home & Builder Base) | clash-of-clans-data (npm) | Bundled package data (canonical) |
@@ -132,6 +132,7 @@ ClashPrime is an unofficial fan project. It gathers reference data and content f
 | Clash of Clans API | Player stats & progress | [developer.clashofclans.com](https://developer.clashofclans.com) |
 | RoyaleAPI proxy | Stable API access for dynamic-IP setups | [docs.royaleapi.com/proxy.html](https://docs.royaleapi.com/proxy.html) |
 | ClashLy | Base layout library & ratings | [clashly.com](https://clashly.com) |
+| clash-bases | Static base layout catalogue (names, tags, builder credits) | [github.com/nschmeller/clash-bases](https://github.com/nschmeller/clash-bases) |
 | ClashArmies | Community army compositions & sharing | [clasharmies.com](https://clasharmies.com) |
 | clash-of-clans-data (npm) | Troop/hero/spell/pet/equipment/siege machine & building data (levels, costs, stats, images) | [npmjs.com/package/clash-of-clans-data](https://www.npmjs.com/package/clash-of-clans-data) |
 | clash.ninja | In-game events & TH max level fallback | [clash.ninja](https://clash.ninja) |
@@ -170,7 +171,8 @@ ClashPrime/
 ├── src/
 │   ├── api/                # API clients and scrapers
 │   │   ├── clash.ts        # CoC API client
-│   │   ├── baseScraper.ts  # ClashLy API base layout fetcher (3-day snapshot)
+│   │   ├── baseScraper.ts  # Base layout fetcher: ClashLy + clash-bases merge (3-day snapshot)
+│   │   ├── clashBases.ts   # Static clash-bases catalogue fetcher (GitHub raw bases.json)
 │   │   ├── clashArmies.ts  # ClashArmies popular armies fetcher with devalue parser (3-day snapshot)
 │   │   ├── troopDetail.ts  # TroopDetail types (levels from package)
 │   │   ├── eventsScraper.ts# Events scraper
