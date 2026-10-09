@@ -34,13 +34,23 @@ export function BasesScreenSkeleton() {
               </View>
             </View>
 
-            {/* Content area */}
+            {/* Content area — mirrors the card: title with a trailing bookmark
+                action, then two dashed icon squares flanking the Apply bar. */}
             <View style={{ padding: Spacing.base, gap: Spacing.md }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Skeleton width="60%" height={16} borderRadius={4} />
-                <Skeleton width={20} height={20} borderRadius={10} />
+                <View style={{ flex: 1 }}>
+                  <Skeleton width="60%" height={16} borderRadius={4} />
+                  <Skeleton width={54} height={9} borderRadius={4} style={{ marginTop: 4 }} />
+                </View>
+                <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
+                  <Skeleton width={20} height={20} borderRadius={10} />
+                </View>
               </View>
-              <Skeleton width="100%" height={38} borderRadius={Radius.md} />
+              <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+                <Skeleton width={60} height={44} borderRadius={Radius.md} />
+                <Skeleton style={{ flex: 1 }} height={44} borderRadius={Radius.md} />
+                <Skeleton width={60} height={44} borderRadius={Radius.md} />
+              </View>
             </View>
           </View>
         ))}
@@ -437,7 +447,7 @@ export function ArmiesScreenSkeleton() {
       <View>
         {[0, 1, 2].map((i) => (
           <View key={i} style={[styles.armyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            {/* Top row: TH image + name/author + score */}
+            {/* Top row: TH image + name/author + score + bookmark */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
               <Skeleton width={36} height={36} borderRadius={4} />
               <View style={{ flex: 1 }}>
@@ -448,6 +458,7 @@ export function ArmiesScreenSkeleton() {
                 <Skeleton width={14} height={14} borderRadius={7} />
                 <Skeleton width={30} height={12} borderRadius={4} />
               </View>
+              <Skeleton width={18} height={18} borderRadius={4} />
             </View>
             {/* Troops */}
             <View style={{ marginTop: Spacing.md }}>
@@ -535,15 +546,12 @@ export function ArmiesScreenSkeleton() {
                 </View>
               </View>
             </View>
-            {/* Actions row */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: Spacing.sm }}>
-              <View style={{ flex: 1 }} />
-              <Skeleton width={18} height={18} borderRadius={4} />
-              <Skeleton width={18} height={18} borderRadius={4} />
-              <Skeleton width={18} height={18} borderRadius={4} />
+            {/* Footer: share-card image + Copy Army + share */}
+            <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: Spacing.sm }}>
+              <Skeleton width={60} height={38} borderRadius={6} />
+              <Skeleton style={{ flex: 1 }} height={38} borderRadius={6} />
+              <Skeleton width={60} height={38} borderRadius={6} />
             </View>
-            {/* Copy Army button */}
-            <Skeleton width="100%" height={38} borderRadius={6} style={{ marginTop: Spacing.md }} />
           </View>
         ))}
       </View>
