@@ -8,152 +8,170 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 
 ## Screenshots
 
-A quick tour, grouped by feature — expand a section to see its screens.
-
-<details>
-<summary><b>Home Dashboard</b></summary>
+A quick tour of ClashPrime. Expand a section to see its screens with what each one does.
 
 <p align="center">
-  <img src="screenshots/Home.png" width="240" alt="Home dashboard" />
+  <img src="screenshots/Home.png" width="165" alt="Home dashboard" />
+  <img src="screenshots/Time%20to%20Max.png" width="165" alt="Time to Max" />
+  <img src="screenshots/Army.png" width="165" alt="Army" />
+  <img src="screenshots/Base%20Library.png" width="165" alt="Base Library" />
+  <img src="screenshots/Giant%20Arrow.png" width="165" alt="Giant Arrow" />
 </p>
+
+<details open>
+<summary><b>Track your progress</b> · Home, Time to Max, Import, Multi-Account</summary>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Home.png" width="150" align="left" alt="Home dashboard" />
+<b>Home Dashboard</b><br/>
+Your village at a glance: progress cards, league details, quick stats and quick actions.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/Time%20to%20Max.png" width="150" align="left" alt="Time to Max" />
+<b>Time to Max</b><br/>
+Lab, Builders, Pets and Equipment pipelines side by side, with a headline time to max and a rush-to-TH+1 comparison.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Import.png" width="150" align="left" alt="Import building levels" />
+<b>Import / Export</b><br/>
+Paste a CoC JSON export to set levels for Home Village and Builder Base, and see only the upgrades that are left.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/Account%20Switcher.png" width="150" align="left" alt="Account switcher" />
+<b>Multi-Account</b><br/>
+Switch between player tags. Each account keeps its own levels, builders, saved bases and last-synced time.
+</td>
+</tr>
+</table>
 
 </details>
 
 <details>
-<summary><b>Time to Max</b></summary>
+<summary><b>Army and Buildings</b> · Army, Heroes, Buildings</summary>
 
-<p align="center">
-  <img src="screenshots/Time%20to%20Max.png" width="240" alt="Time to Max" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Import / Export</b></summary>
-
-<p align="center">
-  <img src="screenshots/Import.png" width="240" alt="Import building levels" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Multi-Account</b></summary>
-
-<p align="center">
-  <img src="screenshots/Account%20Switcher.png" width="240" alt="Account switcher" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Army</b></summary>
-
-<p align="center">
-  <img src="screenshots/Army.png" width="240" alt="Army" />
-  <img src="screenshots/Army%20Heroes.png" width="240" alt="Army heroes" />
-</p>
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Army.png" width="150" align="left" alt="Army" />
+<b>Army</b><br/>
+Troops, heroes, spells, pets and equipment with level tables, discount-aware cost and time, and a Home / Builder Base switch.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/Army%20Heroes.png" width="150" align="left" alt="Army heroes" />
+<b>Hero detail</b><br/>
+Level stats, remaining cost and time for every hero level, folded to your current level so long tables stay readable.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Buildings.png" width="150" align="left" alt="Buildings" />
+<b>Buildings</b><br/>
+80+ buildings with level progression, grouped multi-copy sections, per-building discounts and Crafted Defenses.
+</td>
+<td width="50%" valign="top"></td>
+</tr>
+</table>
 
 </details>
 
 <details>
-<summary><b>Buildings</b></summary>
+<summary><b>Live in-game</b> · Events, War</summary>
 
-<p align="center">
-  <img src="screenshots/Buildings.png" width="240" alt="Buildings" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Events</b></summary>
-
-<p align="center">
-  <img src="screenshots/Events.png" width="240" alt="Events" />
-</p>
-
-</details>
-
-<details>
-<summary><b>War</b></summary>
-
-<p align="center">
-  <img src="screenshots/War.png" width="240" alt="War" />
-</p>
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Events.png" width="150" align="left" alt="Events" />
+<b>Events</b><br/>
+Upcoming in-game events with countdown timers and progress bars.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/War.png" width="150" align="left" alt="War" />
+<b>War</b><br/>
+Live war tracking with attack dots and defense shields, Clan War League rounds and a searchable war history.
+</td>
+</tr>
+</table>
 
 </details>
 
 <details>
-<summary><b>Base Library</b></summary>
+<summary><b>Libraries</b> · Base Library, Army Library</summary>
 
-<p align="center">
-  <img src="screenshots/Base%20Library.png" width="240" alt="Base Library" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Army Library</b></summary>
-
-<p align="center">
-  <img src="screenshots/Army%20Library.png" width="240" alt="Army Library" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Hero Journey</b></summary>
-
-<p align="center">
-  <img src="screenshots/Hero%20Journey.png" width="240" alt="Hero Journey" />
-</p>
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Base%20Library.png" width="150" align="left" alt="Base Library" />
+<b>Base Library</b><br/>
+Browse Home Village and Builder Base layouts from ClashLy and clash-bases, grouped by year and sorted by popularity.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/Army%20Library.png" width="150" align="left" alt="Army Library" />
+<b>Army Library</b><br/>
+Community armies from ClashArmies with TH filtering, favorites, in-game copy and share cards.
+</td>
+</tr>
+</table>
 
 </details>
 
 <details>
-<summary><b>Zapquaker</b></summary>
+<summary><b>Planners and tools</b> · Hero Journey, 6th Builder, Zapquaker, Giant Arrow</summary>
 
-<p align="center">
-  <img src="screenshots/Zapquaker.png" width="240" alt="Zapquaker" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Giant Arrow</b></summary>
-
-<p align="center">
-  <img src="screenshots/Giant%20Arrow.png" width="240" alt="Giant Arrow" />
-</p>
-
-</details>
-
-<details>
-<summary><b>6th Builder (B.O.B.)</b></summary>
-
-<p align="center">
-  <img src="screenshots/6th%20Builder.png" width="240" alt="6th Builder (B.O.B.)" />
-</p>
-
-</details>
-
-<details>
-<summary><b>Settings</b></summary>
-
-<p align="center">
-  <img src="screenshots/Settings.png" width="240" alt="Settings" />
-</p>
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Hero%20Journey.png" width="150" align="left" alt="Hero Journey" />
+<b>Hero Journey</b><br/>
+The Chief's Journey rewards track from TH7 to TH18, with claimed badges and a shortcut to your next claimable milestone.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/6th%20Builder.png" width="150" align="left" alt="6th Builder (B.O.B.)" />
+<b>6th Builder (B.O.B.)</b><br/>
+A resource-feasible schedule for all seven B.O.B. unlock requirements, with ETAs and "what is blocking you" callouts.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Zapquaker.png" width="150" align="left" alt="Zapquaker" />
+<b>Zapquaker</b><br/>
+Per-building Zap + Quake combo calculator, with Fireball and Giant Arrow equipment in the mix and the cheapest kill combos suggested.
+</td>
+<td width="50%" valign="top">
+<img src="screenshots/Giant%20Arrow.png" width="150" align="left" alt="Giant Arrow" />
+<b>Giant Arrow</b><br/>
+Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PNG. Rocket Backpack mode included.
+</td>
+</tr>
+</table>
 
 </details>
 
 <details>
-<summary><b>Onboarding</b></summary>
+<summary><b>Settings and first run</b> · Settings, Onboarding</summary>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="screenshots/Settings.png" width="150" align="left" alt="Settings" />
+<b>Settings</b><br/>
+API token, dark mode, discounts, account management, a Show Global Levels toggle and a What's New changelog.
+</td>
+<td width="50%" valign="top">
+<b>Onboarding</b><br/>
+A guided first run: confirm your profile, pick your Town Hall, and see every data source on the Data &amp; Credits slide before entering the app.
+</td>
+</tr>
+</table>
 
 <p align="center">
-  <img src="screenshots/Welcome.png" width="240" alt="Onboarding welcome" />
-  <img src="screenshots/Profile.png" width="240" alt="Onboarding profile confirmation" /><br/>
-  <img src="screenshots/Town%20Hall.png" width="240" alt="Onboarding Town Hall picker" />
-  <img src="screenshots/Data%20&amp;%20Credits.png" width="240" alt="Onboarding Data & Credits" />
+  <img src="screenshots/Welcome.png" width="165" alt="Onboarding welcome" />
+  <img src="screenshots/Profile.png" width="165" alt="Onboarding profile confirmation" />
+  <img src="screenshots/Town%20Hall.png" width="165" alt="Onboarding Town Hall picker" />
+  <img src="screenshots/Data%20&amp;%20Credits.png" width="165" alt="Onboarding Data &amp; Credits" />
 </p>
 
 </details>
@@ -181,67 +199,6 @@ A quick tour, grouped by feature — expand a section to see its screens.
 - **Onboarding** — guided first-run flow with an image-based Town Hall picker, an Add Account (Full Setup) flow, masked token entry with per-step loading art, and a **Data & Credits** slide that lists every public source before entering the app
 - **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding, and an ongoing notification with an **Android-native per-second countdown** that keeps ticking even when the app is killed (zero battery) plus sound/vibration on finish
 - **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection
-
-## What's New (v6.5.0)
-
-- **Bottom-sheet dialogs everywhere** — every Settings dialog now slides up as a bottom sheet with its title, subtitle and icon in the shared sheet header: the player tag / API token edit sheet, the About, What's New, Privacy, Credits, Feedback and Developer content sheets, the account switcher, the discount modal and the onboarding modal.
-- **Show Global Levels** — a new **Settings → Appearance** toggle expands the Buildings and Army level tables to the game's full global max instead of stopping at your Town Hall. Display-only — progress, maxed badges and Remaining totals still count against your Town Hall.
-- **Shared village switch** — one shared component now drives the Home / Builder Base switch across Army, Buildings, Time to Max and Bases.
-- **Redesigned base and army cards** — base cards swap the duplicate heart for a single bookmark (favoriting stays in the Saved tab), group **Apply Layout** between a share-card image icon and a share icon, and hide tag chips that just restate the card's own category; army cards match, with the bookmark replacing the heart and flanking the **Copy Army** button.
-- **Onboarding polish** — every step shows loading art while work is in flight, the API token field is masked, the builder-hut picker lays out two per row, the Town Hall picker's **Next** button stays visible (disabled until you pick), and the flow ends on a **Data & Credits** slide listing every public source with tappable links and the Supercell notice.
-- **Smaller install** — packed package art is capped at 128px WebP, roughly 85% smaller footprint with no visible quality loss.
-
-## What's New (v6.3.0)
-
-- **Merged base catalogues** — the Base Library now merges ClashLy with the static [clash-bases](https://github.com/nschmeller/clash-bases) catalogue for Home Village layouts: real base names, descriptions, builder credits and tags where the catalogue has them, new **Progress** and **Fun** category pills, and duplicates across the two sources collapsed by their official in-game layout link. Builder Base stays on ClashLy.
-- **Source switch** — a **Both / ClashLy / Clash Bases** switch beside the village selector (Home Village only) browses either catalogue on its own.
-
-## What's New (v6.2.0)
-
-- **Share cards** — Home progress, Time to Max, base layouts and community armies all render a high-res PNG through one shared preview sheet, with capture, save and share from the card.
-- **Cache-first libraries** — Bases and Armies paint from their on-device snapshot the moment the tab opens, then refresh quietly behind it. The stored data is trusted for **3 days** and refetched early if it is older or holds fewer items than the list you have scrolled to; the refresh button still forces a fresh pull. Base thumbnails also fall back to their TH/BH label when a stored image fails, instead of shimmering forever.
-- **Seamless filter pills** — Bases, Armies, Hero Journey and Awards now share one 3-up pill block: real leading art per filter, a count subtitle under the label, and large rounding only on the outer corners of the grid.
-- **Hero Journey fixes and polish** — the flag and summary mark the next milestone you can actually claim (Lv101 at 100 cumulative levels, not the already-claimed Lv99), the All pill uses the Hero's Journey mark, quest/equipment/skin pills lead with the chest, Fireball and Majestic skin, section headers show centred hero portraits dimmed behind a lock badge for heroes you don't own, and the header flag/refresh buttons are squares.
-- **Spell stat tables** — real stats from package data, the placeholder Value column is gone, and each spell fact sits in a pill row with its own glyph and no repeated housing space.
-- **War tab** — war/CWL tab switcher, collapsible member sections, auto-refresh, and the attack plan visible during preparation with the target position badged.
-- **Buildings and Army** — Builder Base categories with Town Hall gating, redesigned category pills and village switch, redesigned Army chips, and unit/hero/spell/siege/pet/equipment icons on every army card.
-- **Home and Time to Max** — the account switcher is a seamless block, rushed/locked troops and spells use their in-game icons, and Time to Max gains a Builder Base section.
-- **Polish** — onboarding export guide step and chevron icons, a shared builder-count store so every screen stays in sync, account switching re-fetches the right player, tidied tab order, Clash font defaults to "All", and Android edge-to-edge with a hidden status bar.
-- **Crafted Defenses** — a new Buildings category for the Crafting Station's defenses. These have no single level: each **module** (Hitpoints, Damage, Seconds Active, …) upgrades on its own 1–10 ladder and the level shown is their **sum**. Cards expand into per-module steppers with next-level stats and cost, tiered sprites chosen by effective level, per-module max detection and a **Max all / reset**. The empty state tells you to import an export to populate it.
-- **Import: builder huts & crafted defenses** — pasted exports are now scanned for the Builder Hut count (shown in the summary and applied with a verified floor) and for Crafted Station defenses, previewed with sprites, effective levels and raw per-module levels — including defenses the package data doesn't know yet.
-- **Upgrade pivot** — long-press a level row in any fully expanded stats table (a building card, a grouped multi-copy section's aggregate, or an army item sheet) to cap the **Remaining** totals at that level instead of the max. The chosen row and range band tint gold, the Remaining header shows the span and a ✕ to clear.
-- **Account-aware builders** — Home and Builder Base builder counts are stored **per account** and keyed to the import baseline, so switching accounts no longer bleeds one village's builders into another's Time to Max.
-- **Account switcher** — every account row shows its own **"Synced hh:mm"**, and the Home header tagline no longer doubles as the session sync readout.
-- **Collapsible Settings** — the six Settings groups collapse into tappable headers with an icon, description and count badge, matching the Time to Max pipeline pattern.
-- **Shared ItemCard** — Home Quick Stats, Backlog and Active Timers, plus Buildings copy/section/level rows, all render through one card with action badges (edit, dismiss, checkmark), footers, plain label/value rows and a hideable level badge.
-- **Row-filling filter pills** — filter pills across Bases, Armies, Hero Journey and Awards size to fill their rows; Buildings and Army put pills two-per-row, and Army / Bases / Time to Max share a **Home ↔ Builder Base switch** built from hall-art pills.
-- **Time to Max** — strategic exclusions are edited in-place on pipeline rows (down to a single troop), gated pipelines report their excluded time/resources with a Restore action, the summary uses a headline tabular time and alloc-chip split, and the rush comparison uses rounded zebra tables with richer new-unlock rows (unlocking building/level + cost/time, and extra copies).
-- **Smaller fixes** — hero level tables fold to your current level ("N earlier levels hidden"), the Hero Journey summary card gets distinct inner surfaces, the Base library shows skeleton filter pills while loading instead of "0 bases", an "unused" war-stars asset required by the All-pill is restored, and preview builds get their own application id.
-
-## What's New (v6.1.0)
-
-- **Zapquaker tab** — pick buildings from game data and find the cheapest Lightning + Earthquake combo that kills them. Tune spell levels, spell capacity, toggle each spell On/Off, and opt into **Fireball (Warden)** or **Giant Arrow (Queen)** equipment with their own level steppers. Combo suggestions are curated per family — cheapest spell-slot kill, spell-only zapquake, and equipment-lean variants — with overkill %.
-- **Giant Arrow tab** — plan the Archer Queen skill on a base screenshot: place and drag start/end pins, choose a path color from a collapsible swatch row (blueprint-style white/black + bold saturated tones), and open a **fullscreen viewer** with draggable pins. Plans auto-save on device and restore on relaunch; **Share** exports a crisp 3x PNG snapshot.
-- **6th Builder tab** — a B.O.B. unlock planner driven by your player profile: requirement checklist with persisted gear-up toggles, a bb-builder / star-lab machine timeline with per-chain ETA and cost badges, storage-feasibility cascade that auto-inserts storage upgrades, Builder Hall gate chains, Clock Tower value, and "what is blocking you" callouts.
-- **Giant Arrow Rocket Backpack** — the Dragon Duke dash reuses the same canvas with a centre pivot, so the line always runs through the base center.
-- **Builder Base buildings** — their own categories in Buildings with Town Hall gating, and dedicated sprites for Builder Base troops.
-- **Credits** — data sources under Settings → Credits are tappable with links, RoyaleAPI + Zapquaker + Otaku Planner are credited as reference sites for the new tools, and a Supercell fan-content notice was added.
-
-## What's New (v6.0.0)
-
-- **Builder Base in Import** — JSON exports now parse Builder Base buildings; their upgrades are timed against their own builders (dedicated "Builder Base Builders" count, auto 2 at Builder Hall 6, max 3) with in-game resource icons on upgrade rows.
-- **Builder Base progress everywhere** — Builder Base troops and heroes are tracked in Progress Achieved, the army list shows builder hero max levels and Builder Base items at their Builder Hall, and progress snapshots include them.
-- **Smarter Import** — per-copy level tracking, "Upgrading now" with a treat-as-done toggle, one row per level variant, and re-pastes no longer re-propose already-applied upgrades.
-- **Hero Journey tab** — the full rewards track from TH7 to TH18 (quests, ore, hero equipment, potions, books, runes and Majestic skins) as milestones in collapsible Town Hall sections, capped to your own Town Hall with a skip-to-milestone shortcut.
-- **Bottom-sheet detail panels** — Army and Buildings details (including locked items) open in slide-up sheets with custom headers, condenseable level ranges, and reset-on-close.
-- **Time to Max** — exclude buildings you don't plan to max and a new Town Hall upgrade card in the rush comparison; new-unlock rows show item type and count.
-- **Polished dialogs** — restyled Progress Achieved (pictograms + in-game item icons) and account switcher (row-highlighted active account, full-width cards).
-- **Home timers** — edit a timer to restart its countdown; rows show start/end times and sort by end time.
-- **Pageable floating tab bar** — overflow tabs page into groups with prev/next arrows.
-- **Restyled What's New dialog** — hero header with the latest version, and every release as a collapsible card with item counts and expand/collapse.
-- **Under the hood** — Expo 57 / React Native 0.86, clash-of-clans-data 0.17 with new package images (Ruin Witch, Sky Wagon, Valkyrie L12 and more), aligned skeleton rows.
-
-Full release history is available in-app under **Settings → What's New**.
 
 ## Design
 
