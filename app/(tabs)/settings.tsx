@@ -49,7 +49,7 @@ import DiscountModal from '../../src/components/DiscountModal';
 import OnboardingModal from '../../src/components/OnboardingModal';
 import Constants from 'expo-constants';
 import { DATA_SOURCE_GROUPS, SUPERCELL_NOTICE } from '../../src/data/attribution';
-import { Switch } from 'react-native-paper'
+import Switch from '../../src/components/Switch';
 const heartImg = require('../../images/heart.png') as any;
 
 /** Settings groups, collapsed the same way the Time to Max pipelines are. */
@@ -1268,8 +1268,6 @@ export default function SettingsScreen() {
               <Switch
                 value={isDark}
                 onValueChange={(v) => setThemeMode(v)}
-                trackColor={{ false: Colors.border, true: Colors.textMuted }}
-                thumbColor={isDark ? Colors.textPrimary : Colors.bgCard}
               />
             </SettingRow>
             <SettingRow
@@ -1294,8 +1292,6 @@ export default function SettingsScreen() {
               <Switch
                 value={globalLevels}
                 onValueChange={(v) => setGlobalLevelsPref(v)}
-                trackColor={{ false: Colors.border, true: Colors.textMuted }}
-                thumbColor={globalLevels ? Colors.textPrimary : Colors.bgCard}
               />
             </SettingRow>
           </SettingSection>
@@ -1692,7 +1688,7 @@ export default function SettingsScreen() {
         handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
       />
 
-      <BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch · hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: 0 }}>
+      <BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch · hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}>
         <View style={styles.switchCard}>
           {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
 
