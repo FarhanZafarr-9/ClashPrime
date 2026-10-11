@@ -13,56 +13,56 @@ A quick tour, from onboarding through the main tabs.
 **Onboarding**
 
 <p align="center">
-  <img src="screenshots/Welcome.png" width="220" alt="Onboarding welcome" />
-  <img src="screenshots/Profile.png" width="220" alt="Onboarding profile confirmation" /><br/>
-  <img src="screenshots/Town%20Hall.png" width="220" alt="Onboarding Town Hall picker" />
-  <img src="screenshots/Data%20&amp;%20Credits.png" width="220" alt="Onboarding Data & Credits" />
+  <img src="screenshots/Welcome.png" width="240" alt="Onboarding welcome" />
+  <img src="screenshots/Profile.png" width="240" alt="Onboarding profile confirmation" /><br/>
+  <img src="screenshots/Town%20Hall.png" width="240" alt="Onboarding Town Hall picker" />
+  <img src="screenshots/Data%20&amp;%20Credits.png" width="240" alt="Onboarding Data & Credits" />
 </p>
 
 **Home &amp; Progress**
 
 <p align="center">
-  <img src="screenshots/Home.png" width="220" alt="Home dashboard" />
-  <img src="screenshots/Account%20Switcher.png" width="220" alt="Account switcher" /><br/>
-  <img src="screenshots/Time%20to%20Max.png" width="220" alt="Time to Max" />
-  <img src="screenshots/Import.png" width="220" alt="Import building levels" />
+  <img src="screenshots/Home.png" width="240" alt="Home dashboard" />
+  <img src="screenshots/Account%20Switcher.png" width="240" alt="Account switcher" /><br/>
+  <img src="screenshots/Time%20to%20Max.png" width="240" alt="Time to Max" />
+  <img src="screenshots/Import.png" width="240" alt="Import building levels" />
 </p>
 
 **Army &amp; Buildings**
 
 <p align="center">
-  <img src="screenshots/Army.png" width="220" alt="Army" />
-  <img src="screenshots/Army%20Heroes.png" width="220" alt="Army heroes" />
-  <img src="screenshots/Buildings.png" width="220" alt="Buildings" />
+  <img src="screenshots/Army.png" width="240" alt="Army" />
+  <img src="screenshots/Army%20Heroes.png" width="240" alt="Army heroes" />
+  <img src="screenshots/Buildings.png" width="240" alt="Buildings" />
 </p>
 
 **Events &amp; War**
 
 <p align="center">
-  <img src="screenshots/Events.png" width="220" alt="Events" />
-  <img src="screenshots/War.png" width="220" alt="War" />
+  <img src="screenshots/Events.png" width="240" alt="Events" />
+  <img src="screenshots/War.png" width="240" alt="War" />
 </p>
 
 **Libraries**
 
 <p align="center">
-  <img src="screenshots/Base%20Library.png" width="220" alt="Base Library" />
-  <img src="screenshots/Army%20Library.png" width="220" alt="Army Library" />
+  <img src="screenshots/Base%20Library.png" width="240" alt="Base Library" />
+  <img src="screenshots/Army%20Library.png" width="240" alt="Army Library" />
 </p>
 
 **Planners &amp; Tools**
 
 <p align="center">
-  <img src="screenshots/Hero%20Journey.png" width="220" alt="Hero Journey" />
-  <img src="screenshots/6th%20Builder.png" width="220" alt="6th Builder (B.O.B.)" /><br/>
-  <img src="screenshots/Zapquaker.png" width="220" alt="Zapquaker" />
-  <img src="screenshots/Giant%20Arrow.png" width="220" alt="Giant Arrow" />
+  <img src="screenshots/Hero%20Journey.png" width="240" alt="Hero Journey" />
+  <img src="screenshots/6th%20Builder.png" width="240" alt="6th Builder (B.O.B.)" /><br/>
+  <img src="screenshots/Zapquaker.png" width="240" alt="Zapquaker" />
+  <img src="screenshots/Giant%20Arrow.png" width="240" alt="Giant Arrow" />
 </p>
 
 **Settings**
 
 <p align="center">
-  <img src="screenshots/Settings.png" width="220" alt="Settings" />
+  <img src="screenshots/Settings.png" width="240" alt="Settings" />
 </p>
 
 ## Features
