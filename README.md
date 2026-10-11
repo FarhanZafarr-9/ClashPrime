@@ -25,6 +25,7 @@ A quick tour, from onboarding through the main tabs.
   <img src="screenshots/home.jpg" width="200" alt="Home dashboard" />
   <img src="screenshots/home_account_switcher.jpg" width="200" alt="Account switcher" />
   <img src="screenshots/time_to_max.jpg" width="200" alt="Time to Max" />
+  <img src="screenshots/import.jpg" width="200" alt="Import building levels" />
 </p>
 
 **Army &amp; Buildings**
