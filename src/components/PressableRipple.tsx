@@ -12,6 +12,8 @@ interface Props {
   rippleColor?: string;
   /** iOS pressed background (react-native-paper underlay); Android uses the ripple. */
   underlayColor?: string;
+  /** Clip the ripple to the view's (rounded) bounds. Defaults to true. */
+  borderless?: boolean;
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
@@ -26,6 +28,7 @@ export default function PressableRipple({
   disabled,
   rippleColor,
   underlayColor,
+  borderless = true,
   accessibilityLabel,
   accessibilityRole,
   accessibilityState,
@@ -34,7 +37,7 @@ export default function PressableRipple({
 
   return (
     <TouchableRipple
-      borderless
+      borderless={borderless}
       style={flat}
       onPress={onPress}
       onLongPress={onLongPress}
