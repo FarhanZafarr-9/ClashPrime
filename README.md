@@ -14,8 +14,8 @@ A quick tour, from onboarding through the main tabs.
 
 <p align="center">
   <img src="screenshots/onboarding_welcome.jpg" width="200" alt="Onboarding welcome" />
-  <img src="screenshots/onboarding_town_hall.jpg" width="200" alt="Onboarding Town Hall picker" />
   <img src="screenshots/onboarding_profile.jpg" width="200" alt="Onboarding profile confirmation" />
+  <img src="screenshots/onboarding_town_hall.jpg" width="200" alt="Onboarding Town Hall picker" />
   <img src="screenshots/onboarding_credits.jpg" width="200" alt="Onboarding Data & Credits" />
 </p>
 
