@@ -8,9 +8,146 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 
 ## Screenshots
 
-A quick tour, from onboarding through the main tabs.
+A quick tour, grouped by feature — expand a section to see its screens.
 
-**Onboarding**
+<details>
+<summary><b>Home Dashboard</b></summary>
+
+<p align="center">
+  <img src="screenshots/Home.png" width="240" alt="Home dashboard" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Time to Max</b></summary>
+
+<p align="center">
+  <img src="screenshots/Time%20to%20Max.png" width="240" alt="Time to Max" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Import / Export</b></summary>
+
+<p align="center">
+  <img src="screenshots/Import.png" width="240" alt="Import building levels" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Multi-Account</b></summary>
+
+<p align="center">
+  <img src="screenshots/Account%20Switcher.png" width="240" alt="Account switcher" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Army</b></summary>
+
+<p align="center">
+  <img src="screenshots/Army.png" width="240" alt="Army" />
+  <img src="screenshots/Army%20Heroes.png" width="240" alt="Army heroes" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Buildings</b></summary>
+
+<p align="center">
+  <img src="screenshots/Buildings.png" width="240" alt="Buildings" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Events</b></summary>
+
+<p align="center">
+  <img src="screenshots/Events.png" width="240" alt="Events" />
+</p>
+
+</details>
+
+<details>
+<summary><b>War</b></summary>
+
+<p align="center">
+  <img src="screenshots/War.png" width="240" alt="War" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Base Library</b></summary>
+
+<p align="center">
+  <img src="screenshots/Base%20Library.png" width="240" alt="Base Library" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Army Library</b></summary>
+
+<p align="center">
+  <img src="screenshots/Army%20Library.png" width="240" alt="Army Library" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Hero Journey</b></summary>
+
+<p align="center">
+  <img src="screenshots/Hero%20Journey.png" width="240" alt="Hero Journey" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Zapquaker</b></summary>
+
+<p align="center">
+  <img src="screenshots/Zapquaker.png" width="240" alt="Zapquaker" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Giant Arrow</b></summary>
+
+<p align="center">
+  <img src="screenshots/Giant%20Arrow.png" width="240" alt="Giant Arrow" />
+</p>
+
+</details>
+
+<details>
+<summary><b>6th Builder (B.O.B.)</b></summary>
+
+<p align="center">
+  <img src="screenshots/6th%20Builder.png" width="240" alt="6th Builder (B.O.B.)" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Settings</b></summary>
+
+<p align="center">
+  <img src="screenshots/Settings.png" width="240" alt="Settings" />
+</p>
+
+</details>
+
+<details>
+<summary><b>Onboarding</b></summary>
 
 <p align="center">
   <img src="screenshots/Welcome.png" width="240" alt="Onboarding welcome" />
@@ -19,51 +156,7 @@ A quick tour, from onboarding through the main tabs.
   <img src="screenshots/Data%20&amp;%20Credits.png" width="240" alt="Onboarding Data & Credits" />
 </p>
 
-**Home &amp; Progress**
-
-<p align="center">
-  <img src="screenshots/Home.png" width="240" alt="Home dashboard" />
-  <img src="screenshots/Account%20Switcher.png" width="240" alt="Account switcher" /><br/>
-  <img src="screenshots/Time%20to%20Max.png" width="240" alt="Time to Max" />
-  <img src="screenshots/Import.png" width="240" alt="Import building levels" />
-</p>
-
-**Army &amp; Buildings**
-
-<p align="center">
-  <img src="screenshots/Army.png" width="240" alt="Army" />
-  <img src="screenshots/Army%20Heroes.png" width="240" alt="Army heroes" />
-  <img src="screenshots/Buildings.png" width="240" alt="Buildings" />
-</p>
-
-**Events &amp; War**
-
-<p align="center">
-  <img src="screenshots/Events.png" width="240" alt="Events" />
-  <img src="screenshots/War.png" width="240" alt="War" />
-</p>
-
-**Libraries**
-
-<p align="center">
-  <img src="screenshots/Base%20Library.png" width="240" alt="Base Library" />
-  <img src="screenshots/Army%20Library.png" width="240" alt="Army Library" />
-</p>
-
-**Planners &amp; Tools**
-
-<p align="center">
-  <img src="screenshots/Hero%20Journey.png" width="240" alt="Hero Journey" />
-  <img src="screenshots/6th%20Builder.png" width="240" alt="6th Builder (B.O.B.)" /><br/>
-  <img src="screenshots/Zapquaker.png" width="240" alt="Zapquaker" />
-  <img src="screenshots/Giant%20Arrow.png" width="240" alt="Giant Arrow" />
-</p>
-
-**Settings**
-
-<p align="center">
-  <img src="screenshots/Settings.png" width="240" alt="Settings" />
-</p>
+</details>
 
 ## Features
 
