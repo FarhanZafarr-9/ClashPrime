@@ -6,6 +6,64 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
   <img src="images/rounded-icon.png" width="120" alt="ClashPrime Icon" />
 </p>
 
+## Screenshots
+
+A quick tour, from onboarding through the main tabs.
+
+**Onboarding**
+
+<p align="center">
+  <img src="screenshots/onboarding_welcome.jpg" width="200" alt="Onboarding welcome" />
+  <img src="screenshots/onboarding_town_hall.jpg" width="200" alt="Onboarding Town Hall picker" />
+  <img src="screenshots/onboarding_profile.jpg" width="200" alt="Onboarding profile confirmation" />
+  <img src="screenshots/onboarding_credits.jpg" width="200" alt="Onboarding Data & Credits" />
+</p>
+
+**Home &amp; Progress**
+
+<p align="center">
+  <img src="screenshots/home.jpg" width="200" alt="Home dashboard" />
+  <img src="screenshots/home_account_switcher.jpg" width="200" alt="Account switcher" />
+  <img src="screenshots/time_to_max.jpg" width="200" alt="Time to Max" />
+</p>
+
+**Army &amp; Buildings**
+
+<p align="center">
+  <img src="screenshots/army.jpg" width="200" alt="Army" />
+  <img src="screenshots/army_heroes.jpg" width="200" alt="Army heroes" />
+  <img src="screenshots/buildings.jpg" width="200" alt="Buildings" />
+</p>
+
+**Events &amp; War**
+
+<p align="center">
+  <img src="screenshots/events.jpg" width="200" alt="Events" />
+  <img src="screenshots/war.jpg" width="200" alt="War" />
+</p>
+
+**Libraries**
+
+<p align="center">
+  <img src="screenshots/base_library.jpg" width="200" alt="Base Library" />
+  <img src="screenshots/army_library.jpg" width="200" alt="Army Library" />
+</p>
+
+**Planners &amp; Tools**
+
+<p align="center">
+  <img src="screenshots/hero_journey.jpg" width="200" alt="Hero Journey" />
+  <img src="screenshots/sixth_builder.jpg" width="200" alt="6th Builder (B.O.B.)" />
+  <img src="screenshots/zapquaker.jpg" width="200" alt="Zapquaker" />
+  <img src="screenshots/giant_arrow.jpg" width="200" alt="Giant Arrow" />
+</p>
+
+**Settings**
+
+<p align="center">
+  <img src="screenshots/settings.jpg" width="200" alt="Settings" />
+</p>
+
 ## Features
 
 - **Home Dashboard** — overview of your village with progress cards, quick actions, **League section** (badge, bonus, loot, star bonus, ore), quick stats, and a **Progress Achieved dialog** that also tracks Builder Base troop and hero progress
