@@ -434,9 +434,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   title: {
-    ...Typography.title2,
+    ...Typography.largeTitle,
     color: Colors.textPrimary,
-    letterSpacing: -0.4,
   },
   subtitle: {
     ...Typography.subhead,
