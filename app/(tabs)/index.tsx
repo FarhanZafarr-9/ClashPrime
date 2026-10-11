@@ -39,6 +39,7 @@ import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, forma
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
+import BottomSheet from '../../src/components/BottomSheet';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { getArmyTroopDetail, getArmyItemImage, getAllBuilderItemsAtBH } from '../../src/utils/armyData';
 import { getLeagueLootInfo } from '../../src/utils/leagueData';
@@ -2107,79 +2108,76 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      <Modal visible={switcherVisible} transparent animationType="fade" onRequestClose={() => setSwitcherVisible(false)} statusBarTranslucent>
-        <Pressable style={styles.switcherOverlay} onPress={() => setSwitcherVisible(false)}>
-          <View style={styles.switcherCard}>
-            <View style={styles.switcherHeader}>
-              <View style={styles.switcherHeaderIcon}>
-                <Ionicons name="swap-horizontal-outline" size={18} color={Colors.textPrimary} />
-              </View>
-              <View style={styles.switcherHeaderText}>
-                <Text style={styles.switcherTitle}>Accounts</Text>
-                <Text style={styles.switcherSubtitle}>Tap an account to switch</Text>
-              </View>
-            </View>
-            {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
-            {accounts.map((acct) => {
-              const isActive = acct.tag === activeAccount?.tag;
-              const isSyncing = acct.tag === syncingTag;
-              const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
-              const thLabel = acct.townHallLevel > 0 ? `TH${acct.townHallLevel}` : 'No Town Hall';
-              return (
-                <PressableRipple
-                  key={acct.tag}
-                  style={[
-                    styles.switcherItem,
-                    isActive && styles.switcherItemActive,
-                  ]}
-                  onPress={() => handleHomeSwitch(acct.tag)}
-                >
-                  <View style={styles.switcherAvatar}>
-                    {acctThImage ? (
-                      <Image source={acctThImage} style={styles.switcherAvatarImg} resizeMode="contain" />
-                    ) : (
-                      <Ionicons name="person" size={18} color={Colors.textSecondary} />
+      <BottomSheet
+        visible={switcherVisible}
+        onClose={() => setSwitcherVisible(false)}
+        maxHeight="90%"
+        title="Accounts"
+        subtitle="Tap an account to switch"
+        icon="swap-horizontal-outline"
+        contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}
+      >
+        <View style={styles.switcherCard}>
+          {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
+          {accounts.map((acct) => {
+            const isActive = acct.tag === activeAccount?.tag;
+            const isSyncing = acct.tag === syncingTag;
+            const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
+            const thLabel = acct.townHallLevel > 0 ? `TH${acct.townHallLevel}` : 'No Town Hall';
+            return (
+              <PressableRipple
+                key={acct.tag}
+                style={[
+                  styles.switcherItem,
+                  isActive && styles.switcherItemActive,
+                ]}
+                onPress={() => handleHomeSwitch(acct.tag)}
+              >
+                <View style={styles.switcherAvatar}>
+                  {acctThImage ? (
+                    <Image source={acctThImage} style={styles.switcherAvatarImg} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="person" size={18} color={Colors.textSecondary} />
+                  )}
+                </View>
+                <View style={styles.switcherItemText}>
+                  <View style={styles.switcherItemNameRow}>
+                    <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
+                  </View>
+                  <View style={styles.switcherItemSubRow}>
+                    <Text style={styles.switcherItemTag} numberOfLines={1}>
+                      {`${thLabel} · ${acct.tag}`}
+                    </Text>
+                    {acct.lastSyncedAt && (
+                      <Text style={styles.switcherItemSynced} numberOfLines={1}>
+                        {`Synced ${new Date(acct.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      </Text>
                     )}
                   </View>
-                  <View style={styles.switcherItemText}>
-                    <View style={styles.switcherItemNameRow}>
-                      <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
-                    </View>
-                    <View style={styles.switcherItemSubRow}>
-                      <Text style={styles.switcherItemTag} numberOfLines={1}>
-                        {`${thLabel} · ${acct.tag}`}
-                      </Text>
-                      {acct.lastSyncedAt && (
-                        <Text style={styles.switcherItemSynced} numberOfLines={1}>
-                          {`Synced ${new Date(acct.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                        </Text>
-                      )}
-                    </View>
+                </View>
+                {isSyncing && (
+                  <View style={styles.switcherSyncingBadge}>
+                    <ActivityIndicator size="small" color={Colors.textSecondary} />
                   </View>
-                  {isSyncing && (
-                    <View style={styles.switcherSyncingBadge}>
-                      <ActivityIndicator size="small" color={Colors.textSecondary} />
-                    </View>
-                  )}
-                </PressableRipple>
-              );
-            })}
-            <PressableRipple
-              style={styles.switcherAdd}
-              onPress={() => {
-                setSwitcherVisible(false);
-                router.push('/onboarding?mode=add');
-              }}
-            >
-              <Ionicons name="link-outline" size={16} color={Colors.textPrimary} />
-              <Text style={styles.switcherAddText}>Add Account</Text>
-            </PressableRipple>
-            <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
-              <Text style={styles.switcherCloseText}>Close</Text>
-            </PressableRipple>
-          </View>
-        </Pressable>
-      </Modal>
+                )}
+              </PressableRipple>
+            );
+          })}
+          <PressableRipple
+            style={styles.switcherAdd}
+            onPress={() => {
+              setSwitcherVisible(false);
+              router.push('/onboarding?mode=add');
+            }}
+          >
+            <Ionicons name="link-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.switcherAddText}>Add Account</Text>
+          </PressableRipple>
+          <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
+            <Text style={styles.switcherCloseText}>Close</Text>
+          </PressableRipple>
+        </View>
+      </BottomSheet>
 
       {player && (
         <Modal visible={shareVisible} transparent animationType="fade" onRequestClose={() => setShareVisible(false)} statusBarTranslucent>
@@ -2410,12 +2408,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  switcherOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.65)',
-  },
   shareOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -2462,50 +2454,7 @@ const styles = StyleSheet.create({
     color: Colors.bg,
   },
   switcherCard: {
-    alignSelf: 'stretch',
-    marginHorizontal: 20,
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    padding: Spacing.base,
     gap: Spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  switcherHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  switcherHeaderIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  switcherHeaderText: {
-    flex: 1,
-    alignSelf: 'stretch',
-    justifyContent: 'space-between',
-  },
-  switcherTitle: {
-    ...Typography.title3,
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-    lineHeight: 22,
-  },
-  switcherSubtitle: {
-    ...Typography.caption,
-    color: Colors.textMuted,
   },
   switcherEmpty: {
     ...Typography.subhead,
