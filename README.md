@@ -27,28 +27,24 @@ A quick tour of ClashPrime. Expand a section to see its screens with what each o
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/home.png" width="150" align="left" alt="Home dashboard" />
-<b>Home Dashboard</b><br/>
-Your village at a glance: progress cards, league details, quick stats and quick actions.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/timeToMax.png" width="150" align="left" alt="Time to Max" />
-<b>Time to Max</b><br/>
-Lab, Builders, Pets and Equipment pipelines side by side, with a headline time to max and a rush-to-TH+1 comparison.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/home.png" width="140" alt="Home dashboard" /></td>
+<td valign="middle"><b>Home Dashboard</b><br/>
+Your village at a glance: progress cards, league details, quick stats and quick actions.</td>
 </tr>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/import.png" width="150" align="left" alt="Import building levels" />
-<b>Import / Export</b><br/>
-Paste a CoC JSON export to set levels for Home Village and Builder Base, and see only the upgrades that are left.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/accountSwitcher.png" width="150" align="left" alt="Account switcher" />
-<b>Multi-Account</b><br/>
-Switch between player tags. Each account keeps its own levels, builders, saved bases and last-synced time.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/timeToMax.png" width="140" alt="Time to Max" /></td>
+<td valign="middle"><b>Time to Max</b><br/>
+Lab, Builders, Pets and Equipment pipelines side by side, with a headline time to max and a rush-to-TH+1 comparison.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/import.png" width="140" alt="Import building levels" /></td>
+<td valign="middle"><b>Import / Export</b><br/>
+Paste a CoC JSON export to set levels for Home Village and Builder Base, and see only the upgrades that are left.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/accountSwitcher.png" width="140" alt="Account switcher" /></td>
+<td valign="middle"><b>Multi-Account</b><br/>
+Switch between player tags. Each account keeps its own levels, builders, saved bases and last-synced time.</td>
 </tr>
 </table>
 
@@ -59,24 +55,19 @@ Switch between player tags. Each account keeps its own levels, builders, saved b
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/army.png" width="150" align="left" alt="Army" />
-<b>Army</b><br/>
-Troops, heroes, spells, pets and equipment with level tables, discount-aware cost and time, and a Home / Builder Base switch.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/armyHeroes.png" width="150" align="left" alt="Army heroes" />
-<b>Hero detail</b><br/>
-Level stats, remaining cost and time for every hero level, folded to your current level so long tables stay readable.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/army.png" width="140" alt="Army" /></td>
+<td valign="middle"><b>Army</b><br/>
+Troops, heroes, spells, pets and equipment with level tables, discount-aware cost and time, and a Home / Builder Base switch.</td>
 </tr>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/buildings.png" width="150" align="left" alt="Buildings" />
-<b>Buildings</b><br/>
-80+ buildings with level progression, grouped multi-copy sections, per-building discounts and Crafted Defenses.
-</td>
-<td width="50%" valign="top"></td>
+<td width="160" align="center" valign="middle"><img src="screenshots/armyHeroes.png" width="140" alt="Army heroes" /></td>
+<td valign="middle"><b>Hero detail</b><br/>
+Level stats, remaining cost and time for every hero level, folded to your current level so long tables stay readable.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/buildings.png" width="140" alt="Buildings" /></td>
+<td valign="middle"><b>Buildings</b><br/>
+80+ buildings with level progression, grouped multi-copy sections, per-building discounts and Crafted Defenses.</td>
 </tr>
 </table>
 
@@ -87,16 +78,14 @@ Level stats, remaining cost and time for every hero level, folded to your curren
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/events.png" width="150" align="left" alt="Events" />
-<b>Events</b><br/>
-Upcoming in-game events with countdown timers and progress bars.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/war.png" width="150" align="left" alt="War" />
-<b>War</b><br/>
-Live war tracking with attack dots and defense shields, Clan War League rounds and a searchable war history.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/events.png" width="140" alt="Events" /></td>
+<td valign="middle"><b>Events</b><br/>
+Upcoming in-game events with countdown timers and progress bars.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/war.png" width="140" alt="War" /></td>
+<td valign="middle"><b>War</b><br/>
+Live war tracking with attack dots and defense shields, Clan War League rounds and a searchable war history.</td>
 </tr>
 </table>
 
@@ -107,16 +96,14 @@ Live war tracking with attack dots and defense shields, Clan War League rounds a
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/baseLibrary.png" width="150" align="left" alt="Base Library" />
-<b>Base Library</b><br/>
-Browse Home Village and Builder Base layouts from ClashLy and clash-bases, grouped by year and sorted by popularity.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/armyLibrary.png" width="150" align="left" alt="Army Library" />
-<b>Army Library</b><br/>
-Community armies from ClashArmies with TH filtering, favorites, in-game copy and share cards.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/baseLibrary.png" width="140" alt="Base Library" /></td>
+<td valign="middle"><b>Base Library</b><br/>
+Browse Home Village and Builder Base layouts from ClashLy and clash-bases, grouped by year and sorted by popularity.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/armyLibrary.png" width="140" alt="Army Library" /></td>
+<td valign="middle"><b>Army Library</b><br/>
+Community armies from ClashArmies with TH filtering, favorites, in-game copy and share cards.</td>
 </tr>
 </table>
 
@@ -127,28 +114,24 @@ Community armies from ClashArmies with TH filtering, favorites, in-game copy and
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/heroJourney.png" width="150" align="left" alt="Hero Journey" />
-<b>Hero Journey</b><br/>
-The Chief's Journey rewards track from TH7 to TH18, with claimed badges and a shortcut to your next claimable milestone.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/sixthBuilder.png" width="150" align="left" alt="6th Builder (B.O.B.)" />
-<b>6th Builder (B.O.B.)</b><br/>
-A resource-feasible schedule for all seven B.O.B. unlock requirements, with ETAs and "what is blocking you" callouts.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/heroJourney.png" width="140" alt="Hero Journey" /></td>
+<td valign="middle"><b>Hero Journey</b><br/>
+The Chief's Journey rewards track from TH7 to TH18, with claimed badges and a shortcut to your next claimable milestone.</td>
 </tr>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/zapquaker.png" width="150" align="left" alt="Zapquaker" />
-<b>Zapquaker</b><br/>
-Per-building Zap + Quake combo calculator, with Fireball and Giant Arrow equipment in the mix and the cheapest kill combos suggested.
-</td>
-<td width="50%" valign="top">
-<img src="screenshots/giantArrow.png" width="150" align="left" alt="Giant Arrow" />
-<b>Giant Arrow</b><br/>
-Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PNG. Rocket Backpack mode included.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/sixthBuilder.png" width="140" alt="6th Builder (B.O.B.)" /></td>
+<td valign="middle"><b>6th Builder (B.O.B.)</b><br/>
+A resource-feasible schedule for all seven B.O.B. unlock requirements, with ETAs and "what is blocking you" callouts.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/zapquaker.png" width="140" alt="Zapquaker" /></td>
+<td valign="middle"><b>Zapquaker</b><br/>
+Per-building Zap + Quake combo calculator, with Fireball and Giant Arrow equipment in the mix and the cheapest kill combos suggested.</td>
+</tr>
+<tr>
+<td width="160" align="center" valign="middle"><img src="screenshots/giantArrow.png" width="140" alt="Giant Arrow" /></td>
+<td valign="middle"><b>Giant Arrow</b><br/>
+Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PNG. Rocket Backpack mode included.</td>
 </tr>
 </table>
 
@@ -159,15 +142,13 @@ Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PN
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<img src="screenshots/settings.png" width="150" align="left" alt="Settings" />
-<b>Settings</b><br/>
-API token, dark mode, discounts, account management, a Show Global Levels toggle and a What's New changelog.
-</td>
-<td width="50%" valign="top">
-<b>Onboarding</b><br/>
-A guided first run: confirm your profile, pick your Town Hall, and see every data source on the Data &amp; Credits slide before entering the app.
-</td>
+<td width="160" align="center" valign="middle"><img src="screenshots/settings.png" width="140" alt="Settings" /></td>
+<td valign="middle"><b>Settings</b><br/>
+API token, dark mode, discounts, account management, a Show Global Levels toggle and a What's New changelog.</td>
+</tr>
+<tr>
+<td colspan="2" valign="middle"><b>Onboarding</b><br/>
+A guided first run: confirm your profile, pick your Town Hall, and see every data source on the Data &amp; Credits slide before entering the app.</td>
 </tr>
 </table>
 
