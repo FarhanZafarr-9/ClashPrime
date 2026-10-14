@@ -6,16 +6,20 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
   <img src="images/rounded-icon.png" width="120" alt="ClashPrime Icon" />
 </p>
 
+<p align="center">
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.clashprime.app%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FFarhanZafarr-9%2FClashPrime%22%2C%22author%22%3A%22FarhanZafarr-9%22%2C%22name%22%3A%22ClashPrime%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EClashPrime%5B.%5Dv%5B0-9%5D%2B%28%5B.%5D%5B0-9%5D%2B%29*%5B.%5Dapk%24%5C%22%2C%5C%22autoApkFilterByArch%5C%22%3Afalse%2C%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D"><img src="images/obtanium-badge.png" width="161" alt="Get it on Obtainium" /></a>
+</p>
+
 ## Screenshots
 
 A quick tour of ClashPrime. Expand a section to see its screens with what each one does.
 
 <p align="center">
-  <img src="screenshots/Home.png" width="165" alt="Home dashboard" />
-  <img src="screenshots/Time%20to%20Max.png" width="165" alt="Time to Max" />
-  <img src="screenshots/Army.png" width="165" alt="Army" />
-  <img src="screenshots/Base%20Library.png" width="165" alt="Base Library" />
-  <img src="screenshots/Giant%20Arrow.png" width="165" alt="Giant Arrow" />
+  <img src="screenshots/home.png" width="165" alt="Home dashboard" />
+  <img src="screenshots/timeToMax.png" width="165" alt="Time to Max" />
+  <img src="screenshots/army.png" width="165" alt="Army" />
+  <img src="screenshots/baseLibrary.png" width="165" alt="Base Library" />
+  <img src="screenshots/giantArrow.png" width="165" alt="Giant Arrow" />
 </p>
 
 <details open>
@@ -24,24 +28,24 @@ A quick tour of ClashPrime. Expand a section to see its screens with what each o
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Home.png" width="150" align="left" alt="Home dashboard" />
+<img src="screenshots/home.png" width="150" align="left" alt="Home dashboard" />
 <b>Home Dashboard</b><br/>
 Your village at a glance: progress cards, league details, quick stats and quick actions.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/Time%20to%20Max.png" width="150" align="left" alt="Time to Max" />
+<img src="screenshots/timeToMax.png" width="150" align="left" alt="Time to Max" />
 <b>Time to Max</b><br/>
 Lab, Builders, Pets and Equipment pipelines side by side, with a headline time to max and a rush-to-TH+1 comparison.
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Import.png" width="150" align="left" alt="Import building levels" />
+<img src="screenshots/import.png" width="150" align="left" alt="Import building levels" />
 <b>Import / Export</b><br/>
 Paste a CoC JSON export to set levels for Home Village and Builder Base, and see only the upgrades that are left.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/Account%20Switcher.png" width="150" align="left" alt="Account switcher" />
+<img src="screenshots/accountSwitcher.png" width="150" align="left" alt="Account switcher" />
 <b>Multi-Account</b><br/>
 Switch between player tags. Each account keeps its own levels, builders, saved bases and last-synced time.
 </td>
@@ -56,19 +60,19 @@ Switch between player tags. Each account keeps its own levels, builders, saved b
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Army.png" width="150" align="left" alt="Army" />
+<img src="screenshots/army.png" width="150" align="left" alt="Army" />
 <b>Army</b><br/>
 Troops, heroes, spells, pets and equipment with level tables, discount-aware cost and time, and a Home / Builder Base switch.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/Army%20Heroes.png" width="150" align="left" alt="Army heroes" />
+<img src="screenshots/armyHeroes.png" width="150" align="left" alt="Army heroes" />
 <b>Hero detail</b><br/>
 Level stats, remaining cost and time for every hero level, folded to your current level so long tables stay readable.
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Buildings.png" width="150" align="left" alt="Buildings" />
+<img src="screenshots/buildings.png" width="150" align="left" alt="Buildings" />
 <b>Buildings</b><br/>
 80+ buildings with level progression, grouped multi-copy sections, per-building discounts and Crafted Defenses.
 </td>
@@ -84,12 +88,12 @@ Level stats, remaining cost and time for every hero level, folded to your curren
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Events.png" width="150" align="left" alt="Events" />
+<img src="screenshots/events.png" width="150" align="left" alt="Events" />
 <b>Events</b><br/>
 Upcoming in-game events with countdown timers and progress bars.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/War.png" width="150" align="left" alt="War" />
+<img src="screenshots/war.png" width="150" align="left" alt="War" />
 <b>War</b><br/>
 Live war tracking with attack dots and defense shields, Clan War League rounds and a searchable war history.
 </td>
@@ -104,12 +108,12 @@ Live war tracking with attack dots and defense shields, Clan War League rounds a
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Base%20Library.png" width="150" align="left" alt="Base Library" />
+<img src="screenshots/baseLibrary.png" width="150" align="left" alt="Base Library" />
 <b>Base Library</b><br/>
 Browse Home Village and Builder Base layouts from ClashLy and clash-bases, grouped by year and sorted by popularity.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/Army%20Library.png" width="150" align="left" alt="Army Library" />
+<img src="screenshots/armyLibrary.png" width="150" align="left" alt="Army Library" />
 <b>Army Library</b><br/>
 Community armies from ClashArmies with TH filtering, favorites, in-game copy and share cards.
 </td>
@@ -124,24 +128,24 @@ Community armies from ClashArmies with TH filtering, favorites, in-game copy and
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Hero%20Journey.png" width="150" align="left" alt="Hero Journey" />
+<img src="screenshots/heroJourney.png" width="150" align="left" alt="Hero Journey" />
 <b>Hero Journey</b><br/>
 The Chief's Journey rewards track from TH7 to TH18, with claimed badges and a shortcut to your next claimable milestone.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/6th%20Builder.png" width="150" align="left" alt="6th Builder (B.O.B.)" />
+<img src="screenshots/sixthBuilder.png" width="150" align="left" alt="6th Builder (B.O.B.)" />
 <b>6th Builder (B.O.B.)</b><br/>
 A resource-feasible schedule for all seven B.O.B. unlock requirements, with ETAs and "what is blocking you" callouts.
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Zapquaker.png" width="150" align="left" alt="Zapquaker" />
+<img src="screenshots/zapquaker.png" width="150" align="left" alt="Zapquaker" />
 <b>Zapquaker</b><br/>
 Per-building Zap + Quake combo calculator, with Fireball and Giant Arrow equipment in the mix and the cheapest kill combos suggested.
 </td>
 <td width="50%" valign="top">
-<img src="screenshots/Giant%20Arrow.png" width="150" align="left" alt="Giant Arrow" />
+<img src="screenshots/giantArrow.png" width="150" align="left" alt="Giant Arrow" />
 <b>Giant Arrow</b><br/>
 Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PNG. Rocket Backpack mode included.
 </td>
@@ -156,7 +160,7 @@ Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PN
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="screenshots/Settings.png" width="150" align="left" alt="Settings" />
+<img src="screenshots/settings.png" width="150" align="left" alt="Settings" />
 <b>Settings</b><br/>
 API token, dark mode, discounts, account management, a Show Global Levels toggle and a What's New changelog.
 </td>
@@ -168,10 +172,10 @@ A guided first run: confirm your profile, pick your Town Hall, and see every dat
 </table>
 
 <p align="center">
-  <img src="screenshots/Welcome.png" width="165" alt="Onboarding welcome" />
-  <img src="screenshots/Profile.png" width="165" alt="Onboarding profile confirmation" />
-  <img src="screenshots/Town%20Hall.png" width="165" alt="Onboarding Town Hall picker" />
-  <img src="screenshots/Data%20&amp;%20Credits.png" width="165" alt="Onboarding Data &amp; Credits" />
+  <img src="screenshots/welcome.png" width="165" alt="Onboarding welcome" />
+  <img src="screenshots/profile.png" width="165" alt="Onboarding profile confirmation" />
+  <img src="screenshots/townHall.png" width="165" alt="Onboarding Town Hall picker" />
+  <img src="screenshots/dataAndCredits.png" width="165" alt="Onboarding Data &amp; Credits" />
 </p>
 
 </details>
@@ -198,7 +202,7 @@ A guided first run: confirm your profile, pick your Town Hall, and see every dat
 - **Settings** — API token, dark mode, discounts, account management, a **Show Global Levels** display toggle (expand level tables past your Town Hall), and a **What's New changelog**, all in collapsible section headers (icon, description and count badge) that expand in place; every dialog opens as a bottom sheet. About, Credits, Privacy Policy, Feedback (farhanzafarr.9@gmail.com) and Developer Info
 - **Onboarding** — guided first-run flow with an image-based Town Hall picker, an Add Account (Full Setup) flow, masked token entry with per-step loading art, and a **Data & Credits** slide that lists every public source before entering the app
 - **Timers** — custom duration parsing (1d 2h 3m), dashed "Add timer" row at list end with proper isFirst/isLast rounding, and an ongoing notification with an **Android-native per-second countdown** that keeps ticking even when the app is killed (zero battery) plus sound/vibration on finish
-- **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection
+- **Version Checker** — compares the running build against GitHub release tags; update badges in Home & Settings with one-tap release links and ahead-of-release detection. On Android, installing via [Obtanium](#installation) picks the same releases up automatically, so the in-app checker is only needed for manual installs
 
 ## Design
 
@@ -308,7 +312,46 @@ ClashPrime/
 │   └── utils/              # armyData, bobPlanner (B.O.B. scheduling), buildingData (getMaxTownHall), buildingImages, craftedDefenses (module levels, effective level, cost-to-max), exclusions (pipeline exclusions & gates), heroJourney (Chief's Journey track), statImages, thReadiness, thMaxLevels, upgradeCosts (chain scheduling), upgradePivot (level-capped Remaining), zapquake (combo math), versionCheck, etc.
 ├── scripts/                # Generators: gen-package-images.mjs (128px WebP shrink → packageImages.ts), gen-coc-ids.mjs (emits crafted-defense/module ID maps), check-coc-data.mjs, preview-image-cap.mjs (shrink QA previews)
 ├── images/                 # App icons and logos
+├── screenshots/            # README screenshots (camelCase filenames)
 ```
+
+## Installation
+
+ClashPrime ships as an Android APK attached to every [GitHub release](https://github.com/FarhanZafarr-9/ClashPrime/releases). Pick whichever route suits you:
+
+### Obtainium (recommended)
+
+[Obtanium](https://github.com/ImranR98/Obtainium) installs ClashPrime straight from this repository and keeps it up to date — no store, no manual re-downloading.
+
+1. Install Obtanium from [GitHub](https://github.com/ImranR98/Obtainium/releases), [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/dev.imranr.obtainium) or [F-Droid](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
+2. Tap the badge at the top of this page, or in Obtanium tap **+ → Add** and paste:
+
+   ```text
+   https://github.com/FarhanZafarr-9/ClashPrime
+   ```
+
+The APK filter, prerelease toggle and architecture filter are pre-filled by the badge link, so the single `ClashPrime.vX.Y.Z.apk` asset of each release is picked automatically.
+
+<details>
+<summary>Raw Obtainium config (for <code>obtainium://app/…</code> links and manual imports)</summary>
+
+```json
+{
+  "id": "com.clashprime.app",
+  "url": "https://github.com/FarhanZafarr-9/ClashPrime",
+  "author": "FarhanZafarr-9",
+  "name": "ClashPrime",
+  "additionalSettings": "{\"apkFilterRegEx\":\"^ClashPrime[.]v[0-9]+([.][0-9]+)*[.]apk$\",\"autoApkFilterByArch\":false,\"includePrereleases\":false}"
+}
+```
+
+`additionalSettings` is a JSON-**encoded string** on the wire — paste it exactly as shown, or let the badge link do it for you.
+
+</details>
+
+### Direct APK
+
+Download the `ClashPrime.vX.Y.Z.apk` asset from the [latest release](https://github.com/FarhanZafarr-9/ClashPrime/releases/latest) and install it (Android will ask to allow installs from your browser the first time). Reinstalling a newer release replaces the app in place and keeps your accounts and saved data, as long as every release is signed with the same key — if a build is ever re-signed, Android requires an uninstall first and on-device data is lost.
 
 ## Getting Started
 
