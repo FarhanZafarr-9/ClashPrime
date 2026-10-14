@@ -6,6 +6,8 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
   <img src="images/rounded-icon.png" width="120" alt="ClashPrime Icon" />
 </p>
 
+[![Get it on Orion Store](https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png)](https://rookieenough.github.io/Orion-Data/redirect.html?id=clashprime)
+
 ## Screenshots
 
 A quick tour of ClashPrime. Expand a section to see its screens with what each one does.
