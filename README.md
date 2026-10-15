@@ -8,6 +8,8 @@ A premium monochrome companion app for Clash of Clans — track your progress, m
 
 <p align="center">
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.clashprime.app%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FFarhanZafarr-9%2FClashPrime%22%2C%22author%22%3A%22FarhanZafarr-9%22%2C%22name%22%3A%22ClashPrime%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EClashPrime%5B.%5Dv%5B0-9%5D%2B%28%5B.%5D%5B0-9%5D%2B%29*%5B.%5Dapk%24%5C%22%2C%5C%22autoApkFilterByArch%5C%22%3Afalse%2C%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D"><img src="images/obtanium-badge.png" width="161" alt="Get it on Obtainium" /></a>
+  &nbsp;&nbsp;
+  <a href="https://rookieenough.github.io/Orion-Data/redirect.html?id=clashprime"><img src="https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png" width="161" alt="Get it on Orion Store" /></a>
 </p>
 
 ## Screenshots
@@ -329,6 +331,12 @@ The APK filter, prerelease toggle and architecture filter are pre-filled by the 
 `additionalSettings` is a JSON-**encoded string** on the wire — paste it exactly as shown, or let the badge link do it for you.
 
 </details>
+
+### Orion Store
+
+[Orion Store](https://github.com/RookieEnough/Orion-Store) lists ClashPrime as a browsable catalogue entry, so it can be installed from an app drawer alongside everything else on your device instead of through a dedicated updater.
+
+Tap the Orion badge at the top of this page, or open ClashPrime's entry in the [Orion Data catalogue](https://github.com/RookieEnough/Orion-Data) directly.
 
 ### Direct APK
 
