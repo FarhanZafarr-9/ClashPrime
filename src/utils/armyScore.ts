@@ -1,26 +1,50 @@
 import type { ClashArmy, EquipmentDef, PetDef, UnitDef } from '../types/armies';
 import type { ClashPlayer } from '../types/clash';
 import { isSuperTroop } from '../types/clash';
-import { getMaxLevelAtTH, looseNameKey, resolveArmyItemName } from './armyData';
+import {
+  getArmyItem,
+  getClanCastleCapacity,
+  getMaxLevelAtTH,
+  looseNameKey,
+  resolveArmyItemName,
+  type ClanCastleCapacity,
+} from './armyData';
 
 export type ArmyItemCategory = 'hero' | 'equipment' | 'pet' | 'siege' | 'spell' | 'troop';
 
 /**
- * Weights for "how maxed am I for this army". Each category contributes one
- * percentage (the mean progress of its items) rather than each item contributing
- * separately - an army carries 8-16 troops but only 4 heroes, so per-item scoring
- * would let troops swamp the heroes that actually decide an attack. Heroes are
- * weighted heaviest: they take the longest to max and gate the most power, so
- * heroes plus their equipment land at roughly half the score.
+ * Weights inside the army camp leg. Each category contributes one percentage
+ * (the mean progress of its items) rather than every item contributing separately,
+ * so a long troop list can't swamp the spells and siege that actually decide an
+ * attack.
  */
-const CATEGORY_WEIGHTS: Record<ArmyItemCategory, number> = {
+const CAMP_WEIGHTS: Record<ArmyItemCategory, number> = {
+  troop: 1.0,
+  spell: 1.0,
+  siege: 1.5,
+  hero: 0,
+  equipment: 0,
+  pet: 0,
+};
+
+/**
+ * Weights inside the hero leg. Heroes dominate: they take the longest to max and
+ * gate the most power, with their equipment and pets counting for less.
+ */
+const HERO_WEIGHTS: Record<ArmyItemCategory, number> = {
   hero: 2.5,
   equipment: 1.5,
-  siege: 1.5,
   pet: 1.0,
-  spell: 1.0,
-  troop: 0.7,
+  troop: 0,
+  spell: 0,
+  siege: 0,
 };
+
+/**
+ * Weights across the three legs for the single overall figure. Heroes are roughly
+ * half the score on their own.
+ */
+const LEG_WEIGHTS = { troops: 1.0, heroes: 2.5, castle: 1.5 };
 
 /** Loose name key so "L.A.S.S.I" and "Lassi" match each other. */
 const nameKey = looseNameKey;
@@ -45,10 +69,30 @@ export interface ArmyScoreItem {
   max: number;
 }
 
+export interface ArmyCastleScore {
+  /**
+   * How much of what the castle leg needs fits in the player's castle, or null
+   * when the leg is empty or their castle level is unknown. Capped at 100 - an
+   * over-capacity leg reads as "doesn't fit" via `over`, not as a percentage over
+   * a hundred.
+   */
+  pct: number | null;
+  needed: ClanCastleCapacity;
+  available: ClanCastleCapacity | null;
+  /** Capacity types the player's castle is too small for, e.g. ['troop']. */
+  over: (keyof ClanCastleCapacity)[];
+}
+
 export interface ArmyScore {
-  /** 0-100 weighted progress of the player's own levels for this army's items. */
+  /** 0-100 across the three legs. */
   score: number;
-  /** Every scored item, for detail rows. */
+  /** Army camp leg by level, or null when the army has no camp units. */
+  troops: number | null;
+  /** Heroes plus equipment and pets by level, or null when the army has no heroes. */
+  heroes: number | null;
+  /** Clan castle leg by capacity rather than level. */
+  castle: ArmyCastleScore;
+  /** Every level-scored item, for detail rows. */
   items: ArmyScoreItem[];
   /** Biggest shortfalls, worst first. */
   gaps: ArmyScoreItem[];
@@ -102,11 +146,24 @@ function collectOwnedLevels(player: ClashPlayer | null | undefined): OwnedLevels
       owned.equipment.set(equipmentKey(h.name, e.name), e.level);
     }
   }
+  // Equipment is also published as a flat list; take whichever is populated, and
+  // never let a second copy of the same piece overwrite the first.
+  for (const e of player.heroEquipment ?? []) {
+    const key = equipmentKey(e.name, e.name);
+    if (!owned.equipment.has(key)) owned.equipment.set(key, e.level);
+  }
   for (const p of player.pets ?? []) {
     if (p.village !== 'home') continue;
     owned.pets.set(nameKey(p.name), p.level);
   }
   return owned;
+}
+
+/** The player's current Clan Castle level, from either building representation. */
+function playerCastleLevel(player: ClashPlayer): number {
+  const byName = player.buildingLevels?.['Clan Castle'];
+  if (byName != null && byName > 0) return byName;
+  return player.buildings?.find((b) => b.name === 'Clan Castle')?.level ?? 0;
 }
 
 /**
@@ -126,11 +183,36 @@ function armyHeroes(
     if (def?.hero) heroes.add(def.hero);
   }
   for (const p of army.pets) {
-    // A pet with an unknown definition still names its hero, so don't require the
-    // lookup to succeed here.
     if (petsById.has(p.petId) && p.hero) heroes.add(p.hero);
   }
   return [...heroes];
+}
+
+/** Housing space for a unit, preferring the army's own figure and falling back to the package. */
+function unitHousing(def: UnitDef | undefined, pkgName: string | null): number {
+  if (def?.housingSpace) return def.housingSpace;
+  return pkgName ? getArmyItem(pkgName)?.housingSpace ?? 0 : 0;
+}
+
+/** Mean progress per category, then a weighted mean across the categories present. */
+function weightedProgress(items: ArmyScoreItem[], weights: Record<ArmyItemCategory, number>): number | null {
+  const byCategory = new Map<ArmyItemCategory, { sum: number; count: number }>();
+  for (const it of items) {
+    const entry = byCategory.get(it.category) ?? { sum: 0, count: 0 };
+    entry.sum += Math.min(it.current, it.max) / it.max;
+    entry.count += 1;
+    byCategory.set(it.category, entry);
+  }
+  let weighted = 0;
+  let weightSum = 0;
+  for (const [category, { sum, count }] of byCategory) {
+    const w = weights[category] ?? 0;
+    if (w <= 0) continue;
+    weighted += (sum / count) * w;
+    weightSum += w;
+  }
+  if (weightSum <= 0) return null;
+  return Math.round((weighted / weightSum) * 100);
 }
 
 /** Shortfall, used to rank the gaps. */
@@ -140,9 +222,16 @@ function shortfall(item: ArmyScoreItem): number {
 
 /**
  * How maxed the player is for the items this army uses, against their own Town
- * Hall caps. Deliberately *not* "how maxed this army is": the ClashArmies payload
+ * Hall. Deliberately *not* "how maxed this army is": the ClashArmies payload
  * carries no per-unit levels, so the army's own state is unknowable. What can be
- * measured is the player's distance from a fully maxed version of it.
+ * measured is the player's distance from a fully maxed, fully fitting version.
+ *
+ * The three legs are judged differently, because they fail differently. Army camp
+ * and hero levels are judged by how close each item is to its Town Hall cap. The
+ * clan castle leg is judged by *capacity* instead: a higher hall hands you bigger
+ * spell and troop caps than the army's author could assume, so a castle leg that
+ * fits someone else's castle is not a level problem - it's whether your castle can
+ * hold it at all.
  *
  * Items the Town Hall can't provide at all are reported in `unavailable` instead
  * of being scored as zero - an army needing a TH17 troop isn't "20% maxed", it
@@ -159,16 +248,24 @@ export function scoreArmyForPlayer(
   const owned = collectOwnedLevels(player);
   const { unitsById, equipmentById, petsById } = defs;
 
-  const items: ArmyScoreItem[] = [];
+  const campItems: ArmyScoreItem[] = [];
+  const heroItems: ArmyScoreItem[] = [];
   const unknown: string[] = [];
   const unavailable: string[] = [];
+  const needed: ClanCastleCapacity = { troop: 0, spell: 0, siege: 0 };
   // The same spell can sit in both the army camp and the clan castle leg, and the
   // score is a mean over items - counting it twice would quietly inflate the
-  // spell category. First sighting wins.
+  // category. First sighting wins.
   const seen = new Set<string>();
 
-  // Scored on the canonical package name, listed under the name the army uses.
-  const addItem = (displayName: string, category: ArmyItemCategory, lookupName: string, current: number) => {
+  /** Scored on the canonical package name, listed under the name the army uses. */
+  const addItem = (
+    into: ArmyScoreItem[],
+    displayName: string,
+    category: ArmyItemCategory,
+    lookupName: string,
+    current: number,
+  ) => {
     const pkgName = resolveArmyItemName(lookupName);
     if (!pkgName) {
       unknown.push(displayName);
@@ -182,12 +279,9 @@ export function scoreArmyForPlayer(
       unavailable.push(displayName);
       return;
     }
-    items.push({ name: displayName, category, current: Math.min(current, max), max });
+    into.push({ name: displayName, category, current: Math.min(current, max), max });
   };
 
-  // Army camp and clan castle legs are both ordinary units - the clan castle leg
-  // is NOT a hero list (it carries Rocket Balloon, Root Rider, Troop Launcher),
-  // so the category comes from the unit definition alone.
   for (const u of army.units) {
     const def = unitsById.get(u.unitId);
     if (!def) {
@@ -196,15 +290,25 @@ export function scoreArmyForPlayer(
     }
     const category: ArmyItemCategory =
       def.type === 'Spell' ? 'spell' : def.type === 'Siege' ? 'siege' : 'troop';
+    const pkgName = resolveArmyItemName(def.name);
     // Look the player's level up on the package name too, so "Rage" on the army
     // and "Rage Spell" on the player resolve to the same entry.
-    const pkgName = resolveArmyItemName(def.name) ?? def.name;
-    addItem(def.name, category, pkgName, owned.units.get(nameKey(pkgName)) ?? 0);
+    const ownedLevel = owned.units.get(nameKey(pkgName ?? def.name)) ?? 0;
+
+    if (u.home === 'clanCastle') {
+      // Capacity, not level: the castle either has room or it doesn't.
+      if (pkgName) {
+        needed[category === 'spell' ? 'spell' : category === 'siege' ? 'siege' : 'troop'] +=
+          unitHousing(def, pkgName) * u.amount;
+      }
+      continue;
+    }
+    addItem(campItems, def.name, category, pkgName ?? def.name, ownedLevel);
   }
 
   for (const hero of armyHeroes(army, equipmentById, petsById)) {
     const pkgName = resolveArmyItemName(hero) ?? hero;
-    addItem(hero, 'hero', pkgName, owned.units.get(nameKey(pkgName)) ?? 0);
+    addItem(heroItems, hero, 'hero', pkgName, owned.units.get(nameKey(pkgName)) ?? 0);
   }
 
   for (const eq of army.equipment) {
@@ -214,8 +318,7 @@ export function scoreArmyForPlayer(
       continue;
     }
     const lookup = EQUIPMENT_ALIASES[def.name] ?? def.name;
-    const current = owned.equipment.get(equipmentKey(def.hero, lookup)) ?? 0;
-    addItem(def.name, 'equipment', lookup, current);
+    addItem(heroItems, def.name, 'equipment', lookup, owned.equipment.get(equipmentKey(def.hero, lookup)) ?? 0);
   }
 
   for (const p of army.pets) {
@@ -225,27 +328,50 @@ export function scoreArmyForPlayer(
       continue;
     }
     const pkgName = resolveArmyItemName(def.name) ?? def.name;
-    addItem(def.name, 'pet', pkgName, owned.pets.get(nameKey(pkgName)) ?? 0);
+    addItem(heroItems, def.name, 'pet', pkgName, owned.pets.get(nameKey(pkgName)) ?? 0);
   }
 
-  // Mean progress within each category, then a weighted mean across categories.
-  const byCategory = new Map<ArmyItemCategory, { sum: number; count: number }>();
-  for (const it of items) {
-    const entry = byCategory.get(it.category) ?? { sum: 0, count: 0 };
-    entry.sum += Math.min(it.current, it.max) / it.max;
-    entry.count += 1;
-    byCategory.set(it.category, entry);
-  }
-  let weighted = 0;
-  let weightSum = 0;
-  for (const [category, { sum, count }] of byCategory) {
-    const w = CATEGORY_WEIGHTS[category];
-    weighted += (sum / count) * w;
-    weightSum += w;
+  const troops = weightedProgress(campItems, CAMP_WEIGHTS);
+  const heroes = weightedProgress(heroItems, HERO_WEIGHTS);
+
+  // Castle capacity: only categories the castle actually has room for count, and
+  // an empty leg has no score rather than a perfect one. The ratio is measured as
+  // "how much of what this leg needs can my castle actually hold", so a leg that
+  // doesn't fit lands below 100% instead of being clamped to a misleading perfect
+  // score. Anything the castle is short for is recorded in `over` too.
+  const available = getClanCastleCapacity(playerCastleLevel(player));
+  const hasCastleLeg = needed.troop > 0 || needed.spell > 0 || needed.siege > 0;
+  const over: (keyof ClanCastleCapacity)[] = [];
+  let castlePct: number | null = null;
+  if (hasCastleLeg && available) {
+    const ratios: number[] = [];
+    for (const key of ['troop', 'spell', 'siege'] as const) {
+      if (available[key] <= 0 || needed[key] <= 0) continue;
+      if (needed[key] > available[key]) over.push(key);
+      ratios.push(Math.min(1, available[key] / needed[key]));
+    }
+    castlePct = ratios.length > 0 ? Math.round((ratios.reduce((s, r) => s + r, 0) / ratios.length) * 100) : 100;
   }
 
+  let overall = 0;
+  let overallWeight = 0;
+  const legs: { value: number | null; weight: number }[] = [
+    { value: troops, weight: LEG_WEIGHTS.troops },
+    { value: heroes, weight: LEG_WEIGHTS.heroes },
+    { value: castlePct, weight: LEG_WEIGHTS.castle },
+  ];
+  for (const leg of legs) {
+    if (leg.value == null) continue;
+    overall += leg.value * leg.weight;
+    overallWeight += leg.weight;
+  }
+
+  const items = [...campItems, ...heroItems];
   return {
-    score: weightSum > 0 ? Math.round((weighted / weightSum) * 100) : 0,
+    score: overallWeight > 0 ? Math.round(overall / overallWeight) : 0,
+    troops,
+    heroes,
+    castle: { pct: castlePct, needed, available, over },
     items,
     gaps: items.filter((it) => it.current < it.max).sort((a, b) => shortfall(b) - shortfall(a)).slice(0, 3),
     unavailable,

@@ -62,6 +62,10 @@ interface PackageLevel {
   laboratoryRequired?: number;
   petHouseLevelRequired?: number;
   blacksmithLevelRequired?: number;
+  /** Clan Castle capacity fields. */
+  troopCapacity?: number;
+  spellCapacity?: number;
+  siegeMachineCapacity?: number;
   researchCost?: number;
   researchCostResource?: string;
   researchTime?: BuildTimeLike;
@@ -206,6 +210,42 @@ export function resolveArmyItemName(name: string): string | null {
     if (looseNameKey(candidate) === key) return candidate;
   }
   return null;
+}
+
+export interface ClanCastleCapacity {
+  /** Housing space for troops in the castle. */
+  troop: number;
+  /** Space for spells held in the castle. */
+  spell: number;
+  /** Space for siege machines held in the castle. */
+  siege: number;
+}
+
+const ccCapacityCache = new Map<number, ClanCastleCapacity | null>();
+
+/**
+ * What a Clan Castle at `level` can hold, or null when the package has no such
+ * level. The castle sits under resourceBuildings, not armyBuildings, so it isn't
+ * reachable through getBuildingMaxLevelAtTH.
+ */
+export function getClanCastleCapacity(level: number): ClanCastleCapacity | null {
+  if (level <= 0) return null;
+  const cached = ccCapacityCache.get(level);
+  if (cached !== undefined) return cached;
+  const item = safeLoad(
+    () => home().resourceBuildings().clanCastle().get()?.[0],
+    undefined,
+  );
+  const lvl = item?.levels?.find((l) => l.level === level);
+  const out = lvl
+    ? {
+        troop: lvl.troopCapacity ?? 0,
+        spell: lvl.spellCapacity ?? 0,
+        siege: lvl.siegeMachineCapacity ?? 0,
+      }
+    : null;
+  ccCapacityCache.set(level, out);
+  return out;
 }
 
 // --- Max levels ---

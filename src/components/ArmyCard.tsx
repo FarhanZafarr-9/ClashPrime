@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,18 +55,64 @@ function unitIcon(def?: UnitDef): ImageSourcePropType | undefined {
   return iconFor(def.name, kind);
 }
 
-function DetailTable({ rows, label }: { rows: { name: string; value: string; icon?: ImageSourcePropType }[]; label?: string }) {
+/**
+ * A section heading with an optional right-aligned figure. The value is the
+ * player's own progress for that section, so it sits on the heading's own row
+ * rather than in a separate badge.
+ */
+function SectionLabel({
+  label,
+  value,
+  valueColor,
+  hint,
+}: {
+  label: string;
+  value?: string | null;
+  valueColor?: string;
+  hint?: string;
+}) {
+  return (
+    <View style={styles.sectionLabelRow}>
+      <Text style={styles.sectionLabel}>{label}</Text>
+      {value ? (
+        <View style={styles.sectionLabelRight}>
+          <Text style={[styles.sectionLabelValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
+          {hint ? (
+            <>
+              <Text style={styles.sectionLabelSep}>·</Text>
+              <Text style={styles.sectionLabelHint}>{hint}</Text>
+            </>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function DetailTable({
+  rows,
+  label,
+  value,
+  valueColor,
+  hint,
+}: {
+  rows: { name: string; value: string; icon?: ImageSourcePropType }[];
+  label?: string;
+  value?: string | null;
+  valueColor?: string;
+  hint?: string;
+}) {
   if (rows.length === 0) return null;
   const mid = Math.ceil(rows.length / 2);
   const left = rows.slice(0, mid);
   const right = rows.slice(mid);
   return (
     <View>
-      {label && <Text style={styles.sectionLabel}>{label}</Text>}
+      {label && <SectionLabel label={label} value={value} valueColor={valueColor} hint={hint} />}
       <View style={styles.detailTable}>
         <View style={styles.detailCol}>
           {left.map((r, i) => (
-            <View key={`l-${i}`} style={styles.detailRow}>
+            <View key={`l-${i}`} style={[styles.detailRow, i === left.length - 1 && styles.detailRowLast]}>
               <View style={styles.detailNameWrap}>
                 {r.icon && <Image source={r.icon} style={styles.detailIcon} resizeMode="contain" />}
                 <Text style={styles.detailName} numberOfLines={1}>{r.name}</Text>
@@ -78,7 +124,7 @@ function DetailTable({ rows, label }: { rows: { name: string; value: string; ico
         <View style={styles.detailDivider} />
         <View style={styles.detailCol}>
           {right.map((r, i) => (
-            <View key={`r-${i}`} style={styles.detailRow}>
+            <View key={`r-${i}`} style={[styles.detailRow, i === right.length - 1 && styles.detailRowLast]}>
               <View style={styles.detailNameWrap}>
                 {r.icon && <Image source={r.icon} style={styles.detailIcon} resizeMode="contain" />}
                 <Text style={styles.detailName} numberOfLines={1}>{r.name}</Text>
@@ -141,15 +187,35 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, maxed, isFa
   const hasPet = heroRows.some((r) => r.pet);
   const armyThImage = getTownHallImageSource(army.townHall);
 
-  // Tone for the personal maxed badge. Green once there's little left to do, gold
-  // in the middle, red early on - read from the theme so it flips with the app.
-  const maxedColor = !maxed
-    ? null
-    : maxed.score >= 85
-      ? colors.success
-      : maxed.score >= 50
-        ? colors.warningText
-        : colors.dangerText;
+  // Tone for a personal maxed badge. Green once there's little left to do, gold in
+  // the middle, red early on - read from the theme so it flips with the app.
+  const tone = (value: number) =>
+    value >= 85 ? colors.success : value >= 50 ? colors.warningText : colors.dangerText;
+
+  // The three legs, each judged on its own terms. Their figures ride on the
+  // section headings rather than in badges, so each number sits next to the thing
+  // it describes.
+  const castle = maxed?.castle;
+  const castleOver = castle?.over ?? [];
+  const castleShortfall = castle
+    ? castleOver.reduce((sum, k) => sum + (castle.needed[k] - (castle.available?.[k] ?? 0)), 0)
+    : 0;
+// A "50/55" next to a healthy percentage is just noise, and a "45/25" next to a
+  // high percentage reads as a contradiction - so the castle only reports numbers
+  // when it genuinely can't hold the leg.
+  const castleHint = castleShortfall > 0 ? `over by ${castleShortfall}` : undefined;
+
+  const legValue = (value: number | null | undefined, forceDanger = false) =>
+    value == null ? { text: null, color: undefined } : { text: `${value}%`, color: forceDanger ? colors.dangerText : tone(value) };
+  const troopsValue = legValue(maxed?.troops);
+  const heroesValue = legValue(maxed?.heroes);
+  const castleValue = legValue(castle?.pct, castleOver.length > 0);
+
+  // What's still missing is useful but not the headline, so it stays collapsed
+  // until asked for - otherwise every card in the list carries two extra lines.
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const hasDetails = !!maxed && (maxed.gaps.length > 0 || maxed.unavailable.length > 0);
+  const missingCount = (maxed?.gaps.length ?? 0) + (maxed?.unavailable.length ?? 0);
 
   return (
     <PressableRipple onPress={onPress} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -169,16 +235,6 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, maxed, isFa
           <Ionicons name="arrow-up-circle" size={14} color={colors.textSecondary} />
           <Text style={styles.score}>{army.score}</Text>
         </View>
-        {maxed && maxedColor ? (
-          <PressableRipple
-            onPress={onPress}
-            style={[styles.maxedBadge, { borderColor: `${maxedColor}55` }]}
-            underlayColor={Colors.bgElevated}
-          >
-            <Ionicons name="cube-outline" size={11} color={maxedColor} />
-            <Text style={[styles.maxedValue, { color: maxedColor }]}>{maxed.score}%</Text>
-          </PressableRipple>
-        ) : null}
         {onFavorite ? (
           <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
             <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
@@ -189,7 +245,23 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, maxed, isFa
         </PressableRipple>
       </View>
 
-      {maxed && (maxed.gaps.length > 0 || maxed.unavailable.length > 0) && (
+      {hasDetails && (
+        <PressableRipple
+          onPress={() => setDetailsOpen((v) => !v)}
+          style={styles.maxedToggle}
+          underlayColor={Colors.bgElevated}
+        >
+          <Ionicons
+            name={detailsOpen ? 'chevron-down' : 'chevron-forward'}
+            size={11}
+            color={colors.textMuted}
+          />
+          <Text style={styles.maxedToggleText}>{detailsOpen ? 'Hide' : "What's still missing"}</Text>
+          {!detailsOpen && <Text style={styles.maxedToggleCount}>{missingCount}</Text>}
+        </PressableRipple>
+      )}
+
+      {hasDetails && detailsOpen && maxed && (
         <View style={styles.maxedDetail}>
           {maxed.unavailable.length > 0 && (
             <View style={styles.maxedRow}>
@@ -214,20 +286,40 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, maxed, isFa
       {/* Troops */}
       {troopRows.length > 0 && (
         <View style={styles.section}>
-          <DetailTable rows={troopRows} label="Troops" />
+          <DetailTable
+            rows={troopRows}
+            label="Troops"
+            value={troopsValue.text}
+            valueColor={troopsValue.color}
+          />
         </View>
       )}
 
       {/* Heroes */}
       {heroRows.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Heroes</Text>
+          <SectionLabel
+            label="Heroes"
+            value={heroesValue.text}
+            valueColor={heroesValue.color}
+          />
           <View style={styles.heroTable}>
             <View style={styles.heroHeader}>
-              <Text style={[styles.heroHeadCell, styles.heroHeadCellLeft, { flex: 1.3 }]}>Hero</Text>
+              <View style={[styles.heroCell, styles.heroHeroCell, styles.heroHeaderCell, { flex: 1.3 }]}>
+                <Text style={[styles.heroHeadText, styles.heroHeadTextLeft]}>Hero</Text>
+              </View>
               <View style={styles.heroVDivider} />
-              <Text style={[styles.heroHeadCell, { flex: 1.5 }]}>Equipment</Text>
-              {hasPet && <><View style={styles.heroVDivider} /><Text style={[styles.heroHeadCell, { flex: 1 }]}>Pet</Text></>}
+              <View style={[styles.heroCell, styles.heroSlotCell, styles.heroHeaderCell, { flex: 1.5 }]}>
+                <Text style={styles.heroHeadText}>Equipment</Text>
+              </View>
+              {hasPet && (
+                <>
+                  <View style={styles.heroVDivider} />
+                  <View style={[styles.heroCell, styles.heroSlotCell, styles.heroHeaderCell, { flex: 1 }]}>
+                    <Text style={styles.heroHeadText}>Pet</Text>
+                  </View>
+                </>
+              )}
             </View>
             {heroRows.map((r, i) => (
               <View key={i} style={[styles.heroRow, i === heroRows.length - 1 && styles.heroRowLast]}>
@@ -258,7 +350,13 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, maxed, isFa
       {/* Clan Castle */}
       {ccRows.length > 0 && (
         <View style={styles.section}>
-          <DetailTable rows={ccRows} label="Clan Castle" />
+          <DetailTable
+            rows={ccRows}
+            label="Clan Castle"
+            value={castleValue.text}
+            valueColor={castleValue.color}
+            hint={castleHint}
+          />
         </View>
       )}
 
@@ -355,17 +453,46 @@ const styles = StyleSheet.create({
   section: {
     marginTop: Spacing.md,
   },
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
   sectionLabel: {
     ...Typography.caption,
     color: Colors.textMuted,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
+  },
+  sectionLabelRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+    gap: 5,
+  },
+  sectionLabelValue: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  sectionLabelSep: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  sectionLabelHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
   },
   detailTable: {
     flexDirection: 'row',
-    borderWidth: 0.75,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     borderRadius: 6,
     overflow: 'hidden',
@@ -374,16 +501,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailDivider: {
-    width: 1,
-    backgroundColor: Colors.border,
+    width: 0,
+    borderLeftWidth: 1,
+    borderStyle: 'dashed',
+    borderLeftColor: Colors.border,
+    marginVertical: 2,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: Spacing.sm + 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
     borderBottomColor: Colors.border,
+  },
+  detailRowLast: {
+    borderBottomWidth: 0,
   },
   detailName: {
     flex: 1,
@@ -425,19 +559,26 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
     backgroundColor: Colors.bgSubtle,
   },
-  heroHeadCell: {
+  // The only thing that makes a header cell a header cell is its background. Every
+  // other property comes from the same body cell style the column uses below, so a
+  // label occupies precisely the box its column has - padding, centring and flex
+  // included. Keeping a separate set of header paddings is what left the labels
+  // sitting slightly off their columns.
+  heroHeaderCell: {
+    backgroundColor: Colors.bgSubtle,
+  },
+  heroHeadText: {
+    flexShrink: 1,
     ...Typography.caption,
     color: Colors.textMuted,
     fontWeight: '700',
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    paddingVertical: 6,
     textAlign: 'center',
   },
-  heroHeadCellLeft: {
+  heroHeadTextLeft: {
     textAlign: 'left',
-    paddingLeft: Spacing.sm + 2,
   },
   heroRow: {
     flexDirection: 'row',
@@ -457,7 +598,6 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   heroCell: {
-    paddingVertical: 8,
     minWidth: 0,
     justifyContent: 'center',
   },
@@ -466,6 +606,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 6,
+    paddingVertical: 7,
     paddingHorizontal: Spacing.sm + 2,
   },
   heroSlotCell: {
@@ -474,6 +615,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexWrap: 'wrap',
     gap: 5,
+    paddingVertical: 7,
     paddingHorizontal: Spacing.sm,
   },
   heroHeroIcon: {
@@ -497,19 +639,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textPrimary,
   },
-  maxedBadge: {
+  maxedToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    alignSelf: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    borderWidth: 0.75,
+    gap: 5,
+    marginTop: Spacing.sm,
+    paddingVertical: 4,
   },
-  maxedValue: {
+  maxedToggleText: {
     ...Typography.caption,
-    fontWeight: '700',
+    color: Colors.textMuted,
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  maxedToggleCount: {
+    ...Typography.caption,
+    color: Colors.textMuted,
     fontSize: 11,
   },
   maxedDetail: {
