@@ -158,8 +158,6 @@ function levelUpImage(key: ProgressCategory, name: string): number | null {
   return getArmyItemImage(name, null, key === 'builderHeroes' || key === 'builderTroops') ?? null;
 }
 
-const RUSHED_ACCENT = '#F6C453';
-
 // Strict duration parsing for custom timer input: any of d/h/m may appear, in
 // that order, each optional. Examples: "1h 32m", "1d 2h 3m", "45m", "2d".
 const CUSTOM_DURATION_RE = /^(?:(\d+)\s*d)?\s*(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?$/i;
@@ -1033,6 +1031,52 @@ export default function HomeScreen() {
   const aggregateTime = Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
   const aggregateRushedTime = Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
 
+  // Locked items, one collapsible per Town Hall. getUnlockableItems already sorts
+  // ascending by unlockTh, so consecutive runs become the groups.
+  const lockedBuckets = useMemo(() => {
+    const byTh = new Map<number, typeof unlockableItems>();
+    for (const item of unlockableItems) {
+      const list = byTh.get(item.unlockTh);
+      if (list) list.push(item);
+      else byTh.set(item.unlockTh, [item]);
+    }
+    return [...byTh.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([th, items]) => ({
+        key: `th${th}`,
+        th,
+        title: `TH${th}`,
+        items,
+        time: items.reduce((sum, i) => sum + (upgradeCosts[i.name]?.timeSeconds ?? 0), 0),
+        pending: items.some((i) => progressDetails[i.name] === undefined),
+      }));
+  }, [unlockableItems, upgradeCosts, progressDetails]);
+
+  // Rushed items are all measured against the same previous Town Hall, so there
+  // is no Town Hall axis to group on - type is the only meaningful split. Image
+  // marks rather than glyphs: representative in-game art per category, same
+  // source the ItemCard rows themselves use.
+  const rushedGroups = useMemo(() => {
+    const spec: { type: 'hero' | 'troop' | 'spell'; title: string; image: number }[] = [
+      { type: 'hero', title: 'Heroes', image: require('../../assets/package-images/images/home/heroes/barbarian-king/icon.webp') },
+      { type: 'troop', title: 'Troops', image: require('../../assets/package-images/images/home/troops/barbarian/icon.webp') },
+      { type: 'spell', title: 'Spells', image: require('../../assets/package-images/images/home/spells/lightning-spell/icon.webp') },
+    ];
+    return spec
+      .map(({ type, title, image }) => {
+        const items = rushedItems.filter((i) => i.type === type);
+        return {
+          key: type,
+          title,
+          image,
+          items,
+          time: items.reduce((sum, i) => sum + (rushedCosts[i.name]?.timeSeconds ?? 0), 0),
+          pending: items.some((i) => progressDetails[i.name] === undefined),
+        };
+      })
+      .filter((g) => g.items.length > 0);
+  }, [rushedItems, rushedCosts, progressDetails]);
+
   // ── Early returns (hooks must not follow) ──
   if (loading && !player) {
     return <HomeScreenSkeleton />;
@@ -1708,8 +1752,8 @@ export default function HomeScreen() {
                 totalMax={0}
                 description="Items waiting to be upgraded / unlocked"
               >
-                <View style={styles.progressInner}>
-                  {unlockableItems.length > 0 && (
+                <View style={styles.backlogSections}>
+                    {unlockableItems.length > 0 && (
                     <CollapsibleSection
                       isLast={rushedItems.length === 0}
                       iconSource={require('../../assets/images/chiefs-journey/locked.png')}
@@ -1722,32 +1766,56 @@ export default function HomeScreen() {
                       totalMax={0}
                       badges={[{ key: 'locked', value: unlockableItems.length, tone: 'danger' }]}
                     >
-                      {(() => {
-                        return unlockableItems.map((item, i) => {
-                          const thImage = getTownHallImageSource(item.unlockTh);
-                          const image = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : 1);
-                          const levelsAtTH = getMaxLevelAtTH(item.name, th) ?? 0;
-                          const itemCost = upgradeCosts[item.name];
-                          const time = itemCost && itemCost.timeSeconds > 0 ? fmtTime(itemCost.timeSeconds) : null;
-                          const showCost = !!itemCost;
-                          return (
-                            <ItemCard
-                              key={item.name}
-                              name={item.name}
-                              level={0}
-                              maxLevel={levelsAtTH}
-                              hideLevelBadge
-                              iconSource={image ?? undefined}
-                              subtitle={`${levelsAtTH} ${levelsAtTH === 1 ? 'level' : 'levels'}${time ? ` · ${time}` : ''}`}
-                              costLabel={showCost ? (formatCostBreakdown(itemCost.byResource) || fmtCost(itemCost.cost)) : undefined}
-                              costResources={showCost && itemCost.byResource ? itemCost.byResource : undefined}
-                              trailing={thImage ? <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" /> : undefined}
-                              isLast={i === unlockableItems.length - 1}
-                              footer={!showCost && lockedCostsPending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
-                            />
-                          );
-                        });
-                      })()}
+                      <View style={styles.backlogSections}>
+                        {lockedBuckets.map((bucket, bi) => {
+                        const bucketDesc = bucket.pending
+                          ? 'Calculating costs & time…'
+                          : bucket.time > 0
+                            ? `${bucket.items.length} · ${formatTimeShort(bucket.time)}`
+                            : `${bucket.items.length} ${bucket.items.length === 1 ? 'item' : 'items'}`;
+                        return (
+                          <CollapsibleSection
+                            key={bucket.key}
+                            isFirst={bi === 0}
+                            isLast={bi === lockedBuckets.length - 1}
+                            iconSource={getTownHallImageSource(bucket.th) ?? undefined}
+                            title={bucket.title}
+                            compact
+                            description={bucketDesc}
+                            count={bucket.items.length}
+                            totalLevel={0}
+                            totalMax={0}
+                          >
+                            <View>
+                              {bucket.items.map((item, i) => {
+                                const thImage = getTownHallImageSource(item.unlockTh);
+                                const image = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : 1);
+                                const levelsAtTH = getMaxLevelAtTH(item.name, th) ?? 0;
+                                const itemCost = upgradeCosts[item.name];
+                                const time = itemCost && itemCost.timeSeconds > 0 ? fmtTime(itemCost.timeSeconds) : null;
+                                const showCost = !!itemCost;
+                                return (
+                                  <ItemCard
+                                    key={item.name}
+                                    name={item.name}
+                                    level={0}
+                                    maxLevel={levelsAtTH}
+                                    hideLevelBadge
+                                    iconSource={image ?? undefined}
+                                    subtitle={`${levelsAtTH} ${levelsAtTH === 1 ? 'level' : 'levels'}${time ? ` · ${time}` : ''}`}
+                                    costLabel={showCost ? (formatCostBreakdown(itemCost.byResource) || fmtCost(itemCost.cost)) : undefined}
+                                    costResources={showCost && itemCost.byResource ? itemCost.byResource : undefined}
+                                    trailing={thImage ? <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" /> : undefined}
+                                    isLast={i === bucket.items.length - 1}
+                                    footer={!showCost && bucket.pending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
+                                  />
+                                );
+                              })}
+                            </View>
+                          </CollapsibleSection>
+                        );
+                      })}
+                      </View>
                     </CollapsibleSection>
                   )}
 
@@ -1756,7 +1824,7 @@ export default function HomeScreen() {
                       isLast
                       iconSource={require('../../assets/images/chiefs-journey/rushed.png')}
                       title={`${rushedItems.length} rushed`}
-                      accentColor={RUSHED_ACCENT}
+                      accentColor={Colors.warningText}
                       compact
                       description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedTime > 0 ? formatTimeShort(aggregateRushedTime) : 'Items below the previous Town Hall max')}
                       count={rushedItems.length}
@@ -1764,41 +1832,53 @@ export default function HomeScreen() {
                       totalMax={0}
                       badges={[{ key: 'rushed', value: rushedItems.length, tone: 'warning' }]}
                     >
-                      {(() => {
-                        const groups: { label: string; key: string; icon: { set: 'ion' | 'mc'; name: string }; items: typeof rushedItems }[] = [
-                          { label: 'Heroes', key: 'hero', icon: { set: 'ion', name: 'shield-half-outline' }, items: [] },
-                          { label: 'Troops', key: 'troop', icon: { set: 'mc', name: 'sword-cross' }, items: [] },
-                          { label: 'Spells', key: 'spell', icon: { set: 'ion', name: 'flask-outline' }, items: [] },
-                          { label: 'Equipment', key: 'equipment', icon: { set: 'ion', name: 'trophy-outline' }, items: [] },
-                        ];
-                        for (const item of rushedItems) {
-                          const g = groups.find((g) => g.key === item.type);
-                          if (g) g.items.push(item);
-                        }
-                        const visible = groups.filter((g) => g.items.length > 0);
-                        const allItems = visible.flatMap((g) => g.items);
-                        return allItems.map((item, i) => {
-                          const itemImage = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'equipment' || item.type === 'troop' || item.type === 'spell' ? null : item.currentLevel);
-                          const costData = rushedCosts[item.name];
-                          const showCost = !!costData && costData.cost > 0;
-                          return (
-                            <ItemCard
-                              key={item.name}
-                              name={item.name}
-                              level={item.currentLevel}
-                              maxLevel={item.maxLevelAtPrevTH}
-                              iconSource={itemImage ?? undefined}
-                              subtitle={`Lv${item.currentLevel} › Lv${item.maxLevelAtPrevTH}`}
-                              subtitleWithBar
-                              costLabel={showCost ? (formatCostBreakdown(costData.byResource) || fmtCost(costData.cost)) : undefined}
-                              costResources={showCost && costData.byResource ? costData.byResource : undefined}
-                              timeLabel={costData && costData.timeSeconds > 0 ? fmtTime(costData.timeSeconds) : undefined}
-                              isLast={i === allItems.length - 1}
-                              footer={!showCost && rushedCostsPending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
-                            />
-                          );
-                        });
-                      })()}
+                      <View style={styles.backlogSections}>
+                        {rushedGroups.map((group, gi) => {
+                        const groupDesc = group.pending
+                          ? 'Calculating costs & time…'
+                          : group.time > 0
+                            ? `${group.items.length} · ${formatTimeShort(group.time)}`
+                            : `${group.items.length} ${group.items.length === 1 ? 'item' : 'items'}`;
+                        return (
+                          <CollapsibleSection
+                            key={group.key}
+                            isFirst={gi === 0}
+                            isLast={gi === rushedGroups.length - 1}
+                            iconSource={group.image}
+                            title={group.title}
+                            compact
+                            description={groupDesc}
+                            count={group.items.length}
+                            totalLevel={0}
+                            totalMax={0}
+                          >
+                            <View>
+                              {group.items.map((item, i) => {
+                                const itemImage = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : item.currentLevel);
+                                const costData = rushedCosts[item.name];
+                                const showCost = !!costData && costData.cost > 0;
+                                return (
+                                  <ItemCard
+                                    key={item.name}
+                                    name={item.name}
+                                    level={item.currentLevel}
+                                    maxLevel={item.maxLevelAtPrevTH}
+                                    iconSource={itemImage ?? undefined}
+                                    subtitle={`Lv${item.currentLevel} › Lv${item.maxLevelAtPrevTH}`}
+                                    subtitleWithBar
+                                    costLabel={showCost ? (formatCostBreakdown(costData.byResource) || fmtCost(costData.cost)) : undefined}
+                                    costResources={showCost && costData.byResource ? costData.byResource : undefined}
+                                    timeLabel={costData && costData.timeSeconds > 0 ? fmtTime(costData.timeSeconds) : undefined}
+                                    isLast={i === group.items.length - 1}
+                                    footer={!showCost && group.pending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
+                                  />
+                                );
+                              })}
+                            </View>
+                          </CollapsibleSection>
+                        );
+                      })}
+                      </View>
                     </CollapsibleSection>
                   )}
                 </View>
@@ -2733,20 +2813,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warning,
   },
   sectionBadgeDanger: {
-    backgroundColor: 'rgba(244,67,54,0.14)',
+    backgroundColor: Colors.destructiveGhost,
     borderWidth: 0.75,
-    borderColor: 'rgba(244,67,54,0.45)',
+    borderColor: Colors.destructiveGhostBorder,
   },
   sectionBadgeDangerText: {
-    color: '#F44336',
+    color: Colors.dangerText,
   },
   sectionBadgeWarning: {
-    backgroundColor: 'rgba(246,196,83,0.14)',
+    backgroundColor: Colors.warningGhost,
     borderWidth: 0.75,
-    borderColor: 'rgba(246,196,83,0.45)',
+    borderColor: Colors.warningGhostBorder,
   },
   sectionBadgeWarningText: {
-    color: RUSHED_ACCENT,
+    color: Colors.warningText,
   },
   sectionBadgeText: {
     fontSize: 14,
@@ -2775,6 +2855,13 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   progressInner: {
+    gap: Spacing.xs,
+  },
+  // Stacks the locked/rushed groups inside Backlog. ItemCard brings its own
+  // marginBottom, so the wrappers *inside* a group stay plain - using
+  // progressInner there doubled the gap to 8px, while consecutive collapsible
+  // headers (padding but no margin) sat flush against each other.
+  backlogSections: {
     gap: Spacing.xs,
   },
   sectionSeparator: {

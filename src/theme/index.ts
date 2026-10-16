@@ -24,10 +24,27 @@ export const DarkColors = {
   success: '#A0A0A0',
   successGhost: 'rgba(255,255,255,0.06)',
   warning: '#D4A359', // Premium gold theme color
+  /** Gold for text and accents. Separate from `warning` because that value has
+   * to also work as a pale wash, and only one of the two can be legible. */
+  warningText: '#F6C453',
   // Tint behind the pivot row and its Remaining header - enough to read as
   // selected without competing with the current-level accent.
-  warningGhost: 'rgba(212,163,89,0.12)',
-  destructive: '#666666',
+  warningGhost: 'rgba(246,196,83,0.14)',
+  warningGhostBorder: 'rgba(246,196,83,0.45)',
+  /**
+   * Lifted off the neutral ramp. This was #666666 - byte-identical to
+   * textTertiary - so a destructive surface was indistinguishable from ordinary
+   * body text. Red-tinted rather than brightened grey: a neutral can never signal
+   * a category, it just looks like a heavier border. Clearing #2A2A2A (the bar
+   * any nested panel has to beat) is what makes the section read as its own layer.
+   */
+  destructive: '#C8554C',
+  destructiveGhost: 'rgba(240,101,92,0.16)',
+  destructiveGhostBorder: 'rgba(240,101,92,0.50)',
+  /** Text on a destructive surface, and the badge/label colour for the locked
+   * state. Was a hardcoded #F44336 in both themes; this is the same red lifted
+   * a little so it holds up on the ghost fill as well as the card. */
+  dangerText: '#F0655C',
   overlay: 'rgba(0,0,0,0.6)',
   shimmer: '#555555',
 };
@@ -52,8 +69,15 @@ export const LightColors = {
   success: '#34C759',
   successGhost: 'rgba(52,199,89,0.12)',
   warning: '#D4A359', // Premium gold theme color
-  warningGhost: 'rgba(212,163,89,0.16)',
+  /** Gold for text and accents. #D4A359 is only 2.29:1 on white, so it can stay
+   * the pale wash colour but cannot be the text colour in light mode. */
+  warningText: '#8A6420',
+  warningGhost: 'rgba(138,100,32,0.12)',
+  warningGhostBorder: 'rgba(138,100,32,0.45)',
   destructive: '#FF3B30',
+  destructiveGhost: 'rgba(196,52,43,0.10)',
+  destructiveGhostBorder: 'rgba(196,52,43,0.40)',
+  dangerText: '#C4342B',
   overlay: 'rgba(0,0,0,0.4)',
   shimmer: '#B0B0B5',
 };
