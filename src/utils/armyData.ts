@@ -7,7 +7,14 @@ import { PACKAGE_IMAGES, PACKAGE_BUILDER_TROOP_IMAGES } from '../data/packageIma
 
 export type { UnlockableType };
 
-export type BuildingKey = 'laboratory' | 'heroHall' | 'blacksmith' | 'petHouse' | 'workshop';
+export type BuildingKey =
+  | 'laboratory'
+  | 'heroHall'
+  | 'blacksmith'
+  | 'petHouse'
+  | 'workshop'
+  | 'spellFactory'
+  | 'darkSpellFactory';
 export type CostResource =
   | 'Elixir'
   | 'Dark Elixir'
@@ -230,12 +237,31 @@ export function getBuildingMaxLevelAtTH(building: BuildingKey, th: number): numb
   return result;
 }
 
+const factoryGateUsable = new Map<BuildingKey, boolean>();
+
+/**
+ * The spell factory gate in getMaxLevelAtTH is load-bearing: getBuildingMaxLevelAtTH
+ * swallows loader errors and reports null, so a package API change that stopped the
+ * factory from resolving would make every spell read as un-unlockable and drop all of
+ * them out of the app. A factory that resolves at no Town Hall at all means the lookup
+ * is broken rather than the Town Hall being too low, so probe once and then fail open
+ * to the ungated path.
+ */
+function isFactoryGateUsable(key: BuildingKey): boolean {
+  const cached = factoryGateUsable.get(key);
+  if (cached !== undefined) return cached;
+  // Probe well past any real Town Hall: this only asks whether the data loads.
+  const usable = getBuildingMaxLevelAtTH(key, 99) != null;
+  factoryGateUsable.set(key, usable);
+  return usable;
+}
+
 /**
  * Max level of an army item reachable at a given Town Hall. Research items are
  * gated by the item's own Town Hall requirement AND the max Laboratory level
  * reachable at that TH (not the player's actual Lab); heroes by the max Hero
- * Hall; pets by the max Pet House. Falls back to townHallRequired where the
- * package carries no building gate.
+ * Hall; pets by the max Pet House. Spells add the Spell Factory gate below.
+ * Falls back to townHallRequired where the package carries no building gate.
  */
 export function getMaxLevelAtTH(name: string, thLevel: number): number | null {
   indexItems();
@@ -246,6 +272,25 @@ export function getMaxLevelAtTH(name: string, thLevel: number): number | null {
     const hhMax = getBuildingMaxLevelAtTH('heroHall', thLevel);
     if (hhMax == null) return null;
     max = maxLevelUnderCap(item.levels, 'heroHallLevelRequired', hhMax);
+  } else if (item.category === 'spell') {
+    // A spell is granted by its factory, not researched, so the factory is the
+    // real unlock gate. The package's level-1 `townHallRequired` disagrees with
+    // the factory for several spells (Recall says 11 while Spell Factory 7 needs
+    // TH13, Overgrowth says 11 while Dark Spell Factory 6 needs TH12, plus
+    // Clone/Freeze/Ice Block/Invisibility/Jump/Revive/Totem) and the wrong value
+    // always claims an earlier TH, so the Backlog offers spells the player
+    // cannot actually unlock yet. Trust `spellFactoryLevelRequired` instead.
+    const required = item.spellFactoryLevelRequired;
+    if (required != null) {
+      const factoryKey: BuildingKey = item.spellType === 'dark' ? 'darkSpellFactory' : 'spellFactory';
+      if (isFactoryGateUsable(factoryKey)) {
+        const factoryMax = getBuildingMaxLevelAtTH(factoryKey, thLevel);
+        if (required > (factoryMax ?? 0)) return null;
+      }
+    }
+    const labMax = getBuildingMaxLevelAtTH('laboratory', thLevel);
+    max = labMax != null ? maxLevelWithBuildingAndTH(item.levels, 'laboratoryRequired', labMax, thLevel) : 0;
+    if (max <= 0) max = maxLevelUnderCap(item.levels, 'townHallRequired', thLevel);
   } else if (item.category === 'pet') {
     const phMax = getBuildingMaxLevelAtTH('petHouse', thLevel);
     max = phMax != null ? maxLevelWithBuildingAndTH(item.levels, 'petHouseLevelRequired', phMax, thLevel) : 0;
