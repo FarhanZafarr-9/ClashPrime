@@ -21,6 +21,7 @@ import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../../src/types/a
 import { getPopularArmies, getCachedArmies } from '../../src/api/clashArmies';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { getArmyItemImage } from '../../src/utils/armyData';
+import { scoreArmyForPlayer, type ArmyScore } from '../../src/utils/armyScore';
 import { buildCopyArmyLink } from '../../src/utils/armyLinks';
 import { ArmiesScreenSkeleton } from '../../src/components/SkeletonScreens';
 import SharePreviewModal, { useShareCardWidth } from '../../src/components/share/SharePreviewModal';
@@ -92,15 +93,20 @@ function pillCornerStyle(index: number, total: number) {
 }
 
 /**
- * The troop art leading a tag pill, taken from the highest-scoring army carrying
- * that tag so the pill previews what the player is about to filter to. The first
- * army-camp troop with package art wins; army camps come first because the clan
- * castle leg is usually a single hero.
+ * The troop art leading a tag pill, as an ordered list of candidates rather than
+ * a single image. Tags overlap heavily - a top Farming and a top Spam army
+ * usually share the same core camp composition - so giving every pill just its
+ * own army's first unit put the same sprite on several pills. tagMeta walks the
+ * visible pills and takes the first candidate nobody has claimed, falling back
+ * to the tag's glyph when a pill runs out. Army camps come first because the
+ * clan castle leg is usually a single hero.
  */
-function leadingUnitImage(army: ClashArmy | undefined, unitsById: Map<number, UnitDef>) {
-  if (!army) return null;
-  const campUnits = army.units.filter((u) => u.home === 'armyCamp');
-  for (const unit of campUnits) {
+function leadingUnitImages(army: ClashArmy | undefined, unitsById: Map<number, UnitDef>): number[] {
+  if (!army) return [];
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const unit of army.units) {
+    if (unit.home !== 'armyCamp') continue;
     const def = unitsById.get(unit.unitId);
     if (!def) continue;
     const kind = def.type === 'Spell' ? 'spell' : def.type === 'Siege' ? 'siege' : 'troop';
@@ -111,10 +117,13 @@ function leadingUnitImage(army: ClashArmy | undefined, unitsById: Map<number, Un
     ];
     for (const variant of variants) {
       const src = getArmyItemImage(variant);
-      if (src) return src;
+      if (src && !seen.has(src)) {
+        seen.add(src);
+        out.push(src);
+      }
     }
   }
-  return null;
+  return out;
 }
 
 export default function ArmiesScreen() {
@@ -245,25 +254,54 @@ export default function ArmiesScreen() {
     [armies, thLevel],
   );
 
-  // Each tag pill leads with the troop art of its top-scoring army and carries the
-  // number of armies it would switch to, matching the Buildings category pills.
-  const tagMeta = useMemo(() => {
-    const out: Record<string, { image: number | null; count: number }> = {};
-    for (const pill of ARMY_TAG_PILLS) {
-      const matches = pill.key === 'All'
-        ? thArmies
-        : thArmies.filter((a) => a.tags.includes(pill.key));
-      out[pill.key] = { image: leadingUnitImage(matches[0], unitsById), count: matches.length };
+  // How maxed the player is for each army's items at their own Town Hall, shown
+  // beside ClashArmies' community score. Null until the definitions and the
+  // player are both in, and null throughout when nobody is logged in.
+  const maxedScores = useMemo(() => {
+    if (!player || unitsById.size === 0) return new Map<number, ArmyScore>();
+    const out = new Map<number, ArmyScore>();
+    const defs = { unitsById, equipmentById, petsById };
+    for (const army of thArmies) {
+      const s = scoreArmyForPlayer(army, defs, player, thLevel);
+      if (s) out.set(army.id, s);
     }
     return out;
-  }, [thArmies, unitsById]);
+  }, [thArmies, player, unitsById, equipmentById, petsById, thLevel]);
+
+  // Counts are resolved first because they decide which pills are visible, and the
+  // leading art is then handed out in that visible order - claiming art for a pill
+  // that later drops out would needlessly deny it to one the player can see.
+  const tagCounts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const pill of ARMY_TAG_PILLS) {
+      out[pill.key] = pill.key === 'All'
+        ? thArmies.length
+        : thArmies.filter((a) => a.tags.includes(pill.key)).length;
+    }
+    return out;
+  }, [thArmies]);
 
   // Tags with no armies at this hall are dropped, matching the Buildings screen.
   // "All" always stays so there is a way back to everything.
   const availableTags = useMemo(
-    () => ARMY_TAG_PILLS.filter((p) => p.key === 'All' || (tagMeta[p.key]?.count ?? 0) > 0),
-    [tagMeta],
+    () => ARMY_TAG_PILLS.filter((p) => p.key === 'All' || (tagCounts[p.key] ?? 0) > 0),
+    [tagCounts],
   );
+
+  // Each tag pill leads with troop art from its top-scoring army, no two pills
+  // showing the same sprite, and carries the number of armies it would switch to.
+  const tagMeta = useMemo(() => {
+    const out: Record<string, { image: number | null; count: number }> = {};
+    const claimed = new Set<number>();
+    for (const pill of availableTags) {
+      const topArmy = thArmies.find((a) => a.tags.includes(pill.key));
+      const candidates = leadingUnitImages(topArmy, unitsById);
+      const image = candidates.find((src) => !claimed.has(src)) ?? null;
+      if (image != null) claimed.add(image);
+      out[pill.key] = { image, count: tagCounts[pill.key] ?? 0 };
+    }
+    return out;
+  }, [availableTags, tagCounts, thArmies, unitsById]);
 
   const activeTag = availableTags.some((p) => p.key === selectedTag)
     ? selectedTag
@@ -397,6 +435,7 @@ export default function ArmiesScreen() {
                     equipmentById={equipmentById}
                     petsById={petsById}
                     isSaved={isSavedArmy}
+                    maxed={maxedScores.get(army.id)}
                     onSave={() => handleSaveArmy(army)}
                     onShare={() => handleShareArmy(army)}
                     onShareCard={() => openShareCard(army)}

@@ -183,6 +183,31 @@ export function getArmyItem(name: string, builderBase = false): PackageItem | nu
   return matches[0];
 }
 
+/** Loose key for cross-source name matching: "L.A.S.S.I" and "Lassi" collapse together. */
+export function looseNameKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z]/g, '');
+}
+
+/**
+ * Canonical package name for a display name that may not match the package
+ * exactly, or null when the package doesn't carry the item at all. Needed because
+ * the two sources disagree in two ways: ClashArmies writes spells without the
+ * "Spell" suffix ("Rage" where the package has "Rage Spell"), and the first pet is
+ * "Lassi" where the package writes "L.A.S.S.I". Exact lookup alone would report
+ * every spell and that pet as missing.
+ */
+export function resolveArmyItemName(name: string): string | null {
+  indexItems();
+  if (byNameIndex?.has(name)) return name;
+  const spellForm = `${name} Spell`;
+  if (byNameIndex?.has(spellForm)) return spellForm;
+  const key = looseNameKey(name);
+  for (const candidate of byNameIndex?.keys() ?? []) {
+    if (looseNameKey(candidate) === key) return candidate;
+  }
+  return null;
+}
+
 // --- Max levels ---
 
 function maxLevelUnderCap(levels: PackageLevel[], capKey: keyof PackageLevel, cap: number): number {

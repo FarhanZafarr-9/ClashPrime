@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography, useTheme } from '../theme';
 import { getTownHallImageSource } from '../utils/buildingImages';
 import { getArmyItemImage } from '../utils/armyData';
+import type { ArmyScore } from '../utils/armyScore';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../types/armies';
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
   unitsById: Map<number, UnitDef>;
   equipmentById: Map<number, EquipmentDef>;
   petsById: Map<number, PetDef>;
+  /** How maxed the player is for this army's items, when a player is known. */
+  maxed?: ArmyScore;
   isFavorite?: boolean;
   isSaved?: boolean;
   onFavorite?: () => void;
@@ -34,6 +37,16 @@ function iconFor(name: string, kind: 'troop' | 'spell' | 'siege' | 'hero' | 'pet
     if (local) return local;
   }
   return undefined;
+}
+
+/**
+ * Hero names run long ("Barbarian King") and the column is narrow, so the cell
+ * shows the last word only - "King", "Queen", "Warden". The icon beside it carries
+ * the class, so the short handle still reads unambiguously.
+ */
+function shortHeroName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1] || name;
 }
 
 function unitIcon(def?: UnitDef): ImageSourcePropType | undefined {
@@ -79,7 +92,7 @@ function DetailTable({ rows, label }: { rows: { name: string; value: string; ico
   );
 }
 
-export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite, isSaved, onFavorite, onSave, onShare, onShareCard, onCopy, onPress }: Props) {
+export function ArmyCard({ army, unitsById, equipmentById, petsById, maxed, isFavorite, isSaved, onFavorite, onSave, onShare, onShareCard, onCopy, onPress }: Props) {
   const { colors } = useTheme();
 
   const campUnits = army.units.filter((u) => u.home === 'armyCamp');
@@ -95,34 +108,48 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
     return { name: def?.name || `#${u.unitId}`, value: `×${u.amount}`, icon: unitIcon(def) };
   });
 
-  // Hero rows: hero name, equipment, pet (separate columns)
-  const heroRows: { hero: string; heroIcon?: ImageSourcePropType; equipment: { name: string; icon?: ImageSourcePropType }[]; pet: { name: string; icon?: ImageSourcePropType } | null }[] = [];
-  const heroMap = new Map<string, { equipment: { name: string; icon?: ImageSourcePropType }[]; pet: { name: string; icon?: ImageSourcePropType } | null }>();
+  // Hero rows keep the three-column layout, but the equipment and pet columns
+  // carry icons only - their names were 11px inside a third of the card and
+  // clipped. Dashed rules keep the table reading as a plan sheet rather than a
+  // data grid.
+  const heroRows: { hero: string; heroIcon?: ImageSourcePropType; equipment: ImageSourcePropType[]; pet?: ImageSourcePropType }[] = [];
+  const heroMap = new Map<string, { equipment: ImageSourcePropType[]; pet?: ImageSourcePropType }>();
   for (const eq of army.equipment) {
     const def = equipmentById.get(eq.equipmentId);
     if (def) {
-      if (!heroMap.has(def.hero)) heroMap.set(def.hero, { equipment: [], pet: null });
-      heroMap.get(def.hero)!.equipment.push({ name: def.name, icon: iconFor(def.name, 'equipment') });
+      if (!heroMap.has(def.hero)) heroMap.set(def.hero, { equipment: [] });
+      const icon = iconFor(def.name, 'equipment');
+      if (icon) heroMap.get(def.hero)!.equipment.push(icon);
     }
   }
   // Attach pets to heroes
   for (const p of army.pets) {
     const def = petsById.get(p.petId);
     if (def && heroMap.has(p.hero)) {
-      heroMap.get(p.hero)!.pet = { name: def.name, icon: iconFor(def.name, 'pet') };
+      heroMap.get(p.hero)!.pet = iconFor(def.name, 'pet');
     }
   }
   for (const [heroName, data] of heroMap) {
     heroRows.push({
-      hero: heroName,
+      hero: shortHeroName(heroName),
       heroIcon: iconFor(heroName, 'hero'),
-      equipment: data.equipment.length > 0 ? data.equipment : [{ name: '—' }],
+      equipment: data.equipment,
       pet: data.pet,
     });
   }
 
   const hasPet = heroRows.some((r) => r.pet);
   const armyThImage = getTownHallImageSource(army.townHall);
+
+  // Tone for the personal maxed badge. Green once there's little left to do, gold
+  // in the middle, red early on - read from the theme so it flips with the app.
+  const maxedColor = !maxed
+    ? null
+    : maxed.score >= 85
+      ? colors.success
+      : maxed.score >= 50
+        ? colors.warningText
+        : colors.dangerText;
 
   return (
     <PressableRipple onPress={onPress} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -142,6 +169,16 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
           <Ionicons name="arrow-up-circle" size={14} color={colors.textSecondary} />
           <Text style={styles.score}>{army.score}</Text>
         </View>
+        {maxed && maxedColor ? (
+          <PressableRipple
+            onPress={onPress}
+            style={[styles.maxedBadge, { borderColor: `${maxedColor}55` }]}
+            underlayColor={Colors.bgElevated}
+          >
+            <Ionicons name="cube-outline" size={11} color={maxedColor} />
+            <Text style={[styles.maxedValue, { color: maxedColor }]}>{maxed.score}%</Text>
+          </PressableRipple>
+        ) : null}
         {onFavorite ? (
           <PressableRipple onPress={onFavorite} hitSlop={8} style={styles.actionBtn}>
             <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={18} color={isFavorite ? colors.textPrimary : colors.textTertiary} />
@@ -151,6 +188,28 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
           <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={18} color={isSaved ? colors.textPrimary : colors.textTertiary} />
         </PressableRipple>
       </View>
+
+      {maxed && (maxed.gaps.length > 0 || maxed.unavailable.length > 0) && (
+        <View style={styles.maxedDetail}>
+          {maxed.unavailable.length > 0 && (
+            <View style={styles.maxedRow}>
+              <Ionicons name="lock-closed" size={11} color={colors.textMuted} />
+              <Text style={styles.maxedDetailText} numberOfLines={2}>
+                Not available at your TH: {maxed.unavailable.join(', ')}
+              </Text>
+            </View>
+          )}
+          {maxed.gaps.length > 0 && (
+            <View style={styles.maxedRow}>
+              <Ionicons name="trending-up-outline" size={11} color={colors.textMuted} />
+              <Text style={styles.maxedDetailText} numberOfLines={2}>
+                Biggest gaps:{' '}
+                {maxed.gaps.map((g) => `${g.name} ${g.current}→${g.max}`).join(' · ')}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Troops */}
       {troopRows.length > 0 && (
@@ -165,30 +224,31 @@ export function ArmyCard({ army, unitsById, equipmentById, petsById, isFavorite,
           <Text style={styles.sectionLabel}>Heroes</Text>
           <View style={styles.heroTable}>
             <View style={styles.heroHeader}>
-              <Text style={[styles.heroHeadCell, { flex: 1.3 }]}>Hero</Text>
-              <View style={styles.heroDivider} />
+              <Text style={[styles.heroHeadCell, styles.heroHeadCellLeft, { flex: 1.3 }]}>Hero</Text>
+              <View style={styles.heroVDivider} />
               <Text style={[styles.heroHeadCell, { flex: 1.5 }]}>Equipment</Text>
-              {hasPet && <><View style={styles.heroDivider} /><Text style={[styles.heroHeadCell, { flex: 1 }]}>Pet</Text></>}
+              {hasPet && <><View style={styles.heroVDivider} /><Text style={[styles.heroHeadCell, { flex: 1 }]}>Pet</Text></>}
             </View>
             {heroRows.map((r, i) => (
-              <View key={i} style={styles.heroRow}>
-                <View style={[styles.heroCell, styles.heroIconCell, { flex: 1.3 }]}>
-                  {r.heroIcon && <Image source={r.heroIcon} style={styles.heroCellIcon} resizeMode="contain" />}
+              <View key={i} style={[styles.heroRow, i === heroRows.length - 1 && styles.heroRowLast]}>
+                <View style={[styles.heroCell, styles.heroHeroCell, { flex: 1.3 }]}>
+                  {r.heroIcon && <Image source={r.heroIcon} style={styles.heroHeroIcon} resizeMode="contain" />}
                   <Text style={styles.heroNameText} numberOfLines={1}>{r.hero}</Text>
                 </View>
-                <View style={styles.heroDivider} />
-                <View style={[styles.heroCell, styles.heroEquipCol, { flex: 1.5 }]}>
-                  {r.equipment.map((eq, j) => (
-                    <View key={j} style={[styles.heroIconCell, styles.heroEquipItem]}>
-                      {eq.icon && <Image source={eq.icon} style={styles.heroCellIcon} resizeMode="contain" />}
-                      <Text style={styles.heroEquipText} numberOfLines={1}>{eq.name}</Text>
-                    </View>
+                <View style={styles.heroVDivider} />
+                <View style={[styles.heroCell, styles.heroSlotCell, { flex: 1.5 }]}>
+                  {r.equipment.map((icon, j) => (
+                    <Image key={j} source={icon} style={styles.heroSlotIcon} resizeMode="contain" />
                   ))}
                 </View>
-                {hasPet && <><View style={styles.heroDivider} /><View style={[styles.heroCell, styles.heroIconCell, { flex: 1 }]}>
-                  {r.pet?.icon && <Image source={r.pet.icon} style={styles.heroCellIcon} resizeMode="contain" />}
-                  <Text style={styles.heroNameText} numberOfLines={1}>{r.pet?.name || '—'}</Text>
-                </View></>}
+                {hasPet && (
+                  <>
+                    <View style={styles.heroVDivider} />
+                    <View style={[styles.heroCell, styles.heroSlotCell, { flex: 1 }]}>
+                      {r.pet ? <Image source={r.pet} style={styles.heroPetIcon} resizeMode="contain" /> : null}
+                    </View>
+                  </>
+                )}
               </View>
             ))}
           </View>
@@ -351,14 +411,17 @@ const styles = StyleSheet.create({
     maxWidth: 120,
   },
   heroTable: {
-    borderWidth: 0.75,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     borderRadius: 6,
     overflow: 'hidden',
   },
   heroHeader: {
     flexDirection: 'row',
+    alignItems: 'stretch',
     borderBottomWidth: 1,
+    borderStyle: 'dashed',
     borderBottomColor: Colors.border,
     backgroundColor: Colors.bgSubtle,
   },
@@ -370,33 +433,63 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     paddingVertical: 6,
-    paddingHorizontal: Spacing.sm + 2,
     textAlign: 'center',
+  },
+  heroHeadCellLeft: {
+    textAlign: 'left',
+    paddingLeft: Spacing.sm + 2,
   },
   heroRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
     borderBottomColor: Colors.border,
   },
-  heroDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-    backgroundColor: Colors.border,
+  heroRowLast: {
+    borderBottomWidth: 0,
+  },
+  heroVDivider: {
+    width: 0,
+    borderLeftWidth: 1,
+    borderStyle: 'dashed',
+    borderLeftColor: Colors.border,
+    marginVertical: 2,
   },
   heroCell: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    lineHeight: 15,
-    paddingVertical: 7,
-    paddingHorizontal: Spacing.sm + 2,
-    textAlign: 'left',
+    paddingVertical: 8,
+    minWidth: 0,
+    justifyContent: 'center',
   },
-  heroIconCell: {
+  heroHeroCell: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
+    gap: 6,
+    paddingHorizontal: Spacing.sm + 2,
+  },
+  heroSlotCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
     gap: 5,
+    paddingHorizontal: Spacing.sm,
+  },
+  heroHeroIcon: {
+    width: 20,
+    height: 20,
+    flexShrink: 0,
+  },
+  heroSlotIcon: {
+    width: 22,
+    height: 22,
+    flexShrink: 0,
+  },
+  heroPetIcon: {
+    width: 24,
+    height: 24,
+    flexShrink: 0,
   },
   heroNameText: {
     flexShrink: 1,
@@ -404,23 +497,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textPrimary,
   },
-  heroEquipCol: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    gap: 6,
+  maxedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    alignSelf: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
   },
-  heroEquipItem: {
-    justifyContent: 'flex-start',
-  },
-  heroEquipText: {
-    flexShrink: 1,
+  maxedValue: {
+    ...Typography.caption,
+    fontWeight: '700',
     fontSize: 11,
-    color: Colors.textSecondary,
   },
-  heroCellIcon: {
-    width: 15,
-    height: 15,
-    flexShrink: 0,
+  maxedDetail: {
+    marginTop: Spacing.sm,
+    gap: 3,
+  },
+  maxedRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 5,
+  },
+  maxedDetailText: {
+    flex: 1,
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+    lineHeight: 15,
   },
   actionBtn: {
     padding: Spacing.xs,
