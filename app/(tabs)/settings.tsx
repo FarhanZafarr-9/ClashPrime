@@ -118,6 +118,7 @@ interface ContentAction {
   label: string;
   onPress?: () => void;
   primary?: boolean;
+  destructive?: boolean;
 }
 
 const PRIVACY_SECTIONS: { title: string; body: string }[] = [
@@ -659,6 +660,7 @@ export default function SettingsScreen() {
         showDialog({
           title: 'No Internet Connection',
           subtitle: 'GitHub was unreachable',
+    icon: 'cloud-offline-outline',
           message: 'Could not reach GitHub to check for updates. Check your Wi-Fi or mobile data, then try again.',
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
@@ -670,6 +672,7 @@ export default function SettingsScreen() {
         showDialog({
           title: 'Update Available',
           subtitle: `v${v} is out — you're on v${currentVersion}`,
+          icon: 'cloud-download-outline',
           message: `A new version of ClashPrime (v${v}) has been published — you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
           actions: [
             { label: 'Later', onPress: () => { } },
@@ -679,14 +682,16 @@ export default function SettingsScreen() {
       } else if (v !== currentVersion) {
         showDialog({
           title: "You're Ahead of the Releases",
-          subtitle: 'Running an unreleased development build',
+          subtitle: 'Development build detected',
+    icon: 'flask-outline',
           message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build — nothing to update.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
       } else {
         showDialog({
           title: "You're Up to Date",
-          subtitle: `ClashPrime v${currentVersion} is the latest`,
+          subtitle: 'Nothing to install',
+    icon: 'checkmark-circle-outline',
           message: `ClashPrime v${currentVersion} matches the latest published release. Check back later for new versions.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
@@ -695,6 +700,7 @@ export default function SettingsScreen() {
       showDialog({
         title: 'Update Check Failed',
         subtitle: 'GitHub unreachable or rate-limited',
+    icon: 'warning-outline',
         message: 'Could not check for updates right now. This can happen if GitHub is rate-limiting or temporarily unavailable — please try again in a moment.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
@@ -706,7 +712,7 @@ export default function SettingsScreen() {
   const handleClearCache = async () => {
     await clearAppCache();
     bumpTagVersion();
-    showDialog({ title: 'Cache Cleared', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+    showDialog({ title: 'Cache Cleared', subtitle: 'Cached libraries removed', icon: 'trash-bin-outline', message: 'Local cache has been cleared successfully.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
   };
 
   const handleOnboardingImportPaste = async () => {
@@ -800,6 +806,8 @@ export default function SettingsScreen() {
     } catch (e: any) {
       showDialog({
         title: 'Sign-in Failed',
+    subtitle: 'Could not connect to the Clash API',
+    icon: 'key-outline',
         message: e.message || 'Failed to connect. Check your token.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
@@ -814,6 +822,8 @@ export default function SettingsScreen() {
       if (existing) {
         showDialog({
           title: 'Account Already Added',
+    subtitle: 'This player tag is already saved',
+    icon: 'person-circle-outline',
           message: `${tag} is already in your account list. Switch to it instead.`,
           actions: [
             { label: 'Cancel', onPress: () => { } },
@@ -830,7 +840,7 @@ export default function SettingsScreen() {
       }
       const token = await getApiToken();
       if (!token) {
-        showDialog({ title: 'No API Token', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+        showDialog({ title: 'No API Token', subtitle: 'Add a token before connecting accounts', icon: 'key-outline', message: 'You need to set up an API token first before adding accounts.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
         return;
       }
       try {
@@ -839,7 +849,7 @@ export default function SettingsScreen() {
         setOnboardingPlayer(data);
         setOnboardingStep('profile');
       } catch (e: any) {
-        showDialog({ title: 'Failed to Fetch Profile', message: e.message || 'Check your API token and player tag.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+        showDialog({ title: 'Failed to Fetch Profile', subtitle: 'Check your token and player tag', icon: 'alert-circle-outline', message: e.message || 'Check your API token and player tag.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
       }
       return;
     }
@@ -1235,6 +1245,8 @@ export default function SettingsScreen() {
               onPress={() => {
                 showDialog({
                   title: 'Sync Now',
+    subtitle: 'Pull fresh player data now',
+    icon: 'sync-outline',
                   message: 'Triggers an immediate sync of your player data from the Clash of Clans API. Use this if your stats seem outdated or after switching accounts.',
                   actions: [
                     { label: 'Cancel', onPress: () => { } },
@@ -1424,6 +1436,8 @@ export default function SettingsScreen() {
               onPress={() => {
                 showDialog({
                   title: 'Refresh Game Data',
+    subtitle: 'Bundled buildings, troops and costs',
+    icon: 'refresh-outline',
                   message: 'Reloads all game reference data (buildings, troops, heroes, spells, pets, siege machines, equipment, max levels, costs) from the clash-of-clans-data package bundled with the app. No web sources are used, so this is instant.',
                   actions: [
                     { label: 'Cancel', onPress: () => { } },
@@ -1646,13 +1660,13 @@ export default function SettingsScreen() {
               {contentActions.map((a, i) => (
                 <PressableRipple
                   key={`${a.label}-${i}`}
-                  style={[styles.contentBtn, a.primary && styles.contentBtnPrimary]}
+                  style={[styles.contentBtn, a.primary && styles.contentBtnPrimary, a.destructive && styles.contentBtnDestructive]}
                   onPress={() => {
                     a.onPress?.();
                     setContentVisible(false);
                   }}
                 >
-                  <Text style={[styles.contentBtnText, a.primary && styles.contentBtnTextPrimary]}>
+                  <Text style={[styles.contentBtnText, a.primary && styles.contentBtnTextPrimary, a.destructive && styles.contentBtnTextDestructive]}>
                     {a.label}
                   </Text>
                 </PressableRipple>
@@ -1708,11 +1722,13 @@ export default function SettingsScreen() {
                   }}
                   onLongPress={() => {
                     if (accounts.length <= 1) {
-                      showDialog({ title: 'Cannot Remove', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
+                      showDialog({ title: 'Cannot Remove', subtitle: 'At least one account is required', icon: 'alert-circle-outline', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
                       return;
                     }
                     showDialog({
                       title: 'Remove Account',
+                      subtitle: 'This only affects ClashPrime',
+                      icon: 'trash-outline',
                       message: `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
                       actions: [
                         { label: 'Cancel', onPress: () => { } },
@@ -2164,26 +2180,31 @@ settingSections: {
     marginTop: -4,
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: Spacing.sm,
-    justifyContent: 'flex-end',
     marginTop: Spacing.sm,
   },
   modalCancelBtn: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
   },
   modalCancelText: {
     ...Typography.subhead,
-    color: Colors.textTertiary,
+    color: Colors.textSecondary,
     fontWeight: '500',
   },
   modalSaveBtn: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
     backgroundColor: Colors.textPrimary,
     borderRadius: Radius.md,
+    borderWidth: 0.75,
+    borderColor: Colors.textPrimary,
   },
   modalSaveText: {
     ...Typography.subhead,
@@ -2203,22 +2224,31 @@ settingSections: {
     gap: Spacing.base,
   },
   contentActions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: Spacing.sm,
-    justifyContent: 'flex-end',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.base,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
   contentBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm + 2,
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
+    borderWidth: 0.75,
+    borderColor: Colors.border,
   },
   contentBtnPrimary: {
     backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  contentBtnDestructive: {
+    backgroundColor: Colors.destructive,
+    borderColor: Colors.destructive,
+  },
+  contentBtnTextDestructive: {
+    color: Colors.bg,
   },
   contentBtnText: {
     ...Typography.subhead,

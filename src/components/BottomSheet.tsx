@@ -132,7 +132,7 @@ export default function BottomSheet({
                 ) : null}
                 <View style={styles.cardHeaderText}>
                   <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{title}</Text>
-                  {subtitle ? <Text style={[styles.cardSubtitle, { color: colors.textTertiary }]} numberOfLines={1}>{subtitle}</Text> : null}
+                  {subtitle ? <Text style={[styles.cardSubtitle, { color: colors.textTertiary }]} numberOfLines={2}>{subtitle}</Text> : null}
                 </View>
                 <PressableRipple onPress={onClose} hitSlop={8} style={[styles.closeBtn, { backgroundColor: colors.bgCardHover }]}>
                   <Ionicons name="close" size={18} color={colors.textTertiary} />
@@ -208,6 +208,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+  // The header text column is only ~236pt wide on a 360pt screen once the
+  // 124pt of padding, gaps, icon and close button are taken off it. Subtitles
+  // wrap to a second line rather than truncating - they carry the "why", so a
+  // clipped half-sentence is worse than one extra line of header.
   cardSubtitle: {
     ...Typography.caption,
     marginTop: 4,
