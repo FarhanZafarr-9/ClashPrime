@@ -168,6 +168,67 @@ const COL_WIDTH: Record<string, number> = {
 };
 const DEFAULT_COL_WIDTH = 56;
 
+// Width measurement for the content-driven columns below. Deliberately a
+// character-count estimate rather than real text measurement: there is no
+// on-layout text measurement available here, and the goal is only that every row
+// agrees on a column's width, not that the text is never ellipsized.
+// Typography.caption is 11px with 0.5 letter-spacing, so ~6.5px per glyph.
+const CELL_CHAR_WIDTH = 6.6;
+const CELL_PADDING = Spacing.xs * 2;
+// High enough for the worst real value ("Healer Puppet, Noble Iron" on the
+// Blacksmith, "Jump Spell, Freeze Spell" on the Spell Factory) so those columns
+// fit rather than ellipsize. Beyond that the table just scrolls.
+const MAX_COL_WIDTH = 190;
+
+/**
+ * Flex for a column of the given measured width.
+ *
+ * The table stretches to the viewport when it is narrower than the columns need,
+ * so the slack has to go somewhere. Growing in proportion to the measured width
+ * (`flexGrow: width`, not a flat 1) shares it out in the same ratio every row was
+ * measured in, which is what keeps the columns stacked under their headers. A
+ * uniform grow would widen the short columns as much as the long ones and drift
+ * the grid apart again.
+ */
+function colFlex(col: string, widths: Record<string, number>) {
+  const w = widths[col] ?? DEFAULT_COL_WIDTH;
+  return { flexBasis: w, flexGrow: w, flexShrink: 0 };
+}
+
+/**
+ * Per-column widths taken from the widest string actually in that column, header
+ * included.
+ *
+ * The columns used to be `flex: 1` with a fixed `minWidth`, so any row whose cell
+ * content ran past that minimum stretched only that column and left the rest of
+ * the row out of line with the header. It showed up on buildings whose levels
+ * unlock two things at once - Blacksmith gear, Spell Factory spells - where one
+ * cell carries a long value the header never sees.
+ *
+ * Measured over *every* level rather than the rows currently on screen, so
+ * expanding the table widens nothing and the layout does not jump under the
+ * reader. The floor keeps the existing hand-tuned widths and the cap keeps one
+ * absurd value from swamping the table.
+ */
+function measureColWidths(levels: any[], statCols: string[], isBB?: boolean): Record<string, number> {
+  const widths: Record<string, number> = {};
+  for (const col of statCols) {
+    const floor = COL_WIDTH[col] || DEFAULT_COL_WIDTH;
+    const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
+    // Headers are uppercase and letter-spaced, so they read wider per glyph.
+    let longest = String(label).length * 1.15;
+    for (const lvl of levels) {
+      const raw = lvl?.[col];
+      if (raw == null || raw === '') continue;
+      const text = typeof raw === 'number' ? formatCostShort(raw) : String(raw);
+      if (text.length > longest) longest = text.length;
+    }
+    const measured = Math.ceil(longest * CELL_CHAR_WIDTH) + CELL_PADDING;
+    widths[col] = Math.min(Math.max(floor, measured), MAX_COL_WIDTH);
+  }
+  return widths;
+}
+
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
 /**
@@ -339,7 +400,8 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
   canPivotRow?: (lvl: number) => boolean;
 }) {
   const [viewportW, setViewportW] = useState(0);
-  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (COL_WIDTH[c] || DEFAULT_COL_WIDTH), 0);
+  const colW = useMemo(() => measureColWidths(levels, statCols, isBB), [levels, statCols, isBB]);
+  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (colW[c] ?? DEFAULT_COL_WIDTH), 0);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setViewportW(e.nativeEvent.layout.width)}>
       <View style={[styles.buildingStatsTable, { minWidth: Math.max(viewportW || contentMinW, contentMinW) }]}>
@@ -347,12 +409,12 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
           <View style={styles.buildingStatCellIcon}>
             <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
           </View>
-          {statCols.map((col: string) => {
+          {statCols.map((col: string, ci: number) => {
             const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
             return (
               <Text
                 key={col}
-                style={[styles.buildingStatCell, styles.buildingStatHeader, { color: Colors.textMuted, minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                style={[styles.buildingStatCell, styles.buildingStatHeader, ci === statCols.length - 1 && styles.buildingStatCellLast, { color: Colors.textMuted, ...colFlex(col, colW) }]}
                 numberOfLines={1}
               >
                 {label}
@@ -364,7 +426,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
           if (item.kind === 'ellipsis') {
             return (
               <View key="ellipsis" style={styles.buildingStatRow}>
-                <View style={[styles.buildingStatCell, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                <View style={[styles.buildingStatCell, styles.buildingStatCellFill, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
                   <Text style={{ color: Colors.textMuted, fontSize: 11 }}>...</Text>
                 </View>
               </View>
@@ -397,7 +459,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
               <View style={styles.buildingStatCellIcon}>
                 <Text style={[styles.buildingStatLvlNum, current && styles.buildingStatLvlNumCurrent, !current && isPivotRow && styles.buildingStatLvlNumPivot]}>{lvl}</Text>
               </View>
-              {statCols.map((col: string) => {
+              {statCols.map((col: string, ci: number) => {
                 const val = levelData[col] ?? '—';
                 const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
                 const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
@@ -416,7 +478,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
                   return (
                     <View
                       key={col}
-                      style={[styles.buildingStatCell, styles.buildingStatCostCell, { minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                      style={[styles.buildingStatCell, styles.buildingStatCostCell, ci === statCols.length - 1 && styles.buildingStatCellLast, { ...colFlex(col, colW) }]}
                     >
                       {icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
                       <Text style={{ color, fontSize: 11, fontWeight: '500', fontFamily: clashFontFamily(500, 11) }} numberOfLines={1}>{displayVal}</Text>
@@ -426,7 +488,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
                 return (
                   <Text
                     key={col}
-                    style={[styles.buildingStatCell, { color: isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary), minWidth: COL_WIDTH[col] || DEFAULT_COL_WIDTH }]}
+                    style={[styles.buildingStatCell, ci === statCols.length - 1 && styles.buildingStatCellLast, { color: isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary), ...colFlex(col, colW) }]}
                     numberOfLines={1}
                   >
                     {displayVal}
@@ -2374,14 +2436,16 @@ const styles = StyleSheet.create({
   buildingStatsTable: {
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
-    borderWidth: 0.75,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
   },
   buildingStatRow: {
     flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
     borderBottomColor: Colors.border,
   },
   buildingStatRowCurrent: {
@@ -2400,16 +2464,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.xs,
-    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
     borderRightColor: Colors.border,
     gap: 2,
   },
   buildingStatCell: {
-    flex: 1,
     ...Typography.caption,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
+    // No `flex: 1` here: growth and basis come from colFlex so every cell in a
+    // column shares one measured width, and the vertical dashed rule separates the
+    // columns.
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
+  },
+  /** The table's own dashed frame already closes the right edge. */
+  buildingStatCellLast: {
+    borderRightWidth: 0,
+  },
+  /** The condensed "..." row is a single cell and should still span the table. */
+  buildingStatCellFill: {
+    flex: 1,
   },
   buildingStatCostCell: {
     flexDirection: 'row',
