@@ -51,7 +51,7 @@ function Stepper({ value, min, max, onChange, disabled }: StepperProps) {
         accessibilityRole="button"
         accessibilityLabel="Decrease"
       >
-        <Ionicons name="remove" size={15} color={Colors.textPrimary} />
+        <Ionicons name="chevron-back" size={16} color={Colors.textPrimary} />
       </PressableRipple>
       <Text style={styles.stepperValue}>{value}</Text>
       <PressableRipple
@@ -60,7 +60,7 @@ function Stepper({ value, min, max, onChange, disabled }: StepperProps) {
         accessibilityRole="button"
         accessibilityLabel="Increase"
       >
-        <Ionicons name="add" size={15} color={Colors.textPrimary} />
+        <Ionicons name="chevron-forward" size={16} color={Colors.textPrimary} />
       </PressableRipple>
     </View>
   );
@@ -510,6 +510,7 @@ export default function ZapquakerScreen() {
 
               {targetDetails.map(({ target: t, level, hp }) => {
                 const image = getTargetImage({ target: t, level });
+                const isBinding = t.name === binding?.target.name;
                 return (
                   <View key={t.name} style={styles.targetMetaRow}>
                     {image && (
@@ -518,12 +519,10 @@ export default function ZapquakerScreen() {
                       </View>
                     )}
                     <View style={[styles.spellInfo, styles.targetInfo]}>
-                      <Text style={styles.targetHP}>
-                        {hp.toLocaleString()} HP
-                      </Text>
+                      <Text style={styles.spellName}>{t.name}</Text>
                       <Text style={styles.spellStat}>
-                        {t.name === binding?.target.name ? 'Highest · ' : 'Lv '}
-                        {t.category}
+                        {isBinding ? 'Highest · ' : ''}
+                        {hp.toLocaleString()} HP
                       </Text>
                     </View>
                     <Stepper
@@ -613,20 +612,29 @@ export default function ZapquakerScreen() {
         {groupedTargets.map((group) => (
           <View key={group.category} style={styles.groupBlock}>
             <Text style={styles.groupHeader}>{group.category}</Text>
-            {group.items.map((t) => {
+            {group.items.map((t, ti) => {
               const selected = targetNames.includes(t.name);
-              const levelAtTH = getBuildingMaxLevelAtTH(t.name, th) ?? 0;
-              const heroLevel =
-                t.category === 'Heroes'
-                  ? player?.heroes?.find((x) => x.name === t.name)?.level ?? t.levels.length
-                  : 0;
-              const iconLevel = heroLevel > 0 ? heroLevel : levelAtTH > 0 ? levelAtTH : 1;
-              const heroImage = t.category === 'Heroes' ? getArmyItemImage(t.name, iconLevel) : null;
-              const icon = heroImage ?? getBuildingLevelImageSource(t.name, iconLevel);
+              // Same resolver the card uses, so the sheet and the row can never
+              // disagree about a building's level. An override set on the main
+              // screen wins, since that is a deliberate choice by the user.
+              const level = clampLevel(
+                levelOverrides[t.name] ?? getDefaultTargetLevel(player, t, th, getBuildingMaxLevelAtTH),
+                t.levels.length,
+              );
+              const icon = t.category === 'Heroes'
+                ? getArmyItemImage(t.name, level) ?? getBuildingLevelImageSource(t.name, level)
+                : getBuildingLevelImageSource(t.name, level);
+              const isFirst = ti === 0;
+              const isLast = ti === group.items.length - 1;
               return (
                 <PressableRipple
                   key={t.name}
-                  style={[styles.listRow, selected && { backgroundColor: colors.bgCardHover }]}
+                  style={[
+                    styles.listRow,
+                    isFirst && styles.listRowFirst,
+                    isLast && styles.listRowLast,
+                    selected && { backgroundColor: colors.bgCardHover },
+                  ]}
                   onPress={() => toggleTarget(t.name)}
                 >
                   <View style={styles.listRowMain}>
@@ -635,7 +643,7 @@ export default function ZapquakerScreen() {
                   </View>
                   <View style={styles.listRowEnd}>
                     {selected && <Ionicons name="checkmark-circle" size={18} color={Colors.accent} />}
-                    <Text style={styles.listRowMeta}>Lv {iconLevel}</Text>
+                    <Text style={styles.listRowMeta}>Lv {level}</Text>
                   </View>
                 </PressableRipple>
               );
@@ -893,7 +901,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    marginBottom: Spacing.sm
+    marginBottom: Spacing.sm,
   },
   targetInfo: {
     justifyContent: 'center',
@@ -903,19 +911,15 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderWidth: 0.75,
     borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   targetImage: {
-    width: 40,
-    height: 40,
-  },
-  targetHP: {
-    ...Typography.headline,
-    color: Colors.textPrimary,
+    width: 30,
+    height: 30,
   },
   noCombos: {
     alignItems: 'center',
@@ -1041,6 +1045,11 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: Spacing.xs,
   },
+  // Each row is its own card rather than a connected block, so it keeps the light
+  // Radius.sm all round. The two flags shape the block's outer edges: isFirst
+  // gives the top corners extra radius and drops the gap against the category
+  // header, isLast does the same for the bottom and leaves the space between
+  // categories to groupBlock.
   listRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1048,10 +1057,18 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xs,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.borderSubtle,
+    borderRadius: Radius.sm,
+    marginTop: Spacing.xs,
+  },
+  listRowFirst: {
+    marginTop: 0,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+  },
+  listRowLast: {
+    marginBottom: 0,
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
   },
   listRowMain: {
     flexDirection: 'row',

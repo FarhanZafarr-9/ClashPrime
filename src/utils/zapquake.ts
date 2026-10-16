@@ -248,8 +248,13 @@ export function getZapquakeTargets(): ZapquakeTarget[] {
   return targets;
 }
 
-/** Default building level for a target: the player's recorded level (import) if
- * known, else the highest level reachable at their Town Hall. */
+/** Default level for a target: the highest level the Town Hall allows, with the
+ * player's recorded level as a fallback for when that resolves to nothing (no
+ * package entry for the building, or no Town Hall data yet). Zapquaker is a
+ * what-if calculator, so it models the building at its Town Hall maximum rather
+ * than the level the player happens to own - the sheet and the card must both
+ * read this, or the two disagree on the same row. Heroes keep their own level:
+ * there is no per-TH building level to consult for them. */
 export function getDefaultTargetLevel(
   player: ClashPlayer | null,
   target: ZapquakeTarget,
@@ -260,17 +265,15 @@ export function getDefaultTargetLevel(
   if (target.category === 'Heroes' && player?.heroes) {
     const hero = player.heroes.find((x) => x.name === target.name);
     if (hero && typeof hero.level === 'number') level = hero.level;
+  } else {
+    const atTH = maxLevelAtTheirTH(target.name, th);
+    if (atTH != null && atTH > 0) level = atTH;
   }
   if (level == null && player?.buildingLevels && typeof player.buildingLevels[toStoreKey(target.name)] === 'number') {
     level = player.buildingLevels[toStoreKey(target.name)];
   }
   if (level == null) {
-    if (target.category === 'Heroes') {
-      level = target.levels[target.levels.length - 1]?.level ?? 1;
-    } else {
-      const atTH = maxLevelAtTheirTH(target.name, th);
-      level = atTH != null && atTH > 0 ? atTH : target.levels.length;
-    }
+    level = target.levels[target.levels.length - 1]?.level ?? 1;
   }
   return clampLevel(Math.round(level), target.levels.length);
 }
