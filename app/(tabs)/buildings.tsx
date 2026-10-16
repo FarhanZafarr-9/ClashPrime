@@ -1898,6 +1898,7 @@ export default function BuildingsScreen() {
         visible={sheetName !== null}
         onClose={() => setSheetName(null)}
         header={sheetSection ? renderSheetHeader(sheetSection) : undefined}
+        headerPaddingHorizontal={Spacing.sm}
       >
         {sheetSection ? renderSheetBody(sheetSection) : null}
       </BottomSheet>

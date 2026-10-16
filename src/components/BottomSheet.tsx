@@ -27,6 +27,10 @@ interface BottomSheetProps {
   icon?: keyof typeof Ionicons.glyphMap;
   iconSource?: ImageSourcePropType;
   header?: React.ReactNode;
+  /** Horizontal inset for a custom `header`. Defaults to the body's padding so the
+   * header lines up with the content below it; pass a smaller value when the
+   * header brings its own padding (e.g. an ItemCard). */
+  headerPaddingHorizontal?: number;
   maxHeight?: DimensionValue;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
@@ -42,6 +46,7 @@ export default function BottomSheet({
   icon,
   iconSource,
   header,
+  headerPaddingHorizontal = Spacing.lg,
   maxHeight = '72%',
   style,
   contentContainerStyle,
@@ -116,7 +121,7 @@ export default function BottomSheet({
           <View style={styles.grabberWrap}>
             <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           </View>
-          <View style={[styles.cardHeader, { borderBottomColor: colors.border }, header !== undefined ? { paddingVertical: Spacing.sm } : undefined]}>
+          <View style={[styles.cardHeader, { borderBottomColor: colors.border }, header !== undefined ? { paddingHorizontal: headerPaddingHorizontal, paddingVertical: Spacing.sm } : undefined]}>
             {header !== undefined ? (
               header
             ) : (
