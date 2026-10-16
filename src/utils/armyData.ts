@@ -260,8 +260,9 @@ function isFactoryGateUsable(key: BuildingKey): boolean {
  * Max level of an army item reachable at a given Town Hall. Research items are
  * gated by the item's own Town Hall requirement AND the max Laboratory level
  * reachable at that TH (not the player's actual Lab); heroes by the max Hero
- * Hall; pets by the max Pet House. Spells add the Spell Factory gate below.
- * Falls back to townHallRequired where the package carries no building gate.
+ * Hall; hero equipment by the max Blacksmith; pets by the max Pet House. Spells
+ * add the Spell Factory gate below. Falls back to townHallRequired where the
+ * package carries no building gate.
  */
 export function getMaxLevelAtTH(name: string, thLevel: number): number | null {
   indexItems();
@@ -272,6 +273,17 @@ export function getMaxLevelAtTH(name: string, thLevel: number): number | null {
     const hhMax = getBuildingMaxLevelAtTH('heroHall', thLevel);
     if (hhMax == null) return null;
     max = maxLevelUnderCap(item.levels, 'heroHallLevelRequired', hhMax);
+  } else if (item.category === 'hero-equipment') {
+    // Hero equipment is upgraded in the Blacksmith - neither the Hero Hall nor the
+    // Lab. Its levels carry no townHallRequired of their own, only
+    // `blacksmithLevelRequired`, so without this branch the generic Laboratory
+    // path below found no gate at all and let every level through at every hall
+    // (a TH9 player read a level 18 piece as maxed). Fail closed like the hero
+    // branch: a Blacksmith that resolves at no hall means the lookup is broken,
+    // not that the hall is too low, and over-reporting is the worse failure here.
+    const bsMax = getBuildingMaxLevelAtTH('blacksmith', thLevel);
+    if (bsMax == null) return null;
+    max = maxLevelWithBuildingAndTH(item.levels, 'blacksmithLevelRequired', bsMax, thLevel);
   } else if (item.category === 'spell') {
     // A spell is granted by its factory, not researched, so the factory is the
     // real unlock gate. The package's level-1 `townHallRequired` disagrees with
