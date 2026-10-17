@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { BaseCard } from '../../src/components/BaseCard';
-import SegmentedSwitch, { type SegmentedSwitchOption } from '../../src/components/SegmentedSwitch';
+import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Skeleton } from '../../src/components/Skeleton';
 import type { ScrapedBase, ScrapeResult, Village } from '../../src/types/bases';
@@ -23,9 +23,9 @@ import {
   scrapeBasesForTH,
   scrapeBasesForBH,
   getCachedBases,
-  getStoredSourceFilter,
-  setStoredSourceFilter,
-  type BaseSourceFilter,
+  interleaveByPattern,
+  simplifyRatio,
+  useBaseSourcePref,
 } from '../../src/api/baseScraper';
 import { getMaxTownHall, getBuildingItemImage } from '../../src/utils/buildingData';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
@@ -72,12 +72,6 @@ function matchesCategory(base: ScrapedBase, key: string): boolean {
   return base.type === key.toLowerCase() || CATEGORY_MAP[base.type] === key;
 }
 
-const SOURCE_OPTIONS: SegmentedSwitchOption<BaseSourceFilter>[] = [
-  { key: 'both', icon: 'albums-outline', label: 'Both' },
-  { key: 'clashly', icon: 'flame-outline', label: 'ClashLy' },
-  { key: 'clash-bases', icon: 'library-outline', label: 'Clash Bases' },
-];
-
 const PILL_COLUMNS = 3;
 
 /**
@@ -113,21 +107,10 @@ export default function BaseLibraryScreen() {
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [savedBases, setSavedBases] = useState<SavedBase[]>([]);
 
-  // Which catalogues feed the Home Village list. ClashLy's volume (700+ per
-  // mid TH) buries the clash-bases entries deep in the year sections, so the
-  // toggle is the only practical way to browse one source's curation.
-  const [sourceFilter, setSourceFilterState] = useState<BaseSourceFilter>('both');
-  useEffect(() => {
-    let cancelled = false;
-    getStoredSourceFilter().then((f) => {
-      if (!cancelled) setSourceFilterState(f);
-    });
-    return () => { cancelled = true; };
-  }, []);
-  const changeSourceFilter = useCallback((f: BaseSourceFilter) => {
-    setSourceFilterState(f);
-    setStoredSourceFilter(f);
-  }, []);
+  // Which catalogues feed the list. Owned by Settings (Settings → Appearance →
+  // Base Sources) rather than a switch on this screen, so this tab just reads the
+  // value and reacts when it changes.
+  const { pref: sourcePref } = useBaseSourcePref();
 
   const [displayCount, setDisplayCount] = useState(20);
   const PAGE_SIZE = 20;
@@ -214,11 +197,32 @@ export default function BaseLibraryScreen() {
     for (const group of Object.values(baseData.groups)) {
       bases.push(...group);
     }
-    // Builder Base snapshots are ClashLy-only, so the source filter only ever
+    // Builder Base snapshots are ClashLy-only, so the source preference only ever
     // applies to Home Village data.
-    if (sourceFilter === 'both' || baseData.village !== 'home') return bases;
-    return bases.filter((b) => b.source === sourceFilter);
-  }, [baseData, sourceFilter]);
+    if (sourcePref === 'both' || baseData.village !== 'home') return bases;
+    return bases.filter((b) => b.source === sourcePref);
+  }, [baseData, sourcePref]);
+
+  // Both sources on: interleave them on a small reduced ratio taken from the counts
+  // each source actually has for this hall. ClashLy's volume would otherwise bury
+  // every clash-bases entry at one end of the list, and the raw counts are far too
+  // lopsided to drive a readable rhythm (see simplifyRatio).
+  const mix = useMemo(() => {
+    if (allBases.length === 0) return null;
+    const clashly = allBases.filter((b) => b.source === 'clashly');
+    const clashBases = allBases.filter((b) => b.source === 'clash-bases');
+    const ratio = simplifyRatio(clashly.length, clashBases.length);
+    const applies = !!baseData && baseData.village === 'home' && sourcePref === 'both'
+      && clashly.length > 0 && clashBases.length > 0;
+    return {
+      clashly: clashly.length,
+      clashBases: clashBases.length,
+      ratio,
+      mixed: applies ? interleaveByPattern(clashly, clashBases, ratio.a, ratio.b) : null,
+    };
+  }, [allBases, baseData, sourcePref]);
+
+  const mixedBases = useMemo(() => mix?.mixed ?? allBases, [mix, allBases]);
 
   // Each category pill leads with a real layout from the scraped results, so the
   // pill is recognisable by the base art rather than a generic glyph, and carries
@@ -227,14 +231,14 @@ export default function BaseLibraryScreen() {
   const catMeta = useMemo(() => {
     const out: Record<string, { image: string | null; count: number }> = {};
     for (const pill of CATEGORY_PILLS) {
-      const matches = allBases.filter((b) => matchesCategory(b, pill.key));
+      const matches = mixedBases.filter((b) => matchesCategory(b, pill.key));
       out[pill.key] = {
         image: matches.find((b) => !!b.preview_image_url)?.preview_image_url ?? null,
         count: matches.length,
       };
     }
     return out;
-  }, [allBases]);
+  }, [mixedBases]);
 
   // Categories with no layouts for the current hall are dropped, matching the
   // Buildings screen. "All" always stays so there is a way back to everything.
@@ -259,8 +263,8 @@ export default function BaseLibraryScreen() {
   }, [availableCats]);
 
   const filteredBases = useMemo(
-    () => allBases.filter((b) => matchesCategory(b, activeCategory)),
-    [allBases, activeCategory],
+    () => mixedBases.filter((b) => matchesCategory(b, activeCategory)),
+    [mixedBases, activeCategory],
   );
 
   // The village switch leads with the halls the player are actually at.
@@ -304,14 +308,16 @@ export default function BaseLibraryScreen() {
     }
   };
 
-  const [prevResetKey, setPrevResetKey] = useState(`${activeCategory}|${sourceFilter}`);
-  const resetKey = `${activeCategory}|${sourceFilter}`;
+  const [prevResetKey, setPrevResetKey] = useState(`${activeCategory}|${sourcePref}`);
+  const resetKey = `${activeCategory}|${sourcePref}`;
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
     setDisplayCount(PAGE_SIZE);
   }
 
   const currentBases = filteredBases;
+  // True when the list is an actual interleave of both catalogues.
+  const isMixed = mix?.mixed != null;
 
   const yearSections = useMemo(() => {
     const groups = new Map<number, ScrapedBase[]>();
@@ -324,8 +330,16 @@ export default function BaseLibraryScreen() {
         nullGroup.push(b);
       }
     }
-    for (const [, arr] of groups) arr.sort((a, b) => b.views - a.views);
-    nullGroup.sort((a, b) => b.views - a.views);
+    // Sorting by views here would undo the interleave. clash-bases entries carry
+    // no view count at all (the scraper records 0), so ranking a mixed group by
+    // views floats every ClashLy layout above every clash-bases one and the smaller
+    // source vanishes from the top of every section. While mixing, the incoming
+    // order is already the intended one and is kept as-is; browsing a single source
+    // still ranks by views.
+    if (!isMixed) {
+      for (const [, arr] of groups) arr.sort((a, b) => b.views - a.views);
+      nullGroup.sort((a, b) => b.views - a.views);
+    }
 
     const sections: { year: number | null; title: string; bases: ScrapedBase[] }[] = [];
     const sortedYears = [...groups.keys()].sort((a, b) => b - a);
@@ -336,7 +350,7 @@ export default function BaseLibraryScreen() {
       sections.push({ year: null, title: 'Unknown', bases: nullGroup });
     }
     return sections;
-  }, [currentBases]);
+  }, [currentBases, isMixed]);
 
   const visibleSections = useMemo(() => {
     let remaining = displayCount;
@@ -373,9 +387,9 @@ export default function BaseLibraryScreen() {
             <Text style={styles.subtitle}>
               {selectedVillage === 'home'
                 ? `${hallLabel}${hallLevel} layouts · ${
-                    sourceFilter === 'both'
-                      ? 'ClashLy + Clash Bases'
-                      : sourceFilter === 'clashly'
+                    sourcePref === 'both'
+                      ? `ClashLy + Clash Bases${mix ? ` · ${mix.ratio.a}:${mix.ratio.b}` : ''}`
+                      : sourcePref === 'clashly'
                         ? 'from ClashLy'
                         : 'from Clash Bases'
                   }`
@@ -388,29 +402,21 @@ export default function BaseLibraryScreen() {
         </PressableRipple>
       </View>
 
-      {/* Village + source switches: the same compact hall pills as the Time to
-          Max and Army tabs. The source filter only applies to Home Village
-          (Builder Base is ClashLy-only), so it sits under the village switch
-          only there. */}
-      {!loading && (
+      {/* Village switch: the same compact hall pills as the Time to Max and Army
+          tabs. It stays on screen while loading and shows its own placeholders, so
+          it does not pop in underneath the reader. The catalogue source lives in
+          Settings, not here. */}
+      {showBuilderBase && (
         <View style={styles.switchesWrap}>
-          {showBuilderBase && (
-            <SegmentedSwitch
-              options={[
-                { key: 'home', image: thHallImage, icon: 'home-outline', label: `TH${thLevel}` },
-                { key: 'builder', image: bhHallImage, icon: 'hammer-outline', label: `BH${bhLevel}` },
-              ]}
-              value={selectedVillage}
-              onChange={(v) => setSelectedVillage(v)}
-            />
-          )}
-          {selectedVillage === 'home' && (
-            <SegmentedSwitch
-              options={SOURCE_OPTIONS}
-              value={sourceFilter}
-              onChange={changeSourceFilter}
-            />
-          )}
+          <SegmentedSwitch
+            options={[
+              { key: 'home', image: thHallImage, icon: 'home-outline', label: `TH${thLevel}` },
+              { key: 'builder', image: bhHallImage, icon: 'hammer-outline', label: `BH${bhLevel}` },
+            ]}
+            value={selectedVillage}
+            onChange={(v) => setSelectedVillage(v)}
+            loading={loading}
+          />
         </View>
       )}
 
@@ -700,7 +706,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
