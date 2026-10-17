@@ -25,6 +25,7 @@ import {
   formatTime as fmtTime,
 } from '../../src/utils/buildingImages';
 import { canPivot, isPivotable, pivotSpanLabel, resolvePivotBound } from '../../src/utils/upgradePivot';
+import { resolveColWidths, DEFAULT_COL_WIDTH, type TableColumn } from '../../src/utils/tableWidths';
 import { getBuildingCopies, getCountAtTH, getCountAtBH } from '../../src/utils/buildingCopies';
 import type { BuildingCopies } from '../../src/utils/buildingCopies';
 import {
@@ -166,74 +167,15 @@ const COL_WIDTH: Record<string, number> = {
   'Cumulative Elixir Cost': 64,
   'Wall Ring Cost': 56,
 };
-const DEFAULT_COL_WIDTH = 56;
 
-// Width measurement for the content-driven columns below. Deliberately a
-// character-count estimate rather than real text measurement: there is no
-// on-layout text measurement available here, and the goal is only that every row
-// agrees on a column's width, not that the text is never ellipsized.
-// Typography.caption is 11px with 0.5 letter-spacing, so ~6.5px per glyph.
-const CELL_CHAR_WIDTH = 6.6;
-const CELL_PADDING = Spacing.xs * 2;
-// High enough for the worst real value ("Healer Puppet, Noble Iron" on the
-// Blacksmith, "Jump Spell, Freeze Spell" on the Spell Factory) so those columns
-// fit rather than ellipsize. Beyond that the table just scrolls.
-const MAX_COL_WIDTH = 190;
-
-/**
- * Flex for a column of the given measured width.
- *
- * The table stretches to the viewport when it is narrower than the columns need,
- * so the slack has to go somewhere. Growing in proportion to the measured width
- * (`flexGrow: width`, not a flat 1) shares it out in the same ratio every row was
- * measured in, which is what keeps the columns stacked under their headers. A
- * uniform grow would widen the short columns as much as the long ones and drift
- * the grid apart again.
- */
-function colFlex(col: string, widths: Record<string, number>) {
-  const w = widths[col] ?? DEFAULT_COL_WIDTH;
-  return { flexBasis: w, flexGrow: w, flexShrink: 0 };
-}
-
-/**
- * Per-column widths taken from the widest string actually in that column, header
- * included.
- *
- * The columns used to be `flex: 1` with a fixed `minWidth`, so any row whose cell
- * content ran past that minimum stretched only that column and left the rest of
- * the row out of line with the header. It showed up on buildings whose levels
- * unlock two things at once - Blacksmith gear, Spell Factory spells - where one
- * cell carries a long value the header never sees.
- *
- * Measured over *every* level rather than the rows currently on screen, so
- * expanding the table widens nothing and the layout does not jump under the
- * reader. The floor keeps the existing hand-tuned widths and the cap keeps one
- * absurd value from swamping the table.
- */
-function measureColWidths(levels: any[], statCols: string[], isBB?: boolean): Record<string, number> {
-  const widths: Record<string, number> = {};
-  for (const col of statCols) {
-    const floor = COL_WIDTH[col] || DEFAULT_COL_WIDTH;
-    const label = col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col);
-    // Headers are uppercase and letter-spaced, so they read wider per glyph.
-    let longest = String(label).length * 1.15;
-    for (const lvl of levels) {
-      const raw = lvl?.[col];
-      if (raw == null || raw === '') continue;
-      const text = typeof raw === 'number' ? formatCostShort(raw) : String(raw);
-      if (text.length > longest) longest = text.length;
-    }
-    const measured = Math.ceil(longest * CELL_CHAR_WIDTH) + CELL_PADDING;
-    widths[col] = Math.min(Math.max(floor, measured), MAX_COL_WIDTH);
-  }
-  return widths;
-}
+// Column widths are measured and shared with the Army sheet's tables - see
+// src/utils/tableWidths.ts.
 
 const SHOW_CATEGORIES = ['Defenses', 'Resources', 'Traps', 'Army', 'Walls'];
 
 /**
- * Crafted defenses are not one of the package's flat building categories — they
- * are upgraded per module off the Crafting Station — so they get their own pill
+ * Crafted defenses are not one of the package's flat building categories Ã¢â‚¬â€ they
+ * are upgraded per module off the Crafting Station Ã¢â‚¬â€ so they get their own pill
  * and their own card list instead of being folded into `SHOW_CATEGORIES` (whose
  * data assumes one `levels` ladder per building).
  */
@@ -251,7 +193,7 @@ function renderResourceRows(
   const entries = (Object.entries(byResource).filter(([, v]) => v > 0) as [string, number][])
     .filter(([r]) => r !== 'Unknown');
   if (entries.length === 0) {
-    return <Text style={{ color: Colors.textSecondary, fontWeight: '600', fontSize }}>—</Text>;
+    return <Text style={{ color: Colors.textSecondary, fontWeight: '600', fontSize }}>Ã¢â‚¬â€</Text>;
   }
   return (
     <>
@@ -315,8 +257,8 @@ function getGlobalMaxLevel(lookupName: string, fallback: number): number {
 }
 
 /**
- * Max level of a building in the active village. The halls self-gate — at TH/BH n
- * the hall is level n — so they use the data's global max instead, which keeps
+ * Max level of a building in the active village. The halls self-gate Ã¢â‚¬â€ at TH/BH n
+ * the hall is level n Ã¢â‚¬â€ so they use the data's global max instead, which keeps
  * the future halls (and their costs) visible to a mid-game player.
  */
 function getSectionMaxLevel(name: string, maxLvl: number, isBB: boolean, th: number, bh: number): number {
@@ -344,6 +286,9 @@ function useBuildingStats(lookupName: string, isBB: boolean | undefined, discoun
   };
 }
 
+/** Level grid cells per row. Must match levelGridCell's width percentage. */
+const GRID_PER_ROW = 5;
+
 /** Level grid cells (image + level badge, condensed with an ellipsis). */
 function renderLevelGridCells({ levels, expand, lookupName, fallbackName, isCurrent }: {
   levels: any[];
@@ -352,10 +297,19 @@ function renderLevelGridCells({ levels, expand, lookupName, fallbackName, isCurr
   fallbackName: string;
   isCurrent: (lvl: number) => boolean;
 }) {
-  return condenseLevels(levels, 2, 3, expand).map((item) => {
+  const items = condenseLevels(levels, 2, 3, expand);
+  const lastRowStart = Math.floor(Math.max(items.length - 1, 0) / GRID_PER_ROW) * GRID_PER_ROW;
+  return items.map((item, index) => {
+    // Only the interior rules are drawn - the dashed frame closes the outer edges,
+    // so a rule on every cell's right/bottom would double up along the border and
+    // clip half a dash against it.
+    const rules = [
+      (index + 1) % GRID_PER_ROW !== 0 && styles.levelGridCellRule,
+      index < lastRowStart && styles.levelGridCellRuleBottom,
+    ];
     if (item.kind === 'ellipsis') {
       return (
-        <View key="ellipsis" style={styles.levelGridCell}>
+        <View key="ellipsis" style={[styles.levelGridCell, ...rules]}>
           <View style={styles.levelGridEllipsisWrap}>
             <Text style={styles.levelGridEllipsisText}>...</Text>
           </View>
@@ -366,7 +320,7 @@ function renderLevelGridCells({ levels, expand, lookupName, fallbackName, isCurr
     const cellSource = getBuildingLevelImageSource(lookupName, lvl);
     const current = isCurrent(lvl);
     return (
-      <View key={lvl} style={[styles.levelGridCell, current && styles.levelGridCellCurrent]}>
+      <View key={lvl} style={[styles.levelGridCell, ...rules, current && styles.levelGridCellCurrent]}>
         <View style={styles.levelGridImgWrap}>
           {cellSource ? (
             <Image source={cellSource} style={styles.levelGridImg} resizeMode="contain" />
@@ -400,11 +354,25 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
   canPivotRow?: (lvl: number) => boolean;
 }) {
   const [viewportW, setViewportW] = useState(0);
-  const colW = useMemo(() => measureColWidths(levels, statCols, isBB), [levels, statCols, isBB]);
-  const contentMinW = 46 + statCols.reduce((sum: number, c: string) => sum + (colW[c] ?? DEFAULT_COL_WIDTH), 0);
+  const colSpec = useMemo<TableColumn<any>[]>(
+    () => statCols.map((col) => ({
+      key: col,
+      header: col === 'Town Hall Level' && isBB ? 'BH' : (COL_ABBREV[col] || col),
+      floor: COL_WIDTH[col] || DEFAULT_COL_WIDTH,
+      // The rich Build Cost cell prefixes a 14px resource icon with a 4px gap.
+      extra: richCost && col === 'Build Cost' ? 18 : undefined,
+      value: (lvl: any) => {
+        const raw = lvl?.[col];
+        return raw == null ? null : typeof raw === 'number' ? formatCostShort(raw) : String(raw);
+      },
+    })),
+    [statCols, isBB, richCost],
+  );
+  const { widths: colWidths, total: colsTotalW } = resolveColWidths(levels, colSpec, viewportW);
+  const tableW = 46 + colsTotalW;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setViewportW(e.nativeEvent.layout.width)}>
-      <View style={[styles.buildingStatsTable, { minWidth: Math.max(viewportW || contentMinW, contentMinW) }]}>
+      <View style={[styles.buildingStatsTable, { width: tableW }]}>
         <View style={styles.buildingStatRow}>
           <View style={styles.buildingStatCellIcon}>
             <Text style={[styles.buildingStatHeader, { color: Colors.textMuted }]}>Lvl</Text>
@@ -414,7 +382,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
             return (
               <Text
                 key={col}
-                style={[styles.buildingStatCell, styles.buildingStatHeader, ci === statCols.length - 1 && styles.buildingStatCellLast, { color: Colors.textMuted, ...colFlex(col, colW) }]}
+                style={[styles.buildingStatCell, styles.buildingStatHeader, ci === statCols.length - 1 && styles.buildingStatCellLast, { color: Colors.textMuted, width: colWidths[ci] ?? DEFAULT_COL_WIDTH }]}
                 numberOfLines={1}
               >
                 {label}
@@ -460,7 +428,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
                 <Text style={[styles.buildingStatLvlNum, current && styles.buildingStatLvlNumCurrent, !current && isPivotRow && styles.buildingStatLvlNumPivot]}>{lvl}</Text>
               </View>
               {statCols.map((col: string, ci: number) => {
-                const val = levelData[col] ?? '—';
+                const val = levelData[col] ?? 'Ã¢â‚¬â€';
                 const formatted = typeof val === 'number' ? formatCostShort(val) : String(val);
                 const isDiscounted = showDiscounted && (col === 'Build Cost' || col === 'Build Time');
                 const resColor = richCost && col === 'Build Cost'
@@ -478,7 +446,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
                   return (
                     <View
                       key={col}
-                      style={[styles.buildingStatCell, styles.buildingStatCostCell, ci === statCols.length - 1 && styles.buildingStatCellLast, { ...colFlex(col, colW) }]}
+                      style={[styles.buildingStatCell, styles.buildingStatCostCell, ci === statCols.length - 1 && styles.buildingStatCellLast, { width: colWidths[ci] ?? DEFAULT_COL_WIDTH }]}
                     >
                       {icon ? <Image source={icon} style={styles.buildingStatCostIcon} resizeMode="contain" /> : null}
                       <Text style={{ color, fontSize: 11, fontWeight: '500', fontFamily: clashFontFamily(500, 11) }} numberOfLines={1}>{displayVal}</Text>
@@ -488,7 +456,7 @@ function StatsTable({ levels, expand, statCols, isBB, isCurrent, showDiscounted,
                 return (
                   <Text
                     key={col}
-                    style={[styles.buildingStatCell, ci === statCols.length - 1 && styles.buildingStatCellLast, { color: isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary), ...colFlex(col, colW) }]}
+                    style={[styles.buildingStatCell, ci === statCols.length - 1 && styles.buildingStatCellLast, { color: isDiscounted ? Colors.warning : (resColor ?? Colors.textSecondary), width: colWidths[ci] ?? DEFAULT_COL_WIDTH }]}
                     numberOfLines={1}
                   >
                     {displayVal}
@@ -519,6 +487,9 @@ function RemainingTable({ variant, levelsText, byResource, timeText, distributed
   const section = variant === 'section';
   const headStyle = section ? styles.sectionRemainingHead : styles.remainingHead;
   const cellStyle = section ? styles.sectionRemainingTotalCell : styles.remainingTotalCell;
+  // Index of the rightmost column, so its right rule is dropped against the frame.
+  const lastCol = distributedText !== undefined ? 3 : 2;
+  const isLast = (i: number) => i === lastCol;
   return (
     <View style={section ? styles.buildingSectionRemaining : styles.remainingTable}>
       <View style={styles.remainingRow}>
@@ -533,16 +504,16 @@ function RemainingTable({ variant, levelsText, byResource, timeText, distributed
           )}
         </View>
         <Text style={[headStyle, { flex: 1 }]}>Cost</Text>
-        <Text style={[headStyle, { flex: 1 }]}>Time</Text>
-        {distributedText !== undefined && <Text style={[headStyle, { flex: 1 }]}>Distributed</Text>}
+        <Text style={[headStyle, isLast(2) && styles.remainingCellLast, { flex: 1 }]}>Time</Text>
+        {distributedText !== undefined && <Text style={[headStyle, styles.remainingCellLast, { flex: 1 }]}>Distributed</Text>}
       </View>
       <View style={styles.remainingTotalRow}>
         <Text style={[cellStyle, { flex: 1 }]}>{levelsText}</Text>
         <View style={[cellStyle, { flex: 1 }]}>
           {renderResourceRows(byResource, showDiscounted, discounts, section ? 10 : 11)}
         </View>
-        <Text style={[cellStyle, { flex: 1 }]}>{timeText}</Text>
-        {distributedText !== undefined && <Text style={[cellStyle, { flex: 1 }]}>{distributedText}</Text>}
+        <Text style={[cellStyle, isLast(2) && styles.remainingCellLast, { flex: 1 }]}>{timeText}</Text>
+        {distributedText !== undefined && <Text style={[cellStyle, styles.remainingCellLast, { flex: 1 }]}>{distributedText}</Text>}
       </View>
     </View>
   );
@@ -603,7 +574,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   const mainImgSource = getBuildingLevelImageSource(lookupName, Math.max(currentLevel, 1));
 
   const availableLevels = getBuildingAvailableLevels(lookupName);
-  // Only show levels the player can actually reach at their TH/BH — no stats
+  // Only show levels the player can actually reach at their TH/BH Ã¢â‚¬â€ no stats
   // rows or level images for unreachable future levels. The self-gated halls
   // (Town Hall, Builder Hall) are always maxed, so keep one future level
   // visible to hint their next upgrade.
@@ -633,7 +604,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   const pivotEnabled = canPivot(currentLevel, effectiveMax);
 
   // Long-pressing the pivot row again clears it, so the totals snap back to the
-  // max without hunting for the ✕.
+  // max without hunting for the Ã¢Å“â€¢.
   const setPivot = (level: number) => setPivotLevel((prev) => (prev === level ? null : level));
 
   const remainingLevels = allLevels.filter((l: any) => l.Level > currentLevel && l.Level <= pivot);
@@ -725,7 +696,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
       {!hideHeader && (
       <ItemCard
         name={name}
-        subtitle={inSection ? `Copy ${copyIndex + 1}${isFullyMaxed ? '' : ` · ${fmtTimeD(totalTime)}`}` : undefined}
+        subtitle={inSection ? `Copy ${copyIndex + 1}${isFullyMaxed ? '' : ` Ã‚Â· ${fmtTimeD(totalTime)}`}` : undefined}
         level={currentLevel}
         maxLevel={effectiveMax}
         iconSource={mainImgSource ?? undefined}
@@ -794,7 +765,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
           )}
           {pivotEnabled && showFull && (
             <Text style={styles.pivotHint}>
-              {isPivoted ? `Long-press Lv${pivot} again, or tap ✕, to return to the max.` : 'Long-press a level to cap the Remaining totals there.'}
+              {isPivoted ? `Long-press Lv${pivot} again, or tap Ã¢Å“â€¢, to return to the max.` : 'Long-press a level to cap the Remaining totals there.'}
             </Text>
           )}
           {(hasRemaining || (currentLevel > 1 && !isFullyMaxed)) && (
@@ -830,7 +801,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   );
 }
 
-/** "both" reads as "Ground & Air" — the package's targetType, spelled out. */
+/** "both" reads as "Ground & Air" Ã¢â‚¬â€ the package's targetType, spelled out. */
 function targetTypeLabel(targetType?: string): string | null {
   if (targetType === 'both') return 'Ground & Air';
   if (targetType === 'ground') return 'Ground';
@@ -841,7 +812,7 @@ function targetTypeLabel(targetType?: string): string | null {
 /**
  * One module of a crafted defense: the level it sits at, the stat that level
  * reaches, and the cost/time of the next rung. The stepper moves this module
- * only — a crafted defense has no directly editable level, its effective level
+ * only Ã¢â‚¬â€ a crafted defense has no directly editable level, its effective level
  * is the sum of its modules.
  */
 function CraftedModuleRow({ defense, moduleName, levels, onChange }: {
@@ -874,7 +845,7 @@ function CraftedModuleRow({ defense, moduleName, levels, onChange }: {
             ) : null}
           </View>
           <Text style={styles.craftedModuleStat} numberOfLines={1}>
-            {nextStat != null ? `${fmtCost(stat)} → ${fmtCost(nextStat)}` : fmtCost(stat)}
+            {nextStat != null ? `${fmtCost(stat)} Ã¢â€ â€™ ${fmtCost(nextStat)}` : fmtCost(stat)}
           </Text>
         </View>
 
@@ -908,7 +879,7 @@ function CraftedModuleRow({ defense, moduleName, levels, onChange }: {
 
         <Text style={styles.craftedNext} numberOfLines={1}>
           {next
-            ? `Next: ${next.buildCost > 0 ? `${fmtCost(next.buildCost)} ${next.buildCostResource} · ` : ''}${fmtTime(next.buildTimeSec)}`
+            ? `Next: ${next.buildCost > 0 ? `${fmtCost(next.buildCost)} ${next.buildCostResource} Ã‚Â· ` : ''}${fmtTime(next.buildTimeSec)}`
             : 'Fully upgraded'}
         </Text>
       </View>
@@ -951,7 +922,7 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
   const subtitleParts = [defense.size, targetTypeLabel(defense.targetType)];
   // Partially maxed reads as neither done nor untouched, so name the split.
   if (!isMaxed && maxedCount > 0) subtitleParts.push(`${maxedCount}/${moduleTotal} maxed`);
-  const subtitle = subtitleParts.filter(Boolean).join(' · ');
+  const subtitle = subtitleParts.filter(Boolean).join(' Ã‚Â· ');
 
   return (
     <View style={[
@@ -998,7 +969,7 @@ function CraftedDefenseCard({ defense, levels, onChange, isFirst, isLast }: {
               <Text style={styles.craftedCostToMax} numberOfLines={2}>
                 {`Max all: ${Object.entries(remaining.byResource)
                   .map(([res, cost]) => `${fmtCost(cost)} ${res}`)
-                  .join(' + ')} · ${fmtTime(remaining.timeSec)}`}
+                  .join(' + ')} Ã‚Â· ${fmtTime(remaining.timeSec)}`}
               </Text>
             )}
             <View style={styles.upgradeRow}>
@@ -1162,7 +1133,7 @@ function BuildingCollapsibleSection({
           <>
             <ItemCard
               key={g.level}
-              name={`${title} ×${g.numCopies}`}
+              name={`${title} Ãƒâ€”${g.numCopies}`}
               level={g.level}
               maxLevel={effectiveMax}
               iconSource={imgSource ?? undefined}
@@ -1234,7 +1205,7 @@ function BuildingCollapsibleSection({
 
   // Wall-clock time to finish all remaining levels across every copy, using the
   // chosen builder count. Per-copy serial chains are LPT bin-packed across the
-  // builders, yielding the makespan — a naive total/builders is wrong because a
+  // builders, yielding the makespan Ã¢â‚¬â€ a naive total/builders is wrong because a
   // single long chain can't be split across builders.
   const distributedTime = useMemo(() => {
     if (builderCount <= 1) return aggregate.totalTime;
@@ -1369,7 +1340,7 @@ function BuildingCollapsibleSection({
               )}
               {sectionIsPivoted && !isSectionMaxed && (
                 <Text style={styles.pivotHint}>
-                  Long-press Lv{sectionPivotBound} again, or tap ✕, to return to the max.
+                  Long-press Lv{sectionPivotBound} again, or tap Ã¢Å“â€¢, to return to the max.
                 </Text>
               )}
             </View>
@@ -1495,7 +1466,7 @@ export default function BuildingsScreen() {
     // The Crafting Station has no per-TH levels in the package, so there is no
     // unlock level to gate on: the category is offered to every Home Village and
     // explains itself (with an import prompt) until an import fills it in. It is
-    // Home Village only — nothing crafted exists in the Builder Base.
+    // Home Village only Ã¢â‚¬â€ nothing crafted exists in the Builder Base.
     if (!isBB) cats.push(CRAFTED_CAT);
     return cats;
   }, [activeData, levelKey, isBB]);
@@ -1736,7 +1707,7 @@ export default function BuildingsScreen() {
           level={totalLevel}
           maxLevel={totalMax}
           iconSource={headerIcon}
-          subtitle={`${isBB ? `BH${bh}` : `TH${th}`} · ${section.count} ${section.count > 1 ? 'copies' : 'copy'}`}
+          subtitle={`${isBB ? `BH${bh}` : `TH${th}`} Ã‚Â· ${section.count} ${section.count > 1 ? 'copies' : 'copy'}`}
           actionIcon="close"
           actionColor={Colors.textPrimary}
           onActionPress={() => setSheetName(null)}
@@ -1817,7 +1788,7 @@ export default function BuildingsScreen() {
           </View>
           <Dialog />
           <Text style={styles.subtitle}>
-            {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
+            {isBB ? `Max levels for BH${bh} Ã‚Â· Builder Base` : `Max levels for TH${th} Ã‚Â· Tap to expand`}
           </Text>
         </View>
 
@@ -1865,7 +1836,7 @@ export default function BuildingsScreen() {
                         style={[styles.pillSubText, isActive && styles.pillSubTextActive]}
                         numberOfLines={1}
                       >
-                        {`${meta?.types ?? 0} types · ${meta?.maxed ?? 0} maxed`}
+                        {`${meta?.types ?? 0} types Ã‚Â· ${meta?.maxed ?? 0} maxed`}
                       </Text>
                     </View>
                   </PressableRipple>
@@ -2169,16 +2140,22 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   remainingTable: {
-    borderWidth: 0.75,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
     marginTop: Spacing.sm,
   },
+  /** The frame already closes the right edge. */
+  remainingCellLast: {
+    borderRightWidth: 0,
+  },
   remainingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
     borderBottomColor: Colors.border,
   },
   remainingHead: {
@@ -2192,10 +2169,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     textAlign: 'center',
     textAlignVertical: 'center',
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
   },
   /**
    * Typography half of remainingHead / sectionRemainingHead, for the one header
-   * that also holds a ✕. Those styles are split layout (padding, centring) from
+   * that also holds a Ã¢Å“â€¢. Those styles are split layout (padding, centring) from
    * text because React Native does not inherit font or textTransform from a
    * View, so a bare <Text> inside the header cell would lose the uppercase and
    * fall back to body text.
@@ -2213,6 +2193,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
+    borderStyle: 'dashed',
     borderTopColor: Colors.border,
   },
   remainingTotalCell: {
@@ -2223,6 +2204,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     textAlign: 'center',
     fontSize: 11,
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
   },
   resourceSumRow: {
     flexDirection: 'row',
@@ -2304,7 +2288,8 @@ const styles = StyleSheet.create({
   },
   buildingSectionRemaining: {
     flex: 1,
-    borderWidth: 0.75,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
@@ -2320,6 +2305,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     textAlign: 'center',
     textAlignVertical: 'center',
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
   },
   /** Denser counterpart of remainingHeadText - see the note there. */
   sectionRemainingHeadText: {
@@ -2339,19 +2327,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     textAlign: 'center',
     fontSize: 10,
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
   },
   buildingSectionQuickBtns: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   buildingSectionSeparator: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
     borderTopColor: Colors.border,
     margin: Spacing.lg,
   },
   levelGridBorder: {
     borderRadius: Radius.sm,
-    borderWidth: 0.75,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     overflow: 'hidden',
     marginTop: Spacing.sm,
@@ -2362,9 +2355,18 @@ const styles = StyleSheet.create({
   },
   levelGridCell: {
     width: '19.99%',
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
+  },
+  /** Interior vertical rule; the frame supplies the outer edges. */
+  levelGridCellRule: {
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
+  },
+  /** Interior horizontal rule; the frame supplies the outer edges. */
+  levelGridCellRuleBottom: {
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
+    borderBottomColor: Colors.border,
   },
   levelGridDowngrade: {
     width: 48,
@@ -2474,9 +2476,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
-    // No `flex: 1` here: growth and basis come from colFlex so every cell in a
-    // column shares one measured width, and the vertical dashed rule separates the
-    // columns.
+    // No `flex: 1` here: widths are fixed per column by resolveColWidths so every
+    // cell in a column is pixel-identical. `minWidth: 0` keeps Yoga from clamping
+    // a cell to its min-content width and pushing that column out of line.
+    minWidth: 0,
     borderRightWidth: 1,
     borderStyle: 'dashed',
     borderRightColor: Colors.border,
@@ -2532,13 +2535,14 @@ const styles = StyleSheet.create({
   },
   expandedSection: {
     paddingBottom: Spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
     borderTopColor: Colors.border,
   },
   expandedSectionBodyOnly: {
     borderTopWidth: 0,
   },
-  // Crafted-defense module rows. Each row is its own block — the modules are
+  // Crafted-defense module rows. Each row is its own block Ã¢â‚¬â€ the modules are
   // upgraded independently, so they don't share a table the way building levels do.
   // The body is padded to match the module rows; the expanded section itself has
   // none, which would otherwise run the description and buttons into the edge.
@@ -2574,7 +2578,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   craftedModuleRow: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
     borderBottomColor: Colors.border,
   },
   craftedModuleInner: {
