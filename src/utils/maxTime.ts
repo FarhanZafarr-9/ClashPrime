@@ -9,6 +9,9 @@ import {
   getBuilderHeroMaxLevel,
   getBuilderTroopMaxLevel,
   getAllBuilderItemsAtBH,
+  getPetNames,
+  filterPets,
+  looseNameKey,
 } from './armyData';
 import { getBuildingEffectiveMax } from './buildingImages';
 import { getBuildingCopies, getCountAtTH, getCountAtBH } from './buildingCopies';
@@ -177,10 +180,15 @@ function buildSerialPipeline(
   excludedBuildings?: ReadonlySet<string>,
 ): PipelineResult {
   const superTroops = new Set(getSuperTroopNames());
+  // Pets ride in player.troops, so the Laboratory pipeline would otherwise claim
+  // them as well as the Pet House pipeline and count every pet upgrade twice.
+  // They upgrade at the Pet House, which is its own pipeline below.
+  const petNames = new Set(getPetNames().map(looseNameKey));
   const rows: PipelineItemRow[] = [];
   for (const item of items) {
     if (item.village === 'builderBase') continue;
     if (key === 'lab' && superTroops.has(item.name)) continue;
+    if (key === 'lab' && petNames.has(looseNameKey(item.name))) continue;
     if (isArmyExcluded(excludedBuildings, item.name)) continue;
     const maxLevel = getMaxLevelAtTH(item.name, th) ?? 0;
     if (maxLevel <= 0) continue;
@@ -324,9 +332,14 @@ export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
   // player must research and upgrade them too, so they start from level 0.
   const labItems = mergeLeveled(
     [...(player.troops ?? []), ...(player.spells ?? [])],
-    lockedItemsAtTH(th, ['troop', 'spell']),
+    // Siege machines too: they are researched in the Laboratory, so a locked
+    // one still has to be researched before it can be maxed.
+    lockedItemsAtTH(th, ['troop', 'spell', 'siege']),
   );
   const heroItems = mergeLeveled(player.heroes ?? [], lockedItemsAtTH(th, ['hero']));
+  // Pets too: a pet you have not unlocked yet still has to be levelled at the
+  // Pet House before it counts toward max, same as troops and heroes.
+  const petItems = mergeLeveled(filterPets(player.troops ?? []), lockedItemsAtTH(th, ['pet']));
   // Each research pipeline is gated by one building: excluding that building
   // drops the pipeline rather than just its own upgrade chain.
   const lab = isPipelineGated(excludedBuildings, 'lab')
@@ -334,7 +347,7 @@ export function computeMaxTime(input: MaxTimeInput): MaxTimeResult {
     : buildSerialPipeline('lab', labItems, th, armyDetails, excludedBuildings);
   const pets = isPipelineGated(excludedBuildings, 'pets')
     ? gatedPipeline('pets')
-    : buildSerialPipeline('pets', player.pets ?? [], th, armyDetails, excludedBuildings);
+    : buildSerialPipeline('pets', petItems, th, armyDetails, excludedBuildings);
   const builders = buildBuildersPipeline(player, heroItems, th, builderCount, armyDetails, excludedBuildings);
   const equipment = isPipelineGated(excludedBuildings, 'equipment')
     ? gatedPipeline('equipment')
