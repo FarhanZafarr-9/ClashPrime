@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import PressableRipple from './PressableRipple';
 import { Colors, Radius, Spacing, Typography } from '../theme';
+import { Skeleton } from './Skeleton';
 
 export interface SegmentedSwitchOption<T extends string> {
   key: T;
@@ -30,6 +31,13 @@ interface Props<T extends string> {
   onChange: (key: T) => void;
   /** Extra container styling, e.g. `alignSelf: 'center'` or margins. */
   style?: StyleProp<ViewStyle>;
+  /**
+   * Draws the segments as placeholders. A switch that selects what the screen is
+   * showing should stay in place while that data loads rather than popping in
+   * afterwards, so the screen passes its own loading state here. Segments are not
+   * pressable in this state.
+   */
+  loading?: boolean;
 }
 
 /**
@@ -56,21 +64,32 @@ export default function SegmentedSwitch<T extends string>({
   value,
   onChange,
   style,
+  loading = false,
 }: Props<T>) {
   return (
     <View style={[styles.container, style]}>
       {options.map((opt, index) => {
+        const corner = segCornerStyle(index, options.length);
+        if (loading) {
+          // Same padding, gap and corner treatment as a real segment so the row
+          // holds its shape; the label bar is sized from the text it stands in for.
+          const hasMark = !!opt.image || !!opt.icon;
+          return (
+            <View key={opt.key} style={[styles.item, corner, styles.itemSkeleton]}>
+              {hasMark ? <Skeleton width={16} height={16} borderRadius={4} /> : null}
+              {opt.label ? (
+                <Skeleton width={Math.max(26, opt.label.length * 7)} height={11} borderRadius={4} />
+              ) : null}
+            </View>
+          );
+        }
         const active = opt.key === value;
         const markColor = active ? Colors.bg : Colors.textSecondary;
         return (
           <PressableRipple
             key={opt.key}
             onPress={() => onChange(opt.key)}
-            style={[
-              styles.item,
-              segCornerStyle(index, options.length),
-              active && styles.itemActive,
-            ]}
+            style={[styles.item, corner, active && styles.itemActive]}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             accessibilityLabel={opt.accessibilityLabel ?? opt.label ?? opt.key}
@@ -96,7 +115,7 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: 3,
     borderRadius: Radius.xl * 1.25,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
@@ -110,6 +129,10 @@ const styles = StyleSheet.create({
   },
   itemActive: {
     backgroundColor: Colors.textPrimary,
+  },
+  /** Placeholder segment: same box as a real one so the row does not resize. */
+  itemSkeleton: {
+    backgroundColor: Colors.bgSubtle,
   },
   image: {
     width: 16,
