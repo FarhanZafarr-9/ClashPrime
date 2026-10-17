@@ -24,7 +24,7 @@ import PressableRipple from '../../src/components/PressableRipple';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { useTimers } from '../../src/hooks/useTimerContext';
 import { useBuilderCount } from '../../src/hooks/useBuilderCount';
@@ -32,12 +32,13 @@ import { backfillAccountNames } from '../../src/hooks/usePlayer';
 import { useGameData } from '../../src/hooks/useGameData';
 import { getMaxLevelAtTH, getUnlockableItems, getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 
-import { getBuildingItemImage, getBuildingCategories, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH } from '../../src/utils/buildingData';
+import { getBuildingItemImage, getBuildingCategories, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getBuildingItem } from '../../src/utils/buildingData';
 import { getBuildingLevelImageSource, getBuildingEffectiveMax, formatCompact, getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getBuildingCopies, getCountAtTH, toJsonName } from '../../src/utils/buildingCopies';
 import { remainingArmyCosts, remainingBuildingCosts, sumCosts, formatCost, formatTime, formatTimeShort, formatCostBreakdown, type CostTime, buildingUpgradeChainTimes, scheduleChains } from '../../src/utils/upgradeCosts';
 import { Card } from '../../src/components/Card';
-import { SettingRow } from '../../src/components/SettingRow';
+import { SettingRow, useSettingRowSurface } from '../../src/components/SettingRow';
+import type { BuilderSplit } from '../../src/utils/maxTime';
 import { ItemCard } from '../../src/components/ItemCard';
 import BottomSheet from '../../src/components/BottomSheet';
 import type { TroopDetail } from '../../src/api/troopDetail';
@@ -248,6 +249,124 @@ interface SectionBadgeConfig {
   action?: () => void;
 }
 
+/**
+ * Categories/sub-categories show only remaining time; costs are shown per item
+ * instead, so gold/elixir/dark elixir are never merged into one sum.
+ *
+ * A component, not a render helper: an open section inverts its header fill and
+ * this has to ask SettingRow whether it is on that inverted surface, which needs
+ * a hook. A hook cannot be called from a plain function invoked during render.
+ */
+function ProgressHeaderDesc({ progress, ct }: { progress: number; ct: CostTime }) {
+  const { colors } = useTheme();
+  const inverted = useSettingRowSurface();
+  const label = ct.hasData && ct.time > 0 ? formatTimeShort(ct.time) : '';
+  return (
+    <View style={styles.progressHeaderDesc}>
+      <View style={styles.progressHeaderRow}>
+        <View style={styles.progressHeaderBar}>
+          <View style={[
+            styles.progressHeaderFill,
+            { width: `${Math.min(progress, 1) * 100}%` },
+            inverted && { backgroundColor: colors.bgCard },
+          ]} />
+        </View>
+        <Text style={[styles.progressHeaderCost, inverted && { color: colors.bgCard }]} numberOfLines={1}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Builders' split line. Its own component for the same reason as
+ * ProgressHeaderDesc - it is built inside a map, so it cannot reach a hook at
+ * the call site, and the label and chevron have to flip on the inverted fill.
+ */
+function BuilderSplitLine({
+  split,
+}: {
+  // Narrower than BuilderSplit: the home tab builds this object inline and does
+  // not carry the chain arrays.
+  split: Pick<
+    BuilderSplit,
+    'buildingsOnlySec' | 'heroesOnlySec' | 'optimalHeroBuilders' | 'optimalBuildingBuilders' | 'optimalSec'
+  >;
+}) {
+  const { colors } = useTheme();
+  const inverted = useSettingRowSurface();
+  return (
+    <Text style={[styles.splitInfoLabel, inverted && { color: colors.bgCard }, { marginBottom: -Spacing.xs }]}>
+      Build: {formatTimeShort(split.buildingsOnlySec)} · Hero: {formatTimeShort(split.heroesOnlySec)} · Optimal: {split.optimalHeroBuilders}H / {split.optimalBuildingBuilders}B
+    </Text>
+  );
+}
+
+/**
+ * Which building unlocks each army item, and at which level. A locked troop's
+ * wait is the Barracks upgrade that unlocks it, not its Laboratory research -
+ * research only begins once the item exists, so showing research time for a
+ * locked item answers the wrong question. Read off each building's own
+ * "Unlocked ..." column so the data package stays the source of truth.
+ */
+const UNLOCK_SOURCES: { building: string; field: string; label: string }[] = [
+  { building: 'Barracks', field: 'unlockedUnit', label: 'Barracks' },
+  { building: 'Dark Barracks', field: 'unlockedUnit', label: 'Dark Barracks' },
+  { building: 'Spell Factory', field: 'unlockedSpell', label: 'Spell Factory' },
+  { building: 'Dark Spell Factory', field: 'unlockedSpell', label: 'Dark Spell Factory' },
+  { building: 'Hero Hall', field: 'unlockedHero', label: 'Hero Hall' },
+  { building: 'Blacksmith', field: 'equipmentUnlocked', label: 'Blacksmith' },
+  { building: 'Workshop', field: 'unlockedSiegeMachine', label: 'Workshop' },
+  { building: 'Pet House', field: 'unlockedPet', label: 'Pet House' },
+];
+
+/** The data package stores build time as parts, not seconds. */
+function buildTimeSec(t: any): number {
+  if (t == null) return 0;
+  if (typeof t === 'number') return t;
+  return (t.days ?? 0) * 86400 + (t.hours ?? 0) * 3600 + (t.minutes ?? 0) * 60 + (t.seconds ?? 0);
+}
+
+interface UnlockInfo { building: string; label: string; level: number }
+
+let armyUnlockIndex: Map<string, UnlockInfo> | null = null;
+
+function getArmyUnlockIndex(): Map<string, UnlockInfo> {
+  if (armyUnlockIndex) return armyUnlockIndex;
+  const index = new Map<string, UnlockInfo>();
+  for (const src of UNLOCK_SOURCES) {
+    const item = getBuildingItem(src.building, false);
+    if (!item) continue;
+    for (const lvl of item.levels ?? []) {
+      const raw = (lvl as any)[src.field];
+      const names: unknown[] = Array.isArray(raw) ? raw : raw != null ? [raw] : [];
+      for (const n of names) {
+        if (typeof n !== 'string' || index.has(n)) continue;
+        index.set(n, { building: src.building, label: src.label, level: lvl.level });
+      }
+    }
+  }
+  armyUnlockIndex = index;
+  return index;
+}
+
+/**
+ * Time to raise one building from where the player has it to `targetLevel`:
+ * every level in between, summed. Used instead of a per-item sum because a
+ * single Barracks jump to level 12 unlocks several troops at once - charging
+ * each troop the full chain would count the same hours many times over.
+ */
+function buildingChainSec(building: string, targetLevel: number, currentLevel: number): number {
+  const item = getBuildingItem(building, false);
+  if (!item) return 0;
+  let sec = 0;
+  for (const lvl of item.levels ?? []) {
+    if (lvl.level <= currentLevel) continue;
+    if (lvl.level > targetLevel) break;
+    sec += buildTimeSec((lvl as any).buildTime);
+  }
+  return sec;
+}
+
 function CollapsibleSection({
   title,
   icon,
@@ -422,6 +541,7 @@ function CollapsibleSection({
         desc={description}
         isFirst={isFirst || open}
         isLast={isLast && !open}
+        expanded={open}
         onPress={toggle}
         destructive={destructive}
         accentColor={accentColor}
@@ -494,7 +614,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
-  const { superTroopNames, petNames } = useGameData();
+  const { superTroopNames, petNames, siegeMachineNames } = useGameData();
   const { reminders, addTimer, updateTimer, dismissTimer, hasPermission } = useTimers();
   const { count: builderCount } = useBuilderCount();
   const { show: showDialog, Dialog } = useDialog();
@@ -853,9 +973,25 @@ export default function HomeScreen() {
         const maxPrev = getMaxLevelAtTH(s.name, prevTh);
         if (maxPrev !== null && s.level < maxPrev) out.push({ name: s.name, currentLevel: s.level, maxLevelAtPrevTH: maxPrev, type: 'spell' });
       }
+      // Pets and siege ride in player.troops alongside real troops, so they have
+      // to be picked out by name or they would never be checked for rushing.
+      const playerTroops = player.troops ?? [];
+      for (const p of playerTroops) {
+        if (p.village && p.village !== 'home') continue;
+        if (!petNames.includes(p.name) && !siegeMachineNames.includes(p.name)) continue;
+        const maxPrev = getMaxLevelAtTH(p.name, prevTh);
+        if (maxPrev !== null && p.level < maxPrev) {
+          out.push({
+            name: p.name,
+            currentLevel: p.level,
+            maxLevelAtPrevTH: maxPrev,
+            type: petNames.includes(p.name) ? 'pet' : 'siege',
+          });
+        }
+      }
     }
     return out;
-  }, [th, player, prevTh, homeTroops, homeHeroes, homeSpells]);
+  }, [th, player, prevTh, homeTroops, homeHeroes, homeSpells, petNames, siegeMachineNames]);
 
   // Names of every troop/spell/hero/equipment the progress overview (and the
   // Backlog's locked/rushed lists) can show at this Town Hall — the single
@@ -1028,8 +1164,41 @@ export default function HomeScreen() {
   }, [player, th, progressDetails, builderCount]);
 
   // ── Aggregates ──
-  const aggregateTime = Object.values(upgradeCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
-  const aggregateRushedTime = Object.values(rushedCosts).reduce((sum, v) => sum + v.timeSeconds, 0);
+  // The per-section headers aggregate their own buckets below; these two raw
+  // sums over every item's research time are no longer what either header shows.
+
+  /**
+   * How long the builders need to clear the buildings that gate these locked
+   * items. A locked troop is not waiting on the Laboratory - nothing can be
+   * researched until it exists - it is waiting on the Barracks upgrade that
+   * unlocks it, and that is builder work. So every gating building collapses
+   * into one Build figure rather than being itemised.
+   *
+   * Measured from what the previous Town Hall already covered up to the highest
+   * level this one needs, not from the player's recorded Barracks level:
+   * buildingLevels is seeded optimistically to max-for-TH, so the recorded level
+   * is usually already at the target and would report zero. Divided by the
+   * builder count because the upgrades run in parallel - an estimate that
+   * flatters the answer when one long chain dominates.
+   */
+  const unlockBuildSec = useCallback((items: { name: string }[], atTh: number) => {
+    const idx = getArmyUnlockIndex();
+    const fromTh = Math.max(1, atTh - 1);
+    const builders = Math.max(1, builderCount);
+    const targets = new Map<string, number>();
+    for (const i of items) {
+      const info = idx.get(i.name);
+      if (!info) continue;
+      const prev = targets.get(info.building);
+      if (prev === undefined || info.level > prev) targets.set(info.building, info.level);
+    }
+    let sec = 0;
+    for (const [building, target] of targets) {
+      const already = getBuildingMaxLevelAtTH(building, fromTh) ?? 0;
+      sec += buildingChainSec(building, target, already);
+    }
+    return sec / builders;
+  }, [builderCount]);
 
   // Locked items, one collapsible per Town Hall. getUnlockableItems already sorts
   // ascending by unlockTh, so consecutive runs become the groups.
@@ -1048,34 +1217,73 @@ export default function HomeScreen() {
         title: `TH${th}`,
         items,
         time: items.reduce((sum, i) => sum + (upgradeCosts[i.name]?.timeSeconds ?? 0), 0),
+        buildSec: unlockBuildSec(items, th),
         pending: items.some((i) => progressDetails[i.name] === undefined),
       }));
-  }, [unlockableItems, upgradeCosts, progressDetails]);
+  }, [unlockableItems, upgradeCosts, progressDetails, unlockBuildSec]);
 
   // Rushed items are all measured against the same previous Town Hall, so there
   // is no Town Hall axis to group on - type is the only meaningful split. Image
   // marks rather than glyphs: representative in-game art per category, same
   // source the ItemCard rows themselves use.
   const rushedGroups = useMemo(() => {
-    const spec: { type: 'hero' | 'troop' | 'spell'; title: string; image: number }[] = [
-      { type: 'hero', title: 'Heroes', image: require('../../assets/package-images/images/home/heroes/barbarian-king/icon.webp') },
-      { type: 'troop', title: 'Troops', image: require('../../assets/package-images/images/home/troops/barbarian/icon.webp') },
-      { type: 'spell', title: 'Spells', image: require('../../assets/package-images/images/home/spells/lightning-spell/icon.webp') },
+    const spec: { type: string; title: string; image: number; gate: string }[] = [
+      { type: 'hero', title: 'Heroes', image: require('../../assets/package-images/images/home/heroes/barbarian-king/icon.webp'), gate: 'Build' },
+      { type: 'troop', title: 'Troops', image: require('../../assets/package-images/images/home/troops/barbarian/icon.webp'), gate: 'Lab' },
+      { type: 'spell', title: 'Spells', image: require('../../assets/package-images/images/home/spells/lightning-spell/icon.webp'), gate: 'Lab' },
+      { type: 'siege', title: 'Siege', image: require('../../assets/package-images/images/home/siege-machines/wall-wrecker/icon.webp'), gate: 'Lab' },
+      { type: 'pet', title: 'Pets', image: require('../../assets/package-images/images/home/pets/lassi/icon.webp'), gate: 'Pet House' },
     ];
     return spec
-      .map(({ type, title, image }) => {
+      .map(({ type, title, image, gate }) => {
         const items = rushedItems.filter((i) => i.type === type);
+        const summed = items.reduce((sum, i) => sum + (rushedCosts[i.name]?.timeSeconds ?? 0), 0);
+        // Rushed items already exist, so this is no longer building work - it is
+        // research on the Laboratory, or the Pet House for pets. Heroes take the
+        // builder split's makespan instead of the summed time: builders work
+        // them in parallel with the building chain, so adding up the hero
+        // research overstates the wait the player actually has.
+        const time = type === 'hero' ? (builderSplit?.heroesOnlySec || summed) : summed;
         return {
           key: type,
           title,
           image,
+          gate,
           items,
-          time: items.reduce((sum, i) => sum + (rushedCosts[i.name]?.timeSeconds ?? 0), 0),
+          time,
           pending: items.some((i) => progressDetails[i.name] === undefined),
         };
       })
+      // Only show a category the player has actually rushed.
       .filter((g) => g.items.length > 0);
-  }, [rushedItems, rushedCosts, progressDetails]);
+  }, [rushedItems, rushedCosts, progressDetails, builderSplit]);
+
+  /**
+   * The Locked header sums every TH bucket. All of it is Build - unlocking
+   * anything means upgrading a building, which is builder work - so the buckets
+   * collapse into one figure instead of being itemised per building.
+   */
+  const aggregateBuildSec = useMemo(
+    () => lockedBuckets.reduce((s, b) => s + b.buildSec, 0),
+    [lockedBuckets],
+  );
+
+  /**
+   * The Rushed header keeps its buckets apart, summed per gate. Lab work and
+   * Pet House work cannot overlap, so folding them into a single number would
+   * hide which one is the bottleneck.
+   */
+  const rushedGateDesc = useMemo(() => {
+    const byGate = new Map<string, number>();
+    for (const g of rushedGroups) {
+      if (g.time <= 0) continue;
+      byGate.set(g.gate, (byGate.get(g.gate) ?? 0) + g.time);
+    }
+    return ['Build', 'Lab', 'Pet House']
+      .filter((k) => (byGate.get(k) ?? 0) > 0)
+      .map((k) => `${k} ${formatTimeShort(byGate.get(k)!)}`)
+      .join(' · ');
+  }, [rushedGroups]);
 
   // ── Early returns (hooks must not follow) ──
   if (loading && !player) {
@@ -1120,9 +1328,15 @@ export default function HomeScreen() {
   const allTroopsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'troop');
   const allSpellsAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'spell');
   const allHeroesAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'hero');
+  const allSiegeAtTH = getAllItemsAtTH(th).filter((i) => i.type === 'siege');
+  // Siege machines ride in player.troops alongside real troops, so they have to
+  // be split out by name or the Troops group would claim their levels.
+  const homeSiegeList = (player.troops ?? []).filter((t: any) =>
+    (t.village === 'home' || !t.village) && siegeMachineNames.includes(t.name));
   const heroesProgress = calcProgress(homeHeroes, allHeroesAtTH);
   const troopsProgress = calcProgress(homeTroops, allTroopsAtTH);
   const spellsProgress = calcProgress(homeSpells, allSpellsAtTH);
+  const siegeProgress = calcProgress(homeSiegeList, allSiegeAtTH);
   const equipProgress = heroEquipment.length > 0
     ? heroEquipment.reduce((s, e) => s + (getEquipFullMax(e.name, e.maxLevel) > 0 ? e.level / getEquipFullMax(e.name, e.maxLevel) : 0), 0) / heroEquipment.length
     : 0;
@@ -1175,6 +1389,19 @@ export default function HomeScreen() {
         pushTo: '/(tabs)/army?tab=spells',
         rows: allSpellsAtTH.map((s) => {
           const owned = homeSpells.find((o: { name: string }) => o.name === s.name);
+          const level = owned?.level ?? 0;
+          return { name: s.name, level, maxLevel: s.maxLevel, iconSource: getArmyItemImage(s.name) ?? undefined };
+        }),
+      },
+      {
+        key: 'siege',
+        title: 'Siege',
+        icon: 'construct-outline',
+        iconSource: getArmyItemImage('Wall Wrecker', 1) ?? undefined,
+        progress: siegeProgress,
+        pushTo: '/(tabs)/army?tab=siege',
+        rows: allSiegeAtTH.map((s) => {
+          const owned = homeSiegeList.find((o: any) => o.name === s.name);
           const level = owned?.level ?? 0;
           return { name: s.name, level, maxLevel: s.maxLevel, iconSource: getArmyItemImage(s.name) ?? undefined };
         }),
@@ -1279,22 +1506,6 @@ export default function HomeScreen() {
       g.rows.map((r) => remainingBuildingCosts(r.name, r.copies, r.effectiveMax)),
     );
   }
-
-  const renderProgressHeader = (progress: number, ct: CostTime) => {
-    // Categories/sub-categories show only remaining time; costs are shown per
-    // item instead, so gold/elixir/dark elixir are never merged into one sum.
-    const label = ct.hasData && ct.time > 0 ? formatTimeShort(ct.time) : '';
-    return (
-      <View style={styles.progressHeaderDesc}>
-        <View style={styles.progressHeaderRow}>
-          <View style={styles.progressHeaderBar}>
-            <View style={[styles.progressHeaderFill, { width: `${Math.min(progress, 1) * 100}%` }]} />
-          </View>
-          <Text style={styles.progressHeaderCost} numberOfLines={1}>{label}</Text>
-        </View>
-      </View>
-    );
-  };
 
   const playerLeague = player.league ?? player.leagueTier;
   const leagueInfo = playerLeague?.name
@@ -1473,7 +1684,9 @@ export default function HomeScreen() {
           <View style={styles.progressSections}>
             {/* ── Lab ── */}
             {(() => {
-              const labKeys = ['troops', 'spells'];
+              // Siege belongs here: it is Workshop-built but still Lab-upgraded, so its
+  // remaining research is part of the Laboratory timeline.
+  const labKeys = ['troops', 'spells', 'siege'];
               const labGroups = progressGroups.filter((g) => labKeys.includes(g.key) && g.rows.some((r) => r.level < r.maxLevel));
               const labTl = labKeys.reduce((s, k) => {
                 const g = progressGroups.find(x => x.key === k);
@@ -1500,7 +1713,7 @@ export default function HomeScreen() {
                   }, 0)}
                   totalLevel={labTl}
                   totalMax={labTm}
-                  description={renderProgressHeader(labProgress, labCost)}
+                  description={<ProgressHeaderDesc progress={labProgress} ct={labCost} />}
                 >
                   <View style={styles.progressInner}>
                     {labGroups.map((group, gi, groups) => {
@@ -1517,7 +1730,7 @@ export default function HomeScreen() {
                           title={group.title}
                           compact
                           onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                          description={renderProgressHeader(group.progress, progressCosts[group.key])}
+                          description={<ProgressHeaderDesc progress={group.progress} ct={progressCosts[group.key]} />}
                           count={displayRows.length}
                           totalLevel={totalLevel}
                           totalMax={totalMax}
@@ -1565,12 +1778,17 @@ export default function HomeScreen() {
                   description={
                     <>
                       {builderSplit && (
-                        <Text style={{ ...styles.splitInfoLabel, marginBottom: -Spacing.xs }}>
-                          Build: {formatTimeShort(builderSplit.buildingsOnlySec)} · Hero: {formatTimeShort(builderSplit.heroesOnlySec)} · Opt: {builderSplit.optimalHeroBuilders}H / {builderSplit.optimalBuildingBuilders}B <Ionicons name="chevron-forward" size={10} color={Colors.textMuted} />
-                {formatTimeShort(builderSplit.optimalSec)}
-                        </Text>
+                        <BuilderSplitLine split={builderSplit} />
                       )}
-                      {renderProgressHeader(builderProgress, builderCost)}
+                      {<ProgressHeaderDesc
+                        progress={builderProgress}
+                        // The split's optimal makespan, not the summed remaining
+                        // time. Buildings and heroes share builders, so adding
+                        // their times together reports far more time than the
+                        // schedule actually takes - the progress row is where
+                        // the one useful duration belongs.
+                        ct={{ ...builderCost, time: builderSplit?.optimalSec ?? builderCost.time, hasData: (builderSplit?.optimalSec ?? 0) > 0 || builderCost.hasData }}
+                      />}
                     </>
                   }
                 >
@@ -1640,7 +1858,7 @@ export default function HomeScreen() {
                             compact
                             maxed={group.maxed}
                             onPressOverride={navigateInstead ? () => router.push(group.pushTo) : undefined}
-                            description={renderProgressHeader(group.progress, isHero ? progressCosts.heroes : buildingCosts[group.key])}
+                            description={<ProgressHeaderDesc progress={group.progress} ct={isHero ? progressCosts.heroes : buildingCosts[group.key]} />}
                             count={displayRows.length}
                             totalLevel={group.rows.reduce((s, r) => s + r.level, 0)}
                             totalMax={group.rows.reduce((s, r) => s + r.maxLevel, 0)}
@@ -1684,7 +1902,7 @@ export default function HomeScreen() {
                   count={group?.rows.length ?? 0}
                   totalLevel={group?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
                   totalMax={group?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
-                  description={renderProgressHeader(group?.progress ?? 0, progressCosts.pets)}
+                  description={<ProgressHeaderDesc progress={group?.progress ?? 0} ct={progressCosts.pets} />}
                   onPressOverride={navigateInstead ? () => router.push(group?.pushTo ?? '/(tabs)/army?tab=pets') : undefined}
                 >
                   <View style={styles.progressInner}>
@@ -1721,7 +1939,7 @@ export default function HomeScreen() {
                   count={group?.rows.length ?? 0}
                   totalLevel={group?.rows.reduce((s, r) => s + r.level, 0) ?? 0}
                   totalMax={group?.rows.reduce((s, r) => s + r.maxLevel, 0) ?? 0}
-                  description={renderProgressHeader(group?.progress ?? 0, progressCosts.equipment)}
+                  description={<ProgressHeaderDesc progress={group?.progress ?? 0} ct={progressCosts.equipment} />}
                   onPressOverride={navigateInstead ? () => router.push(group?.pushTo ?? '/(tabs)/army?tab=equipment') : undefined}
                 >
                   <View style={styles.progressInner}>
@@ -1761,7 +1979,7 @@ export default function HomeScreen() {
                       title={`${unlockableItems.length} locked`}
                       destructive
                       compact
-                      description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateTime > 0 ? formatTimeShort(aggregateTime) : 'Items locked at your Town Hall')}
+                      description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateBuildSec > 0 ? `Build ${formatTimeShort(aggregateBuildSec)}` : 'Items locked at your Town Hall')}
                       count={unlockableItems.length}
                       totalLevel={0}
                       totalMax={0}
@@ -1769,15 +1987,16 @@ export default function HomeScreen() {
                     >
                       <View style={styles.backlogSections}>
                         {lockedBuckets.map((bucket, bi) => {
-                        const bucketDesc = bucket.pending
-                          ? 'Calculating costs & time…'
-                          : bucket.time > 0
-                            ? `${bucket.items.length} · ${formatTimeShort(bucket.time)}`
-                            : `${bucket.items.length} ${bucket.items.length === 1 ? 'item' : 'items'}`;
+const bucketDesc = bucket.pending
+      ? 'Calculating costs & time.'
+      : bucket.buildSec > 0 ? `Build ${formatTimeShort(bucket.buildSec)}` : 'No building work needed';
                         return (
                           <CollapsibleSection
                             key={bucket.key}
-                            isFirst={bi === 0}
+                            // No isFirst: these buckets sit inside the outer
+                            // Locked/Rushed section's body, which owns the top
+                            // corners. CollapsibleSection still applies isFirst
+                            // when open, so an expanded bucket rounds its own.
                             isLast={bi === lockedBuckets.length - 1}
                             iconSource={getTownHallImageSource(bucket.th) ?? undefined}
                             title={bucket.title}
@@ -1827,7 +2046,7 @@ export default function HomeScreen() {
                       title={`${rushedItems.length} rushed`}
                       accentColor={Colors.warningText}
                       compact
-                      description={rushedCostsPending ? 'Calculating costs & time…' : (aggregateRushedTime > 0 ? formatTimeShort(aggregateRushedTime) : 'Items below the previous Town Hall max')}
+                      description={rushedCostsPending ? 'Calculating costs & time…' : (rushedGateDesc || 'Items below the previous Town Hall max')}
                       count={rushedItems.length}
                       totalLevel={0}
                       totalMax={0}
@@ -1835,15 +2054,12 @@ export default function HomeScreen() {
                     >
                       <View style={styles.backlogSections}>
                         {rushedGroups.map((group, gi) => {
-                        const groupDesc = group.pending
-                          ? 'Calculating costs & time…'
-                          : group.time > 0
-                            ? `${group.items.length} · ${formatTimeShort(group.time)}`
-                            : `${group.items.length} ${group.items.length === 1 ? 'item' : 'items'}`;
+const groupDesc = group.pending
+      ? 'Calculating costs & time.'
+      : group.time > 0 ? `${group.gate} ${formatTimeShort(group.time)}` : 'Maxed';
                         return (
                           <CollapsibleSection
                             key={group.key}
-                            isFirst={gi === 0}
                             isLast={gi === rushedGroups.length - 1}
                             iconSource={group.image}
                             title={group.title}
