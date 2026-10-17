@@ -1401,7 +1401,7 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
                 {player && (
                   <PressableRipple style={styles.switchBtn} onPress={handleOpenShare}>
-                    <Ionicons name="share-outline" size={18} color={Colors.textSecondary} />
+                    <Ionicons name="images-outline" size={18} color={Colors.textSecondary} />
                   </PressableRipple>
                 )}
                 <PressableRipple style={styles.switchBtn} onPress={handleCheckUpdates}>

@@ -517,8 +517,11 @@ export default function PlayerProfileScreen() {
   const homePetsSplit = splitProgress(homePets);
   const builderTroopsSplit = splitProgress(builderTroops, (t) => getBuilderTroopMaxLevel(t.name, bhLevel));
   const builderHeroesSplit = splitProgress(builderHeroes);
-  // The real, player-owned Blacksmith building level (from their profile buildings).
-  // Falls back to the max the Town Hall allows if the player hasn't tracked it.
+  // The Blacksmith that bounds equipment. This is the level reachable at the
+  // player's Town Hall (the seed writes it into buildingLevels), not a measured
+  // one: the Blacksmith is not API-readable, and inferring it from owned
+  // equipment only ever yields the level that equipment unlocked at. Matches
+  // getMaxLevelAtTH, which armyScore uses for the same cap.
   const blacksmithLevel = player.buildingLevels?.['Blacksmith'] ?? getBuildingMaxLevelAtTH('blacksmith', player.townHallLevel) ?? 0;
   const isEquipmentName = (name: string) => player.heroEquipment.some((e) => e.name === name);
 
@@ -1187,7 +1190,7 @@ to={pivot}
                     ? `Showing all Builder Base levels for ${detail.name}`
                     : `Showing all Builder Base levels reachable at BH ${bhLevel} (Max Lv${getBuilderTroopMaxLevel(detail.name, bhLevel) ?? bhLevel * 2})`
                   : isEquip
-                    ? `Showing all levels reachable with your Blacksmith at Lv${blacksmithLevel}`
+                    ? `Showing all levels reachable at Lv${blacksmithLevel} of the Blacksmith for your Town Hall`
                     : maxReachable != null
                       ? `Showing all levels reachable at TH ${player.townHallLevel} (Max Lv${maxReachable})`
                       : `Showing all levels for ${detail.name}`}
@@ -1774,7 +1777,7 @@ to={pivot}
                 <>
                   <View style={{ paddingHorizontal: Spacing.base, paddingBottom: Spacing.sm }}>
                     <Text style={{ fontSize: 12, color: Colors.textTertiary, fontStyle: 'italic', fontFamily: clashFontFamily(400, 12) }}>
-                      Levels shown reflect your Blacksmith (Lv {blacksmithLevel}).
+                      Levels shown reflect the Blacksmith reachable at Lv {blacksmithLevel} for your Town Hall.
                     </Text>
                   </View>
                   {sortedHeroEquipment.map((e, i) => (
@@ -1893,9 +1896,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
   },
   tabActive: {
     backgroundColor: Colors.textPrimary,
@@ -1939,7 +1940,13 @@ const styles = StyleSheet.create({
   },
   panelEmpty: {
     paddingVertical: Spacing.base,
-    borderWidth: 0.75,
+    // Dashed at 1 rather than the old 0.75 solid hairline: RN has no control over
+    // dash length, but the dash and its gap both scale with borderWidth, so 0.75
+    // packed the dashes close enough to read as a solid rule. 1 also matches the
+    // table and level-grid frames, and avoids the sub-pixel width where Android
+    // drops the dashes entirely.
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderRadius: Radius.md,
     alignItems: 'center',
   },
