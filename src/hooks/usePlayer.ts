@@ -94,6 +94,53 @@ export async function removeAccount(tag: string): Promise<void> {
   }
 }
 
+/**
+ * Remove the account and everything stored for it. `removeAccount` only drops the
+ * registry entry, which leaves the cached player, API token, saved bases,
+ * favourites, reminders and progress snapshot behind - so signing out of the last
+ * account would leave its village data on the device and reappear if the same tag
+ * were added again.
+ *
+ * Keys are stored both namespaced (`<base>_<tag>`) and, for older installs,
+ * unscoped. Both are cleared when they belong to this account.
+ */
+export async function signOutAccount(tag: string): Promise<void> {
+  const safeTag = tag.replace(/[^a-zA-Z0-9]/g, '');
+  const namespaced = [
+    acctKey(PLAYER_TAG_KEY, tag),
+    acctKey(API_TOKEN_KEY, tag),
+    acctKey(PLAYER_CACHE_KEY, tag),
+    acctKey(LAST_MAXED_TH_KEY, tag),
+    acctKey(SAVED_BASES_KEY, tag),
+    acctKey(FAVORITES_KEY, tag),
+    `clashprime_progress_${tag}`,
+    `clashprime_reminders_${safeTag}`,
+    `${AUTO_REFRESH_TIMESTAMP_KEY}_${tag}`,
+  ];
+  await AsyncStorage.multiRemove(namespaced.filter((k) => k && !k.endsWith('_')));
+
+  // Legacy unscoped keys only ever held one account, so they go when that account
+  // signs out.
+  if ((await getActiveAccountTag()) === tag) {
+    await AsyncStorage.multiRemove([
+      PLAYER_TAG_KEY,
+      API_TOKEN_KEY,
+      PLAYER_CACHE_KEY,
+      LAST_MAXED_TH_KEY,
+      SAVED_BASES_KEY,
+      FAVORITES_KEY,
+      AUTO_REFRESH_TIMESTAMP_KEY,
+      'clashprime_builders',
+      'clashprime_builder_base_builders',
+      'clashprime_reminders',
+      `clashprime_progress_${tag}`,
+    ]);
+  }
+
+  await clearAppCache(tag);
+  await removeAccount(tag);
+}
+
 export async function markAccountSynced(tag: string): Promise<void> {
   const accounts = await getAccounts();
   const idx = accounts.findIndex((a) => a.tag === tag);
