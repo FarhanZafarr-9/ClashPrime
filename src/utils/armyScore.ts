@@ -268,6 +268,10 @@ export function scoreArmyForPlayer(
   ) => {
     const pkgName = resolveArmyItemName(lookupName);
     if (!pkgName) {
+      // The package ships no data for some things an army can reference - super
+      // troops being the common one, as neither their names nor their Workshop
+      // levels exist in it. They are reported rather than counted as unmaxed, so a
+      // data gap never drags the score down as though the player were behind.
       unknown.push(displayName);
       return;
     }
