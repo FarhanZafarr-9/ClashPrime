@@ -310,9 +310,12 @@ function BuilderSplitLine({
  */
 const UNLOCK_SOURCES: { building: string; field: string; label: string }[] = [
   { building: 'Barracks', field: 'unlockedUnit', label: 'Barracks' },
-  { building: 'Dark Barracks', field: 'unlockedUnit', label: 'Dark Barracks' },
+  // `building` is the lookup key and must stay exact; `label` is display only, so
+  // the long ones are trimmed to two words to fit a row subtitle beside the
+  // level and time.
+  { building: 'Dark Barracks', field: 'unlockedUnit', label: 'D Barracks' },
   { building: 'Spell Factory', field: 'unlockedSpell', label: 'Spell Factory' },
-  { building: 'Dark Spell Factory', field: 'unlockedSpell', label: 'Dark Spell Factory' },
+  { building: 'Dark Spell Factory', field: 'unlockedSpell', label: 'DS Factory' },
   { building: 'Hero Hall', field: 'unlockedHero', label: 'Hero Hall' },
   { building: 'Blacksmith', field: 'equipmentUnlocked', label: 'Blacksmith' },
   { building: 'Workshop', field: 'unlockedSiegeMachine', label: 'Workshop' },
@@ -365,6 +368,32 @@ function buildingChainSec(building: string, targetLevel: number, currentLevel: n
     sec += buildTimeSec((lvl as any).buildTime);
   }
   return sec;
+}
+
+/**
+ * Resource cost of the same chain, grouped by resource - the spend that
+ * actually unlocks a locked item, rather than the research you cannot start
+ * until it exists.
+ */
+function buildingChainCost(
+  building: string,
+  targetLevel: number,
+  currentLevel: number,
+): { cost: number; byResource: Record<string, number> } {
+  const item = getBuildingItem(building, false);
+  const byResource: Record<string, number> = {};
+  let cost = 0;
+  if (!item) return { cost, byResource };
+  for (const lvl of item.levels ?? []) {
+    if (lvl.level <= currentLevel) continue;
+    if (lvl.level > targetLevel) break;
+    const amount = (lvl as any).buildCost ?? 0;
+    if (amount <= 0) continue;
+    const res = (lvl as any).buildCostResource ?? 'Unknown';
+    cost += amount;
+    byResource[res] = (byResource[res] ?? 0) + amount;
+  }
+  return { cost, byResource };
 }
 
 function CollapsibleSection({
@@ -1052,22 +1081,10 @@ export default function HomeScreen() {
 
   // ── State / derived (must be before early returns) ──
 
-  // Backlog costs are derived from the shared wiki-detail cache (progressDetails),
-  // which the prefetch above already fills for every locked/rushed item name —
-  // the Backlog never issues its own requests.
-  const upgradeCosts = useMemo(() => {
-    const results: Record<string, { cost: number; timeSeconds: number; byResource?: Record<string, number> }> = {};
-    for (const item of unlockableItems) {
-      const detail = progressDetails[item.name];
-      if (!detail || detail.levels.length === 0) continue;
-      const maxLvl = getMaxLevelAtTH(item.name, th);
-      if (!maxLvl) continue;
-      const ct = remainingArmyCosts(detail, 0, maxLvl);
-      if (ct.cost > 0 || ct.time > 0) results[item.name] = { cost: ct.cost, timeSeconds: ct.time, byResource: ct.byResource };
-    }
-    return results;
-  }, [progressDetails, unlockableItems, th]);
-
+  // Rushed costs come from the shared wiki-detail cache (progressDetails), which
+  // the prefetch above already fills - the Backlog never issues its own requests.
+  // Locked items no longer need it: their rows show the gating building's cost
+  // and time, which come from the bundled building data synchronously.
   const rushedCosts = useMemo(() => {
     const results: Record<string, { cost: number; timeSeconds: number; byResource?: Record<string, number> }> = {};
     for (const item of rushedItems) {
@@ -1079,7 +1096,6 @@ export default function HomeScreen() {
     return results;
   }, [progressDetails, rushedItems]);
 
-  const lockedCostsPending = unlockableItems.some((i) => progressDetails[i.name] === undefined);
   const rushedCostsPending = rushedItems.some((i) => progressDetails[i.name] === undefined);
 
   // ── Builder split calculation (for Builders pipeline) ──
@@ -1200,6 +1216,29 @@ export default function HomeScreen() {
     return sec / builders;
   }, [builderCount]);
 
+  /**
+   * Per-item unlock cost and time: the gating building chain that brings this one
+   * item into existence. Rows show this rather than research time, because
+   * research cannot start until the building work is done - showing research on a
+   * locked row described work the player has no way to begin.
+   *
+   * Rows intentionally do not sum to the header: one building level can unlock
+   * several items at once, so each row repeats part of the same chain.
+   */
+  const unlockWork = useCallback((name: string, atTh: number) => {
+    const info = getArmyUnlockIndex().get(name);
+    if (!info) return null;
+    const already = getBuildingMaxLevelAtTH(info.building, Math.max(1, atTh - 1)) ?? 0;
+    const { cost, byResource } = buildingChainCost(info.building, info.level, already);
+    return {
+      label: info.label,
+      level: info.level,
+      sec: buildingChainSec(info.building, info.level, already),
+      cost,
+      byResource,
+    };
+  }, []);
+
   // Locked items, one collapsible per Town Hall. getUnlockableItems already sorts
   // ascending by unlockTh, so consecutive runs become the groups.
   const lockedBuckets = useMemo(() => {
@@ -1216,11 +1255,12 @@ export default function HomeScreen() {
         th,
         title: `TH${th}`,
         items,
-        time: items.reduce((sum, i) => sum + (upgradeCosts[i.name]?.timeSeconds ?? 0), 0),
+        // Both figures come from the bundled building data, so nothing here
+        // waits on the wiki-detail cache - hence no "pending" state.
         buildSec: unlockBuildSec(items, th),
-        pending: items.some((i) => progressDetails[i.name] === undefined),
+        unlockWork: items.map((i) => unlockWork(i.name, th)),
       }));
-  }, [unlockableItems, upgradeCosts, progressDetails, unlockBuildSec]);
+  }, [unlockableItems, unlockBuildSec, unlockWork]);
 
   // Rushed items are all measured against the same previous Town Hall, so there
   // is no Town Hall axis to group on - type is the only meaningful split. Image
@@ -1979,7 +2019,7 @@ export default function HomeScreen() {
                       title={`${unlockableItems.length} locked`}
                       destructive
                       compact
-                      description={lockedCostsPending ? 'Calculating costs & time…' : (aggregateBuildSec > 0 ? `Build ${formatTimeShort(aggregateBuildSec)}` : 'Items locked at your Town Hall')}
+                      description={aggregateBuildSec > 0 ? `Build ${formatTimeShort(aggregateBuildSec)}` : 'Items locked at your Town Hall'}
                       count={unlockableItems.length}
                       totalLevel={0}
                       totalMax={0}
@@ -1987,9 +2027,7 @@ export default function HomeScreen() {
                     >
                       <View style={styles.backlogSections}>
                         {lockedBuckets.map((bucket, bi) => {
-const bucketDesc = bucket.pending
-      ? 'Calculating costs & time.'
-      : bucket.buildSec > 0 ? `Build ${formatTimeShort(bucket.buildSec)}` : 'No building work needed';
+const bucketDesc = bucket.buildSec > 0 ? `Build ${formatTimeShort(bucket.buildSec)}` : 'No building work needed';
                         return (
                           <CollapsibleSection
                             key={bucket.key}
@@ -2007,30 +2045,39 @@ const bucketDesc = bucket.pending
                             totalMax={0}
                           >
                             <View>
-                              {bucket.items.map((item, i) => {
-                                const thImage = getTownHallImageSource(item.unlockTh);
-                                const image = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : 1);
-                                const levelsAtTH = getMaxLevelAtTH(item.name, th) ?? 0;
-                                const itemCost = upgradeCosts[item.name];
-                                const time = itemCost && itemCost.timeSeconds > 0 ? fmtTime(itemCost.timeSeconds) : null;
-                                const showCost = !!itemCost;
-                                return (
-                                  <ItemCard
-                                    key={item.name}
-                                    name={item.name}
-                                    level={0}
-                                    maxLevel={levelsAtTH}
-                                    hideLevelBadge
-                                    iconSource={image ?? undefined}
-                                    subtitle={`${levelsAtTH} ${levelsAtTH === 1 ? 'level' : 'levels'}${time ? ` · ${time}` : ''}`}
-                                    costLabel={showCost ? (formatCostBreakdown(itemCost.byResource) || fmtCost(itemCost.cost)) : undefined}
-                                    costResources={showCost && itemCost.byResource ? itemCost.byResource : undefined}
-                                    trailing={thImage ? <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" /> : undefined}
-                                    isLast={i === bucket.items.length - 1}
-                                    footer={!showCost && bucket.pending ? <Text style={styles.backlogPending}>Calculating…</Text> : null}
-                                  />
-                                );
-                              })}
+{bucket.items.map((item, i) => {
+                const thImage = getTownHallImageSource(item.unlockTh);
+                const image = getArmyItemImage(item.name, item.type === 'hero' || item.type === 'troop' || item.type === 'spell' ? null : 1);
+                // Capped to the bucket's Town Hall, not the player's current one: a bucket
+                // groups items that unlock at that TH, so its rows describe the TH
+                // it is named for.
+                const levelsAtTH = getMaxLevelAtTH(item.name, bucket.th) ?? 0;
+                // What the row is actually about: the building work that unlocks
+                // this item. The level count is not useful while the item is
+                // locked, so the subtitle names the building and its target level.
+                const work = bucket.unlockWork[i];
+                const subtitle = !work
+                  ? null
+                  : work.sec > 0
+                    ? `${work.label} to Lv ${work.level} in ${fmtTime(work.sec)}`
+                    : `${work.label} already at Lv ${work.level}`;
+                const showWork = !!work && work.cost > 0;
+                return (
+                  <ItemCard
+                    key={item.name}
+                    name={item.name}
+                    level={0}
+                    maxLevel={levelsAtTH}
+                    hideLevelBadge
+                    iconSource={image ?? undefined}
+                    subtitle={subtitle ?? undefined}
+                    costLabel={showWork ? (formatCostBreakdown(work.byResource) || fmtCost(work.cost)) : undefined}
+                    costResources={showWork && Object.keys(work.byResource).length > 0 ? work.byResource : undefined}
+                    trailing={thImage ? <Image source={thImage} style={styles.thImageBadgeImg} resizeMode="contain" /> : null}
+                    isLast={i === bucket.items.length - 1}
+                  />
+                );
+              })}
                             </View>
                           </CollapsibleSection>
                         );
