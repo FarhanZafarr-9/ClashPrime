@@ -28,6 +28,8 @@ interface Props {
   rightValue?: React.ReactNode;
   rightValueColor?: string;
   icon?: string | number;
+  /** Overrides the card background, e.g. `colors.bgCardHover` to lift a nested row off the sheet. */
+  background?: string;
   iconSource?: ImageSourcePropType;
   /** Ionicons glyph for the icon slot, used when there is no artwork to show. */
   iconName?: keyof typeof Ionicons.glyphMap;
@@ -66,7 +68,7 @@ interface Props {
   dashed?: boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progress', subtitle, subtitleColor, costLabel, costResources, timeLabel, rightValue, rightValueColor, icon, iconSource, iconName, onPress, locked, isFirst, isLast, actionIcon, actionText, onActionPress, actionPosition = 'after', actionColor, actionAccessibilityLabel, actionIcon2, actionText2, onActionPress2, actionPosition2 = 'after', actionColor2, actionAccessibilityLabel2, dimmed, hideLevelBadge, subtitleWithBar, footer, trailing, dashed }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progress', subtitle, subtitleColor, costLabel, costResources, timeLabel, rightValue, rightValueColor, icon, background, iconSource, iconName, onPress, locked, isFirst, isLast, actionIcon, actionText, onActionPress, actionPosition = 'after', actionColor, actionAccessibilityLabel, actionIcon2, actionText2, onActionPress2, actionPosition2 = 'after', actionColor2, actionAccessibilityLabel2, dimmed, hideLevelBadge, subtitleWithBar, footer, trailing, dashed }: Props) {
   const { colors } = useTheme();
   const isPlain = variant === 'plain';
   const currentLevel = level ?? 0;
@@ -139,7 +141,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progres
     <PressableRipple
       onPress={onPress}
       style={[styles.card,
-      { backgroundColor: colors.bgCard, opacity: locked ? 0.55 : dimmed ? 0.5 : 1 },
+      { backgroundColor: background ?? colors.bgCard, opacity: locked ? 0.55 : dimmed ? 0.5 : 1 },
       dashed && styles.cardDashed,
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl }
