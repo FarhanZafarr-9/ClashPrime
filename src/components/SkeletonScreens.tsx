@@ -429,6 +429,29 @@ export function ProfileScreenSkeleton() {
 }
 
 // ─── Armies tab skeleton ──────────────────────────────────────────────────────
+
+/** Pill columns on the Army tag grid, matching PILL_COLUMNS in armies.tsx. */
+const ARMY_PILL_COLUMNS = 3;
+/** How many tag pills the grid shows before the counts arrive. */
+const ARMY_PILL_PLACEHOLDERS = 6;
+
+/**
+ * Seamless-grid corner rounding, matching pillCornerStyle in armies.tsx: the
+ * placeholders read as one rounded block, so only the four outermost corners take
+ * the large radius and the interior seams stay at Radius.sm.
+ */
+function armyPillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(ARMY_PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / ARMY_PILL_COLUMNS) * ARMY_PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
+
 export function ArmiesScreenSkeleton() {
   const { colors } = useTheme();
   return (
@@ -437,10 +460,33 @@ export function ArmiesScreenSkeleton() {
       <View style={[styles.countBarSkeleton]}>
         <Skeleton width={100} height={14} borderRadius={4} />
       </View>
-      {/* Tag filter pills */}
-      <View style={[styles.chipsRowSkeleton, { paddingBottom: Spacing.sm }]}>
-        {[50, 60, 55, 50, 55, 60].map((w, i) => (
-          <Skeleton key={i} width={w} height={28} borderRadius={14} />
+      {/* Tag filter pills - the current 3-per-row grid, not a row of loose pills */}
+      <View style={styles.armyPillGrid}>
+        {Array.from({ length: Math.ceil(ARMY_PILL_PLACEHOLDERS / ARMY_PILL_COLUMNS) }, (_, r) => (
+          <View key={r} style={styles.armyPillLine}>
+            {Array.from(
+              { length: Math.min(ARMY_PILL_COLUMNS, ARMY_PILL_PLACEHOLDERS - r * ARMY_PILL_COLUMNS) },
+              (_, c) => {
+                const i = r * ARMY_PILL_COLUMNS + c;
+                return (
+                  <View
+                    key={i}
+                    style={[
+                      styles.armyPill,
+                      armyPillCornerStyle(i, ARMY_PILL_PLACEHOLDERS),
+                      { backgroundColor: colors.bgCardHover, borderColor: colors.border },
+                    ]}
+                  >
+                    <Skeleton width={18} height={18} borderRadius={4} />
+                    <View style={styles.armyPillTextCol}>
+                      <Skeleton width="70%" height={11} borderRadius={4} />
+                      <Skeleton width="45%" height={9} borderRadius={4} />
+                    </View>
+                  </View>
+                );
+              },
+            )}
+          </View>
         ))}
       </View>
       {/* Cards */}
@@ -560,6 +606,29 @@ export function ArmiesScreenSkeleton() {
 }
 
 // ─── Hero Journey tab skeleton ────────────────────────────────────────────────
+
+/** Pill columns on the Hero Journey filter grid, matching PILL_COLUMNS in hero-journey.tsx. */
+const JOURNEY_PILL_COLUMNS = 3;
+/** Filter pills shown before the milestone counts arrive. */
+const JOURNEY_PILL_PLACEHOLDERS = 6;
+
+/**
+ * Seamless-grid corner rounding, matching pillCornerStyle in hero-journey.tsx:
+ * only the four outermost corners take the large radius, so the placeholders read
+ * as one rounded block with Radius.sm interior seams.
+ */
+function journeyPillCornerStyle(index: number, total: number) {
+  const outer = Radius.xl * 1.25;
+  const firstRowCount = Math.min(JOURNEY_PILL_COLUMNS, total);
+  const lastRowStart = Math.floor((total - 1) / JOURNEY_PILL_COLUMNS) * JOURNEY_PILL_COLUMNS;
+  return {
+    ...(index === 0 && { borderTopLeftRadius: outer }),
+    ...(index === firstRowCount - 1 && { borderTopRightRadius: outer }),
+    ...(index === lastRowStart && { borderBottomLeftRadius: outer }),
+    ...(index === total - 1 && { borderBottomRightRadius: outer }),
+  };
+}
+
 export function HeroJourneyScreenSkeleton() {
   const { colors } = useTheme();
   return (
@@ -600,14 +669,35 @@ export function HeroJourneyScreenSkeleton() {
           </View>
         </View>
 
-        {/* Filter chips + scroll-to-current */}
-        <View style={styles.heroJourneyFilterRow}>
-          <View style={styles.heroJourneyFilterChips}>
-            {[0, 1, 2, 3, 4].map((c) => (
-              <Skeleton key={c} width={c === 0 ? 44 : 66} height={28} borderRadius={Radius.full} />
-            ))}
-          </View>
-          <Skeleton width={30} height={30} borderRadius={Radius.full} />
+        {/* Filter pills - the current 3-per-row grid. The scroll-to-current button
+            lives in the header on the real screen, not beside these. */}
+        <View style={styles.journeyPillGrid}>
+          {Array.from({ length: Math.ceil(JOURNEY_PILL_PLACEHOLDERS / JOURNEY_PILL_COLUMNS) }, (_, r) => (
+            <View key={r} style={styles.journeyPillLine}>
+              {Array.from(
+                { length: Math.min(JOURNEY_PILL_COLUMNS, JOURNEY_PILL_PLACEHOLDERS - r * JOURNEY_PILL_COLUMNS) },
+                (_, c) => {
+                  const i = r * JOURNEY_PILL_COLUMNS + c;
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        styles.journeyPill,
+                        journeyPillCornerStyle(i, JOURNEY_PILL_PLACEHOLDERS),
+                        { backgroundColor: colors.bgCardHover, borderColor: colors.border },
+                      ]}
+                    >
+                      <Skeleton width={16} height={16} borderRadius={4} />
+                      <View style={styles.journeyPillTextCol}>
+                        <Skeleton width="70%" height={11} borderRadius={4} />
+                        <Skeleton width="45%" height={9} borderRadius={4} />
+                      </View>
+                    </View>
+                  );
+                },
+              )}
+            </View>
+          ))}
         </View>
 
         {/* Timeline: expanded section + collapsed section headers */}
@@ -828,11 +918,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingBottom: Spacing.sm,
   },
-  chipsRowSkeleton: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
+  // Army tag pills - mirrors the pill/line/grid styles in armies.tsx so the
+  // placeholder block holds exactly the shape the real pills take.
+  armyPillGrid: {
+    gap: Spacing.xs,
     paddingHorizontal: Spacing.base,
-    flexWrap: 'wrap',
+    paddingBottom: Spacing.sm,
+  },
+  armyPillLine: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  armyPill: {
+    // flex: 1, not a fixed width, so a row of pills fills it and a partial
+    // trailing row shares out the same space.
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
+  },
+  armyPillTextCol: {
+    flex: 1,
+    minWidth: 0,
+    // The two bars stand in for a label and a count that are one fontSize apart;
+    // without this they read as a single tall block.
+    gap: 5,
   },
   baseGrid: {
     flexDirection: 'row',
@@ -925,17 +1040,34 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: Spacing.xs,
   },
-  heroJourneyFilterRow: {
+  // Hero Journey filter pills - mirrors the pill/line/row styles in
+  // hero-journey.tsx so the placeholder block holds the real shape.
+  journeyPillGrid: {
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+  },
+  journeyPillLine: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  journeyPill: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.sm,
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.sm,
+    borderWidth: 0.75,
   },
-  heroJourneyFilterChips: {
+  journeyPillTextCol: {
     flex: 1,
-    flexDirection: 'row',
-    gap: Spacing.sm,
+    minWidth: 0,
+    // Label and count are one fontSize apart; without this they read as one
+    // tall block.
+    gap: 5,
   },
   heroJourneyTimeline: {
     paddingHorizontal: Spacing.base,
