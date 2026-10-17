@@ -175,7 +175,7 @@ const FEEDBACK_EMAIL = 'farhanzafarr.9@gmail.com';
 
 const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
-    version: '6.5.0',
+    version: '7.0.0',
     date: 'October 9, 2026',
     items: [
       'Every settings dialog now opens as a bottom sheet — the player tag / API token edit sheet, the About / What\u2019s New / Privacy / Credits / Feedback / Developer content sheets, the account switcher, the discount modal and the onboarding modal all slide up with their title, subtitle and icon in the sheet header.',
