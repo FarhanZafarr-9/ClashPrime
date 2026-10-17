@@ -277,7 +277,8 @@ ClashPrime/
 │       ├── zapquaker.tsx   # Zapquaker combo calculator
 │       ├── giantarrow.tsx  # Giant Arrow / Rocket Backpack path planner on base screenshots
 │       ├── bob.tsx         # 6th Builder (B.O.B.) unlock planner
-│       └── settings.tsx    # Settings (collapsible section headers + What's New changelog)
+│       ├── settings.tsx    # Settings (collapsible section headers + What's New changelog)
+│       └── player.tsx      # Player profile (account switcher, tag, token, achievements)
 ├── src/
 │   ├── api/                # API clients and scrapers
 │   │   ├── clash.ts        # CoC API client
