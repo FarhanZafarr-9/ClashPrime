@@ -845,6 +845,7 @@ export default function HomeScreen() {
 
     return {
       timestamp: Date.now(),
+      townHall: p.townHallLevel ?? 0,
       categories: {
         heroes: calc(ownedHeroes, allHeroesAtTH),
         troops: calc(ownedTroops, allTroopsAtTH),
@@ -1349,7 +1350,13 @@ export default function HomeScreen() {
     );
   }
 
-  if (!player) return null;
+  // Rendered nothing at all, which is a blank screen rather than an error. Reached
+  // on first launch after onboarding hands off: it caches the player and switches
+  // the active tag, but this screen mounts before the provider has picked it up, so
+  // loading is already false while player is still null - and the skeleton guard
+  // above needs loading to be true. Reopening the app hides the gap, because the
+  // provider then boots with the account already selected.
+  if (!player) return <HomeScreenSkeleton />;
 
   // ── Player-guaranteed computations ──
   const calcProgress = (
@@ -2576,6 +2583,34 @@ const groupDesc = group.pending
               </View>
             </View>
 
+            {progressDiff?.townHall && (
+              <View style={styles.progressThBanner}>
+                <View style={styles.progressThIcon}>
+                  {(() => {
+                    const thImg = getTownHallImageSource(progressDiff!.townHall!.after);
+                    return thImg ? (
+                      <Image source={thImg} style={styles.progressThImage} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="home" size={20} color={Colors.textPrimary} />
+                    );
+                  })()}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.progressThTitleRow}>
+                    <Text style={styles.progressThTitle}>Town Hall</Text>
+                    <Text style={styles.progressThTitle}>{progressDiff.townHall.before}</Text>
+                    <Ionicons name="chevron-forward" size={11} color={Colors.bg} />
+                    <Text style={styles.progressThTitle}>{progressDiff.townHall.after}</Text>
+                  </View>
+                  <Text style={styles.progressThSub}>
+                    {progressDiff.townHall.after - progressDiff.townHall.before > 1
+                      ? `Skipped ${progressDiff.townHall.after - progressDiff.townHall.before - 1} Town Hall${progressDiff.townHall.after - progressDiff.townHall.before - 1 > 1 ? 's' : ''} — new unlocks, new caps`
+                      : 'New unlocks and higher caps across the board'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
             {progressDiff && progressDiff.categories.length > 0 && (
               <>
                 <Text style={styles.progressSectionTitle}>Overall Progress</Text>
@@ -3453,6 +3488,48 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     marginTop: Spacing.xs,
+  },
+  // Town Hall jump gets its own banner rather than a row: it is the one change
+  // that resets caps across every other category, so it reads as a headline.
+  progressThBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.textPrimary,
+  },
+  progressThIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    // Dark chip so the Town Hall art reads as knocked out of the light banner.
+    backgroundColor: Colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  progressThImage: {
+    width: 34,
+    height: 34,
+  },
+  progressThTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  progressThTitle: {
+    ...Typography.subhead,
+    color: Colors.bg,
+    fontWeight: '700',
+  },
+  progressThSub: {
+    ...Typography.caption,
+    color: Colors.bg,
+    opacity: 0.75,
+    marginTop: 4,
   },
   progressSectionTitle: {
     ...Typography.caption,
