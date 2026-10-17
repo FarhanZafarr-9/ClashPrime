@@ -1136,10 +1136,10 @@ export default function SettingsScreen() {
           <Text style={styles.devTagline}>
             every pixel intentional · every commit counts · every detail ships
           </Text>
-          <Text style={styles.creditBlurb}>
+          <Text style={styles.devBlurb}>
             Mobile and full-stack developer, currently on a BS in Data Science at FAST-NUCES Lahore. I ship real apps — React Native, Flutter and full-stack web — and obsess over the details users actually feel.
           </Text>
-          <Text style={styles.creditSectionTitle}>What I do</Text>
+          <Text style={styles.devSectionTitle}>What I do</Text>
           <View style={styles.devSkillRow}>
             {[
               { icon: 'phone-portrait-outline', title: 'Mobile', body: 'React Native · Expo · Flutter' },
@@ -1147,13 +1147,15 @@ export default function SettingsScreen() {
               { icon: 'analytics-outline', title: 'Data', body: 'Python · PyTorch · scikit-learn' },
             ].map((s) => (
               <View style={styles.devSkillTile} key={s.title}>
-                <Ionicons name={s.icon as any} size={15} color={Colors.textSecondary} />
+                <View style={styles.devSkillIcon}>
+                  <Ionicons name={s.icon as any} size={16} color={Colors.textPrimary} />
+                </View>
                 <Text style={styles.devSkillName}>{s.title}</Text>
                 <Text style={styles.devSkillBody}>{s.body}</Text>
               </View>
             ))}
           </View>
-          <Text style={styles.creditSectionTitle}>Featured projects</Text>
+          <Text style={styles.devSectionTitle}>Featured projects</Text>
           <View style={styles.devProjectList}>
             {DEVELOPER_PROJECTS.map((p) => (
               <View style={styles.devProjectItem} key={p.name}>
@@ -2825,30 +2827,39 @@ builderCountBtnDisabled: {
     flex: 1,
     lineHeight: 20,
   },
-  // Developer Info: kept light. An earlier pass put the tagline in a filled hero
-  // card, which read as heavy and pushed the rest of the sheet down; plain accent
-  // text plus one row of tiles and one list carries the same hierarchy.
+  // Developer Info: roomier than the surrounding sheets, and the icon chips are
+  // circles rather than rounded squares - a bare glyph read as flat, and the
+  // tight row gaps made the three tiles look like one smudged block.
   devSkillRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
   devSkillTile: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    gap: 3,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCardHover,
+    gap: 4,
+  },
+  devSkillIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    backgroundColor: Colors.bgCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
   },
   devSkillName: {
     ...Typography.footnote,
     color: Colors.textPrimary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   devSkillBody: {
     ...Typography.caption,
     fontSize: 10,
-    lineHeight: 13,
+    lineHeight: 14,
     color: Colors.textMuted,
   },
   devProjectList: {
@@ -2856,15 +2867,15 @@ builderCountBtnDisabled: {
   },
   devProjectItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   devProjectIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2879,12 +2890,30 @@ builderCountBtnDisabled: {
   devProjectBlurb: {
     ...Typography.footnote,
     color: Colors.textTertiary,
-    lineHeight: 16,
+    lineHeight: 17,
+    marginTop: 1,
   },
   devTagline: {
     ...Typography.caption,
     color: Colors.accent,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    lineHeight: 18,
+    marginTop: Spacing.md,
+  },
+  // Spacing, not the shared creditSectionTitle: Credits and About sit tight on
+  // purpose and should not inherit this.
+  devSectionTitle: {
+    ...Typography.callout,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
+  devBlurb: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    lineHeight: 21,
     marginTop: Spacing.md,
   },
   devRow: {
