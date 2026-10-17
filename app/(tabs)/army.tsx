@@ -23,6 +23,7 @@ import {
   getBuilderTroopMaxLevel,
   getArmyItemImage,
   getArmyTroopDetail,
+  looseNameKey,
   RESOURCE_META,
   sumLevelCostsByResource,
   type CostResource,
@@ -314,7 +315,10 @@ export default function PlayerProfileScreen() {
   }, [details, player, activeTab]);
 
   React.useEffect(() => {
-    if (activeTab !== 'equipment') return;
+    // Not gated on activeTab: the tab subtitles count maxed equipment on every
+    // render, so waiting until the tab is opened left the Equipment chip reading
+    // "0/N maxed" until you switched to it and the details landed. Fetching up
+    // front is what the home screen already does for the same details.
     if (!player || player.heroEquipment.length === 0) return;
     const names = player.heroEquipment.map((e) => e.name);
     if (names.every((n) => details[n] !== undefined)) return;
@@ -489,14 +493,38 @@ export default function PlayerProfileScreen() {
   const allTroopsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'troop');
   const allSpellsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'spell');
   const allHeroesAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'hero');
+  const allSiegeAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'siege');
+  const allPetsAtTH = getAllItemsAtTH(player.townHallLevel).filter((i) => i.type === 'pet');
 
-  const ownedTroopNames = new Set(homeTroops.map((t) => t.name.toLowerCase()));
-  const ownedSpellNames = new Set(homeSpells.map((s) => s.name.toLowerCase()));
-  const ownedHeroNames = new Set(homeHeroes.map((h) => h.name.toLowerCase()));
+  const ownedTroopNames = new Set(homeTroops.map((t) => looseNameKey(t.name)));
+  const ownedSpellNames = new Set(homeSpells.map((s) => looseNameKey(s.name)));
+  const ownedHeroNames = new Set(homeHeroes.map((h) => looseNameKey(h.name)));
+  // Siege machines and pets are carried in the troop list, so they need their
+  // own sets rather than falling through ownedTroopNames, which excludes both.
+  const ownedSiegeNames = new Set(siegeMachines.map((t) => looseNameKey(t.name)));
+  const ownedPetNames = new Set(homePets.map((t) => looseNameKey(t.name)));
+  const ownedBuilderNames = new Set(builderTroops.map((t) => looseNameKey(t.name)));
 
-  const lockedTroops = allTroopsAtTH.filter((t) => !ownedTroopNames.has(t.name.toLowerCase()));
-  const lockedSpells = allSpellsAtTH.filter((s) => !ownedSpellNames.has(s.name.toLowerCase()));
-  const lockedHeroes = allHeroesAtTH.filter((h) => !ownedHeroNames.has(h.name.toLowerCase()));
+  /**
+   * Whether the player already owns this item, across every tab's list. The
+   * unlock-requirement block only earns its space for something still locked -
+   * once a hero is yours, "unlocks at TH7" is noise.
+   */
+  const isOwnedItem = (name: string) => {
+    const key = looseNameKey(name);
+    return ownedHeroNames.has(key)
+      || ownedTroopNames.has(key)
+      || ownedBuilderNames.has(key)
+      || ownedSpellNames.has(key)
+      || ownedSiegeNames.has(key)
+      || ownedPetNames.has(key);
+  };
+
+  const lockedTroops = allTroopsAtTH.filter((t) => !ownedTroopNames.has(looseNameKey(t.name)));
+  const lockedSpells = allSpellsAtTH.filter((s) => !ownedSpellNames.has(looseNameKey(s.name)));
+  const lockedHeroes = allHeroesAtTH.filter((h) => !ownedHeroNames.has(looseNameKey(h.name)));
+  const lockedSiege = allSiegeAtTH.filter((s) => !ownedSiegeNames.has(looseNameKey(s.name)));
+  const lockedPets = allPetsAtTH.filter((p) => !ownedPetNames.has(looseNameKey(p.name)));
 
   const splitProgress = <T extends { name: string; level: number; maxLevel: number }>(
     items: T[],
@@ -515,6 +543,7 @@ export default function PlayerProfileScreen() {
   const homeSpellsSplit = splitProgress(homeSpells);
   const homeHeroesSplit = splitProgress(homeHeroes);
   const homePetsSplit = splitProgress(homePets);
+  const homeSiegeSplit = splitProgress(siegeMachines);
   const builderTroopsSplit = splitProgress(builderTroops, (t) => getBuilderTroopMaxLevel(t.name, bhLevel));
   const builderHeroesSplit = splitProgress(builderHeroes);
   // The Blacksmith that bounds equipment. This is the level reachable at the
@@ -844,7 +873,7 @@ export default function PlayerProfileScreen() {
           </View>
         )}
 
-        {!isEquip && unlockReqItems.length > 0 ? (
+        {!isEquip && !isOwnedItem(detail.name) && unlockReqItems.length > 0 ? (
           <View style={[styles.panelTable, { borderColor: colors.border }]}>
             <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
               <Text
@@ -1209,7 +1238,10 @@ to={pivot}
         ...player.troops,
         ...player.spells,
         ...player.heroEquipment,
-        ...(player.pets ?? []),
+        // Pets ride in player.troops, which is already spread above; player.pets
+        // is declared in the type but never populated, so listing it here found
+        // nothing and an owned pet read as "Not yet unlocked".
+        ...homePets,
       ]
       : [];
     const item = allItems.find((i) => i.name === name);
@@ -1617,7 +1649,7 @@ to={pivot}
 
           {activeTab === 'siege' && (
             <>
-              {siegeMachines.length === 0 ? (
+              {siegeMachines.length === 0 && lockedSiege.length === 0 ? (
                 <EmptyState
                   icon="🚀"
                   title="No siege machines"
@@ -1625,19 +1657,62 @@ to={pivot}
                 />
               ) : (
                 <>
-                  {siegeMachines.map((s, i) => (
-                    <React.Fragment key={s.name}>
-                      <ItemCard
-                        name={s.name}
-                        level={s.level}
-                        maxLevel={s.maxLevel}
-                        thMaxLevel={getMaxLevelAtTH(s.name, th)}
-                        {...cardIconProps(s.name)}
-                        onPress={() => toggleDetail(s.name)}
-                        isFirst={i === 0}
-                        isLast={i === siegeMachines.length - 1}
-                      />
-                    </React.Fragment>
+                  {homeSiegeSplit.leveling.length > 0 && (
+                    <>
+                      <Text style={styles.sectionHeader}>Upgrading</Text>
+                      {homeSiegeSplit.leveling.map((s, i) => (
+                        <React.Fragment key={s.name}>
+                          <ItemCard
+                            name={s.name}
+                            level={s.level}
+                            maxLevel={s.maxLevel}
+                            thMaxLevel={getMaxLevelAtTH(s.name, th)}
+                            {...cardIconProps(s.name)}
+                            onPress={() => toggleDetail(s.name)}
+                            isFirst={i === 0}
+                            isLast={i === homeSiegeSplit?.leveling?.length - 1}
+                          />
+                        </React.Fragment>
+                      ))}
+                    </>
+                  )}
+                  {homeSiegeSplit.maxed.length > 0 && (
+                    <>
+                      <Text style={styles.sectionHeader}>Maxed</Text>
+                      {homeSiegeSplit.maxed.map((s, i) => (
+                        <React.Fragment key={s.name}>
+                          <ItemCard
+                            name={s.name}
+                            level={s.level}
+                            maxLevel={s.maxLevel}
+                            thMaxLevel={getMaxLevelAtTH(s.name, th)}
+                            {...cardIconProps(s.name)}
+                            onPress={() => toggleDetail(s.name)}
+                            isFirst={i === 0}
+                            isLast={i === homeSiegeSplit?.maxed?.length - 1}
+                          />
+                        </React.Fragment>
+                      ))}
+                    </>
+                  )}
+                </>
+              )}
+              {lockedSiege.length > 0 && (
+                <>
+                  <Text style={styles.sectionHeader}>Locked</Text>
+                  {lockedSiege.map((s, i) => (
+                    <ItemCard
+                      key={s.name}
+                      name={s.name}
+                      level={0}
+                      maxLevel={s.maxLevel}
+                      thMaxLevel={s.maxLevel}
+                      {...cardIconProps(s.name)}
+                      locked
+                      onPress={() => toggleDetail(s.name)}
+                      isFirst={i === 0}
+                      isLast={i === lockedSiege.length - 1}
+                    />
                   ))}
                 </>
               )}
@@ -1715,7 +1790,7 @@ to={pivot}
 
           {activeTab === 'pets' && (
             <>
-              {homePets.length === 0 ? (
+              {homePets.length === 0 && lockedPets.length === 0 ? (
                 <EmptyState
                   icon="🐾"
                   title="No pets yet"
@@ -1761,6 +1836,25 @@ to={pivot}
                       ))}
                     </>
                   )}
+                </>
+              )}
+              {lockedPets.length > 0 && (
+                <>
+                  <Text style={styles.sectionHeader}>Locked</Text>
+                  {lockedPets.map((p, i) => (
+                    <ItemCard
+                      key={p.name}
+                      name={p.name}
+                      level={0}
+                      maxLevel={p.maxLevel}
+                      thMaxLevel={p.maxLevel}
+                      {...cardIconProps(p.name)}
+                      locked
+                      onPress={() => toggleDetail(p.name)}
+                      isFirst={i === 0}
+                      isLast={i === lockedPets.length - 1}
+                    />
+                  ))}
                 </>
               )}
             </>
