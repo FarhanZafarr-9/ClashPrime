@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { SectionHeader } from '../../src/components/SectionHeader';
-import { SettingRow } from '../../src/components/SettingRow';
+import { SettingRow, useSettingRowSurface } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
 import PressableRipple from '../../src/components/PressableRipple';
 import SegmentedSwitch from '../../src/components/SegmentedSwitch';
@@ -14,7 +14,7 @@ import { useBuilderCount } from '../../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../../src/hooks/useBuilderBaseCount';
 import { useBuildingExclusions } from '../../src/hooks/useBuildingExclusions';
 import { useDiscounts, type ScopeDiscount, type Discounts } from '../../src/hooks/useDiscounts';
-import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
+import { getArmyTroopDetail, getArmyItemImage, getAllItemsAtTH, getAllBuilderItemsAtBH, getMaxLevelAtTH, filterPets, RESOURCE_META, type CostResource } from '../../src/utils/armyData';
 import { getBuildingItemImage, getBuildingMaxLevelAtTH, getBuildingMaxLevelAtBH, getMaxTownHall, getTownHallUpgrade, getBuildingDetail, getBuildingItem, BUILDING_RESOURCE_META, type BuildingCostResource } from '../../src/utils/buildingData';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
@@ -93,6 +93,50 @@ const READINESS_PIPELINE_DESC: Record<string, string> = {
   builders: 'buildings · heroes · walls',
   pets: 'pets',
 };
+
+/**
+ * A trailing chip on a collapsible row.
+ *
+ * Its own component for two reasons. It has to read the row's inverted surface,
+ * and it is rendered as SettingRow's children - reading that from the enclosing
+ * function would pick up the parent's context, which is always the normal
+ * surface. And the corner rounding arrives as booleans derived from the exact
+ * expressions handed to SettingRow, with index/count picking which chip takes
+ * the outer edge, so the badge cannot drift from the card's shape.
+ */
+function RowBadge({
+  label,
+  tone,
+  index,
+  count,
+  topRounded,
+  bottomRounded,
+  square,
+}: {
+  label: string;
+  tone: 'value' | 'marker';
+  index: number;
+  count: number;
+  topRounded: boolean;
+  bottomRounded: boolean;
+  square?: boolean;
+}) {
+  const { colors } = useTheme();
+  const inverted = useSettingRowSurface();
+  return (
+    <View style={[
+      square ? styles.headerBadge : styles.pipelineBadge,
+      inverted && { backgroundColor: colors.bg },
+      topRounded && index === 0 && styles.rowBadgeFirst,
+      bottomRounded && index === count - 1 && styles.rowBadgeLast,
+    ]}>
+      <Text style={[
+        tone === 'marker' ? styles.headerBadgeMarker : styles.pipelineTime,
+        inverted && { color: colors.textPrimary },
+      ]}>{label}</Text>
+    </View>
+  );
+}
 
 const RESOURCE_ORDER: (CostResource | BuildingCostResource)[] = [
   'Gold',
@@ -190,7 +234,9 @@ export default function MaxTimeScreen() {
   const bh = player?.builderHallLevel ?? 1;
   const maxTh = getMaxTownHall();
   const isMaxTh = th >= maxTh;
-  const hasPets = (player?.pets?.length ?? 0) > 0;
+  // Pets ride in player.troops; player.pets is never populated, so reading it
+// left this false and the Pet House pipeline never rendered.
+const hasPets = filterPets(player?.troops ?? []).length > 0;
   // The Builder Base unlocks alongside the sixth Town Hall, same gate the
   // Buildings tab uses for its own village switch.
   const showBB = th >= 6;
@@ -588,7 +634,7 @@ export default function MaxTimeScreen() {
     </View>
   );
 
-  const renderPipeline = (p: PipelineResult, scope: ScopeDiscount, isLast: boolean) => {
+  const renderPipeline = (p: PipelineResult, scope: ScopeDiscount, isLast: boolean, isFirst = false) => {
     const meta = PIPELINE_META[p.key];
     const isOpen = expanded[p.key];
     const d = pipelineDiscounted ? pipelineDiscounted[p.key] : null;
@@ -642,19 +688,40 @@ export default function MaxTimeScreen() {
           title={meta.title}
           desc={gate ? `${gate} excluded — left out of the maxing timeline` : meta.desc}
           compact
-          isFirst={isOpen}
+          isFirst={isFirst || isOpen}
           isLast={isLast && !isOpen}
+          expanded={isOpen}
           onPress={() => setExpanded((prev) => ({ ...prev, [p.key]: !prev[p.key] }))}
         >
           <View style={styles.readinessChildren}>
-            {!isOpen && !gate && skippedRows.length > 0 && (
-              <View style={styles.headerBadge}>
-                <Text style={styles.headerBadgeMarker}>{`−${skippedRows.length}`}</Text>
-              </View>
-            )}
-            <View style={styles.headerBadge}>
-              <Text style={styles.pipelineTime}>{badge}</Text>
-            </View>
+            {(() => {
+              const showSkip = !isOpen && !gate && skippedRows.length > 0;
+              const count = showSkip ? 2 : 1;
+              return (
+                <>
+                  {showSkip && (
+                    <RowBadge
+                      label={`−${skippedRows.length}`}
+                      tone="marker"
+                      index={0}
+                      count={count}
+                      topRounded={isFirst || isOpen}
+                      bottomRounded={isLast && !isOpen}
+                      square
+                    />
+                  )}
+                  <RowBadge
+                    label={badge}
+                    tone="value"
+                    index={showSkip ? 1 : 0}
+                    count={count}
+                    topRounded={isFirst || isOpen}
+                    bottomRounded={isLast && !isOpen}
+                    square
+                  />
+                </>
+              );
+            })()}
           </View>
         </SettingRow>
         {isOpen && (
@@ -973,7 +1040,7 @@ export default function MaxTimeScreen() {
 
             {renderPipelinesHeader()}
             <View style={styles.pipelineSections}>
-              {renderPipeline(result.lab, discounts.army, false)}
+              {renderPipeline(result.lab, discounts.army, false, true)}
               {renderPipeline(result.builders, discounts.buildings, false)}
               {hasPets ? renderPipeline(result.pets, discounts.army, false) : null}
               {renderPipeline(result.equipment, discounts.army, true)}
@@ -990,12 +1057,18 @@ export default function MaxTimeScreen() {
                 compact
                 isFirst
                 isLast={!readinessOpen}
+                expanded={readinessOpen}
                 onPress={() => setReadinessOpen((o) => !o)}
               >
                 {readiness && (
-                  <View style={styles.pipelineBadge}>
-                    <Text style={styles.pipelineTime}>{Math.round(readiness.score)}%</Text>
-                  </View>
+                  <RowBadge
+                    label={`${Math.round(readiness.score)}%`}
+                    tone="value"
+                    index={0}
+                    count={1}
+                    topRounded
+                    bottomRounded={!readinessOpen}
+                  />
                 )}
               </SettingRow>
               {readinessOpen && readiness && (
@@ -1036,14 +1109,20 @@ export default function MaxTimeScreen() {
                           title={PIPELINE_META[p.key].title}
                           desc={READINESS_PIPELINE_DESC[p.key]}
                           compact
-                          isFirst={i === 0}
+                          isFirst={i === 0 || isOpen}
                           isLast={isOpen ? false : i === readiness.pipelines.length - 1}
+                          expanded={isOpen}
                           onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
                         >
                           <View style={styles.readinessChildren}>
-                            <View style={styles.pipelineBadge}>
-                              <Text style={styles.pipelineTime}>{Math.round(p.pct)}%</Text>
-                            </View>
+                            <RowBadge
+                              label={`${Math.round(p.pct)}%`}
+                              tone="value"
+                              index={0}
+                              count={1}
+                              topRounded={i === 0 || isOpen}
+                              bottomRounded={!isOpen && i === readiness.pipelines.length - 1}
+                            />
                           </View>
                         </SettingRow>
                         {isExpandable && isOpen && (
@@ -1073,12 +1152,18 @@ export default function MaxTimeScreen() {
                     compact
                     isFirst
                     isLast={!rushExpanded}
+                    expanded={rushExpanded}
                     onPress={() => setRushExpanded((o) => !o)}
                   >
                     <View style={styles.readinessChildren}>
-                      <View style={styles.pipelineBadge}>
-                        <Text style={styles.pipelineTime}>{formatTimeShort(nextDiscounted.headlineTime)}</Text>
-                      </View>
+                      <RowBadge
+                        label={formatTimeShort(nextDiscounted.headlineTime)}
+                        tone="value"
+                        index={0}
+                        count={1}
+                        topRounded
+                        bottomRounded={!rushExpanded}
+                      />
                     </View>
                   </SettingRow>
                   {rushExpanded && (
@@ -1097,42 +1182,82 @@ export default function MaxTimeScreen() {
                       )}
                       <Text style={styles.rushSectionLabel}>Time to finish</Text>
                       <View style={styles.rushTable}>
-                        <View style={styles.rushCompareHeader}>
-                          <Text style={styles.rushCompareCol}>Pipeline</Text>
-                          <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
-                          <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
-                          <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
-                        </View>
-                        {rushTimeRows.map((p, i) => (
-                          <View
-                            key={p.key}
-                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.accentSubtle }]}
-                          >
-                            <Text style={styles.rushCompareLabel}>{p.label}</Text>
-                            <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
-                            <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
-                            <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
-                          </View>
-                        ))}
+<View style={[styles.rushCompareHeader, styles.rushCompareRuleBottom]}>
+              <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellWide, styles.rushCompareRuleRight]}>
+                <Text style={styles.rushCompareColLabel}>Pipeline</Text>
+              </View>
+              <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellWide, styles.rushCompareRuleRight]}>
+                <Text style={styles.rushCompareCol}>TH{th} left</Text>
+              </View>
+              <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellWide, styles.rushCompareRuleRight]}>
+                <Text style={styles.rushCompareCol}>+TH{readiness.nextTh}</Text>
+              </View>
+              <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellLast]}>
+                <Text style={styles.rushCompareCol}>TH{readiness.nextTh} total</Text>
+              </View>
+            </View>
+            {rushTimeRows.map((p, i) => (
+              <View
+                key={p.key}
+                style={[
+                  styles.rushCompareRow,
+                  i % 2 === 1 && { backgroundColor: Colors.accentSubtle },
+                  i < rushTimeRows.length - 1 && styles.rushCompareRuleBottom,
+                ]}
+              >
+                <View style={[styles.rushCompareCell, styles.rushCompareCellWide, styles.rushCompareRuleRight]}>
+                  <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                </View>
+                <View style={[styles.rushCompareCell, styles.rushCompareCellWide, styles.rushCompareRuleRight]}>
+                  <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.cur)}</Text>
+                </View>
+                <View style={[styles.rushCompareCell, styles.rushCompareCellWide, styles.rushCompareRuleRight]}>
+                  <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : p.next > p.cur ? `+${formatTimeShort(p.next - p.cur)}` : '—'}</Text>
+                </View>
+                <View style={[styles.rushCompareCell, styles.rushCompareCellLast]}>
+                  <Text style={styles.rushCompareVal}>{p.instant ? 'Instant' : formatTimeShort(p.next)}</Text>
+                </View>
+              </View>
+            ))}
                       </View>
                       <View style={styles.rushDivider} />
                       <Text style={styles.rushSectionLabel}>Cost to finish</Text>
                       <View style={styles.rushTable}>
-                        <View style={styles.rushCompareHeader}>
-                          <Text style={styles.rushCompareCol}>Pipeline</Text>
-                          <Text style={styles.rushCompareCol}>TH{th} remaining</Text>
-                          <Text style={styles.rushCompareCol}>TH{readiness.nextTh} adds</Text>
-                          <Text style={styles.rushCompareCol}>Total at TH{readiness.nextTh}</Text>
+                        <View style={[styles.rushCompareHeader, styles.rushCompareRuleBottom]}>
+                          <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellWide, styles.rushCompareRuleRight]}>
+                            <Text style={styles.rushCompareColLabel}>Pipeline</Text>
+                          </View>
+                          <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellWide, styles.rushCompareRuleRight]}>
+                            <Text style={styles.rushCompareCol}>TH{th} left</Text>
+                          </View>
+                          <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellWide, styles.rushCompareRuleRight]}>
+                            <Text style={styles.rushCompareCol}>+TH{readiness.nextTh}</Text>
+                          </View>
+                          <View style={[styles.rushCompareHeaderCell, styles.rushCompareHeaderCellLast]}>
+                            <Text style={styles.rushCompareCol}>TH{readiness.nextTh} total</Text>
+                          </View>
                         </View>
                         {rushCostRows.map((p, i) => (
                           <View
                             key={p.key}
-                            style={[styles.rushCompareRow, i % 2 === 1 && { backgroundColor: Colors.accentSubtle }]}
+                            style={[
+                              styles.rushCompareRow,
+                              i % 2 === 1 && { backgroundColor: Colors.accentSubtle },
+                              i < rushCostRows.length - 1 && styles.rushCompareRuleBottom,
+                            ]}
                           >
-                            <Text style={styles.rushCompareLabel}>{p.label}</Text>
-                            <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
-                            <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
-                            <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
+                            <View style={[styles.rushCompareCell, styles.rushCompareCellWide, styles.rushCompareRuleRight]}>
+                              <Text style={styles.rushCompareLabel}>{p.label}</Text>
+                            </View>
+                            <View style={[styles.rushCompareCell, styles.rushCompareCellWide, styles.rushCompareRuleRight]}>
+                              <Text style={styles.rushCompareVal}>{formatCost(p.cur)}</Text>
+                            </View>
+                            <View style={[styles.rushCompareCell, styles.rushCompareCellWide, styles.rushCompareRuleRight]}>
+                              <Text style={styles.rushCompareVal}>{p.next > p.cur ? `+${formatCost(p.next - p.cur)}` : '—'}</Text>
+                            </View>
+                            <View style={[styles.rushCompareCell, styles.rushCompareCellLast]}>
+                              <Text style={styles.rushCompareVal}>{formatCost(p.next)}</Text>
+                            </View>
                           </View>
                         ))}
                       </View>
@@ -1256,7 +1381,7 @@ export default function MaxTimeScreen() {
 
             {renderPipelinesHeader()}
             <View style={styles.pipelineSections}>
-              {renderPipeline(bbResult.bbBuilders, discounts.buildings, false)}
+              {renderPipeline(bbResult.bbBuilders, discounts.buildings, false, true)}
               {renderPipeline(bbResult.bbLab, discounts.army, true)}
             </View>
           </>
@@ -1674,6 +1799,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
+  // Outer-edge rounding for a trailing chip, mirroring the card it sits in.
+  rowBadgeFirst: {
+    borderTopRightRadius: Radius.lg,
+  },
+  rowBadgeLast: {
+    borderBottomRightRadius: Radius.lg,
+  },
   pipelinesHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1835,15 +1967,68 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.sm,
     marginVertical: Spacing.xs,
     borderRadius: Radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     overflow: 'hidden',
   },
+  /**
+   * Dashed interior grid, matching the Army and Buildings tables. The dashed
+   * frame closes the outer edges, so the last row and last column carry no
+   * rule - otherwise the frame double-draws and the dashes misalign.
+   */
+  rushCompareRuleBottom: {
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
+    borderBottomColor: Colors.border,
+  },
+  rushCompareRuleRight: {
+    borderRightWidth: 1,
+    borderStyle: 'dashed',
+    borderRightColor: Colors.border,
+  },
   rushCompareHeader: {
     flexDirection: 'row',
+    backgroundColor: Colors.bgSubtle,
+  },
+  /**
+   * Cells are Views rather than bare Texts, and they own the padding. A Text's
+   * border only spans its own text height, so a rule drawn on one floated inside
+   * the row instead of meeting the horizontal separators; a cell View stretches
+   * to the full row height and its rule joins the grid. Keeping the padding off
+   * the row is what lets the rules reach the table's outer edge.
+   *
+   * Widths are a 2:1:1:1 flex split - 40/20/20/20. Percentage widths summed to
+   * more than 100% because Yoga adds padding and border on top of them, so the
+   * table overflowed; flex shares the space that is actually left over.
+   */
+  rushCompareHeaderCell: {
+    flex: 1,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.bgSubtle,
+    justifyContent: 'center',
+  },
+  /** 2:1:1:1 is the 40/20/20/20 split. Flex rather than percentage widths:
+   *  Yoga adds padding and border on top of a percentage width, so four of them
+   *  summing to 100% overflowed the table. Flex shares what is left over. */
+  rushCompareHeaderCellWide: {
+    flex: 2,
+  },
+  /** The total column carries the headline number, so it gets a little extra. */
+  rushCompareHeaderCellLast: {
+    flex: 1.25,
+  },
+  rushCompareCell: {
+    flex: 1,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    justifyContent: 'center',
+  },
+  rushCompareCellWide: {
+    flex: 2,
+  },
+  rushCompareCellLast: {
+    flex: 1.25,
   },
   rushSectionLabel: {
     ...Typography.caption,
@@ -1859,28 +2044,29 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   rushCompareCol: {
-    flex: 1,
     ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '700',
     textAlign: 'center',
   },
+  /** Column 0 reads left, matching the pipeline labels beneath it - centring
+   *  this header over a left-aligned label was what made the two look skewed. */
+  rushCompareColLabel: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    textAlign: 'left',
+  },
   rushCompareRow: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
     backgroundColor: Colors.bgCard,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderSubtle,
   },
   rushCompareLabel: {
-    flex: 1,
     ...Typography.footnote,
     color: Colors.textSecondary,
     fontWeight: '600',
   },
   rushCompareVal: {
-    flex: 1,
     ...Typography.footnote,
     color: Colors.textSecondary,
     fontWeight: '600',
