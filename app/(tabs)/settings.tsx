@@ -36,6 +36,7 @@ import {
   clearAppCache,
   saveAccount,
   removeAccount,
+  signOutAccount,
   getAccounts,
   cachePlayer,
 } from '../../src/hooks/usePlayer';
@@ -208,21 +209,21 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '6.5.0',
     date: 'October 9, 2026',
     items: [
-      'Every settings dialog now opens as a bottom sheet Ã¢â‚¬â€ the player tag / API token edit sheet, the About / What\u2019s New / Privacy / Credits / Feedback / Developer content sheets, the account switcher, the discount modal and the onboarding modal all slide up with their title, subtitle and icon in the sheet header.',
+      'Every settings dialog now opens as a bottom sheet — the player tag / API token edit sheet, the About / What\u2019s New / Privacy / Credits / Feedback / Developer content sheets, the account switcher, the discount modal and the onboarding modal all slide up with their title, subtitle and icon in the sheet header.',
       'New Show Global Levels toggle under Settings \u2192 Appearance: Buildings and Army level tables expand to the game\u2019s full global max instead of stopping at your Town Hall. Display-only \u2014 progress, maxed badges and Remaining totals still count against your Town Hall.',
       'Onboarding polished: every step shows loading art while work is in flight, the API token field is masked, the builder-hut picker lays out two per row, and the Town Hall picker\u2019s Next button stays visible (disabled until you pick).',
       'The Home / Builder Base switch is now one shared component across Army, Buildings, Time to Max and Bases.',
       'Base cards simplified: the Apply Layout button now sits between a share-card image icon and a share icon, the bookmark replaces the duplicate heart (favoriting stays in the Saved tab), and tag chips hide whatever just restates the card\u2019s own category.',
       'Army cards match: the heart gives way to a single bookmark, and the share-card image and share icons now flank the Copy Army button (favoriting stays in the Saved tab).',
       'Onboarding ends on a Data & Credits slide listing every public source the app draws from (with tappable links and the Supercell notice) before entering the app.',
-      'Packed package art capped at 128px WebP Ã¢â‚¬â€ roughly 85% smaller install footprint with no visible quality loss.',
+      'Packed package art capped at 128px WebP — roughly 85% smaller install footprint with no visible quality loss.',
     ],
   },
   {
     version: '6.3.0',
     date: 'October 8, 2026',
     items: [
-      'Base Library now merges ClashLy with the clash-bases catalogue for Home Village layouts Ã¢â‚¬â€ every card gets a real base name, description, builder credit and tags where the catalogue has them, new Progress and Fun category pills surface layout styles ClashLy never tagged, and duplicates across the two sources are collapsed by their official in-game layout link. Builder Base stays on ClashLy.',
+      'Base Library now merges ClashLy with the clash-bases catalogue for Home Village layouts — every card gets a real base name, description, builder credit and tags where the catalogue has them, new Progress and Fun category pills surface layout styles ClashLy never tagged, and duplicates across the two sources are collapsed by their official in-game layout link. Builder Base stays on ClashLy.',
       'A Both / ClashLy / Clash Bases source switch sits beside the village selector (Home Village only), so either catalogue can be browsed on its own instead of being buried under the other\u2019s volume.',
     ],
   },
@@ -230,14 +231,14 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '6.2.0',
     date: 'September 29, 2026',
     items: [
-      'Share cards: Home progress, Time to Max, base layouts and community armies each render a high-res PNG through one shared preview sheet Ã¢â‚¬â€ capture, save or share from the card in any of those tabs.',
+      'Share cards: Home progress, Time to Max, base layouts and community armies each render a high-res PNG through one shared preview sheet — capture, save or share from the card in any of those tabs.',
       'Bases and Armies now paint from their on-device snapshot the moment you open the tab, then quietly refresh behind it: the stored data is trusted for three days, and is refetched early if it is older than that or holds fewer items than the list you have scrolled to. No more skeleton wait on every revisit, and the refresh button still forces a fresh pull.',
-      'Base layout thumbnails no longer shimmer forever when a stored image url is dead or missing Ã¢â‚¬â€ the placeholder clears on failure and the card falls back to its TH/BH label.',
-      'Filter pills rebuilt as one seamless 3-up block across Bases, Armies, Hero Journey and Awards Ã¢â‚¬â€ real leading art per filter, a count subtitle under the label, and large rounding only on the outer corners of the grid.',
-      'Hero Journey: the flag and summary now mark the next milestone you can actually claim instead of the last one already collected (at 100 cumulative levels that is Lv101, not Lv99), the All pill uses the Hero\'s Journey mark, and each section header shows its hero portrait centred Ã¢â‚¬â€ dimmed with a lock badge when you do not own that hero.',
+      'Base layout thumbnails no longer shimmer forever when a stored image url is dead or missing — the placeholder clears on failure and the card falls back to its TH/BH label.',
+      'Filter pills rebuilt as one seamless 3-up block across Bases, Armies, Hero Journey and Awards — real leading art per filter, a count subtitle under the label, and large rounding only on the outer corners of the grid.',
+      'Hero Journey: the flag and summary now mark the next milestone you can actually claim instead of the last one already collected (at 100 cumulative levels that is Lv101, not Lv99), the All pill uses the Hero\'s Journey mark, and each section header shows its hero portrait centred — dimmed with a lock badge when you do not own that hero.',
       'Hero Journey filter pills lead with real rewards: the chest for quests, the Fireball for equipment, and the matching Majestic skin for skins.',
       'Awards: village filters are the same pill grid, leading with your Town Hall and Builder Hall art and a war-stars mark for All, each carrying an award count.',
-      'Spell stat tables filled in from real package data Ã¢â‚¬â€ the placeholder Value column is gone and each spell fact sits in a pill row with its own glyph, no repeated housing space.',
+      'Spell stat tables filled in from real package data — the placeholder Value column is gone and each spell fact sits in a pill row with its own glyph, no repeated housing space.',
       'War tab rebuilt with a war/CWL tab switcher, collapsible member sections and auto-refresh, plus the attack plan now shows during preparation and badges the target position.',
       'Buildings: Builder Base categories with Town Hall gating, and a redesigned category pill row with a village switch showing the Town Hall and Builder Hall art.',
       'Army: redesigned category chips and a tidied detail sheet, and unit, hero, spell, siege, pet and equipment icons on every army card.',
@@ -246,7 +247,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Onboarding: new export guide step, chevron icons in place of arrows, and the flow extracted into its own modal component.',
       'Builder count is shared through a single store, so changing it anywhere keeps the Import pipeline, Time to Max and Home in sync.',
       'Switching accounts now re-fetches the player you land on instead of showing the previous account for a moment.',
-      'Tab order tidied Ã¢â‚¬â€ Zapquaker and 6th Builder move to the third page, with Awards and Saved ahead of Settings.',
+      'Tab order tidied — Zapquaker and 6th Builder move to the third page, with Awards and Saved ahead of Settings.',
       'Clash display font now defaults to "All" so titles and body text use it out of the box.',
       'Under the hood: all troop, hero, spell, pet, equipment and building art resolved from clash-of-clans-data (the Fandom image URLs are gone), legacy building/Town Hall JSON tables and the obsolete image scrapers deleted, Builder Base league and Town Hall sprites generated, app icons regenerated at the right sizes, expo-notifications loaded lazily so the app also works outside Expo Go, and a lint pass across screens, components, hooks and utils.',
     ],
@@ -255,12 +256,12 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '6.1.0',
     date: 'September 25, 2026',
     items: [
-      'New Zapquaker tab: per-building Lightning + Earthquake combo calculator Ã¢â‚¬â€ pick target buildings from game data (Town Hall, Clan Castle and storages are excluded), tune spell levels and spell capacity, flip each spell On/Off, and enable Fireball (Warden) or Giant Arrow (Queen) equipment with their own level steppers. Combos show the cheapest kill by spell slots with spell-only and equipment-lean variants and overkill %.',
+      'New Zapquaker tab: per-building Lightning + Earthquake combo calculator — pick target buildings from game data (Town Hall, Clan Castle and storages are excluded), tune spell levels and spell capacity, flip each spell On/Off, and enable Fireball (Warden) or Giant Arrow (Queen) equipment with their own level steppers. Combos show the cheapest kill by spell slots with spell-only and equipment-lean variants and overkill %.',
       'Zapquaker: double-damage rows against Air Defenses and a per-target level row, so each building shows what a Zap or Quake actually does to it at your spell level.',
-      'New Giant Arrow tab: plan the Archer Queen skill on a base screenshot Ã¢â‚¬â€ tap and drag start/end pins, pick a path color from a collapsible swatch row, open a fullscreen viewer, and share the finished plan as a high-res PNG.',
+      'New Giant Arrow tab: plan the Archer Queen skill on a base screenshot — tap and drag start/end pins, pick a path color from a collapsible swatch row, open a fullscreen viewer, and share the finished plan as a high-res PNG.',
       'Giant Arrow: Rocket Backpack (Dragon Duke) mode reuses the same canvas with a centre pivot, so the dash line always runs through the base center.',
       'Giant Arrow plans auto-save on this device and restore on next launch (screenshot, pins, color and arrow path).',
-      'New 6th Builder (B.O.B.) tab: turns your profile into an ordered, resource-feasible schedule for all seven unlock requirements Ã¢â‚¬â€ requirement checklist, machine timeline, storage cascades and "what is blocking you" callouts.',
+      'New 6th Builder (B.O.B.) tab: turns your profile into an ordered, resource-feasible schedule for all seven unlock requirements — requirement checklist, machine timeline, storage cascades and "what is blocking you" callouts.',
       'Buildings: Builder Base building categories with Town Hall gating.',
       'Hero Journey: reward captions, image badges and parent grouping so completed and upcoming Town Hall sections are clearly separated.',
       'Builder Base troops got their own generated sprites (no more shared Home Village art), and buildings/troops now resolve to the sprite for their own level.',
@@ -272,41 +273,41 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '6.0.0',
     date: 'September 20, 2026',
     items: [
-      'Import screen: Builder Base buildings in JSON exports are now tracked and timed against their own builders Ã¢â‚¬â€ a dedicated "Builder Base Builders" count (default 1, auto 2 at Builder Hall 6, max 3) drives them while Home Village upgrades keep using your builder count.',
+      'Import screen: Builder Base buildings in JSON exports are now tracked and timed against their own builders — a dedicated "Builder Base Builders" count (default 1, auto 2 at Builder Hall 6, max 3) drives them while Home Village upgrades keep using your builder count.',
       'Builder Base progress now flows into the rest of the app: Builder Base troops and heroes are tracked in Progress Achieved, the army list shows builder hero max levels and Builder Base items at their Builder Hall, and progress snapshots include them.',
-      'Import screen: the builders pipeline summary is now a stack of rounded rows Ã¢â‚¬â€ a Builders header chip showing the combined time as the first row, one time row per village, and a compact 2-column resource grid using the in-game gold/elixir icons.',
-      'Import screen: building levels apply per-copy Ã¢â‚¬â€ mixed-level copies import and upgrade independently, only copies that actually gain a level show up, and "Upgrading now" lists copies still mid-upgrade with time left plus a treat-as-done toggle (Lv +1).',
+      'Import screen: the builders pipeline summary is now a stack of rounded rows — a Builders header chip showing the combined time as the first row, one time row per village, and a compact 2-column resource grid using the in-game gold/elixir icons.',
+      'Import screen: building levels apply per-copy — mixed-level copies import and upgrade independently, only copies that actually gain a level show up, and "Upgrading now" lists copies still mid-upgrade with time left plus a treat-as-done toggle (Lv +1).',
       'Import screen: one row per level variant with its own count, cost and time; applying to another attached account confirms first; re-pasting the same export drops copies the account already absorbed.',
       'Import screen: skipped/un-tracked buildings match the tracked Upgrade rows, the Town Hall row shows its actual TH-level image, and upgrade rows carry in-game resource icons.',
       'Settings: new "Builder Base Builders" control next to the incoming Builder Count, with inline +/- steppers.',
-      'Settings: What\u2019s New dialog redesigned Ã¢â‚¬â€ a hero header with the latest version and release dates, and every release as a collapsible card with version chips, item counts and per-release expand/collapse.',
-      'Home: account switcher dialog polished Ã¢â‚¬â€ name/tag aligned, bigger Add Account button with a link icon, active account highlighted by row instead of a chip; dialogs now span full-width with edge margins.',
-      'Home: Progress Achieved dialog restyled Ã¢â‚¬â€ progress rows use each category\'s building pictograms, level-up rows show in-game item icons, and rows sit in a gap-spaced rounded layout.',
-      'Army and Buildings detail panels open in a slide-up bottom sheet with a custom header Ã¢â‚¬â€ item icon, title, progress bar and level badge, plus a badge-styled close button.',
+      'Settings: What\u2019s New dialog redesigned — a hero header with the latest version and release dates, and every release as a collapsible card with version chips, item counts and per-release expand/collapse.',
+      'Home: account switcher dialog polished — name/tag aligned, bigger Add Account button with a link icon, active account highlighted by row instead of a chip; dialogs now span full-width with edge margins.',
+      'Home: Progress Achieved dialog restyled — progress rows use each category\'s building pictograms, level-up rows show in-game item icons, and rows sit in a gap-spaced rounded layout.',
+      'Army and Buildings detail panels open in a slide-up bottom sheet with a custom header — item icon, title, progress bar and level badge, plus a badge-styled close button.',
       'Locked heroes/units/spells open their detail sheet too: header shows a lock badge, stats tables start from the first levels, and sheets reset to the default level window whenever they close.',
       'Building detail sheets condense long level ranges with "..." in both the level grid and stats table, with a Show-all toggle.',
       'Home timers: edit a timer to restart its countdown; rows show start and end times and are sorted by end time.',
       'Home tab Heroes progress section now uses the Hero Hall building image.',
-      'Time to Max: exclude any building you don\'t plan to max Ã¢â‚¬â€ all its copies are skipped from max-time estimates and TH readiness.',
+      'Time to Max: exclude any building you don\'t plan to max — all its copies are skipped from max-time estimates and TH readiness.',
       'Time to Max: new Town Hall upgrade card in the rush comparison shows next-TH build cost and time, and new-unlock rows show item type and count info with per-group corner rounding.',
       'Buildings: "Distributed" column shows how long remaining upgrades take using all your builders.',
-      'New Hero Journey tab: the full rewards track from TH7 to TH18 Ã¢â‚¬â€ quests, ore, hero equipment, potions, books, runes and Majestic skins Ã¢â‚¬â€ shown as milestones grouped into collapsible Town Hall sections with claimed badges and lock icons.',
+      'New Hero Journey tab: the full rewards track from TH7 to TH18 — quests, ore, hero equipment, potions, books, runes and Majestic skins — shown as milestones grouped into collapsible Town Hall sections with claimed badges and lock icons.',
       'Hero Journey: equipment nodes grant the in-game piece for each hero pool in order, next piece is picked while it is already owned, a fully-owned pool pays 50 Starry Ore, and progress reflects your own Town Hall cap with a scroll-to-current-milestone shortcut.',
       'Majestic hero skins, runes and other magic items now render as full images in rewards.',
       'Floating tab bar: pageable tab groups with prev/next arrows when tabs overflow, plus a wider pagination chevron hit area.',
       'Polished skeleton rows on Home and Hero Journey aligned with the new layouts.',
       'Engine upgrade: Expo 57, React Native 0.86, eslint-config-expo 57.',
-      'New in-app package images for added content and levels Ã¢â‚¬â€ Electro Fangs, Monolith Arrow and Revenge Deck hero equipment, Barbarian/Dragon L13, Golem L15, Yeti L8, Workshop 9, Log Launcher 6 and more Ã¢â‚¬â€ after upgrading to clash-of-clans-data 0.18.',
+      'New in-app package images for added content and levels — Electro Fangs, Monolith Arrow and Revenge Deck hero equipment, Barbarian/Dragon L13, Golem L15, Yeti L8, Workshop 9, Log Launcher 6 and more — after upgrading to clash-of-clans-data 0.18.',
     ],
   },
   {
     version: '5.3.0',
     date: 'August 23, 2026',
     items: [
-      'Critical-path TH readiness using computeMaxTime Ã¢â‚¬â€ bottleneck-driven score (Lab/Builders/Pets pipeline times) replaces weighted average, exposing hero/building bottlenecks correctly.',
+      'Critical-path TH readiness using computeMaxTime — bottleneck-driven score (Lab/Builders/Pets pipeline times) replaces weighted average, exposing hero/building bottlenecks correctly.',
       'Rush to TH+1 expandable comparison: remaining time, added time, total time per pipeline + new unlocks grid with icons and max-level badges.',
       'Lab expandable in readiness card with Troops/Spells/Sieges tier progress.',
-      'Walls counted per-copy (not Ãƒâ€”250) in next-TH level counts; Army buildings prioritized in level unlocks grid.',
+      'Walls counted per-copy (not –250) in next-TH level counts; Army buildings prioritized in level unlocks grid.',
       'Max TH celebration screen; GitHub version checker in Home & Settings with ahead-of-release detection and one-tap release links.',
       'Buildings/Army max level images in Rush unlocks; troop/spell max-level badges on icons.',
       'Timer notifications rebuilt: Android-native per-second countdown (works with app killed, zero battery), progress-free pinned card, sound + vibration on finish, monochrome notification icon.',
@@ -314,8 +315,8 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Builder pipeline header shows buildings/heroes/optimal split time inline on Home tab.',
       'Builder split computes internally using player TH/progress details; uses builderCount from settings/onboarding.',
       'Max Time screen: dual Gold/Elixir icons for Gold or Elixir resources (hero resource grid and resource summary).',
-      'Max Time screen: hero resource icons resized (32Ã¢â€ â€™24px), Gold/Elixir separator changed from "+" to "/", improved padding and spacing.',
-      'Builder split label shortened: "Buildings" Ã¢â€ â€™ "Build", "Heroes" Ã¢â€ â€™ "Hero", "Optimal" Ã¢â€ â€™ "Opt" for compact readability.',
+      'Max Time screen: hero resource icons resized (32’24px), Gold/Elixir separator changed from "+" to "/", improved padding and spacing.',
+      'Builder split label shortened: "Buildings" ’ "Build", "Heroes" ’ "Hero", "Optimal" ’ "Opt" for compact readability.',
       'Auto-refresh player data once per day per account on app start.',
       'Onboarding flow redesign: TH picker now select-then-confirm with Next button; added Builder Hut picker step between TH and builder count; builder count step integrated; fixed navigation/back flow between steps.',
       'Settings: builder count inline +/- controls (removed modal), reactive chip selection with proper dialog dismissal.',
@@ -326,13 +327,13 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '5.0.0',
     date: 'August 17, 2026',
     items: [
-      'Complete data migration to clash-of-clans-data npm package Ã¢â‚¬â€ all building images, troop/hero/spell/pet/equipment/siege machine data, levels, costs, stats, and TH/BH max levels now come from canonical Supercell data.',
-      'Removed ~1000 local .webp building images and 1200 lines of auto-generated asset mapping Ã¢â‚¬â€ app size reduced from 535 MB to ~40 MB archive.',
-      'New Time to Max screen Ã¢â‚¬â€ estimate remaining upgrade time for Laboratory, Builders, Pet House and Equipment pipelines, with per-resource cost breakdowns and adjustable builder counts.',
-      'Optional Clash display font with Off / Titles / All preference under Settings Ã¢â€ â€™ Appearance.',
-      'Building stats, copy counts, max levels, upgrade costs now use package data via buildingData.ts/armyData.ts Ã¢â‚¬â€ no more Fandom scraping or local JSON fallbacks.',
-      'Troop/hero/spell/pet/equipment detail panels use package data (armyData.ts) Ã¢â‚¬â€ no more Fandom wiki scraping, instant load, per-resource cost breakdown.',
-      'New Import Building Levels screen (Settings Ã¢â€ â€™ Import) Ã¢â‚¬â€ paste a Clash of Clans JSON export to bulk-set all building levels and copies.',
+      'Complete data migration to clash-of-clans-data npm package — all building images, troop/hero/spell/pet/equipment/siege machine data, levels, costs, stats, and TH/BH max levels now come from canonical Supercell data.',
+      'Removed ~1000 local .webp building images and 1200 lines of auto-generated asset mapping — app size reduced from 535 MB to ~40 MB archive.',
+      'New Time to Max screen — estimate remaining upgrade time for Laboratory, Builders, Pet House and Equipment pipelines, with per-resource cost breakdowns and adjustable builder counts.',
+      'Optional Clash display font with Off / Titles / All preference under Settings ’ Appearance.',
+      'Building stats, copy counts, max levels, upgrade costs now use package data via buildingData.ts/armyData.ts — no more Fandom scraping or local JSON fallbacks.',
+      'Troop/hero/spell/pet/equipment detail panels use package data (armyData.ts) — no more Fandom wiki scraping, instant load, per-resource cost breakdown.',
+      'New Import Building Levels screen (Settings ’ Import) — paste a Clash of Clans JSON export to bulk-set all building levels and copies.',
       'Tab bar rework: Time to Max promoted to main tabs, War moved to the More menu, and a refreshed floating bar.',
       'Home tab timers: custom durations like 1d 2h 30m, an Add Timer row inside the active list, and focus-styled inputs in the New Timer modal.',
       'Resource and ore icons now shipped in-app and shown on Home, Army, Buildings and Time to Max rows.',
@@ -345,7 +346,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '4.5.0',
     date: 'August 11, 2026',
     items: [
-      'War tab: enemy member list with the same grouped rows and colors, a heuristic Attack Plan card Ã¢â‚¬â€ your mirror plus the top targets with expected stars, cleanup estimates and Best/Mirror/Cleanup/Risky tags Ã¢â‚¬â€ and a collapsible legend for the attack and defense colors.',
+      'War tab: enemy member list with the same grouped rows and colors, a heuristic Attack Plan card — your mirror plus the top targets with expected stars, cleanup estimates and Best/Mirror/Cleanup/Risky tags — and a collapsible legend for the attack and defense colors.',
       'Home tab: Progress Overview, Buildings and Backlog now nest into collapsible sections with progress bars, so the whole village fits on one screen.',
       'Buildings tab: bulk Max out all buildings action with a confirmation summary of every category affected.',
       'Home polish: quick actions as compact setting rows, softer borderless profile card, and rounded corners that now match across section headers, badges and icons.',
@@ -355,8 +356,8 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '4.3.0',
     date: 'August 9, 2026',
     items: [
-      'Buildings tab tracks every copy of multi-copy buildings individually Ã¢â‚¬â€ Cannons, Archer Towers, Walls, Traps and more are grouped into collapsible sections with a per-building progress bar, aggregate remaining cost/time and level badges.',
-      'Quick upgrade/downgrade controls on each building card: tap Ã¢â€“Â² to upgrade, hold Ã¢â€“Â² to max out, tap Ã¢â€“Â¼ to downgrade Ã¢â‚¬â€ no need to expand the card.',
+      'Buildings tab tracks every copy of multi-copy buildings individually — Cannons, Archer Towers, Walls, Traps and more are grouped into collapsible sections with a per-building progress bar, aggregate remaining cost/time and level badges.',
+      'Quick upgrade/downgrade controls on each building card: tap – to upgrade, hold – to max out, tap – to downgrade — no need to expand the card.',
       'Building copy counts come straight from the Clash of Clans wiki (per-TH and per-BH), so new copies unlocked at higher Town Halls seed correctly at level 1.',
     ],
   },
@@ -364,7 +365,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '4.2.0',
     date: 'August 7, 2026',
     items: [
-      'Player inspect screen Ã¢â‚¬â€ search any player by tag to view their stats, army, achievements and clan, copy their tag, add them to your accounts or open their profile in-game.',
+      'Player inspect screen — search any player by tag to view their stats, army, achievements and clan, copy their tag, add them to your accounts or open their profile in-game.',
       'Home screen rebuilt into collapsible sections: Progress Overview, a Backlog of locked and rushed upgrades, Quick Stats and Active Timers.',
       'Builder timers scoped per account, with an improved active-timers section and a redesigned new-timer modal.',
       'Achievements rows and summary restyled to match the settings rows, grouped by stars with corner rounding.',
@@ -378,7 +379,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '4.1.0',
     date: 'August 5, 2026',
     items: [
-      'Live Clan War League rounds on the War tab Ã¢â‚¬â€ follow each round, its result and expandable per-member breakdowns.',
+      'Live Clan War League rounds on the War tab — follow each round, its result and expandable per-member breakdowns.',
       'War tab list redesign: grouped member rows with attack dots and defense shields, rounded list corners and tighter spacing.',
       'Onboarding Town Hall picker rebuilt as an image gallery with a current-TH badge.',
       'Add Account (Full Setup) walks you through connecting a new village from Settings.',
@@ -412,7 +413,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '2.0.0',
     date: 'July 23, 2026',
     items: [
-      'Dynamic light/dark theme engine Ã¢â‚¬â€ switch instantly, every screen follows.',
+      'Dynamic light/dark theme engine — switch instantly, every screen follows.',
       'Animated skeleton loading screens for Home, Profile, Bases and Events.',
       'Fandom Wiki as the primary troop, hero and pet detail source with inline detail panels.',
       'Building level data scraper and stat tables inside expanded building cards.',
@@ -424,7 +425,7 @@ const CHANGELOG: { version: string; date: string; items: string[] }[] = [
     version: '1.0.0',
     date: 'July 19, 2026',
     items: [
-      'ClashPrime launch Ã¢â‚¬â€ the full Clash of Clans companion app.',
+      'ClashPrime launch — the full Clash of Clans companion app.',
       'Home dashboard with progress cards, quick actions and quick stats.',
       'Army tab with troops, heroes, spells and pet details.',
       'Buildings tab covering 80+ structures with level progression.',
@@ -455,7 +456,7 @@ function ChangelogBody({ expanded, onToggle }: ChangelogBodyProps) {
         </View>
         <Text style={styles.changelogHeroDate}>{CHANGELOG[0].date}</Text>
         <Text style={styles.changelogHeroStats}>
-          {TOTAL_RELEASES} {TOTAL_RELEASES === 1 ? 'release' : 'releases'} Ã‚Â· {TOTAL_CHANGES} {TOTAL_CHANGES === 1 ? 'change' : 'changes'}
+          {TOTAL_RELEASES} {TOTAL_RELEASES === 1 ? 'release' : 'releases'} · {TOTAL_CHANGES} {TOTAL_CHANGES === 1 ? 'change' : 'changes'}
         </Text>
       </View>
 
@@ -508,9 +509,9 @@ function ChangelogBody({ expanded, onToggle }: ChangelogBodyProps) {
 }
 
 const DEVELOPER_PROJECTS: { name: string; blurb: string }[] = [
-  { name: 'FlexPrime', blurb: 'Academic companion for FASTians Ã¢â‚¬â€ marks analytics, attendance risk, GPA tools and past papers, shipped to Google Play.' },
-  { name: 'NotePrime', blurb: 'Material You fork of Note Safe Ã¢â‚¬â€ end-to-end encrypted, local-first notes with a privacy shield and biometric lock.' },
-  { name: 'ClashPrime', blurb: 'This app Ã¢â‚¬â€ a premium Clash of Clans companion built in React Native + Expo.' },
+  { name: 'FlexPrime', blurb: 'Academic companion for FASTians — marks analytics, attendance risk, GPA tools and past papers, shipped to Google Play.' },
+  { name: 'NotePrime', blurb: 'Material You fork of Note Safe — end-to-end encrypted, local-first notes with a privacy shield and biometric lock.' },
+  { name: 'ClashPrime', blurb: 'This app — a premium Clash of Clans companion built in React Native + Expo.' },
   { name: 'Timers', blurb: 'Android multi-timer app with reliable notifications and zero bloat.' },
 ];
 
@@ -612,10 +613,10 @@ export default function SettingsScreen() {
     const parts: string[] = [];
     if (s.costPercent > 0) parts.push(`Cost -${s.costPercent}%`);
     if (s.timePercent > 0) parts.push(`Time -${s.timePercent}%`);
-    return parts.length ? parts.join(' Ã‚Â· ') : 'No discounts set';
+    return parts.length ? parts.join(' · ') : 'No discounts set';
   };
 
-  const maskSecret = (value: string) => value ? 'Ã¢â‚¬Â¢'.repeat(Math.min(value.length, 24)) : '';
+  const maskSecret = (value: string) => value ? '•'.repeat(Math.min(value.length, 24)) : '';
 
   const handleSwitchAccount = async (tag: string) => {
     if (tag === activeAccount?.tag) return;
@@ -732,9 +733,9 @@ export default function SettingsScreen() {
       if (hasUpdate) {
         showDialog({
           title: 'Update Available',
-          subtitle: `v${v} is out Ã¢â‚¬â€ you're on v${currentVersion}`,
+          subtitle: `v${v} is out — you're on v${currentVersion}`,
           icon: 'cloud-download-outline',
-          message: `A new version of ClashPrime (v${v}) has been published Ã¢â‚¬â€ you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
+          message: `A new version of ClashPrime (v${v}) has been published — you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
           actions: [
             { label: 'Later', onPress: () => { } },
             { label: 'View on GitHub', primary: true, onPress: () => openURL('https://github.com/FarhanZafarr-9/ClashPrime/releases') },
@@ -745,7 +746,7 @@ export default function SettingsScreen() {
           title: "You're Ahead of the Releases",
           subtitle: 'Development build detected',
     icon: 'flask-outline',
-          message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build Ã¢â‚¬â€ nothing to update.`,
+          message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build — nothing to update.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
       } else {
@@ -762,7 +763,7 @@ export default function SettingsScreen() {
         title: 'Update Check Failed',
         subtitle: 'GitHub unreachable or rate-limited',
     icon: 'warning-outline',
-        message: 'Could not check for updates right now. This can happen if GitHub is rate-limiting or temporarily unavailable Ã¢â‚¬â€ please try again in a moment.',
+        message: 'Could not check for updates right now. This can happen if GitHub is rate-limiting or temporarily unavailable — please try again in a moment.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
     } finally {
@@ -980,14 +981,14 @@ export default function SettingsScreen() {
             </View>
           )}
           <Text style={styles.creditBlurb}>
-            ClashPrime is an unofficial, community-built companion for Clash of Clans. It brings your village progress, war performance and favorite game references together in one clean, fast app Ã¢â‚¬â€ no ads, no clutter, just the data that matters.
+            ClashPrime is an unofficial, community-built companion for Clash of Clans. It brings your village progress, war performance and favorite game references together in one clean, fast app — no ads, no clutter, just the data that matters.
           </Text>
           <Text style={styles.creditSectionTitle}>What it does</Text>
           {[
             { icon: 'trending-up-outline', title: 'Progress Tracking', body: 'Tracks every troop, spell, hero and building against your town hall, with a weighted max-out score so you always know what is next.' },
             { icon: 'timer-outline', title: 'Pinned Timers', body: 'Set countdowns for upgrades and boosts, with reminders delivered as system notifications.' },
             { icon: 'flag-outline', title: 'War Center', body: 'Follow the current war, per-member attacks and defenses, plus a searchable war history split into regular wars and CWL.' },
-            { icon: 'git-network-outline', title: 'Base & Army Hub', body: 'Browse community base layouts, armies, super troops, pets and in-game events Ã¢â‚¬â€ all kept up to date.' },
+            { icon: 'git-network-outline', title: 'Base & Army Hub', body: 'Browse community base layouts, armies, super troops, pets and in-game events — all kept up to date.' },
             { icon: 'swap-horizontal-outline', title: 'Multi-Account', body: 'Switch between several villages with one tap. Each account keeps its own progress, cache and timers.' },
           ].map((f) => (
             <View style={styles.aboutFeatureRow} key={f.title}>
@@ -1023,7 +1024,7 @@ export default function SettingsScreen() {
         { label: 'View on GitHub', primary: true, onPress: () => openURL('https://github.com/FarhanZafarr-9/ClashPrime') },
         { label: 'Close' },
       ],
-      `v${appVersion} Ã‚Â· Premium Clash of Clans companion`,
+      `v${appVersion} · Premium Clash of Clans companion`,
       'shield',
     );
   };
@@ -1067,7 +1068,7 @@ export default function SettingsScreen() {
         },
         { label: 'Close' },
       ],
-      'Farhan Zafar Ã‚Â· @FarhanZafarr-9',
+      'Farhan Zafar · @FarhanZafarr-9',
       'logo-github',
     );
   };
@@ -1097,7 +1098,7 @@ export default function SettingsScreen() {
       (
         <View>
           <Text style={styles.feedbackText}>
-            {"We'd love to hear from you Ã¢â‚¬â€ bug reports, feature ideas, or just a hello."}
+            {"We'd love to hear from you — bug reports, feature ideas, or just a hello."}
           </Text>
           <View style={styles.feedbackEmailRow}>
             <Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />
@@ -1133,35 +1134,39 @@ export default function SettingsScreen() {
       (
         <View>
           <Text style={styles.devTagline}>
-            every pixel intentional Ã‚Â· every commit counts Ã‚Â· every detail ships
+            every pixel intentional · every commit counts · every detail ships
           </Text>
           <Text style={styles.creditBlurb}>
-            Mobile and full-stack developer, currently on a BS in Data Science at FAST-NUCES Lahore. I ship real apps Ã¢â‚¬â€ React Native, Flutter and full-stack web Ã¢â‚¬â€ and obsess over the details users actually feel.
+            Mobile and full-stack developer, currently on a BS in Data Science at FAST-NUCES Lahore. I ship real apps — React Native, Flutter and full-stack web — and obsess over the details users actually feel.
           </Text>
-          <Text style={styles.creditSectionTitle}>Featured projects</Text>
-          {DEVELOPER_PROJECTS.map((p) => (
-            <View style={styles.devProjectRow} key={p.name}>
-              <Ionicons name="code-slash-outline" size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
-              <View style={styles.creditSourceText}>
-                <Text style={styles.creditSourceName}>{p.name}</Text>
-                <Text style={styles.creditSourceUse}>{p.blurb}</Text>
-              </View>
-            </View>
-          ))}
           <Text style={styles.creditSectionTitle}>What I do</Text>
-          {[
-            { icon: 'phone-portrait-outline', title: 'Mobile Dev', body: 'React Native Ã‚Â· Expo Ã‚Â· Flutter' },
-            { icon: 'globe-outline', title: 'Full Stack Web', body: 'React Ã‚Â· Node.js Ã‚Â· Express Ã‚Â· SQL' },
-            { icon: 'analytics-outline', title: 'Data Science', body: 'Python Ã‚Â· PyTorch Ã‚Â· scikit-learn Ã‚Â· NumPy' },
-          ].map((s) => (
-            <View style={styles.aboutFeatureRow} key={s.title}>
-              <Ionicons name={s.icon as any} size={16} color={Colors.textTertiary} style={styles.creditSourceIcon} />
-              <View style={styles.creditSourceText}>
-                <Text style={styles.creditSourceName}>{s.title}</Text>
-                <Text style={styles.creditSourceUse}>{s.body}</Text>
+          <View style={styles.devSkillRow}>
+            {[
+              { icon: 'phone-portrait-outline', title: 'Mobile', body: 'React Native · Expo · Flutter' },
+              { icon: 'globe-outline', title: 'Web', body: 'React · Node.js · Express · SQL' },
+              { icon: 'analytics-outline', title: 'Data', body: 'Python · PyTorch · scikit-learn' },
+            ].map((s) => (
+              <View style={styles.devSkillTile} key={s.title}>
+                <Ionicons name={s.icon as any} size={15} color={Colors.textSecondary} />
+                <Text style={styles.devSkillName}>{s.title}</Text>
+                <Text style={styles.devSkillBody}>{s.body}</Text>
               </View>
-            </View>
-          ))}
+            ))}
+          </View>
+          <Text style={styles.creditSectionTitle}>Featured projects</Text>
+          <View style={styles.devProjectList}>
+            {DEVELOPER_PROJECTS.map((p) => (
+              <View style={styles.devProjectItem} key={p.name}>
+                <View style={styles.devProjectIcon}>
+                  <Ionicons name="code-slash-outline" size={14} color={Colors.textSecondary} />
+                </View>
+                <View style={styles.devProjectText}>
+                  <Text style={styles.devProjectName}>{p.name}</Text>
+                  <Text style={styles.devProjectBlurb}>{p.blurb}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       ),
       [
@@ -1175,7 +1180,7 @@ export default function SettingsScreen() {
         },
         { label: 'Close', primary: true },
       ],
-      'Farhan Zafar Ã‚Â· @FarhanZafarr-9',
+      'Farhan Zafar · @FarhanZafarr-9',
       undefined,
       { uri: DEV_AVATAR_URL },
     );
@@ -1185,14 +1190,24 @@ export default function SettingsScreen() {
     const expo = (Constants.expoConfig as any) ?? {};
     const extra = expo.extra ?? {};
     const easBuild = extra.eas?.build ?? {};
+    // Everything here is read straight off injected config, so a nested object
+    // can reach here and React cannot render one as a child. Flatten anything
+    // non-primitive instead of letting it through.
+    const str = (v: unknown): string => {
+      if (v == null || v === '') return '—';
+      if (typeof v === 'object') {
+        const keys = Object.keys(v as object);
+        return keys.length ? JSON.stringify(v) : '—';
+      }
+      return String(v);
+    };
     const rows: { label: string; value: string }[] = [
-      { label: 'App Version', value: expo.version ? `v${expo.version}` : 'Ã¢â‚¬â€' },
-      { label: 'Build Number', value: String(easBuild.runNumber ?? Constants.nativeBuildVersion ?? 'Ã¢â‚¬â€') },
-      { label: 'Expo SDK', value: expo.sdkVersion ?? 'Ã¢â‚¬â€' },
-      { label: 'Environment', value: extra.variant ?? (__DEV__ ? 'development' : 'production') },
-      { label: 'Git Commit', value: extra.commitHash ?? 'Ã¢â‚¬â€' },
-      { label: 'Update URL', value: expo.updates?.url ?? 'Ã¢â‚¬â€' },
-      { label: 'Platform', value: `${Platform.OS}${Platform.constants && (Platform.constants as any).Version ? ` ${(Platform.constants as any).Version}` : ''}` },
+      { label: 'App Version', value: str(expo.version ? `v${expo.version}` : null) },
+      { label: 'Build Number', value: str(easBuild.runNumber ?? Constants.nativeBuildVersion ?? null) },
+      { label: 'Expo SDK', value: str(expo.sdkVersion ?? null) },
+      { label: 'Environment', value: str(extra.variant ?? (__DEV__ ? 'development' : 'production')) },
+      { label: 'Git Commit', value: str(extra.commitHash ?? null) },
+      { label: 'Platform', value: str(`${Platform.OS}${Platform.constants && (Platform.constants as any).Version ? ` ${(Platform.constants as any).Version}` : ''}`) },
     ];
     showContent(
       'Build Diagnostics',
@@ -1260,7 +1275,7 @@ export default function SettingsScreen() {
               <SettingRow
                 icon={switchingAccount ? 'ellipsis-horizontal' : 'people-outline'}
                 title={activeAccount?.name || 'Accounts'}
-                desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} Ã‚Â· ${activeAccount?.tag || ''}`}
+                desc={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} · ${activeAccount?.tag || ''}`}
                 compact
                 onPress={() => setSwitchModalVisible(true)}
               >
@@ -1443,10 +1458,10 @@ export default function SettingsScreen() {
               icon="hammer-outline"
               title="Builder Count"
               desc={!builderLoaded
-                ? 'Loading your saved builder countÃ¢â‚¬Â¦'
+                ? 'Loading your saved builder count…'
                 : builderVerifiedCount !== null
-                  ? `Number of builders Ã‚Â· ${builderVerifiedCount} confirmed by import`
-                  : 'Number of builders (2Ã¢â‚¬â€œ6)'}
+                  ? `Number of builders · ${builderVerifiedCount} confirmed by import`
+                  : 'Number of builders (2“6)'}
               compact
               onPress={() => { }}
             >
@@ -1477,8 +1492,8 @@ export default function SettingsScreen() {
               icon="construct-outline"
               title="Builder Base Builders"
               desc={!bbBuilderLoaded
-                ? 'Loading your saved Builder Base countÃ¢â‚¬Â¦'
-                : `Builder Base builders (1Ã¢â‚¬â€œ3)${(player?.builderHallLevel ?? 1) >= 6 ? ' Ã‚Â· 2 granted at BH6' : ' Ã‚Â· unlocks a 2nd at BH6'}`}
+                ? 'Loading your saved Builder Base count…'
+                : `Builder Base builders (1“3)${(player?.builderHallLevel ?? 1) >= 6 ? ' · 2 granted at BH6' : ' · unlocks a 2nd at BH6'}`}
               compact
               onPress={() => { }}
             >
@@ -1530,7 +1545,7 @@ export default function SettingsScreen() {
             <SettingRow
               icon="cloud-outline"
               title="Check for Updates"
-              desc={checkingUpdates ? 'Checking GitHub for the latest releaseÃ¢â‚¬Â¦' : 'Compare your build against the latest GitHub release'}
+              desc={checkingUpdates ? 'Checking GitHub for the latest release…' : 'Compare your build against the latest GitHub release'}
               compact
               onPress={checkingUpdates ? undefined : handleCheckUpdates}
             >
@@ -1631,7 +1646,7 @@ export default function SettingsScreen() {
             <View style={styles.modalHint}>
               {modalType === 'tag' ? (
                 <Text style={styles.modalHintText}>
-                  Your unique player identifier starting with #. Find it in-game under Settings Ã¢â€ â€™ More Ã¢â€ â€™ Show Tag.
+                  Your unique player identifier starting with #. Find it in-game under Settings ’ More ’ Show Tag.
                 </Text>
               ) : (
                 <>
@@ -1648,7 +1663,7 @@ export default function SettingsScreen() {
                     <View style={styles.modalStep}>
                       <Text style={styles.modalStepNum}>2</Text>
                       <Text style={styles.modalStepText}>
-                        Go to <Text style={styles.modalLink}>My Account Ã¢â€ â€™ Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
+                        Go to <Text style={styles.modalLink}>My Account ’ Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
                       </Text>
                     </View>
                     <View style={styles.modalStep}>
@@ -1775,7 +1790,7 @@ export default function SettingsScreen() {
         handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
       />
 
-      <BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch Ã‚Â· hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}>
+      <BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch · hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}>
         <View style={styles.switchCard}>
           {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
 
@@ -1794,25 +1809,36 @@ export default function SettingsScreen() {
                     await handleSwitchAccount(acct.tag);
                   }}
                   onLongPress={() => {
-                    if (accounts.length <= 1) {
-                      showDialog({ title: 'Cannot Remove', subtitle: 'At least one account is required', icon: 'alert-circle-outline', message: 'You need at least one account.', actions: [{ label: 'OK', primary: true, onPress: () => { } }] });
-                      return;
-                    }
+                    const isLast = accounts.length <= 1;
                     showDialog({
-                      title: 'Remove Account',
-                      subtitle: 'This only affects ClashPrime',
-                      icon: 'trash-outline',
-                      message: `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
+                      title: isLast ? 'Sign Out' : 'Remove Account',
+                      subtitle: isLast ? 'Wipes everything for this account' : 'This only affects ClashPrime',
+                      icon: isLast ? 'log-out-outline' : 'trash-outline',
+                      message: isLast
+                        ? `Sign out of ${acct.tag}? This is your only account, so ClashPrime will erase its cached player data, API token, saved bases, favourites and progress from this device. Your Clash of Clans account is untouched.`
+                        : `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
                       actions: [
                         { label: 'Cancel', onPress: () => { } },
                         {
-                          label: 'Remove', primary: true, destructive: true, onPress: async () => {
-                            await removeAccount(acct.tag);
-                            await refreshAccounts();
-                            if (isActive) {
-                              const remaining = await getAccounts();
-                              if (remaining.length > 0) {
-                                await handleSwitchAccount(remaining[0].tag);
+                          label: isLast ? 'Sign Out' : 'Remove', primary: true, destructive: true, onPress: async () => {
+                            if (isLast) {
+                              await signOutAccount(acct.tag);
+                              await refreshAccounts();
+                              setSwitchModalVisible(false);
+                              // replace, not push: the tabs must not stay behind
+                              // onboarding, or back would land on a settings screen
+                              // for an account that no longer exists. The root
+                              // layout only redirects to onboarding on mount, so
+                              // this has to happen here.
+                              router.replace('/onboarding');
+                            } else {
+                              await removeAccount(acct.tag);
+                              await refreshAccounts();
+                              if (isActive) {
+                                const remaining = await getAccounts();
+                                if (remaining.length > 0) {
+                                  await handleSwitchAccount(remaining[0].tag);
+                                }
                               }
                             }
                           }
@@ -2799,17 +2825,67 @@ builderCountBtnDisabled: {
     flex: 1,
     lineHeight: 20,
   },
+  // Developer Info: kept light. An earlier pass put the tagline in a filled hero
+  // card, which read as heavy and pushed the rest of the sheet down; plain accent
+  // text plus one row of tiles and one list carries the same hierarchy.
+  devSkillRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  devSkillTile: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    gap: 3,
+  },
+  devSkillName: {
+    ...Typography.footnote,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  devSkillBody: {
+    ...Typography.caption,
+    fontSize: 10,
+    lineHeight: 13,
+    color: Colors.textMuted,
+  },
+  devProjectList: {
+    gap: Spacing.xs,
+  },
+  devProjectItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  devProjectIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devProjectText: {
+    flex: 1,
+  },
+  devProjectName: {
+    ...Typography.subhead,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  devProjectBlurb: {
+    ...Typography.footnote,
+    color: Colors.textTertiary,
+    lineHeight: 16,
+  },
   devTagline: {
     ...Typography.caption,
     color: Colors.accent,
     fontWeight: '600',
     marginTop: Spacing.md,
-  },
-  devProjectRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
   },
   devRow: {
     flexDirection: 'row',
