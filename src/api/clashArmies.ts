@@ -46,7 +46,9 @@ function parseDefinitions(data: any[]): { unitsById: Map<number, UnitDef>; equip
     if (Array.isArray(unitIndices)) {
       for (const idx of unitIndices) {
         const raw = resolve(data, idx);
-        if (!raw || !raw.name) break;
+        // Skip, don't break: one malformed record used to abandon the rest of the
+        // list, so every unit after it silently lost its name and icon.
+        if (!raw || !raw.name) continue;
         unitsById.set(raw.id, {
           id: raw.id,
           clashId: raw.clashId ?? raw.id,
@@ -66,7 +68,7 @@ function parseDefinitions(data: any[]): { unitsById: Map<number, UnitDef>; equip
     if (Array.isArray(equipIndices)) {
       for (const idx of equipIndices) {
         const raw = resolve(data, idx);
-        if (!raw || !raw.name) break;
+        if (!raw || !raw.name) continue;
         equipmentById.set(raw.id, {
           id: raw.id,
           hero: raw.hero,
@@ -82,7 +84,7 @@ function parseDefinitions(data: any[]): { unitsById: Map<number, UnitDef>; equip
     if (Array.isArray(petIndices)) {
       for (const idx of petIndices) {
         const raw = resolve(data, idx);
-        if (!raw || !raw.name) break;
+        if (!raw || !raw.name) continue;
         petsById.set(raw.id, {
           id: raw.id,
           name: raw.name,
