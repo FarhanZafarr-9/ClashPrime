@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import type { ScrapedBase, ScrapeResult, Village } from '../types/bases';
 import { getClashBasesForTH, layoutPayload, type ClashBasesEntry } from './clashBases';
 
@@ -375,22 +376,124 @@ export async function clearBaseCache(village?: Village, level?: number): Promise
   }
 }
 
-/** Which catalogues the Bases tab shows for Home Village. */
-export type BaseSourceFilter = 'both' | 'clashly' | 'clash-bases';
+// Which catalogues the Bases tab shows for Home Village. Lives in Settings; this
+// module owns the value and notifies subscribers so the Bases tab updates without a
+// refetch.
+export type BaseSourcePref = 'clashly' | 'both' | 'clash-bases';
 
-const SOURCE_FILTER_KEY = 'bases_source_pref';
+const SOURCE_PREF_KEY = 'bases_source_pref';
 
-export async function getStoredSourceFilter(): Promise<BaseSourceFilter> {
-  try {
-    const raw = await AsyncStorage.getItem(SOURCE_FILTER_KEY);
-    return raw === 'clashly' || raw === 'clash-bases' ? raw : 'both';
-  } catch {
-    return 'both';
-  }
+let sourcePref: BaseSourcePref = 'both';
+const prefListeners = new Set<() => void>();
+
+function notifySourcePref() {
+  for (const l of prefListeners) l();
 }
 
-export async function setStoredSourceFilter(filter: BaseSourceFilter): Promise<void> {
+export function getBaseSourcePref(): BaseSourcePref {
+  return sourcePref;
+}
+
+/** Read the stored preference at startup. Safe to call once; a missing key keeps the default. */
+export async function loadBaseSourcePref(): Promise<void> {
   try {
-    await AsyncStorage.setItem(SOURCE_FILTER_KEY, filter);
+    const raw = await AsyncStorage.getItem(SOURCE_PREF_KEY);
+    if (raw === 'clashly' || raw === 'clash-bases' || raw === 'both') {
+      sourcePref = raw;
+    }
   } catch {}
+  notifySourcePref();
+}
+
+export async function setBaseSourcePref(pref: BaseSourcePref): Promise<void> {
+  sourcePref = pref;
+  notifySourcePref();
+  try {
+    await AsyncStorage.setItem(SOURCE_PREF_KEY, pref);
+  } catch {}
+}
+
+/** Subscribes the Bases tab to the Settings-owned preference. */
+export function useBaseSourcePref(): {
+  pref: BaseSourcePref;
+  setPref: (p: BaseSourcePref) => void;
+} {
+  const [pref, setPref] = useState(sourcePref);
+  useEffect(() => {
+    const l = () => setPref(sourcePref);
+    prefListeners.add(l);
+    l();
+    return () => {
+      prefListeners.delete(l);
+    };
+  }, []);
+  return { pref, setPref };
+}
+
+/**
+ * Reduces two counts to the smallest readable ratio that still describes them.
+ *
+ * Raw counts make a useless mix key: 557:365 does not reduce (557 is prime) and a
+ * 557-long run between each second-source slot just reads as one source dominating.
+ * Snapping to a small ratio like 3:2 keeps the same balance — 1.526 vs 1.5 — while
+ * giving the list an even, repeating rhythm instead of an irregular one.
+ *
+ * Exact ratios are reduced by their GCD first, so 700:100 comes back as 7:1 rather
+ * than being rounded. Only genuinely awkward ratios fall through to the search, and
+ * only an approximation that stays within 15% is accepted - a source holding 278
+ * times the layouts of the other has no small honest ratio, so it keeps the exact
+ * reduced form instead of a misleading 10:1.
+ */
+export function simplifyRatio(first: number, second: number, maxPart = 10): { a: number; b: number } {
+  if (first <= 0 || second <= 0) return { a: 1, b: 1 };
+  const gcd = (x: number, y: number): number => (y === 0 ? x : gcd(y, x % y));
+  const g = gcd(first, second);
+  const ra = first / g;
+  const rb = second / g;
+  if (ra <= maxPart && rb <= maxPart) return { a: ra, b: rb };
+
+  const target = first / second;
+  let bestA = 1;
+  let bestB = 1;
+  let bestErr = Infinity;
+  for (let a = 1; a <= maxPart; a++) {
+    for (let b = 1; b <= maxPart; b++) {
+      const err = Math.abs(a / b - target);
+      // Ties go to the smaller ratio so 3:2 wins over 6:4.
+      if (err < bestErr - 1e-12 || (Math.abs(err - bestErr) <= 1e-12 && a + b < bestA + bestB)) {
+        bestErr = err;
+        bestA = a;
+        bestB = b;
+      }
+    }
+  }
+  // Reject an approximation that distorts the balance too far to be honest; the
+  // exact reduced ratio is ugly but correct, and this only happens for extremes.
+  if (Math.abs(bestA / bestB - target) / target > 0.15) return { a: ra, b: rb };
+  return { a: bestA, b: bestB };
+}
+
+/**
+ * Interleaves two lists in a repeating `a:b` pattern.
+ *
+ * Neither list is truncated: a side that runs out simply stops taking its slots and
+ * the other carries on, so a 10:1 pattern against a short second list degrades to
+ * "the rest are all from the first source" instead of dropping items.
+ */
+export function interleaveByPattern<T>(first: T[], second: T[], a: number, b: number): T[] {
+  const total = first.length + second.length;
+  const cycle = a + b;
+  const out: T[] = [];
+  let ia = 0;
+  let ib = 0;
+  // The step guard is belt and braces: once both lists are drained out.length hits
+  // total, but a slot whose side is empty must not be able to stall the loop.
+  for (let step = 0; out.length < total && step <= total * 2; step++) {
+    if (step % cycle < a) {
+      if (ia < first.length) out.push(first[ia++]);
+    } else if (ib < second.length) {
+      out.push(second[ib++]);
+    }
+  }
+  return out;
 }

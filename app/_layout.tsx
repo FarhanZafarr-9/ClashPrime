@@ -10,6 +10,7 @@ import { TimerProvider } from '../src/hooks/useTimerContext';
 import { useTheme, loadTheme, loadClashFontPref, setClashFontLoaded, useClashFontPref, loadGlobalLevelsPref } from '../src/theme';
 import { getApiToken } from '../src/hooks/usePlayer';
 import { loadDiscounts } from '../src/hooks/useDiscounts';
+import { loadBaseSourcePref } from '../src/api/baseScraper';
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -32,6 +33,7 @@ export default function RootLayout() {
       await loadTheme();
       await loadClashFontPref();
       await loadGlobalLevelsPref();
+      await loadBaseSourcePref();
       await loadDiscounts();
       const token = await getApiToken();
       if (!token) {
