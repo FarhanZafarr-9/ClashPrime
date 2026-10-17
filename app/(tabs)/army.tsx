@@ -68,10 +68,15 @@ const TAB_ICONS: Record<Tab, { set: 'ion' | 'mc'; name: string }> = {
   equipment: { set: 'ion', name: 'trophy-outline' },
 };
 
+/** Minimum width for the Remaining table so its headers are never squeezed. */
+const REMAINING_TABLE_MIN_W = 260;
+/** Column split for the Remaining table: range, cost, time. */
+const REMAINING_COL_SPLIT = { range: 0.42, cost: 0.29 };
+
 /** Appearance grid cells per row. Must match troopLevelCell's width percentage. */
 const TROOP_GRID_PER_ROW = 5;
 
-/** Index of the first cell in the grid's final row. */
+/** Index of the first cell in the appearance grid's final row. */
 function troopGridLastRowStart(total: number): number {
   return Math.floor(Math.max(total - 1, 0) / TROOP_GRID_PER_ROW) * TROOP_GRID_PER_ROW;
 }
@@ -109,8 +114,8 @@ function chipCornerStyle(index: number, total: number) {
 }
 
 /**
- * "Lv4 Ã¢â‚¬Âº Lv12" for the remaining-levels rows. Uses a real chevron glyph rather
- * than a hardcoded "Ã¢â€ â€™" character, which renders inconsistently depending on the
+ * "Lv4 › Lv12" for the remaining-levels rows. Uses a real chevron glyph rather
+ * than a hardcoded "→" character, which renders inconsistently depending on the
  * device font and misaligns against the tabular numerals.
  */
 function LevelRange({ from, to, color }: { from: number; to: number | string; color: string }) {
@@ -179,6 +184,7 @@ export default function PlayerProfileScreen() {
    */
   const [pivotLevels, setPivotLevels] = useState<Record<string, number>>({});
   const [tableViewportW, setTableViewportW] = useState(0);
+  const [remainingViewportW, setRemainingViewportW] = useState(0);
 
   type StatPill = { icon?: keyof typeof Ionicons.glyphMap; image?: number; value: string };
 
@@ -200,9 +206,9 @@ export default function PlayerProfileScreen() {
 
       if (info.targetType) {
         const tt = info.targetType.toLowerCase();
-        if (tt.includes('ground') && tt.includes('air')) label += ' Ã‚Â· All';
-        else if (tt.includes('ground')) label += ' Ã‚Â· Ground';
-        else if (tt.includes('air')) label += ' Ã‚Â· Air';
+        if (tt.includes('ground') && tt.includes('air')) label += ' · All';
+        else if (tt.includes('ground')) label += ' · Ground';
+        else if (tt.includes('air')) label += ' · Air';
       }
       pills.push({ image: SPELL_STAT_ICONS.damageType, value: label });
     }
@@ -581,7 +587,7 @@ export default function PlayerProfileScreen() {
   // Returns the level rows to show for an expanded item, applying the right
   // gating per village. Home troops/spells/pets/heroes are capped by the max
   // reachable at the player's Town Hall (via their gating building's max level
-  // at that TH Ã¢â‚¬â€ never the player's own building level); equipment by the
+  // at that TH — never the player's own building level); equipment by the
   // player's Blacksmith; Builder Base units by their Star Lab at the BH.
   const getVisibleLevels = (detail: TroopDetail): TroopDetail['levels'] => {
     // Global levels setting: show every level the package carries, unlocked past
@@ -606,7 +612,7 @@ export default function PlayerProfileScreen() {
 
   // Inline expansion panel rendered directly under a tapped card (replaces the
   // old modal). Because it lives in the page's own ScrollView, the stats table
-  // scrolls naturally with the page Ã¢â‚¬â€ no nested-scroll quirks.
+  // scrolls naturally with the page — no nested-scroll quirks.
   const renderDetailPanel = (name: string) => {
     const detail = details[detailCacheKey(name, isBuilderBaseName())];
 
@@ -660,7 +666,7 @@ export default function PlayerProfileScreen() {
     const isBB = isBuilderBaseName();
     const isEquip = isEquipmentName(detail.name);
     // Builder Base units are already capped by their Star Lab (getVisibleLevels);
-    // never apply the Home Village Town Hall cap Ã¢â‚¬â€ getMaxLevelAtTH resolves the
+    // never apply the Home Village Town Hall cap — getMaxLevelAtTH resolves the
     // name's home copy, so a shared name like "Baby Dragon" would apply the wrong
     // ceiling to a Builder Base troop.
     const maxReachable = isEquip ? getEquipmentMaxLevel(detail.name) || null : isBB ? null : getMaxLevelAtTH(detail.name, player.townHallLevel);
@@ -682,7 +688,7 @@ export default function PlayerProfileScreen() {
       setPivotLevels((prev) => {
         const next = { ...prev };
         // Long-pressing the pivot row again clears it, so the totals snap back to
-        // the max without hunting for the Ã¢Å“â€¢.
+        // the max without hunting for the ✕.
         if (next[name] === level) delete next[name];
         else next[name] = level;
         return next;
@@ -766,11 +772,10 @@ export default function PlayerProfileScreen() {
         }
       }
     }
-    // Column spec drives both the measured widths and the cells below, in the same
-    // order, so every row and the header agree on each column's width. The custom
-    // stat columns are the reason this cannot stay a fixed minWidth: an
-    // "Unlocked" or "Armor" style value can be far longer than its header, and the
-    // old per-cell minimum let that one column stretch per row.
+    const headerLabels = extraLabels.map((lbl) => acronymMap.get(lbl) ?? lbl);
+
+    // One spec drives the measured widths and the header, in the same order the body
+    // cells are written, so every row and the header agree on each column's width.
     const statColumns: TableColumn<TroopDetailLevel>[] = [
       { key: 'lvl', header: 'Lvl', floor: 28, value: (l) => l.level },
       ...(isTroopLike
@@ -778,11 +783,11 @@ export default function PlayerProfileScreen() {
             { key: 'dps', header: 'DPS', floor: 36, value: (l: TroopDetailLevel) => l.dps },
             { key: 'hp', header: 'HP', floor: 36, value: (l: TroopDetailLevel) => l.hitpoints },
           ]
-        : extraLabels.map((lbl, i) => ({
+        : headerLabels.map((lbl, i) => ({
             key: `extra${i}`,
-            header: acronymMap.get(lbl) ?? lbl,
+            header: lbl,
             floor: 54,
-            value: (l: TroopDetailLevel) => l.extra?.find((e) => e.label === lbl)?.value ?? 'Ã¢â‚¬â€',
+            value: (l: TroopDetailLevel) => l.extra?.find((e) => e.label === extraLabels[i])?.value ?? '—',
           }))),
       { key: 'cost', header: 'Cost', floor: 56, value: (l) => l.upgradeCost },
       { key: 'time', header: 'Time', floor: 48, value: (l) => l.upgradeTime },
@@ -795,8 +800,23 @@ export default function PlayerProfileScreen() {
           }]
         : []),
     ];
-    const { widths: colWidths, total: tableW } = resolveColWidths(visibleDetailLevels, statColumns, tableViewportW);
-    const colWidthAt = (i: number) => colWidths[i] ?? 0;
+    // Fixed pixel widths, so no row can disagree with the header. Any slack against
+    // the viewport is folded in here rather than left to flex.
+    const { widths: statWidths, total: statTableW } = resolveColWidths(
+      visibleDetailLevels,
+      statColumns,
+      tableViewportW,
+    );
+    const statW = (i: number) => statWidths[i] ?? 0;
+
+    const remTableW = Math.max(remainingViewportW, REMAINING_TABLE_MIN_W);
+    // Fixed column widths rather than flex: the header cells and the data cells hold
+    // different content, so any flex/min-content difference showed up as the header
+    // cell being a few pixels narrower than the cell under it. The last column takes
+    // the remainder so the three always sum to exactly the table width.
+    const remColW = Math.round(remTableW * REMAINING_COL_SPLIT.range);
+    const costColW = Math.round(remTableW * REMAINING_COL_SPLIT.cost);
+    const timeColW = remTableW - remColW - costColW;
 
     return (
       <View style={styles.panel}>
@@ -839,7 +859,7 @@ export default function PlayerProfileScreen() {
                     styles.panelTableCell,
                     styles.panelTableHeader,
                     styles.panelTableCellLast,
-                    { backgroundColor: colors.bgCard, color: colors.textMuted },
+                    { backgroundColor: colors.bgCard, color: colors.textMuted, flex: 1 },
                   ]}
                 >
                   Cost
@@ -857,7 +877,7 @@ export default function PlayerProfileScreen() {
                   {r.source}
                 </Text>
                 {unlockHasCost ? (
-                  <Text style={[styles.panelTableCell, styles.panelTableCellLast, { color: colors.textPrimary, fontWeight: '600' }]}>{r.cost}</Text>
+                  <Text style={[styles.panelTableCell, styles.panelTableCellLast, { color: colors.textPrimary, fontWeight: '600', flex: 1 }]}>{r.cost}</Text>
                 ) : null}
               </View>
             ))}
@@ -866,7 +886,7 @@ export default function PlayerProfileScreen() {
 
         {visibleDetailLevels.length > 0 && (() => {
           const parseTime = (s: string): number => {
-            if (!s || /[Ã¢â‚¬â€\-]/.test(s)) return 0;
+            if (!s || /[—\-]/.test(s)) return 0;
             const d = s.match(/(\d+)\s*d/);
             const h = s.match(/(\d+)\s*h/);
             const m = s.match(/(\d+)\s*m/);
@@ -897,7 +917,7 @@ export default function PlayerProfileScreen() {
           }
           const hasRemaining = remainingLevels.length > 0 && totalCost > 0;
           // Units with per-level cosmetic sprites show their visual progression
-          // (current + upcoming levels) until they're maxed Ã¢â‚¬â€ including Builder
+          // (current + upcoming levels) until they're maxed — including Builder
           // Base troops, which use their own village sprites.
           const showAppearance =
             !isHero && !isEquip && isTroopLike &&
@@ -943,11 +963,25 @@ export default function PlayerProfileScreen() {
                 </>
               )}
               {hasRemaining && (
-                <View style={[styles.panelTable, { borderColor: colors.border, marginBottom: Spacing.md }]}>
-                  <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
-                    <View style={[styles.panelTableCell, styles.remainingHeaderCell, { backgroundColor: colors.bgCard }]}>
+                <ScrollView
+                  horizontal
+                  overScrollMode="never"
+                  showsHorizontalScrollIndicator={false}
+                  onLayout={(e) => setRemainingViewportW(e.nativeEvent.layout.width)}
+                >
+                  {/* Explicit width: a horizontal ScrollView sizes its content to the
+                      content, which left this table short of the row instead of filling
+                      it. Falls back to a floor so the headers never squeeze. */}
+                  <View
+                    style={[
+                      styles.panelTable,
+                      { borderColor: colors.border, marginBottom: Spacing.md, width: Math.max(remainingViewportW, REMAINING_TABLE_MIN_W) },
+                    ]}
+                  >
+<View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+                    <View style={[styles.panelTableCell, styles.remainingHeaderCell, { width: remColW, backgroundColor: colors.bgCard }]}>
                       <Text numberOfLines={1} style={[styles.remainingHeaderText, { color: isPivoted ? colors.warning : colors.textMuted }]}>
-                        Remaining Ã‚Â· {pivotSpanCount(currentLevel, pivot)}
+                        Remaining · {pivotSpanCount(currentLevel, pivot)}
                       </Text>
                       {isPivoted && (
                         <PressableRipple
@@ -961,15 +995,19 @@ export default function PlayerProfileScreen() {
                         </PressableRipple>
                       )}
                     </View>
-                    <Text style={[styles.panelTableCell, styles.panelTableHeader, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Cost</Text>
-                    <Text style={[styles.panelTableCell, styles.panelTableHeader, styles.panelTableCellLast, { backgroundColor: colors.bgCard, color: colors.textMuted }]}>Time</Text>
+<View style={[styles.panelTableCell, styles.panelTableHeader, { width: costColW, backgroundColor: colors.bgCard }]}>
+                      <Text style={[styles.panelTableHeaderText, { color: colors.textMuted }]}>Cost</Text>
+                    </View>
+                    <View style={[styles.panelTableCell, styles.panelTableHeader, styles.panelTableCellLast, { width: timeColW, backgroundColor: colors.bgCard }]}>
+                      <Text style={[styles.panelTableHeaderText, { color: colors.textMuted }]}>Time</Text>
+                    </View>
                   </View>
                   {resourceSums.length > 0 ? (
                     resourceSums.map((s, ri) => {
                       const icon = PACKAGE_RESOURCE_IMAGES[s.resource as string];
                       return (
-                        <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
-                          <View style={[styles.panelTableCell, { flex: 1, paddingLeft: Spacing.base }]}>
+                        <View key={s.resource} style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }, ri === resourceSums.length - 1 && styles.panelTableRowLast]}>
+                          <View style={[styles.panelTableCell, { width: remColW, paddingLeft: Spacing.base }]}>
                             {ri === 0 && (
                               <LevelRange
                                 from={currentLevel}
@@ -978,7 +1016,7 @@ to={pivot}
                               />
                             )}
                           </View>
-                          <View style={[styles.panelTableCell, { alignItems: 'center', justifyContent: 'center' }]}>
+                          <View style={[styles.panelTableCell, { width: costColW, alignItems: 'center', justifyContent: 'center' }]}>
                             <View style={styles.resourceSumRow}>
                               {icon ? (
                                 <Image source={icon} style={styles.resourceSumIcon} resizeMode="contain" />
@@ -997,7 +1035,7 @@ to={pivot}
                               </Text>
                             </View>
                           </View>
-                          <Text style={[styles.panelTableCell, styles.panelTableCellLast, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                          <Text style={[styles.panelTableCell, styles.panelTableCellLast, { width: timeColW, color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
                             {ri === 0
                               ? (showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime))
                               : ''}
@@ -1006,21 +1044,22 @@ to={pivot}
                       );
                     })
                   ) : (
-                    <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }]}>
-                      <View style={[styles.panelTableCell, { flex: 1, paddingLeft: Spacing.base }]}>
+                    <View style={[styles.panelTableRow, { backgroundColor: colors.bgSubtle }, styles.panelTableRowLast]}>
+                      <View style={[styles.panelTableCell, { width: remColW, paddingLeft: Spacing.base }]}>
                         <LevelRange
                           from={currentLevel}
                           to={maxReachable != null ? maxReachable : visibleDetailLevels[visibleDetailLevels.length - 1]?.level ?? '?'}
                           color={colors.textSecondary}
                         />
                       </View>
-                      <Text style={[styles.panelTableCell, { color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>Ã¢â‚¬â€</Text>
-                      <Text style={[styles.panelTableCell, styles.panelTableCellLast, { color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
+                      <Text style={[styles.panelTableCell, { width: costColW, color: colors.textSecondary, fontWeight: '600', fontFamily: clashFontFamily(600) }]}>—</Text>
+                      <Text style={[styles.panelTableCell, styles.panelTableCellLast, { width: timeColW, color: showDiscounted ? colors.warning : colors.textPrimary, fontWeight: '600' }]}>
                         {showDiscounted ? applyTimeDiscount(fmtTime(totalTime), discounts.army) : fmtTime(totalTime)}
                       </Text>
                     </View>
                   )}
-                </View>
+                  </View>
+                </ScrollView>
               )}
               <Text style={[styles.panelSectionTitle, { color: colors.textPrimary }]}>Level Stats</Text>
               {hiddenLevelCount > 0 && (
@@ -1037,26 +1076,26 @@ to={pivot}
                   ))}
                 </View>
               )}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.base }} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
-                <View style={[styles.panelTable, { borderColor: colors.border, width: tableW }]}>
-<View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
+              <ScrollView horizontal overScrollMode="never" showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.base }} onLayout={(e) => setTableViewportW(e.nativeEvent.layout.width)}>
+                <View style={[styles.panelTable, { borderColor: colors.border, width: statTableW }]}>
+                  <View style={[styles.panelTableRow, { borderBottomColor: colors.border }]}>
                     {statColumns.map((c, ci) => (
-                      <Text
+                      <View
                         key={c.key}
                         style={[
                           styles.panelTableCell,
                           styles.panelTableHeader,
                           ci === statColumns.length - 1 && styles.panelTableCellLast,
-                          { backgroundColor: colors.bgCard, color: colors.textMuted },
-                          { width: colWidthAt(ci) },
+                          { backgroundColor: colors.bgCard, width: statW(ci) },
                         ]}
-                        numberOfLines={1}
                       >
-                        {c.header}
-                      </Text>
+                        <Text numberOfLines={1} style={[styles.panelTableHeaderText, { color: colors.textMuted }]}>
+                          {c.header}
+                        </Text>
+                      </View>
                     ))}
                   </View>
-                  {displayLevels.map((l) => {
+                  {displayLevels.map((l, li) => {
                     const isCurrentRow = l.level === currentLevel;
                     const isPivotRow = pivotLevels[name] === l.level;
                     // The levels the pivot covers, so the gold pivot row reads as the end of a
@@ -1075,18 +1114,19 @@ to={pivot}
                         style={[
                           styles.panelTableRow,
                           { borderBottomColor: colors.border },
+                          li === displayLevels.length - 1 && styles.panelTableRowLast,
                           isCurrentRow ? { backgroundColor: colors.accentGhost } : isPivotRow && styles.pivotRow, inPivotRange && styles.pivotRangeRow,
                         ]}
                       >
-                        <Text numberOfLines={1} style={[styles.panelTableCell, { width: colWidthAt(0) }, isPivotRow ? styles.pivotLvl : { color: colors.textSecondary }]}>{l.level}</Text>
+                        <Text numberOfLines={1} style={[styles.panelTableCell, { width: statW(0) }, isPivotRow ? styles.pivotLvl : { color: colors.textSecondary }]}>{l.level}</Text>
                         {isTroopLike ? (
                           <>
-                            <Text numberOfLines={1} style={[styles.panelTableCell, { color: colors.textSecondary }, { width: colWidthAt(1) }]}>{l.dps}</Text>
-                            <Text numberOfLines={1} style={[styles.panelTableCell, { color: colors.textSecondary }, { width: colWidthAt(2) }]}>{l.hitpoints}</Text>
+                            <Text numberOfLines={1} style={[styles.panelTableCell, { color: colors.textSecondary, width: statW(1) }]}>{l.dps}</Text>
+                            <Text numberOfLines={1} style={[styles.panelTableCell, { color: colors.textSecondary, width: statW(2) }]}>{l.hitpoints}</Text>
                           </>
                         ) : extraLabels.map((lbl, i) => (
-                            <Text key={i} numberOfLines={1} style={[styles.panelTableCell, { color: colors.textSecondary }, { width: colWidthAt(1 + i) }]}>
-                              {l.extra?.find((e) => e.label === lbl)?.value ?? 'Ã¢â‚¬â€'}
+                            <Text key={i} numberOfLines={1} style={[styles.panelTableCell, { color: colors.textSecondary, width: statW(1 + i) }]}>
+                              {l.extra?.find((e) => e.label === lbl)?.value ?? '—'}
                             </Text>
                           ))}
                         <Text
@@ -1099,8 +1139,8 @@ to={pivot}
                                 : l.costResource
                                   ? RESOURCE_META[l.costResource as CostResource].color
                                   : colors.textSecondary,
+                              width: statW(statColumns.length - (showLabColumn ? 3 : 2)),
                             },
-                            { width: colWidthAt(statColumns.length - (showLabColumn ? 3 : 2)) },
                           ]}
                         >
                           {showDiscounted ? applyCostDiscount(l.upgradeCost || '—', discounts.army) : (l.upgradeCost || '—')}
@@ -1109,15 +1149,14 @@ to={pivot}
                           numberOfLines={1}
                           style={[
                             styles.panelTableCell,
-                            { color: showDiscounted ? colors.warning : colors.textSecondary },
+                            { color: showDiscounted ? colors.warning : colors.textSecondary, width: statW(statColumns.length - (showLabColumn ? 2 : 1)) },
                             showLabColumn ? undefined : styles.panelTableCellLast,
-                            { width: colWidthAt(statColumns.length - (showLabColumn ? 2 : 1)) },
                           ]}
                         >
                           {showDiscounted ? applyTimeDiscount(l.upgradeTime || '—', discounts.army) : (l.upgradeTime || '—')}
                         </Text>
                         {showLabColumn && (
-                          <Text numberOfLines={1} style={[styles.panelTableCell, styles.panelTableCellLast, { color: colors.textSecondary }, { width: colWidthAt(statColumns.length - 1) }]}>
+                          <Text numberOfLines={1} style={[styles.panelTableCell, styles.panelTableCellLast, { color: colors.textSecondary, width: statW(statColumns.length - 1) }]}>
                             {l.labLevel ?? '—'}
                           </Text>
                         )}
@@ -1126,7 +1165,7 @@ to={pivot}
                   })}
                   {pivotEnabled && showFull && (
                     <Text style={[styles.pivotHint, { color: colors.textTertiary }]}>
-                      {isPivoted ? 'Long-press Lv' + pivot + ' again, or tap Ã¢Å“â€¢, to return to the max.' : 'Long-press a level to cap the Remaining totals there.'}
+                      {isPivoted ? 'Long-press Lv' + pivot + ' again, or tap ✕, to return to the max.' : 'Long-press a level to cap the Remaining totals there.'}
                     </Text>
                   )}
                 </View>
@@ -1393,7 +1432,7 @@ to={pivot}
               )}
               {homeHeroes.length === 0 && lockedHeroes.length === 0 && (
                 <EmptyState
-                  icon="ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Ëœ"
+                  icon="👑"
                   title="No heroes yet"
                   description="Heroes unlock at higher Town Hall levels. Your first hero, the Barbarian King, is available at TH7."
                 />
@@ -1405,7 +1444,7 @@ to={pivot}
             <>
               {builderHeroes.length === 0 ? (
                 <EmptyState
-                  icon="ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â"
+                  icon="🛡️"
                   title="No Builder Base heroes"
                   description="Builder Base heroes unlock at BH6. The Battle Machine is your first Builder Base hero."
                 />
@@ -1513,7 +1552,7 @@ to={pivot}
               )}
               {homeTroops.length === 0 && lockedTroops.length === 0 && (
                 <EmptyState
-                  icon="ÃƒÂ¢Ã…Â¡Ã¢â‚¬ÂÃƒÂ¯Ã‚Â¸Ã‚Â"
+                  icon="⚔️"
                   title="No troops yet"
                   description="Troops unlock as you progress. Your first troop, the Barbarian, is available from TH1."
                 />
@@ -1525,7 +1564,7 @@ to={pivot}
             <>
               {builderTroops.length === 0 ? (
                 <EmptyState
-                  icon="ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¨"
+                  icon="🔨"
                   title="No Builder Base troops"
                   description="Builder Base troops are unlocked as you progress through the Builder Base."
                 />
@@ -1576,7 +1615,7 @@ to={pivot}
             <>
               {siegeMachines.length === 0 ? (
                 <EmptyState
-                  icon="ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬"
+                  icon="🚀"
                   title="No siege machines"
                   description="Siege Machines unlock at TH12 with the Workshop. You can request them from your clanmates."
                 />
@@ -1662,7 +1701,7 @@ to={pivot}
               )}
               {homeSpells.length === 0 && lockedSpells.length === 0 && (
                 <EmptyState
-                  icon="ÃƒÂ¢Ã…â€œÃ‚Â¨"
+                  icon="✨"
                   title="No spells yet"
                   description="Spells unlock at TH5. Your first spell, the Lightning Spell, is available at TH5."
                 />
@@ -1674,7 +1713,7 @@ to={pivot}
             <>
               {homePets.length === 0 ? (
                 <EmptyState
-                  icon="ÃƒÂ°Ã…Â¸Ã‚ÂÃ‚Â¾"
+                  icon="🐾"
                   title="No pets yet"
                   description="Pets unlock at TH14 with the Pet House. They follow and fight alongside your heroes in battle."
                 />
@@ -1727,7 +1766,7 @@ to={pivot}
             <>
               {player.heroEquipment.length === 0 ? (
                 <EmptyState
-                  icon="ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â"
+                  icon="🛡️"
                   title="No equipment yet"
                   description="Hero equipment unlocks at TH8 with the Blacksmith. Equip your heroes with special abilities."
                 />
@@ -1854,7 +1893,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
@@ -1893,7 +1932,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
   },
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Inline detail panel (expands below a tapped card) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // ── Inline detail panel (expands below a tapped card) ──
   panel: {
     marginTop: 2,
     marginBottom: Spacing.sm,
@@ -1926,7 +1965,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     flex: 1,
   },
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Stat pills (icon + concise tag) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // ── Stat pills (icon + concise tag) ──
   panelPillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1987,12 +2026,13 @@ const styles = StyleSheet.create({
   troopLevelCell: {
     width: '19.99%',
   },
-  /** Interior rules only; the dashed frame closes the outer edges. */
+  /** Interior vertical rule; the dashed frame closes the outer edges. */
   troopLevelCellRule: {
     borderRightWidth: 1,
     borderStyle: 'dashed',
     borderRightColor: Colors.border,
   },
+  /** Interior horizontal rule; the dashed frame closes the outer edges. */
   troopLevelCellRuleBottom: {
     borderBottomWidth: 1,
     borderStyle: 'dashed',
@@ -2087,6 +2127,9 @@ const styles = StyleSheet.create({
   },
   panelTableRow: {
     flexDirection: 'row',
+    // 1, not a fraction: Android rounds a fractional dashed border to nothing and
+    // does not draw it at all, which left the header rule invisible. Solid hairlines
+    // are the only way to get a sub-pixel rule on both platforms.
     borderBottomWidth: 1,
     borderStyle: 'dashed',
     borderBottomColor: Colors.border,
@@ -2108,21 +2151,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   panelTableCell: {
-    flex: 1,
     ...Typography.caption,
     color: Colors.textSecondary,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xs,
     textAlign: 'center',
-    // Load-bearing with the measured column widths: without it Yoga clamps each
-    // cell to its min-content width, so a cell even slightly wider than the
-    // column forces that column wider in its own row and the grid stops lining up.
-    // 0 lets the measured width win, and numberOfLines on the cells ellipsizes
-    // instead of wrapping past it.
+    // Fixed widths come from resolveColWidths. `minWidth: 0` is load-bearing: without
+    // it Yoga clamps each cell to its min-content width, so a value even slightly
+    // wider than its column pushes that column wider in its own row and the grid
+    // stops lining up with the header. 0 lets the column width win, and
+    // numberOfLines on the cells ellipsizes rather than wrapping past it.
     minWidth: 0,
     borderRightWidth: 1,
     borderStyle: 'dashed',
     borderRightColor: Colors.border,
+  },
+  /** The table's own frame closes the bottom edge, so the last row must not rule it too. */
+  panelTableRowLast: {
+    borderBottomWidth: 0,
   },
   /** The table frame already closes the right edge. */
   panelTableCellLast: {
@@ -2140,27 +2186,40 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   panelTableHeader: {
+    backgroundColor: Colors.bgSubtle,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    justifyContent: 'center',
+  },
+  /** Header typography, split from the cell so it can sit inside a View cell - React
+   * Native does not inherit font or textTransform from a View to a Text. */
+  panelTableHeaderText: {
+    ...Typography.caption,
     color: Colors.textMuted,
     fontWeight: '600',
-    backgroundColor: Colors.bgSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   /**
-   * The Remaining header carries a Ã¢Å“â€¢ once a pivot is set, so it is a row rather
+   * The Remaining header carries a ✕ once a pivot is set, so it is a row rather
    * than a cell. Layout lives on the View and the header typography on the Text -
    * React Native does not inherit font or textTransform from a View to a Text.
    */
   remainingHeaderCell: {
     flexDirection: 'row',
     alignItems: 'center',
+    // Centre the title and its ✕ as one group. The title used to carry flex: 1, so
+    // it filled the cell and sat left of centre once the ✕ took space beside it.
+    justifyContent: 'center',
+    gap: 4,
   },
   remainingHeaderText: {
     ...Typography.caption,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    flex: 1,
+    textAlign: 'center',
   },
   /**
    * The pivot row sits next to the current-level row, so it gets its own tint and
