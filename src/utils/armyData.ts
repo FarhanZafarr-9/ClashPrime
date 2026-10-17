@@ -178,7 +178,17 @@ function indexItems(): void {
 /** Resolve a package item by display name. Pass builderBase=true to prefer the Builder Base copy when a name collides (e.g. "Baby Dragon"). */
 export function getArmyItem(name: string, builderBase = false): PackageItem | null {
   indexItems();
-  const matches = byNameIndex?.get(name);
+  let matches = byNameIndex?.get(name);
+  if (!matches || matches.length === 0) {
+    // The package punctuates some names the API does not: it writes
+    // "L.A.S.S.I" where ClashArmies writes "Lassi". Without this fallback every
+    // lookup for that pet missed - its detail came back null, so max levels,
+    // level tables and the Time to Max pets pipeline all silently had no data.
+    // Loose on punctuation only, and the package has no two keys that collide
+    // under it, so this can only ever return the one intended item.
+    const canonical = resolveArmyItemNameLoose(name);
+    if (canonical) matches = byNameIndex?.get(canonical);
+  }
   if (!matches || matches.length === 0) return null;
   if (builderBase) {
     const bb = matches.find((i) => i.base === 'builder');
@@ -437,6 +447,11 @@ export function getAllItemsAtTH(th: number): { name: string; type: UnlockableTyp
   for (const item of homeSpells) addItem(item, 'spell');
   for (const item of homeHeroes) addItem(item, 'hero');
   for (const item of homeSiege) addItem(item, 'siege');
+  // Pets too: they were missing here, which left them out of getUnlockableItems
+  // (so a locked pet never showed in the home Backlog) and out of the name list
+  // the home screen prefetches detail for, so the Pets pipeline rendered no
+  // remaining time.
+  for (const item of homePets) addItem(item, 'pet');
   return result;
 }
 
@@ -489,6 +504,20 @@ export function getSuperTroopNames(): string[] {
 }
 
 /**
+ * Pull the player's pets out of the troop list.
+ *
+ * Pets arrive inside `player.troops`, not a separate array. `ClashPlayer.pets`
+ * is declared in the type but nothing ever assigns it, so anything reading that
+ * field sees an empty list - which is why the Time to Max pets pipeline never
+ * appeared. Filter by name, on punctuation-insensitive keys so the API's "Lassi"
+ * matches the package's "L.A.S.S.I".
+ */
+export function filterPets<T extends { name: string }>(troops: T[]): T[] {
+  const names = new Set(getPetNames().map(looseNameKey));
+  return troops.filter((t) => names.has(looseNameKey(t.name)));
+}
+
+/**
  * Bundled package image (require'd asset) for an army item. Returns the
  * level-specific sprite when `level` matches one, otherwise the item icon.
  * Builder Base units use their own village sprites when `builderBase` is set
@@ -497,9 +526,12 @@ export function getSuperTroopNames(): string[] {
  * keep the network fallback).
  */
 export function getArmyItemImage(name: string, level?: number | null, builderBase = false): number | null {
+  // Same punctuation mismatch as getArmyItem: look up the literal name first,
+  // then the canonical one, so "Lassi" finds the "L.A.S.S.I" artwork.
+  const key = PACKAGE_IMAGES[name] ? name : (resolveArmyItemNameLoose(name) ?? name);
   const entry =
-    (builderBase ? PACKAGE_BUILDER_TROOP_IMAGES[name] : undefined) ??
-    PACKAGE_IMAGES[name];
+    (builderBase ? PACKAGE_BUILDER_TROOP_IMAGES[key] : undefined) ??
+    PACKAGE_IMAGES[key];
   if (!entry) return null;
   if (level != null) {
     const sprite = entry.levels[String(level)];
