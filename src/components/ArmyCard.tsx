@@ -76,13 +76,15 @@ function SectionLabel({
       <Text style={styles.sectionLabel}>{label}</Text>
       {value ? (
         <View style={styles.sectionLabelRight}>
-          <Text style={[styles.sectionLabelValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
+          
           {hint ? (
             <>
-              <Text style={styles.sectionLabelSep}>·</Text>
               <Text style={styles.sectionLabelHint}>{hint}</Text>
+              <Text style={styles.sectionLabelSep}>·</Text>
             </>
           ) : null}
+
+          <Text style={[styles.sectionLabelValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
         </View>
       ) : null}
     </View>

@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
+    backgroundColor: Colors.bgCardHover,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },
