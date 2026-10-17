@@ -1149,7 +1149,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     // Lighter than the screen in dark and unchanged in light, so the pills read
     // as raised tiles rather than holes in the background.
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },

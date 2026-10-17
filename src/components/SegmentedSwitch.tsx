@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: 3,
     borderRadius: Radius.xl * 1.25,
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgCard,
     borderWidth: 0.75,
     borderColor: Colors.border,
   },

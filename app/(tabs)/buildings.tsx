@@ -1974,7 +1974,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: Colors.bgCardHover,
+    backgroundColor: Colors.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2049,9 +2049,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard
   },
   pillActive: {
     backgroundColor: Colors.textPrimary,

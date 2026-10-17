@@ -599,9 +599,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.bgCardHover,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard
   },
   pillActive: {
     backgroundColor: Colors.textPrimary,
