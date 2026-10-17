@@ -11,7 +11,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
-import { SettingRow } from '../../src/components/SettingRow';
+import { SettingRow, useSettingRowSurface } from '../../src/components/SettingRow';
 import BottomSheet from '../../src/components/BottomSheet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -71,6 +71,29 @@ const SECTION_META: Record<SettingsSectionKey, { title: string; icon: string; de
  * bottom corners while closed, and the body's last row closes them again when
  * open, so one group always reads as a single rounded card.
  */
+/**
+ * The trailing count chip. Its own component because it has to read the row's
+ * surface state, and it is rendered as SettingRow's children - reading it from
+ * SettingSection would pick up the parent's context, not the row's.
+ */
+function SectionBadge({ label, isFirst, isOpen, isLast }: { label: string; isFirst?: boolean; isOpen: boolean; isLast?: boolean }) {
+  const { colors } = useTheme();
+  const inverted = useSettingRowSurface();
+  return (
+    <View style={[
+      styles.sectionBadge,
+      // Knocked out of the inverted card, like the icon chip.
+      inverted && { backgroundColor: colors.bg },
+      // Mirrors the row's own corner logic, so the chip follows the card's
+      // rounded outer edge instead of floating as its own pill.
+      (isFirst || isOpen) && styles.sectionBadgeFirst,
+      isLast && !isOpen && styles.sectionBadgeLast,
+    ]}>
+      <Text style={[styles.sectionBadgeText, inverted && { color: colors.textPrimary }]}>{label}</Text>
+    </View>
+  );
+}
+
 function SettingSection({
   meta,
   isOpen,
@@ -97,12 +120,11 @@ function SettingSection({
         compact
         isFirst={isFirst || isOpen}
         isLast={isLast && !isOpen}
+        expanded={isOpen}
         onPress={onToggle}
       >
         {badge != null && (
-          <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{badge}</Text>
-          </View>
+          <SectionBadge label={badge} isFirst={isFirst} isOpen={isOpen} isLast={isLast} />
         )}
       </SettingRow>
       {isOpen && (
@@ -514,10 +536,11 @@ export default function SettingsScreen() {
   const [contentActions, setContentActions] = useState<ContentAction[]>([]);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
-  // Groups start collapsed so the whole tab fits one screen; Account stays open
-  // because the tag and token it holds are what everything else depends on.
+  // Every group starts collapsed, so the tab opens as a single screen of section
+  // headers. The open group is tinted by SettingRow's `expanded` flag, which is
+  // what tells you which one you opened.
   const [expanded, setExpanded] = useState<Record<SettingsSectionKey, boolean>>({
-    account: true,
+    account: false,
     appearance: false,
     discounts: false,
     data: false,
@@ -1872,6 +1895,12 @@ settingSections: {
     backgroundColor: Colors.bgCardHover,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sectionBadgeFirst: {
+    borderTopRightRadius: Radius.lg,
+  },
+  sectionBadgeLast: {
+    borderBottomRightRadius: Radius.lg,
   },
   sectionBadgeText: {
     ...Typography.footnote,
