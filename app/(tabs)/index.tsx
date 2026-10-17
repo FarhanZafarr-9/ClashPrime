@@ -1378,6 +1378,7 @@ export default function HomeScreen() {
       <View style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={styles.scroll}
+          overScrollMode="never"
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -2382,11 +2383,11 @@ export default function HomeScreen() {
                           <Text style={styles.progressLevelCellFallback}>{u.name.charAt(0)}</Text>
                         )}
                         <View style={{ flex: 1 }} />
-                        <Text style={styles.progressLevelCellValue}>
-                          <Text style={styles.progressRowBefore}>Lv{u.before}</Text>
+                        <View style={styles.progressLevelCellValue}>
+                          <Text style={[styles.progressRowBefore, styles.progressLevelText]}>Lv{u.before}</Text>
                           <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
-                          <Text style={styles.progressRowAfter}>Lv{u.after}</Text>
-                        </Text>
+                          <Text style={[styles.progressRowAfter, styles.progressLevelText]}>Lv{u.after}</Text>
+                        </View>
                       </View>
                     );
                   })}
@@ -3280,6 +3281,20 @@ const styles = StyleSheet.create({
     color: Colors.success,
     fontWeight: '700',
   },
+  /**
+   * A View, not a Text: the chevron sits between two nested Texts in one inline
+   * line box, and neither margin nor padding on a nested Text lays out reliably
+   * (both silently did nothing). A row with an explicit gap always applies.
+   */
+  progressLevelCellValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  progressLevelText: {
+    ...Typography.footnote,
+    fontVariant: ['tabular-nums'],
+  },
   progressLevelGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -3306,12 +3321,6 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     fontWeight: '600',
     marginRight: Spacing.lg,
-  },
-  progressLevelCellValue: {
-    ...Typography.footnote,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
   },
   progressClose: {
     alignItems: 'center',
