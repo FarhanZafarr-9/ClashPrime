@@ -6,6 +6,20 @@ import { Colors, useTheme, Radius, Spacing } from '../theme';
 
 const DANGER = '#F44336';
 
+/**
+ * Whether the row is currently drawing on its inverted surface.
+ *
+ * An expanded row fills with the text colour and prints the surface colour, so
+ * anything a caller passes as `desc` or `children` has to flip too - otherwise
+ * dark text lands on a dark fill. SettingRow can only recolour what it owns, so
+ * custom nodes read this instead. `useSettingRowSurface()` returns false outside
+ * a row, which is the safe default for the normal surface.
+ */
+const SettingRowSurfaceContext = React.createContext(false);
+export function useSettingRowSurface(): boolean {
+  return React.useContext(SettingRowSurfaceContext);
+}
+
 export type PillPosition =
   | 'top-left' | 'top-center' | 'top-right'
   | 'center-left' | 'center' | 'center-right'
@@ -43,6 +57,12 @@ interface SettingRowProps {
   isFirst?: boolean;
   isLast?: boolean;
   compact?: boolean;
+  /**
+   * For a row whose content is revealed underneath it. Lifts the block onto
+   * bgCardHover so the open state reads at a glance and the header looks
+   * continuous with what it opened, rather than joining the flat closed rows.
+   */
+  expanded?: boolean;
 }
 
 export function SettingRow({
@@ -65,18 +85,28 @@ export function SettingRow({
   isFirst,
   isLast,
   compact,
+  expanded,
 }: SettingRowProps) {
-  const { colors } = useTheme();
+const { colors } = useTheme();
   const accent = destructive ? DANGER : accentColor || null;
+  /**
+   * An expanded row inverts the card - text-coloured fill, surface-coloured
+   * text - so the open section is obvious at a glance. Skipped when the row
+   * carries its own tint (isExtra / accent), which already owns the surface:
+   * inverting those would strand accent text on a dark fill.
+   */
+  const inverted = !!expanded && !isExtra && !accent;
+  const fg = inverted ? colors.bgCard : null;
   return (
     <View style={styles.settingRowContainer}>
       {pillText && (
         <View style={getPillPos(pillPosition, pillTopOffset, pillRightOffset)}>
-          <View style={[styles.pill, destructive ? styles.pillDanger : { backgroundColor: colors.textPrimary, borderColor: colors.border }]}>
-            <Text style={[styles.pillText, destructive ? styles.pillTextDanger : { color: colors.bg }]}>{pillText}</Text>
+          <View style={[styles.pill, destructive ? styles.pillDanger : { backgroundColor: inverted ? colors.bg : colors.textPrimary, borderColor: colors.border }]}>
+            <Text style={[styles.pillText, destructive ? styles.pillTextDanger : { color: inverted ? colors.textPrimary : colors.bg }]}>{pillText}</Text>
           </View>
         </View>
       )}
+      <SettingRowSurfaceContext.Provider value={inverted}>
       <PressableRipple
         onPress={onPress}
         onLongPress={onLongPress}
@@ -84,7 +114,7 @@ export function SettingRow({
         style={[
           styles.settingBlock,
           compact && styles.settingBlockCompact,
-          { backgroundColor: isExtra ? colors.accentGhost : colors.bgCard, borderColor: colors.border },
+          { backgroundColor: isExtra ? colors.accentGhost : inverted ? colors.textPrimary : colors.bgCard, borderColor: colors.border },
           accent && { backgroundColor: `${accent}1a`, borderColor: `${accent}40` },
           disabled && styles.settingBlockDisabled,
           isFirst && styles.settingBlockFirst,
@@ -94,6 +124,9 @@ export function SettingRow({
         {(icon || iconSource || iconUrl) && (
           <View style={[
             styles.settingRowIcon,
+            // The glyph knocks out of the chip, so it takes the card's colour - not the
+            // chip's. Matching the chip made it invisible in both themes.
+            inverted && { backgroundColor: colors.bg },
             accent && { backgroundColor: `${accent}2e` },
             isFirst && styles.settingRowIconFirst,
             isLast && styles.settingRowIconLast,
@@ -106,21 +139,24 @@ export function SettingRow({
               <Ionicons
                 name={icon as any}
                 size={15}
+                // Knocks out of the inverted chip, so the glyph takes the card's
+                // colour rather than the chip's.
                 color={accent || colors.textPrimary}
               />
             )}
           </View>
         )}
         <View style={styles.settingTextBlock}>
-          <Text style={[styles.settingTitle, accent && { color: accent }]}>{title}</Text>
+          <Text style={[styles.settingTitle, accent && { color: accent }, fg && { color: fg }]}>{title}</Text>
           {desc != null
             ? typeof desc === 'string'
-              ? <Text style={[styles.settingDesc, accent && { color: accent }]}>{desc}</Text>
+              ? <Text style={[styles.settingDesc, accent && { color: accent }, fg && { color: fg, opacity: 0.7 }]}>{desc}</Text>
               : desc
             : null}
         </View>
         {children}
       </PressableRipple>
+      </SettingRowSurfaceContext.Provider>
     </View>
   );
 }
