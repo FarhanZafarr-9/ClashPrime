@@ -193,6 +193,21 @@ export function looseNameKey(name: string): string {
 }
 
 /**
+ * Same punctuation-only match as resolveArmyItemName, without the " Spell" guess.
+ * Callers that already know an item's kind use this, so a troop can never be
+ * matched onto a spell that merely shares its name.
+ */
+export function resolveArmyItemNameLoose(name: string): string | null {
+  indexItems();
+  if (byNameIndex?.has(name)) return name;
+  const key = looseNameKey(name);
+  for (const candidate of byNameIndex?.keys() ?? []) {
+    if (looseNameKey(candidate) === key) return candidate;
+  }
+  return null;
+}
+
+/**
  * Canonical package name for a display name that may not match the package
  * exactly, or null when the package doesn't carry the item at all. Needed because
  * the two sources disagree in two ways: ClashArmies writes spells without the
@@ -205,11 +220,7 @@ export function resolveArmyItemName(name: string): string | null {
   if (byNameIndex?.has(name)) return name;
   const spellForm = `${name} Spell`;
   if (byNameIndex?.has(spellForm)) return spellForm;
-  const key = looseNameKey(name);
-  for (const candidate of byNameIndex?.keys() ?? []) {
-    if (looseNameKey(candidate) === key) return candidate;
-  }
-  return null;
+  return resolveArmyItemNameLoose(name);
 }
 
 export interface ClanCastleCapacity {

@@ -4,7 +4,7 @@ import PressableRipple from './PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography, useTheme } from '../theme';
 import { getTownHallImageSource } from '../utils/buildingImages';
-import { getArmyItemImage } from '../utils/armyData';
+import { getArmyItemImage, resolveArmyItemNameLoose } from '../utils/armyData';
 import type { ArmyScore } from '../utils/armyScore';
 import type { ClashArmy, UnitDef, EquipmentDef, PetDef } from '../types/armies';
 
@@ -28,6 +28,12 @@ interface Props {
 function iconFor(name: string, kind: 'troop' | 'spell' | 'siege' | 'hero' | 'pet' | 'equipment'): ImageSourcePropType | undefined {
   const variants = [
     name,
+    // The package punctuates some names the sources don't: it writes "L.A.S.S.I"
+    // where ClashArmies writes "Lassi", so an exact-only lookup silently renders
+    // no icon. Match on punctuation alone here rather than via
+    // resolveArmyItemName, which also guesses a " Spell" suffix that would let a
+    // troop pick up a spell's art.
+    resolveArmyItemNameLoose(name) ?? name,
     ...(kind === 'spell' ? [`${name} Spell`, `${name} Potion`] : []),
     ...(kind === 'siege' ? [`${name} Machine`, `${name} Workshop`] : []),
     ...(kind === 'equipment' ? [`${name} Equipment`, `${name} Puppet`] : []),
