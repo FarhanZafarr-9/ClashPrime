@@ -112,7 +112,7 @@ export default function AchievementsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Awards</Text>
           <Text style={styles.subtitle}>Milestones across all villages</Text>

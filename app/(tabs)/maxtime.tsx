@@ -889,7 +889,7 @@ export default function MaxTimeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Time to Max</Text>

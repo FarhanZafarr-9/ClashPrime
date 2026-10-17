@@ -128,9 +128,10 @@ export default function EventsScreen() {
   return (
     <SafeAreaView style={styles.container} >
       <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
+contentContainerStyle={styles.scroll}
+          overScrollMode="never"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}

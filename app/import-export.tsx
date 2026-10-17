@@ -642,6 +642,7 @@ export default function ImportExportScreen() {
 
         <ScrollView
           contentContainerStyle={styles.scroll}
+          overScrollMode="never"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

@@ -1779,7 +1779,7 @@ export default function BuildingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Buildings</Text>

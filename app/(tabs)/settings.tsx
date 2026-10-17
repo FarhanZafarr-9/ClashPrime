@@ -1167,7 +1167,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
         </View>

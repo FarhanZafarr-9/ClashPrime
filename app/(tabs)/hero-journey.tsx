@@ -431,9 +431,10 @@ export default function HeroJourneyScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
+ref={scrollRef}
+          contentContainerStyle={styles.scroll}
+          overScrollMode="never"
+          showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

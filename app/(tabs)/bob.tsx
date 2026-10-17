@@ -182,7 +182,7 @@ export default function BobPlannerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>6th Builder</Text>
           <Text style={styles.subtitle}>Plan B.O.B.: gear-ups, research, heroes and the Builder Hall</Text>

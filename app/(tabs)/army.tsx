@@ -1274,6 +1274,7 @@ to={pivot}
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView
         contentContainerStyle={styles.scroll}
+        overScrollMode="never"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

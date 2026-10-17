@@ -514,9 +514,10 @@ export default function BaseLibraryScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            onScroll={handleScroll}
+contentContainerStyle={styles.list}
+          overScrollMode="never"
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
             scrollEventThrottle={100}
           >
             {totalBases === 0 ? (

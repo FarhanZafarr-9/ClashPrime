@@ -666,6 +666,7 @@ export default function WarScreen() {
       </View>
 
       <ScrollView
+        overScrollMode="never"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
