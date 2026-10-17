@@ -228,6 +228,11 @@ export default function OnboardingScreen() {
       // Import provides all building levels + lastMaxedTH; skip profile/TH/builder steps
       setStep('attribution');
       setLoading(false);
+      // Pull the freshly-cached player into the provider. refreshAccounts only
+      // re-reads the account list - it never calls setPlayer - so without this the
+      // context still holds a null player and Home sits on the skeleton forever.
+      await refreshAccounts();
+      await refresh();
     } catch (e: any) {
       setError(e.message || 'Failed to connect. Check your token.');
       showDialog({
