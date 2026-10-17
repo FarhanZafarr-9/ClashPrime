@@ -12,23 +12,23 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import PressableRipple from '../src/components/PressableRipple';
+import PressableRipple from '../../src/components/PressableRipple';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '../src/theme';
-import { Card } from '../src/components/Card';
-import { ItemCard } from '../src/components/ItemCard';
-import { SettingRow } from '../src/components/SettingRow';
-import { AchievementCard } from '../src/components/AchievementCard';
-import { groupAchievementsByStars, getTotalStars, type StarGroup } from '../src/utils/achievements';
-import { getApiToken, getAccounts, ensureAccountRegistered, cachePlayer, getActiveAccountTag, setPlayerTag, setActiveAccountTag } from '../src/hooks/usePlayer';
-import { usePlayer } from '../src/hooks/usePlayerContext';
-import { ClashAPI, ClashAPIError } from '../src/api/clash';
-import type { ClashPlayer, Hero, Pet, HeroEquipment } from '../src/types/clash';
-import { isSuperTroop } from '../src/types/clash';
-import { getTownHallImageSource , getBuildingLevelImageSource, formatCompact } from '../src/utils/buildingImages';
-import { getArmyItemImage } from '../src/utils/armyData';
-import { entityRef } from '../src/data/entityReference';
+import { Colors, Typography, Spacing, Radius } from '../../src/theme';
+import { Card } from '../../src/components/Card';
+import { ItemCard } from '../../src/components/ItemCard';
+import { SettingRow } from '../../src/components/SettingRow';
+import { AchievementCard } from '../../src/components/AchievementCard';
+import { groupAchievementsByStars, getTotalStars, type StarGroup } from '../../src/utils/achievements';
+import { getApiToken, getAccounts, ensureAccountRegistered, cachePlayer, getActiveAccountTag, setPlayerTag, setActiveAccountTag } from '../../src/hooks/usePlayer';
+import { usePlayer } from '../../src/hooks/usePlayerContext';
+import { ClashAPI, ClashAPIError } from '../../src/api/clash';
+import type { ClashPlayer, Hero, Pet, HeroEquipment } from '../../src/types/clash';
+import { isSuperTroop } from '../../src/types/clash';
+import { getTownHallImageSource , getBuildingLevelImageSource, formatCompact } from '../../src/utils/buildingImages';
+import { getArmyItemImage } from '../../src/utils/armyData';
+import { entityRef } from '../../src/data/entityReference';
 
 const ROLE_LABELS: Record<string, string> = {
   leader: 'Leader',
@@ -322,7 +322,7 @@ export default function PlayerInspectScreen() {
           </Card>
         </ScrollView>
       ) : player ? (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
           {/* ── Identity card ── */}
           <Card>
             <View style={styles.playerRow}>

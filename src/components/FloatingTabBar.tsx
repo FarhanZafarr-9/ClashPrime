@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, BackHandler } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { Colors, Spacing, Radius } from '../theme';
 import PressableRipple from './PressableRipple';
 import { Skeleton } from './Skeleton';
@@ -10,11 +9,12 @@ import { usePlayer } from '../hooks/usePlayerContext';
 type IconDef = { set: 'ion' | 'mc'; name: string };
 
 /** Pages of tabs, in display order. Arrows cycle through these.
- * 'search' is a pseudo-entry: it pushes the /player route instead of switching tabs. */
+ * Flattened in the same order in `app/(tabs)/_layout.tsx`, so swiping between
+ * pages follows the arrows rather than fighting them. */
 const TAB_GROUPS: string[][] = [
   ['index', 'buildings', 'army', 'maxtime'],
   ['events', 'hero-journey', 'bases', 'armies'],
-  ['war', 'search', 'zapquaker', 'bob'],
+  ['war', 'player', 'zapquaker', 'bob'],
   ['giantarrow', 'achievements', 'saved', 'settings'],
 ];
 
@@ -34,7 +34,7 @@ const TAB_ICONS: Record<string, IconDef> = {
   war: { set: 'ion', name: 'flag-outline' },
   saved: { set: 'ion', name: 'bookmarks-outline' },
   achievements: { set: 'ion', name: 'trophy-outline' },
-  search: { set: 'ion', name: 'search-outline' },
+  player: { set: 'ion', name: 'person-circle-outline' },
 };
 
 function TabIcon({ icon, color, size }: { icon: IconDef; color: string; size?: number }) {
@@ -52,7 +52,6 @@ function groupOf(key: string): number {
 
 export default function FloatingTabBar({ state, navigation }: any) {
   const { player, loading } = usePlayer();
-  const router = useRouter();
   const activeKey: string = state.routeNames[state.index];
   const [page, setPage] = useState(() => {
     const g = groupOf(activeKey);
@@ -97,10 +96,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const visibleTabs = TAB_GROUPS[Math.min(page, TAB_GROUPS.length - 1)];
 
   const navigate = (name: string) => {
-    if (name === 'search') {
-      router.push('/player');
-      return;
-    }
     const route = state.routes.find((r: any) => r.name === name);
     if (route) navigation.navigate(route.name);
   };
