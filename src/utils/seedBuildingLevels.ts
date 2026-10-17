@@ -55,7 +55,6 @@ export function seedBuildingLevelsForTH(
     const homeTroops = (player.troops || []).filter((t: any) => t.village === 'home' && !isSuperTroop(t.name));
     const homeSpells = (player.spells || []).filter((s: any) => s.village === 'home');
     const heroes = player.heroes || [];
-    const equipment = player.heroEquipment || [];
 
     function inferLevel(display: string, column: string, items: { name: string }[]): number {
       const detail = getBuildingDetail(display, { builderBase: false });
@@ -64,6 +63,10 @@ export function seedBuildingLevelsForTH(
       for (const lev of detail.levels) {
         const val: string = lev[column] || '';
         if (!val) continue;
+        // Rows that unlock nothing come back as the placeholder '-', and the
+        // `includes` test below would match any item name containing a hyphen
+        // against every one of them, reporting the building as maxed.
+        if (val === '-') continue;
         if (items.some((i) => val === i.name || val.includes(i.name) || i.name.includes(val))) {
           level = Math.max(level, lev.Level);
         }
@@ -77,8 +80,15 @@ export function seedBuildingLevelsForTH(
     setIf('Dark Barracks', inferLevel('Dark Barracks', 'Unlocked Unit', homeTroops));
     setIf('Spell Factory', inferLevel('Spell Factory', 'Unlocked Spell', homeSpells));
     setIf('Dark Spell Factory', inferLevel('Dark Spell Factory', 'Unlocked Spell', homeSpells));
-    setIf('Blacksmith', inferLevel('Blacksmith', 'Equipment Unlocked', equipment));
     setIf('Hero Hall', inferLevel('Hero Hall', 'Unlocked Hero', heroes));
+    // The Blacksmith is deliberately NOT inferred from owned equipment. Each of
+    // its levels unlocks exactly one piece, so the best item a player holds
+    // reports only the Blacksmith level that piece unlocked at - a lower bound,
+    // never their real Blacksmith. That lower bound is what the Army tab capped
+    // equipment with, so a maxed Blacksmith holding mid-tier gear showed fully
+    // upgraded equipment as not maxed, and flipped to maxed whenever the
+    // inference missed and the seed's max-at-TH value survived. Equipment maxes
+    // by Town Hall instead, matching getMaxLevelAtTH and armyScore.
   }
 
   for (const display of BB_BUILDINGS) {
