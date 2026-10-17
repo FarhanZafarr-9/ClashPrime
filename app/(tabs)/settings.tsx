@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
 import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref, useGlobalLevels } from '../../src/theme';
+import { useBaseSourcePref } from '../../src/api/baseScraper';
 import { Chip } from '../../src/components/Chip';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
@@ -479,6 +480,13 @@ export default function SettingsScreen() {
   const { isDark, setThemeMode } = useTheme();
   const { pref: fontPref, setClashFontPref } = useClashFontPref();
   const { enabled: globalLevels, setShowGlobalLevels: setGlobalLevelsPref } = useGlobalLevels();
+  const { pref: basePref, setPref: setBasePref } = useBaseSourcePref();
+  const baseSourceDesc =
+    basePref === 'both'
+      ? 'Interleave both catalogues'
+      : basePref === 'clashly'
+        ? 'ClashLy only'
+        : 'Clash Bases only';
   const clashFontDesc = fontPref === 'off'
     ? 'Use the system font'
     : fontPref === 'titles'
@@ -1299,12 +1307,24 @@ export default function SettingsScreen() {
               title="Show Global Levels"
               desc="Show levels beyond your Town Hall"
               compact
-              isLast
             >
               <Switch
                 value={globalLevels}
                 onValueChange={(v) => setGlobalLevelsPref(v)}
               />
+            </SettingRow>
+            <SettingRow
+              icon="albums-outline"
+              title="Base Sources"
+              desc={baseSourceDesc}
+              compact
+              isLast
+            >
+              <View style={styles.fontChipRow}>
+                <Chip label="ClashLy" selected={basePref === 'clashly'} onPress={() => setBasePref('clashly')} />
+                <Chip label="Both" selected={basePref === 'both'} onPress={() => setBasePref('both')} />
+                <Chip label="Clash Bases" selected={basePref === 'clash-bases'} onPress={() => setBasePref('clash-bases')} />
+              </View>
             </SettingRow>
           </SettingSection>
 
