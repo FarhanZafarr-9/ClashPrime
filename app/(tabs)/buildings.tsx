@@ -11,7 +11,7 @@ import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, clashFontFamily, useGlobalLevels } from '../../src/theme';
+import { Colors, Typography, Spacing, Radius, clashFontFamily, useGlobalLevels, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import {
   getBuildingLevelImageSource,
@@ -555,6 +555,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
   hideHeader?: boolean;
 }) {
   const { setBuildingCopies } = usePlayer();
+  const { colors } = useTheme();
   const { enabled: showGlobalLevels } = useGlobalLevels();
   const [expanded, setExpanded] = useState(false);
   const [showFull, setShowFull] = useState(false);
@@ -689,6 +690,7 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
       styles.itemCard,
       inSheet && styles.itemCardInSheet,
       inSection && styles.itemCardInSection,
+      inSection && inSheet && styles.itemCardCopyInSheet,
       hideHeader && styles.itemCardBodyOnly,
       isFirst && { borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl },
       isLast && !expanded && { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl },
@@ -696,6 +698,10 @@ function BuildingCard({ name, copyIndex, count, copies, effectiveMax, isBB, disc
       {!hideHeader && (
       <ItemCard
         name={name}
+        // Copies listed inside the details sheet sit on the sheet's own bgCard, so
+        // they are lifted onto bgCardHover to read as separate rows. Only there: the
+        // main list's copies already sit on the screen background.
+        background={inSection && inSheet ? colors.bgCardHover : undefined}
         subtitle={inSection ? `Copy ${copyIndex + 1}${isFullyMaxed ? '' : ` · ${fmtTimeD(totalTime)}`}` : undefined}
         level={currentLevel}
         maxLevel={effectiveMax}
@@ -2096,6 +2102,14 @@ const styles = StyleSheet.create({
   },
   itemCardInSection: {
     marginHorizontal: 0,
+  },
+  /**
+   * A copy card inside the details sheet. The wrapper's own 4px margin and
+   * ItemCard's internal 4px stacked to 8 between copies, which read as loose
+   * rows; zeroing the wrapper leaves just ItemCard's 4.
+   */
+  itemCardCopyInSheet: {
+    marginBottom: 0,
   },
   itemCardBodyOnly: {
     marginBottom: 0,
