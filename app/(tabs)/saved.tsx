@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,7 +9,6 @@ import {
   Share,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { ArmyCard } from '../../src/components/ArmyCard';
@@ -224,7 +224,7 @@ export default function SavedScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <View style={styles.header}>
         <Text style={styles.title}>Saved & Favorites</Text>
       </View>
@@ -328,7 +328,7 @@ export default function SavedScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
