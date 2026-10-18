@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -9,7 +10,6 @@ import {
 import PressableRipple from '../../src/components/PressableRipple';
 import HeaderButton from '../../src/components/HeaderButton';
 import SegmentedSwitch from '../../src/components/SegmentedSwitch';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, clashFontFamily, useGlobalLevels, useTheme } from '../../src/theme';
@@ -1781,7 +1781,7 @@ export default function BuildingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
@@ -1949,7 +1949,7 @@ export default function BuildingsScreen() {
       >
         {sheetSection ? renderSheetBody(sheetSection) : null}
       </BottomSheet>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
