@@ -1,6 +1,6 @@
+import Screen from './Screen';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Skeleton } from './Skeleton';
 import { Colors, Spacing, Radius, useTheme } from '../theme';
 
@@ -63,7 +63,7 @@ export function BasesScreenSkeleton() {
 export function EventsScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         <View style={styles.header}>
           <View style={{ gap: 6 }}>
@@ -163,7 +163,7 @@ export function EventsScreenSkeleton() {
           </View>
         ))}
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -172,7 +172,7 @@ export function HomeScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         {/* Header: title + icon buttons + timestamp */}
         <View style={styles.header}>
@@ -299,7 +299,7 @@ export function HomeScreenSkeleton() {
         </View>
         <View style={{ height: 100 }} />
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -308,7 +308,7 @@ export function MaxTimeScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 150 }}>
         {/* Header */}
         <View style={styles.header}>
@@ -379,7 +379,7 @@ export function MaxTimeScreenSkeleton() {
         </View>
         <View style={{ height: 40 }} />
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -387,7 +387,7 @@ export function MaxTimeScreenSkeleton() {
 export function ProfileScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         <View style={styles.header}>
           <Skeleton width={90} height={20} borderRadius={6} />
@@ -424,7 +424,7 @@ export function ProfileScreenSkeleton() {
           ))}
         </View>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -632,7 +632,7 @@ function journeyPillCornerStyle(index: number, total: number) {
 export function HeroJourneyScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <View style={{ flex: 1, paddingBottom: 64 }}>
         {/* Header + refresh */}
         <View style={styles.heroJourneyHeader}>
@@ -759,7 +759,7 @@ export function HeroJourneyScreenSkeleton() {
           ))}
         </View>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
