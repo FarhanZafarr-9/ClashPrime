@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
@@ -10,10 +11,10 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PressableRipple from '../../src/components/PressableRipple';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, clashFontFamily, useTheme } from '../../src/theme';
 import { Skeleton } from '../../src/components/Skeleton';
+import SegmentedSwitch, { type SegmentedSwitchOption } from '../../src/components/SegmentedSwitch';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
 import { ClashAPI, ClashAPIError } from '../../src/api/clash';
 import { getApiToken } from '../../src/hooks/usePlayer';
@@ -39,6 +40,42 @@ async function setWarAutoRefreshTs(clanTag: string): Promise<void> {
 interface WarScreenData {
   currentWar: ClanWar | null;
   warLog: WarLogEntry[];
+}
+
+/**
+ * Last war payload per clan, so opening the tab paints immediately instead of
+ * holding the skeleton through a full API round trip. The same idea as the bases
+ * snapshot; the fetch still runs and replaces this when it lands.
+ */
+const WAR_SNAPSHOT_KEY = 'clashprime_war_snapshot';
+
+/** Current / History selector, shared with the loading skeleton. */
+const SCREEN_VIEW_OPTIONS: SegmentedSwitchOption<'current' | 'history'>[] = [
+  { key: 'current', label: 'Current War', icon: 'flame-outline' },
+  { key: 'history', label: 'War History', icon: 'time-outline' },
+];
+
+async function getWarSnapshot(clanTag: string): Promise<WarScreenData | null> {
+  try {
+    const raw = await AsyncStorage.getItem(`${WAR_SNAPSHOT_KEY}_${clanTag}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return {
+      currentWar: parsed.currentWar ?? null,
+      warLog: Array.isArray(parsed.warLog) ? parsed.warLog : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function setWarSnapshot(clanTag: string, data: WarScreenData): Promise<void> {
+  try {
+    await AsyncStorage.setItem(`${WAR_SNAPSHOT_KEY}_${clanTag}`, JSON.stringify(data));
+  } catch {
+    // A full disk should not break the screen that is already on screen.
+  }
 }
 
 interface CwlRoundWar {
@@ -297,7 +334,7 @@ function WarScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Skeleton width={80} height={28} borderRadius={6} />
@@ -307,10 +344,13 @@ function WarScreenSkeleton() {
       </View>
 
       {/* Top tabs */}
-      <View style={styles.topTabs}>
-        <Skeleton height={40} borderRadius={Radius.md} style={{ flex: 1, borderTopRightRadius: Radius.sm, borderBottomRightRadius: Radius.sm }} />
-        <Skeleton height={40} borderRadius={Radius.md} style={{ flex: 1, borderTopLeftRadius: Radius.sm, borderBottomLeftRadius: Radius.sm }} />
-      </View>
+      <SegmentedSwitch
+        style={styles.screenToggle}
+        options={SCREEN_VIEW_OPTIONS}
+        value="current"
+        onChange={() => { }}
+        loading
+      />
 
       <View style={styles.skeletonContent}>
         {/* Legend card */}
@@ -401,7 +441,7 @@ function WarScreenSkeleton() {
 
         <View style={{ height: 120 }} />
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -553,6 +593,10 @@ export default function WarScreen() {
       setCwlLeague(cwl);
 
       setData({ currentWar, warLog });
+      // Snapshot after the state update so the next open paints from disk.
+      if (currentWar || warLog.length > 0) {
+        setWarSnapshot(clanTag, { currentWar, warLog });
+      }
     } catch (e: any) {
       setError(e?.message || 'Failed to load war data');
     }
@@ -561,6 +605,15 @@ export default function WarScreen() {
   useEffect(() => {
     (async () => {
       if (data) return;
+      if (clanTag) {
+        // Paint the stored payload straight away so the tab opens on content,
+        // then let the real fetch correct it in the background.
+        const snap = await getWarSnapshot(clanTag);
+        if (snap) {
+          setData(snap);
+          setLoading(false);
+        }
+      }
       await loadWarData();
       if (clanTag) await setWarAutoRefreshTs(clanTag);
       setLoading(false);
@@ -605,7 +658,7 @@ export default function WarScreen() {
         message: 'Add a player tag in Settings who belongs to a clan to see war data.',
       };
     return (
-      <SafeAreaView style={styles.container}>
+      <Screen style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>War</Text>
@@ -630,12 +683,12 @@ export default function WarScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </PressableRipple>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>War</Text>
@@ -648,22 +701,12 @@ export default function WarScreen() {
         </Text>
       </View>
 
-      <View style={styles.topTabs}>
-        <PressableRipple
-          style={[styles.topTab, styles.topTabLeft, screenView === 'current' && styles.topTabActive]}
-          onPress={() => setScreenView('current')}
-        >
-          <Ionicons name="flame-outline" size={14} color={screenView === 'current' ? Colors.bg : Colors.textSecondary} />
-          <Text style={[styles.topTabText, screenView === 'current' && styles.topTabTextActive]}>Current War</Text>
-        </PressableRipple>
-        <PressableRipple
-          style={[styles.topTab, styles.topTabRight, screenView === 'history' && styles.topTabActive]}
-          onPress={() => setScreenView('history')}
-        >
-          <Ionicons name="time-outline" size={14} color={screenView === 'history' ? Colors.bg : Colors.textSecondary} />
-          <Text style={[styles.topTabText, screenView === 'history' && styles.topTabTextActive]}>War History</Text>
-        </PressableRipple>
-      </View>
+      <SegmentedSwitch
+        style={styles.screenToggle}
+        options={SCREEN_VIEW_OPTIONS}
+        value={screenView}
+        onChange={setScreenView}
+      />
 
       <ScrollView
         overScrollMode="never"
@@ -827,7 +870,7 @@ export default function WarScreen() {
 
         <View style={{ height: 120 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -1651,46 +1694,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
   },
-  topTabs: {
-    flexDirection: 'row',
-    gap: 8,
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.md,
-  },
-  topTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
-  topTabLeft: {
-    borderTopLeftRadius: Radius.md,
-    borderBottomLeftRadius: Radius.md,
-    borderTopRightRadius: Radius.sm,
-    borderBottomRightRadius: Radius.sm,
-  },
-  topTabRight: {
-    borderTopLeftRadius: Radius.sm,
-    borderBottomLeftRadius: Radius.sm,
-    borderTopRightRadius: Radius.md,
-    borderBottomRightRadius: Radius.md,
-  },
-  topTabActive: {
-    backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
-  },
-  topTabText: {
-    ...Typography.subhead,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  topTabTextActive: {
-    color: Colors.bg,
+  // Matches the village toggles on the army and buildings screens: the switch
+  // centres itself rather than spanning the full width, with breathing room
+  // above and below. The old topTabs row carried marginHorizontal, which read
+  // as a half-width band instead.
+  screenToggle: {
+    alignSelf: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   pill: {
     flexDirection: 'row',
@@ -1804,7 +1815,11 @@ const styles = StyleSheet.create({
   vsTeamSize: { ...Typography.caption, color: Colors.textTertiary, fontSize: 9 },
 
   warTable: {
-    borderWidth: 0.75,
+    // Dashed at 1 rather than the old 0.75 solid hairline: RN scales dash
+    // length and gap with borderWidth, so a hairline packs the dashes close
+    // enough to read as a solid rule, and Android drops them below 1.
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
     borderRadius: Radius.sm,
     overflow: 'hidden',
