@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -338,9 +339,9 @@ export default function ArmiesScreen() {
           <Text style={styles.title}>Army Library</Text>
           {loading ? null : <Text style={styles.subtitle}>Community armies from ClashArmies</Text>}
         </View>
-        <PressableRipple onPress={() => fetchArmies(true)} hitSlop={12} style={styles.refreshBtn}>
-          <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
-        </PressableRipple>
+        <HeaderButton onPress={() => fetchArmies(true)} hitSlop={12} loading={loading} accessibilityLabel="Refresh army library">
+          <Ionicons name="refresh-circle-outline" size={20} color={Colors.textSecondary} />
+        </HeaderButton>
       </View>
 
       {/* Content */}
@@ -530,10 +531,7 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 2,
   },
-  refreshBtn: {
-    padding: Spacing.xs,
-  },
-  loadingContainer: {
+loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
