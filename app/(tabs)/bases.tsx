@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
@@ -397,9 +398,9 @@ export default function BaseLibraryScreen() {
             </Text>
           )}
         </View>
-        <PressableRipple onPress={fetchBases} hitSlop={12} style={styles.refreshBtn}>
-          <Ionicons name="refresh-circle-outline" size={28} color={Colors.textSecondary} />
-        </PressableRipple>
+        <HeaderButton onPress={fetchBases} hitSlop={12} loading={loading} accessibilityLabel="Refresh bases">
+          <Ionicons name="refresh-circle-outline" size={20} color={Colors.textSecondary} />
+        </HeaderButton>
       </View>
 
       {/* Village switch: the same compact hall pills as the Time to Max and Army
@@ -639,10 +640,7 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 2,
   },
-  refreshBtn: {
-    padding: Spacing.xs,
-  },
-  loadingContainer: {
+loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
