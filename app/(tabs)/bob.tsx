@@ -1,6 +1,6 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -181,7 +181,7 @@ export default function BobPlannerScreen() {
     : [];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>6th Builder</Text>
@@ -414,7 +414,7 @@ export default function BobPlannerScreen() {
           </>
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
