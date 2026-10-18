@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
@@ -11,7 +12,6 @@ import {
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
 import HeaderButton from '../../src/components/HeaderButton';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -380,7 +380,7 @@ export default function BaseLibraryScreen() {
   const hallLabel = selectedVillage === 'home' ? 'TH' : 'BH';
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Base Library</Text>
@@ -613,7 +613,7 @@ contentContainerStyle={styles.list}
           ) : null
         }
       </SharePreviewModal>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
