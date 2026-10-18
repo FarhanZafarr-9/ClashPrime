@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
@@ -6,9 +7,9 @@ import {
   StyleSheet,
   RefreshControl,
   Image,
+  InteractionManager,
   type LayoutChangeEvent,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -250,18 +251,20 @@ export default function HeroJourneyScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const rowY = useRef<Map<number, number>>(new Map());
 
-  // Defer the expensive computation (package-indexed TH caps + 115 milestones)
-  // until the app is idle, so the tab transitions instantly and the skeleton
-  // shows while the journey is being built.
+  // The journey build is CPU work on the JS thread, so it is held until the tab
+  // transition finishes rather than running mid-animation. requestIdleCallback
+  // was the wrong tool: on a screen the user is actively looking at, idle can
+  // be a long way off, and its timeout left the skeleton up for 5s.
   useEffect(() => {
     if (!player) return;
-    const handle = requestIdleCallback(
-      () => {
-        setJourney(computeHeroJourney(player));
-      },
-      { timeout: 5000 },
-    );
-    return () => cancelIdleCallback(handle);
+    let cancelled = false;
+    const handle = InteractionManager.runAfterInteractions(() => {
+      if (!cancelled) setJourney(computeHeroJourney(player));
+    });
+    return () => {
+      cancelled = true;
+      handle.cancel();
+    };
   }, [player]);
 
   const onRefresh = useCallback(async () => {
@@ -430,7 +433,7 @@ export default function HeroJourneyScreen() {
   if (!journey) return <HeroJourneyScreenSkeleton />;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView
 ref={scrollRef}
           contentContainerStyle={styles.scroll}
@@ -567,7 +570,7 @@ ref={scrollRef}
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
