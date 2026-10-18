@@ -1,3 +1,4 @@
+import Screen from '../src/components/Screen';
 import React, { useState, type ReactNode } from 'react';
 import {
   View,
@@ -14,7 +15,6 @@ import {
 import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
 import { useBuilderCount } from '../src/hooks/useBuilderCount';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getStringAsync } from 'expo-clipboard';
@@ -341,7 +341,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboard}
@@ -898,7 +898,7 @@ export default function OnboardingScreen() {
       </KeyboardAvoidingView>
 
       <Dialog />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
