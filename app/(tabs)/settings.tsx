@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -13,7 +14,6 @@ import {
 import PressableRipple from '../../src/components/PressableRipple';
 import { SettingRow, useSettingRowSurface } from '../../src/components/SettingRow';
 import BottomSheet from '../../src/components/BottomSheet';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { openURL } from 'expo-linking';
@@ -554,6 +554,7 @@ export default function SettingsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'tag' | 'token'>('tag');
   const [modalTitle, setModalTitle] = useState('');
+  const [modalSubtitle, setModalSubtitle] = useState('');
   const [modalValue, setModalValue] = useState('');
   const [modalPlaceholder, setModalPlaceholder] = useState('');
   const [modalError, setModalError] = useState('');
@@ -659,9 +660,16 @@ export default function SettingsScreen() {
     return () => { mounted = false; };
   }, []);
 
+  /** Header subline for the tag/token input sheet. */
+  const MODAL_SUBTITLE: Record<'tag' | 'token', string> = {
+    tag: 'Starts with # and identifies your account',
+    token: 'Grants read-only access to your profile',
+  };
+
   const openModal = (type: 'tag' | 'token', title: string, placeholder: string, current: string, onSave: (text: string) => void) => {
     setModalType(type);
     setModalTitle(title);
+    setModalSubtitle(MODAL_SUBTITLE[type]);
     setModalValue(current);
     setModalPlaceholder(placeholder);
     setModalError('');
@@ -1264,7 +1272,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
@@ -1491,7 +1499,7 @@ export default function SettingsScreen() {
                 ? 'Loading your saved builder count…'
                 : builderVerifiedCount !== null
                   ? `Number of builders · ${builderVerifiedCount} confirmed by import`
-                  : 'Number of builders (2“6)'}
+                  : 'Number of builders (2-6)'}
               compact
               onPress={() => { }}
             >
@@ -1523,7 +1531,7 @@ export default function SettingsScreen() {
               title="Builder Base Builders"
               desc={!bbBuilderLoaded
                 ? 'Loading your saved Builder Base count…'
-                : `Builder Base builders (1“3)${(player?.builderHallLevel ?? 1) >= 6 ? ' · 2 granted at BH6' : ' · unlocks a 2nd at BH6'}`}
+                : `Builder Base builders (1-3)${(player?.builderHallLevel ?? 1) >= 6 ? ' · 2 granted at BH6' : ' · unlocks a 2nd at BH6'}`}
               compact
               onPress={() => { }}
             >
@@ -1671,12 +1679,13 @@ export default function SettingsScreen() {
         onShow={() => modalInputRef.current?.focus()}
         icon={modalType === 'tag' ? 'person-outline' : 'key-outline'}
         title={modalTitle}
+        subtitle={modalSubtitle}
       >
         <View style={styles.modalContent}>
             <View style={styles.modalHint}>
               {modalType === 'tag' ? (
                 <Text style={styles.modalHintText}>
-                  Your unique player identifier starting with #. Find it in-game under Settings ’ More ’ Show Tag.
+                  Your unique player identifier starting with #. Find it in-game under Settings › More › Show Tag.
                 </Text>
               ) : (
                 <>
@@ -1693,7 +1702,7 @@ export default function SettingsScreen() {
                     <View style={styles.modalStep}>
                       <Text style={styles.modalStepNum}>2</Text>
                       <Text style={styles.modalStepText}>
-                        Go to <Text style={styles.modalLink}>My Account ’ Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
+                        Go to <Text style={styles.modalLink}>My Account › Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
                       </Text>
                     </View>
                     <View style={styles.modalStep}>
@@ -1940,7 +1949,7 @@ onboardingBuilderCount={onboardingBuilderCount}
       />
 
       <Dialog />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -2248,9 +2257,12 @@ switchClose: {
     lineHeight: 18,
   },
   modalCode: {
-    fontFamily: 'monospace',
-    fontSize: 11,
+    // No fontFamily: a hardcoded face opts the style out of the Clash font
+    // applied by StyleSheet.create, so this ran in the system monospace while
+    // the sentence around it used Clash.
+    fontSize: 12,
     color: Colors.accent,
+    fontWeight: '600',
   },
   modalSteps: {
     marginTop: Spacing.sm,
@@ -2288,14 +2300,12 @@ switchClose: {
     color: Colors.warning,
     fontWeight: '600',
   },
-  modalInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.bgSubtle,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
-    paddingRight: Spacing.sm,
+modalInputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.bgSubtle,
+      borderRadius: Radius.md,
+      paddingRight: Spacing.sm,
   },
   modalInput: {
     flex: 1,
