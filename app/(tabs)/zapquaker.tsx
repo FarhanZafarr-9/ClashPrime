@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
@@ -7,7 +8,6 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import PressableRipple from '../../src/components/PressableRipple';
 import { Card } from '../../src/components/Card';
@@ -321,7 +321,7 @@ export default function ZapquakerScreen() {
   const noData = refs.lightningLevels.length === 0 || refs.eqLevels.length === 0;
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <ScrollView
 contentContainerStyle={styles.scroll}
           overScrollMode="never"
@@ -652,7 +652,7 @@ contentContainerStyle={styles.scroll}
           </View>
         ))}
       </BottomSheet>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
