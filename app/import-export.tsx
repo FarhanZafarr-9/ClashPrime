@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   StyleSheet,
   Platform,
@@ -31,12 +30,10 @@ import {
   effectiveLevel,
   statFor,
   nextUpgrade,
-  getCraftedDefenseImage,
   moduleMaxLevel,
 } from '../src/utils/craftedDefenses';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
-const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 const goldElixirImg = require('../assets/package-images/images/other/goldelxir.png') as number;
 
 const RESOURCE_ORDER: BuildingCostResource[] = [
@@ -74,7 +71,7 @@ function BuildingRowIcon({ storeName, level }: { storeName: string; level: numbe
 
 export default function ImportExportScreen() {
   const router = useRouter();
-  const { player, accounts, setBulkLevels, setCraftedLevels, applyLevelsToAccount } = usePlayer();
+  const { player, accounts, setBulkLevels, setCraftedLevels, applyLevelsToAccount, refresh } = usePlayer();
   const playerThImage = getTownHallImageSource(player?.townHallLevel);
   const { show, Dialog } = useDialog();
   const { colors } = useTheme();
@@ -87,6 +84,46 @@ export default function ImportExportScreen() {
   const [exportTag, setExportTag] = useState<string | null>(null);
   const [markInProgressDone, setMarkInProgressDone] = useState(false);
   const [detectedHuts, setDetectedHuts] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pastedOk, setPastedOk] = useState(false);
+
+  // Pulls the live profile so the preview above the paste box reflects current
+  // troops, heroes, spells and equipment. Building levels keep coming from the
+  // pasted export only, so this never overwrites what the import is for.
+  const handleRefreshProfile = async () => {
+    setRefreshing(true);
+    try {
+      const updated = await refresh();
+      show({
+        title: updated ? 'Profile refreshed' : 'Nothing to refresh',
+        subtitle: updated
+          ? `${updated.name} is up to date`
+          : 'No active profile is signed in.',
+        icon: updated ? 'checkmark-circle-outline' : 'alert-circle-outline',
+        message: updated
+          ? 'Troops, heroes, spells and equipment now match the Clash API. Buildings still come from the pasted export.'
+          : 'Sign in to an account first.',
+        actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+      });
+    } catch (e: any) {
+      show({
+        title: 'Refresh failed',
+        subtitle: 'Could not reach the Clash API',
+        icon: 'alert-circle-outline',
+        message: e?.message || 'Check your token and try again.',
+        actions: [{ label: 'OK', primary: true, onPress: () => { } }],
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const hasPasted = text.trim().length > 0;
+
+  // The paste target and the pasted JSON share one height, so the card does not
+  // jump the moment a paste lands. Long exports scroll inside the box rather
+  // than stretching it down the page.
+  const PASTE_BOX_HEIGHT = 128;
 
   const handleParse = (raw: string) => {
     const parsed = parseCocExport(raw);
@@ -111,14 +148,26 @@ export default function ImportExportScreen() {
   const handlePaste = async () => {
     try {
       const raw = await Clipboard.getStringAsync();
-      if (raw) {
-        setText(raw);
-        handleParse(raw);
-      } else {
+      if (!raw) {
         setError('Clipboard is empty. Copy the export JSON first, then try again.');
+        return;
       }
+      // Validated on the way in rather than on Parse. The export shape is known
+      // here, so anything that is not a Clash export is dropped immediately
+      // instead of sitting in the box waiting to fail.
+      const check = parseCocExport(raw);
+      if (!check.ok || !check.data) {
+        setText('');
+        setPastedOk(false);
+        setError(check.error ?? 'That is not a Clash of Clans export. Clipboard discarded.');
+        return;
+      }
+      setError(null);
+      setText(raw);
+      setPastedOk(true);
+      handleParse(raw);
     } catch {
-      setError('Could not read the clipboard. Paste the JSON manually instead.');
+      setError('Could not read the clipboard. Try again.');
     }
   };
 
@@ -292,7 +341,6 @@ export default function ImportExportScreen() {
           levels: levels ?? { ...raw },
           known: !!defense,
           effectiveLevel: eff,
-          image: getCraftedDefenseImage(c.displayName, eff),
           modules: defense && levels
             ? defense.modules.map((m) => ({
               name: m.name,
@@ -313,6 +361,11 @@ export default function ImportExportScreen() {
     for (const row of craftedRows) if (Object.keys(row.levels).length) out[row.name] = row.levels;
     return out;
   }, [craftedRows]);
+
+  // What an apply would actually write. The section below is driven off this
+  // rather than craftedDefs, so an export that mentions crafted defenses but
+  // carries no levels for them shows nothing instead of an empty block.
+  const craftedPayloadCount = Object.keys(craftedPayload).length;
 
   // Flatten each building into one row per distinct level transition so the list
   // reads cleanly when copies upgrade across different levels. Each variant keeps
@@ -394,7 +447,14 @@ export default function ImportExportScreen() {
       .filter((u) => u.copies > 0)
       .sort((a, b) => b.remainingSec - a.remainingSec);
   }, [result, player]);
-  const canApply = (applyCount > 0 && totalChanged > 0 || Object.keys(craftedPayload).length > 0) && !!player;
+  const hasBuildingChanges = applyCount > 0 && totalChanged > 0;
+  // Crafted defenses ride along with the building changes rather than
+  // introducing their own. Listing them on their own made the row appear on a
+  // preview with nothing to apply, which read as an import that was not there.
+  const showCrafted = hasBuildingChanges && craftedPayloadCount > 0;
+  // Drives the button off showCrafted, not craftedPayloadCount, so it can never
+  // read "Nothing to apply" while still being live.
+  const canApply = (hasBuildingChanges || showCrafted) && !!player;
 
   const doApply = async (tag: string) => {
     if (!result || !player) return;
@@ -412,15 +472,17 @@ export default function ImportExportScreen() {
     for (const row of upgradeRows) levels[row.storeName] = Math.max(...row.targetLevels);
     if (tag.toUpperCase() === player.tag.toUpperCase()) {
       setBulkLevels(levels, perBuilding);
-      if (Object.keys(craftedPayload).length) setCraftedLevels(craftedPayload);
+      if (craftedPayloadCount > 0) setCraftedLevels(craftedPayload);
       router.back();
       return;
     }
     const target = accounts.find((a) => a.tag.toUpperCase() === tag.toUpperCase());
     await applyLevelsToAccount(tag, levels, perBuilding);
-    if (Object.keys(craftedPayload).length) await setBulkCraftedLevels(craftedPayload, tag);
+    if (craftedPayloadCount > 0) await setBulkCraftedLevels(craftedPayload, tag);
     show({
       title: 'Levels applied',
+      subtitle: `Saved to ${target?.name || tag}`,
+      icon: 'checkmark-circle-outline',
       message: `Building levels were saved to ${target?.name || tag}. Switch to that account to see them.`,
       actions: [{ label: 'OK', primary: true, onPress: () => router.back() }],
     });
@@ -431,6 +493,8 @@ export default function ImportExportScreen() {
     if (tagUnattached) {
       show({
         title: 'Account not attached',
+        subtitle: 'This export is for a different account',
+        icon: 'alert-circle-outline',
         message: `This export is for ${exportTag}, which isn't one of your attached accounts. Levels will be applied to ${player.name} (${player.tag}) instead. Continue?`,
         actions: [
           { label: 'Cancel', onPress: () => { } },
@@ -443,6 +507,10 @@ export default function ImportExportScreen() {
     const forActive = targetAccount === null || targetIsActive;
     show({
       title: 'Apply imported levels?',
+      subtitle: forActive
+        ? `Updating ${player.name}`
+        : `Updating ${targetAccount!.name || targetAccount!.tag}`,
+      icon: 'download-outline',
       message: forActive
         ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept.`
         : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). This account is not active right now — the levels are saved to its cache.`,
@@ -498,9 +566,12 @@ export default function ImportExportScreen() {
         >
           <BuildingRowIcon storeName={u.storeName} level={u.t} />
           <View style={styles.upgradeText}>
-            <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
+            <Text style={styles.rowLabel} numberOfLines={1}>
+              {u.displayName}
+              {u.count > 1 ? <Text style={styles.rowSub}>{`  ×${u.count}`}</Text> : null}
+            </Text>
             <Text style={styles.upgradeSub} numberOfLines={2}>
-              Lv {u.c} → Lv {u.t}{u.count > 1 ? ` ×${u.count}` : ''}
+              Lv {u.c} › Lv {u.t}
             </Text>
           </View>
           <View style={styles.upgradeRight}>
@@ -648,44 +719,46 @@ export default function ImportExportScreen() {
         >
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderIcon}>
-                <Ionicons name="document-text-outline" size={20} color={Colors.textPrimary} />
-              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>Paste the export</Text>
                 <Text style={styles.cardSubtitle}>Home Village and Builder Base buildings and traps are imported</Text>
               </View>
             </View>
 
-            <TextInput
-              style={styles.input}
-              multiline
-              value={text}
-              onChangeText={(t) => {
-                setText(t);
-                if (error) setError(null);
-              }}
-              placeholder={'Paste the full export JSON here…\ne.g. {"tag":"#AAAAAA","buildings":[…],…}'}
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              textAlignVertical="top"
-            />
+            {pastedOk && result ? (
+              <View style={[styles.pasteDrop, { height: PASTE_BOX_HEIGHT }]}>
+                <Ionicons name="checkmark-circle-outline" size={22} color={Colors.success} />
+                <Text style={styles.pasteDropOkTitle}>Export pasted</Text>
+                <Text style={styles.pasteDropHint}>
+                  Valid JSON · {result.resolved.length} building types ·{' '}
+                  {exportTag ?? 'no tag'}
+                </Text>
+              </View>
+            ) : (
+              <PressableRipple style={[styles.pasteDrop, { height: PASTE_BOX_HEIGHT }]} onPress={handlePaste}>
+                <Ionicons name="clipboard-outline" size={22} color={Colors.textTertiary} />
+                <Text style={styles.pasteDropTitle}>Tap to paste</Text>
+                <Text style={styles.pasteDropHint}>
+                  Reads the export JSON straight off your clipboard. Anything that is not a
+                  Clash export is discarded.
+                </Text>
+              </PressableRipple>
+            )}
 
             <View style={styles.btnRow}>
-              <PressableRipple style={styles.ghostBtn} onPress={handlePaste}>
-                <Ionicons name="clipboard-outline" size={16} color={Colors.textSecondary} />
-                <Text style={styles.ghostBtnText}>Paste from clipboard</Text>
+              <PressableRipple
+                style={[styles.pasteActionBtn, hasPasted ? styles.pasteActionGhost : styles.pasteActionPrimary]}
+                onPress={handlePaste}
+              >
+                <Ionicons
+                  name="clipboard-outline"
+                  size={16}
+                  color={hasPasted ? Colors.textSecondary : Colors.bg}
+                />
+                <Text style={hasPasted ? styles.ghostBtnText : styles.parseBtnText}>
+                  {hasPasted ? 'Paste again' : 'Paste'}
+                </Text>
               </PressableRipple>
-              {text.trim() ? (
-                <PressableRipple
-                  style={styles.parseBtn}
-                  onPress={() => handleParse(text)}
-                  disabled={!text.trim()}
-                >
-                  <Text style={styles.parseBtnText}>Parse</Text>
-                </PressableRipple>
-              ) : null}
             </View>
 
             {error ? (
@@ -698,8 +771,10 @@ export default function ImportExportScreen() {
 
           {result ? (
             <View style={styles.resultSection}>
-              <Text style={styles.sectionTitle}>Import Summary</Text>
-              <View style={styles.rows}>
+              {hasBuildingChanges ? (
+                <>
+                  <Text style={styles.sectionTitle}>Import Summary</Text>
+                  <View style={styles.rows}>
                 {(() => {
                   const summaryRows = [
                     { key: 'tag', icon: 'pricetag-outline' as const, label: 'Export tag', value: exportTag ?? '—', warning: !!exportTag && tagUnattached },
@@ -728,15 +803,15 @@ export default function ImportExportScreen() {
                           : `${detectedHuts} — sets builders to ${detectedHuts}`,
                       warning: detectedHuts !== null && detectedHuts !== builderCount,
                     },
-                    ...(craftedDefs.length
+                    ...(showCrafted
                       ? [{
                         key: 'crafted',
                         icon: 'shield-half-outline' as const,
                         label: 'Crafted defenses',
                         // Counts what an apply would actually save, so the number here
-                        // always matches the cards below it.
-                        value: `${Object.keys(craftedPayload).length} detected`,
-                        warning: Object.keys(craftedPayload).length < craftedDefs.length,
+                        // always matches the rows below it.
+                        value: `${craftedPayloadCount} detected`,
+                        warning: craftedPayloadCount < craftedDefs.length,
                       }]
                       : []),
                     { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
@@ -760,53 +835,89 @@ export default function ImportExportScreen() {
                     </View>
                   ));
                 })()}
-              </View>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.upToDateCard}>
+                  <Ionicons name="checkmark-circle-outline" size={22} color={Colors.textTertiary} />
+                  <Text style={styles.upToDateTitle}>Already up to date</Text>
+                  <Text style={styles.upToDateText}>
+                    Every building in this export already matches {player?.name ?? 'this account'}, so
+                    there is nothing to apply.
+                  </Text>
+                </View>
+              )}
 
-              {craftedRows.length > 0 ? (
+              {showCrafted ? (
                 <>
                   <Text style={styles.sectionTitle}>Crafted defenses in export</Text>
-                  {craftedRows.map((row, ri) => (
-                    <View key={row.name} style={[styles.craftedCard, ri === 0 && styles.craftedCardFirst]}>
-                      <View style={styles.craftedHeader}>
-                        {row.image ? (
-                          <Image source={row.image} style={styles.craftedIcon} resizeMode="contain" />
-                        ) : (
-                          <View style={styles.craftedIconBox}>
-                            <Ionicons name="shield-half-outline" size={18} color={Colors.textTertiary} />
-                          </View>
-                        )}
-                        <Text style={styles.craftedName} numberOfLines={1}>{row.name}</Text>
-                        <Text style={styles.craftedLevel}>Lv {row.effectiveLevel}</Text>
-                      </View>
-                      {!row.known && (
-                        <Text style={styles.craftedUnknown}>
-                          This defense is not in the app data yet, so its modules, stats and
-                          upgrade costs are unknown. The levels above are still imported.
+                  <View style={styles.rows}>
+                    {craftedRows.map((row, ri) => (
+                      <View
+                        key={row.name}
+                        style={[
+                          styles.row,
+                          ri === 0 && styles.rowFirst,
+                          ri === craftedRows.length - 1 && styles.rowLast,
+                          ri < craftedRows.length - 1 && styles.rowBorder,
+                        ]}
+                      >
+                        <Ionicons name="shield-half-outline" size={15} color={Colors.textSecondary} />
+                        <Text style={styles.rowLabel} numberOfLines={1}>
+                          {row.name}
+                          <Text style={styles.rowSub}>{`  ·  Lv ${row.effectiveLevel}`}</Text>
                         </Text>
-                      )}
-                      {row.modules.map((m) => (
-                        <View key={m.name} style={styles.craftedModuleRow}>
-                          <Text style={styles.craftedModuleName} numberOfLines={1}>{m.name}</Text>
-                          <Text style={styles.craftedModuleLevel}>
-                            {m.max ? `${m.level}/${m.max}` : String(m.level)}
-                          </Text>
-                          {m.stat != null ? (
-                            <Text style={styles.craftedModuleStat} numberOfLines={1}>
-                              {m.stat.toLocaleString()}
-                              {m.next ? ` → ${m.next.stat.toLocaleString()}` : ' · maxed'}
-                            </Text>
-                          ) : null}
-                        </View>
-                      ))}
-                    </View>
-                  ))}
+                        <Text
+                          style={[styles.rowAfter, !row.known && { color: Colors.textMuted }]}
+                          numberOfLines={1}
+                        >
+                          {row.known
+                            ? row.modules
+                                .map((m) => (m.max ? `${m.level}/${m.max}` : String(m.level)))
+                                .join('  ·  ')
+                            : 'unknown data'}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                   <Text style={styles.sectionHint}>
-                    A crafted defense has no single level: each module is upgraded on its own and
-                    the level shown is their sum, which is what the game displays. The value on the
-                    right is the stat the module currently reaches, then what the next upgrade gives.
+                    Each module is upgraded on its own; the level shown is their sum, which is what the
+                    game displays.
                   </Text>
                 </>
               ) : null}
+
+              <View style={styles.actionRow}>
+                {hasBuildingChanges ? (
+                  <PressableRipple
+                    style={[styles.refreshBtn, refreshing && styles.refreshBtnDisabled]}
+                    onPress={handleRefreshProfile}
+                    disabled={refreshing}
+                  >
+                    <Ionicons
+                      name={refreshing ? 'sync-outline' : 'cloud-download-outline'}
+                      size={16}
+                      color={Colors.textSecondary}
+                    />
+                    <Text style={styles.refreshBtnText} numberOfLines={1}>
+                      {refreshing ? 'Refreshing' : 'Refresh'}
+                    </Text>
+                  </PressableRipple>
+                ) : null}
+                <PressableRipple
+                  style={[styles.applyBtn, styles.applyBtnFlex, !canApply && styles.applyBtnDisabled]}
+                  onPress={handleApply}
+                  disabled={!canApply}
+                >
+                  <Text style={styles.applyBtnText} numberOfLines={1}>
+                    {!player
+                      ? 'Waiting for account…'
+                      : hasBuildingChanges
+                        ? `Apply ${applyCount} level${applyCount === 1 ? '' : 's'}`
+                        : 'Nothing to apply'}
+                  </Text>
+                </PressableRipple>
+              </View>
 
               {upgradingRows.length > 0 ? (
                 <>
@@ -823,9 +934,12 @@ export default function ImportExportScreen() {
                       >
                         <BuildingRowIcon storeName={u.storeName} level={u.level + 1} />
                         <View style={styles.upgradeText}>
-                          <Text style={styles.rowLabel} numberOfLines={1}>{u.displayName}</Text>
+                          <Text style={styles.rowLabel} numberOfLines={1}>
+                            {u.displayName}
+                            {u.copies > 1 ? <Text style={styles.rowSub}>{`  ×${u.copies}`}</Text> : null}
+                          </Text>
                           <Text style={styles.upgradeSub} numberOfLines={2}>
-                            {u.copies > 1 ? `×${u.copies} ` : ''}Lv {u.level} → Lv {u.level + 1} · {formatTimeShort(u.remainingSec)} left
+                            Lv {u.level} › Lv {u.level + 1} · {formatTimeShort(u.remainingSec)} left
                           </Text>
                         </View>
                         <View style={styles.upgradeRight}>
@@ -882,18 +996,6 @@ export default function ImportExportScreen() {
                   </View>
                 </>
               ) : null}
-
-              <PressableRipple
-                style={[styles.applyBtn, !canApply && styles.applyBtnDisabled]}
-                onPress={handleApply}
-                disabled={!canApply}
-              >
-                <Text style={styles.applyBtnText}>
-                  {player
-                    ? `Apply ${applyCount} level${applyCount === 1 ? '' : 's'} to ${player.name}`
-                    : 'Waiting for account…'}
-                </Text>
-              </PressableRipple>
 
               {result.skipped.length > 0 ? (
                 <>
@@ -982,8 +1084,6 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
     padding: Spacing.base,
     gap: Spacing.sm,
   },
@@ -1009,56 +1109,102 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     lineHeight: 22,
   },
-  cardSubtitle: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-  },
-  input: {
-    width: '100%',
-    maxWidth: '100%',
-    height: 150,
-    backgroundColor: Colors.bgSubtle,
+cardSubtitle: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      // Without this the title's tight lineHeight leaves the subtitle crowding
+      // up against it.
+      marginTop: Spacing.xs,
+    },
+  pasteDrop: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.lg,
     borderRadius: Radius.md,
-    borderWidth: 0.75,
+    backgroundColor: Colors.bgCardHover,
+    borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.border,
-    padding: Spacing.base,
-    color: Colors.textPrimary,
-    fontFamily: MONO,
-    fontSize: 12,
+  },
+  pasteDropTitle: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+  },
+  pasteDropHint: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    textAlign: 'center',
     lineHeight: 16,
   },
-  btnRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
+  pasteDropOkTitle: {
+    ...Typography.subhead,
+    color: Colors.success,
+    fontWeight: '700',
   },
-  ghostBtn: {
+  // One layout for both paste/parse states so swapping primary only repaints
+  // them. Sharing ghostBtn/parseBtn directly reshaped the buttons, since those
+  // differ in flex and horizontal padding as well as colour.
+  pasteActionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.base,
     borderRadius: Radius.md,
     borderWidth: 0.75,
+  },
+  pasteActionPrimary: {
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+  },
+  pasteActionGhost: {
+    backgroundColor: 'transparent',
     borderColor: Colors.border,
   },
-  ghostBtnText: {
+  btnRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+// Refresh sits beside Apply rather than up by the paste box: both act on the
+    // parsed preview, so they belong together at the point of applying.
+    actionRow: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      gap: Spacing.sm,
+      marginTop: Spacing.sm,
+    },
+    refreshBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      paddingHorizontal: Spacing.base,
+      borderRadius: Radius.md,
+      borderWidth: 0.75,
+      borderColor: Colors.border,
+    },
+    refreshBtnDisabled: {
+      opacity: 0.5,
+    },
+    refreshBtnText: {
+      ...Typography.subhead,
+      color: Colors.textSecondary,
+      fontWeight: '500',
+    },
+    ghostBtnText: {
     ...Typography.subhead,
     color: Colors.textSecondary,
     fontWeight: '500',
   },
-  parseBtn: {
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.textPrimary,
-  },
-  parseBtnText: {
-    ...Typography.subhead,
-    color: Colors.bg,
-    fontWeight: '600',
+parseBtnText: {
+      ...Typography.subhead,
+      color: Colors.bg,
+      fontWeight: '600',
   },
   errorRow: {
     flexDirection: 'row',
@@ -1073,6 +1219,30 @@ const styles = StyleSheet.create({
   },
   resultSection: {
     gap: Spacing.sm,
+  },
+  // Dashed frame reads as "nothing here" rather than another populated card.
+  // Same 1px dashed rule the header buttons and troop grids use: 0.75 packs the
+  // dashes so tightly it looks solid, and Android drops them below 1.
+  upToDateCard: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: Colors.border,
+  },
+  upToDateTitle: {
+    ...Typography.subhead,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+  },
+  upToDateText: {
+    ...Typography.caption,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   sectionTitle: {
     ...Typography.caption,
@@ -1145,6 +1315,12 @@ const styles = StyleSheet.create({
     ...Typography.subhead,
     color: Colors.success,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  rowSub: {
+    ...Typography.subhead,
+    color: Colors.textMuted,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   pipelineText: {
@@ -1353,77 +1529,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
-  craftedCard: {
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: 10,
-    gap: 2,
-    marginTop: Spacing.xs + 2,
-  },
-  craftedCardFirst: {
-    marginTop: 0,
-  },
-  craftedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingBottom: 6,
-  },
-  craftedIcon: {
-    width: 34,
-    height: 34,
-  },
-  craftedIconBox: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  craftedName: {
-    flex: 1,
-    ...Typography.subhead,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  craftedLevel: {
-    ...Typography.subhead,
-    color: Colors.success,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  craftedModuleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: 3,
-  },
-  craftedModuleName: {
-    flex: 1,
-    ...Typography.footnote,
-    color: Colors.textSecondary,
-  },
-  craftedModuleLevel: {
-    ...Typography.footnote,
-    color: Colors.textTertiary,
-    fontVariant: ['tabular-nums'],
-  },
-  craftedModuleStat: {
-    minWidth: 118,
-    textAlign: 'right',
-    ...Typography.footnote,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  craftedUnknown: {
-    ...Typography.caption,
-    color: Colors.warning,
-    lineHeight: 16,
-    paddingBottom: Spacing.xs,
-  },
   levelIcon: {
     width: 24,
     height: 24,
@@ -1446,13 +1551,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
-  applyBtn: {
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.xs,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.textPrimary,
-  },
+applyBtn: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: Spacing.md,
+      marginTop: Spacing.xs,
+      borderRadius: Radius.md,
+      backgroundColor: Colors.textPrimary,
+    },
+    // Row variant: marginTop comes from actionRow's gap, so it drops out here.
+    applyBtnFlex: {
+      flex: 1,
+      marginTop: 0,
+      paddingHorizontal: Spacing.sm,
+    },
   applyBtnDisabled: {
     opacity: 0.4,
   },
