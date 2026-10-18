@@ -94,6 +94,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const skeletons = activeKey === 'index' && loading && !player;
 
   const visibleTabs = TAB_GROUPS[Math.min(page, TAB_GROUPS.length - 1)];
+  const activeIndex = visibleTabs.indexOf(activeKey);
 
   const navigate = (name: string) => {
     const route = state.routes.find((r: any) => r.name === name);
@@ -105,26 +106,46 @@ export default function FloatingTabBar({ state, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {!skeletons && (
+      {/* Kept mounted while loading. Dropping it moved the bar up by its own
+            height and then back down again once the player landed. */}
         <View style={styles.pagePill}>
-          {TAB_GROUPS.map((_, i) => (
-            <View key={i} style={[styles.pageDot, i === page && styles.pageDotActive]} />
-          ))}
+          {TAB_GROUPS.map((_, i) =>
+            skeletons ? (
+              <Skeleton
+                key={i}
+                width={4}
+                height={4}
+                borderRadius={2}
+                style={i === page ? styles.pageDotActive : styles.pageDot}
+              />
+            ) : (
+              <View key={i} style={[styles.pageDot, i === page && styles.pageDotActive]} />
+            ),
+          )}
         </View>
-      )}
       <View style={styles.bar}>
         {skeletons ? (
           <>
-            <View style={[styles.tabItem, styles.tabItemSkeleton]}>
-              <Skeleton width={22} height={22} borderRadius={8} />
+            {/* Chevron slots are fixed width, not flex like a tab. Sizing them as
+                tabItem made the whole bar narrower during load than after. */}
+            <View style={[styles.tabItemChevron, styles.tabItemSkeleton]}>
+              <Skeleton width={18} height={18} borderRadius={5} />
             </View>
-            {visibleTabs.map((tab) => (
-              <View key={tab} style={[styles.tabItem, styles.tabItemSkeleton]}>
-                <Skeleton width={22} height={22} borderRadius={8} />
+            {visibleTabs.map((tab, i) => (
+              <View
+                key={tab}
+                style={[styles.tabItem, i === activeIndex && styles.tabItemActive, styles.tabItemSkeleton]}
+              >
+                <Skeleton
+                  width={22}
+                  height={22}
+                  borderRadius={8}
+                  style={i === activeIndex ? styles.skeletonInverted : undefined}
+                />
               </View>
             ))}
-            <View style={[styles.tabItem, styles.tabItemSkeleton]}>
-              <Skeleton width={22} height={22} borderRadius={8} />
+            <View style={[styles.tabItemChevron, styles.tabItemSkeleton]}>
+              <Skeleton width={18} height={18} borderRadius={5} />
             </View>
           </>
         ) : (
@@ -203,6 +224,11 @@ const styles = StyleSheet.create({
   tabItemSkeleton: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // The active tab paints its icon in bgCard on a filled pill, so the skeleton
+  // inside it has to invert too or the shape reads as a plain tab.
+  skeletonInverted: {
+    backgroundColor: Colors.bgCard,
   },
   tabItemChevron: {
     minWidth: 46,
