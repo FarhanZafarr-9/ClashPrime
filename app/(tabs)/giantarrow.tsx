@@ -303,9 +303,11 @@ export default function GiantArrowScreen() {
   }, [mode]);
 
   const clearImage = useCallback(() => {
-    show({
-      title: 'Remove screenshot?',
-      message: 'This clears the image and the arrow plan drawn on it.',
+show({
+        title: 'Remove screenshot?',
+        subtitle: 'Clears the image and the plan drawn on it',
+        icon: 'trash-outline',
+        message: 'This clears the image and the arrow plan drawn on it.',
       actions: [
         { label: 'Cancel', onPress: () => { } },
         {
