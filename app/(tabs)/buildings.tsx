@@ -7,6 +7,7 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -1643,6 +1644,8 @@ export default function BuildingsScreen() {
 
     showDialog({
       title: 'Max out all buildings?',
+      subtitle: `Sets every building to its TH${th} maximum`,
+      icon: 'rocket-outline',
       message: (
         <View style={styles.dialogMessage}>
           <Text style={styles.dialogMessageText}>
@@ -1784,12 +1787,15 @@ export default function BuildingsScreen() {
           <View style={styles.headerRow}>
             <Text style={styles.title}>Buildings</Text>
             <View style={styles.headerActions}>
-              <PressableRipple onPress={maxOutAllBuildings} hitSlop={8} style={styles.headerBtn}>
-                <Ionicons name="rocket-outline" size={20} color={Colors.textSecondary} />
-              </PressableRipple>
-              <PressableRipple onPress={() => router.push(`/onboarding?mode=reset&th=${th}`)} hitSlop={8} style={styles.headerBtn}>
-                <Ionicons name="flag-outline" size={20} color={Colors.textSecondary} />
-              </PressableRipple>
+              <HeaderButton onPress={maxOutAllBuildings} accessibilityLabel="Max out all buildings">
+                <Ionicons name="rocket-outline" size={18} color={Colors.textSecondary} />
+              </HeaderButton>
+              <HeaderButton
+                onPress={() => router.push(`/onboarding?mode=reset&th=${th}`)}
+                accessibilityLabel="Reset account data"
+              >
+                <Ionicons name="flag-outline" size={18} color={Colors.textSecondary} />
+              </HeaderButton>
             </View>
           </View>
           <Dialog />
@@ -1970,15 +1976,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
+title: {
     ...Typography.largeTitle,
     color: Colors.textPrimary,
   },
