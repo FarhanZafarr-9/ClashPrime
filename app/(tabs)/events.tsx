@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
@@ -8,7 +9,6 @@ import {
   Linking,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { Card } from '../../src/components/Card';
@@ -126,7 +126,7 @@ export default function EventsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <ScrollView
 contentContainerStyle={styles.scroll}
           overScrollMode="never"
@@ -255,7 +255,7 @@ contentContainerStyle={styles.scroll}
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
