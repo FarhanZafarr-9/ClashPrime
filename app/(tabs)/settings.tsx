@@ -23,7 +23,7 @@ import { useBaseSourcePref } from '../../src/api/baseScraper';
 import { Chip } from '../../src/components/Chip';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
-import { parseCocExport, cocExportToBuildingLevels, normalizeTag, CocImportResult } from '../../src/utils/cocExport';
+import { parseCocExport, cocExportToBuildingLevels, normalizeTag, detectBuilderHutCount, CocImportResult } from '../../src/utils/cocExport';
 import type { ClashPlayer } from '../../src/types/clash';
 import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
 import { ClashAPI } from '../../src/api/clash';
@@ -589,6 +589,10 @@ export default function SettingsScreen() {
   const [onboardingStep, setOnboardingStep] = useState<'tag' | 'import' | 'importToken' | 'profile' | 'builderCount' | 'thPicker'>('tag');
   const [onboardingTag, setOnboardingTag] = useState('');
   const [onboardingBuilderCount, setOnboardingBuilderCount] = useState(2);
+  // Set when the pasted export yielded a readable Builder Hut count. A detected
+  // count is authoritative and locks the step; only an undetected one is
+  // editable, so the default of 2 can never be saved by accident.
+  const [onboardingHutsDetected, setOnboardingHutsDetected] = useState(false);
   const [onboardingThLevel, setOnboardingThLevel] = useState('');
   const [onboardingPlayer, setOnboardingPlayer] = useState<ClashPlayer | null>(null);
 
@@ -610,6 +614,7 @@ export default function SettingsScreen() {
     isVerified: builderIsVerified,
     canDecrease: canDecreaseBuilders,
     canIncrease: canIncreaseBuilders,
+    verifyBuilderCount,
     clearVerified: clearBuilderVerified,
   } = useBuilderCount();
   const { count: builderBaseCount, setBuilderBaseCount, loaded: bbBuilderLoaded } = useBuilderBaseCount(player?.builderHallLevel);
@@ -812,11 +817,17 @@ export default function SettingsScreen() {
       setOnboardingImportError(parsed.error ?? 'Failed to parse export.');
       setOnboardingImportResult(null);
       setOnboardingImportTag(null);
+      setOnboardingHutsDetected(false);
       return;
     }
     setOnboardingImportError(null);
     setOnboardingImportResult(cocExportToBuildingLevels(parsed.data));
     setOnboardingImportTag(normalizeTag(parsed.data.tag) || null);
+    // Acknowledge the huts the same way onboarding does. Without this the
+    // builder step kept its default of 2 and saved that for the account.
+    const huts = detectBuilderHutCount(cocExportToBuildingLevels(parsed.data));
+    setOnboardingHutsDetected(huts !== null);
+    if (huts) setOnboardingBuilderCount(huts);
   };
 
   const handleOnboardingImportContinue = () => {
@@ -856,7 +867,17 @@ export default function SettingsScreen() {
       await setApiToken(token);
       await cachePlayer(mergedPlayer, onboardingImportTag!);
 
-      // Import provides all building levels; skip profile/TH/builder steps
+      // Import provides all building levels; skip profile/TH/builder steps.
+      // The count still has to land: this branch used to skip the step without
+      // ever saving one, leaving the account on the default of 2. A count read
+      // from the export is verified, matching onboarding; otherwise the value
+      // chosen in the step is stored unverified so the user can correct it.
+      if (onboardingHutsDetected) {
+        await verifyBuilderCount(onboardingBuilderCount, onboardingImportTag!);
+      } else {
+        await setBuilderCount(onboardingBuilderCount, onboardingImportTag!);
+      }
+
       setShowOnboarding(false);
       setOnboardingStep('tag');
       setOnboardingImportJson('');
@@ -867,6 +888,7 @@ export default function SettingsScreen() {
       setOnboardingTag('');
       setOnboardingThLevel('');
       setOnboardingBuilderCount(2);
+      setOnboardingHutsDetected(false);
 
       // Refresh accounts and switch to the new one
       await refreshAccounts();
@@ -1779,8 +1801,9 @@ export default function SettingsScreen() {
         setOnboardingTag={setOnboardingTag}
         onboardingPlayer={onboardingPlayer}
         setOnboardingPlayer={setOnboardingPlayer}
-        onboardingBuilderCount={onboardingBuilderCount}
-        setOnboardingBuilderCount={setOnboardingBuilderCount}
+onboardingBuilderCount={onboardingBuilderCount}
+                setOnboardingBuilderCount={setOnboardingBuilderCount}
+                onboardingHutsDetected={onboardingHutsDetected}
         onboardingThLevel={onboardingThLevel}
         setOnboardingThLevel={setOnboardingThLevel}
         onboardingImportJson={onboardingImportJson}
@@ -2036,6 +2059,7 @@ settingSections: {
     alignItems: 'center',
     gap: Spacing.sm,
     paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
   },
   switchItemActive: {
@@ -2140,14 +2164,14 @@ settingSections: {
     color: Colors.textSecondary,
     fontWeight: '500',
   },
-  switchClose: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    marginTop: Spacing.xs,
-    borderRadius: Radius.md,
-    borderWidth: 0.75,
-    borderColor: Colors.border,
-  },
+switchClose: {
+      alignItems: 'center',
+      paddingVertical: Spacing.md,
+      marginTop: Spacing.xs,
+      borderRadius: Radius.md,
+      borderWidth: 0.75,
+      borderColor: Colors.border,
+    },
   switchCloseText: {
     ...Typography.subhead,
     color: Colors.textSecondary,
