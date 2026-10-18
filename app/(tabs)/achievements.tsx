@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState } from 'react';
 import {
   View,
@@ -7,7 +8,6 @@ import {
   Image,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -67,11 +67,11 @@ export default function AchievementsScreen() {
 
   if (loading || !player) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+      <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
         <View style={styles.center}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -111,7 +111,7 @@ export default function AchievementsScreen() {
   const activeGroups = groupAchievementsByStars(activeAchievements);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Awards</Text>
@@ -227,7 +227,7 @@ export default function AchievementsScreen() {
         )}
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
