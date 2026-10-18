@@ -23,6 +23,7 @@ import {
   type HeroJourneyTHSection,
 } from '../../src/utils/heroJourney';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import { SettingRow } from '../../src/components/SettingRow';
 import { ResourceCostChips } from '../../src/components/ResourceCostChips';
 import { HeroJourneyScreenSkeleton } from '../../src/components/SkeletonScreens';
@@ -452,30 +453,26 @@ ref={scrollRef}
           </View>
           <View style={styles.headerActions}>
             {journey.currentMilestone && currentFilteredIndex >= 0 && (
-              <PressableRipple
+              <HeaderButton
                 onPress={scrollToCurrent}
-                style={styles.currentBtn}
-                hitSlop={8}
-                accessibilityRole="button"
+                tone="warning"
                 accessibilityLabel="Scroll to current milestone"
               >
                 <MaterialCommunityIcons name="flag" size={15} color={Colors.warning} />
-              </PressableRipple>
+              </HeaderButton>
             )}
-            <PressableRipple
+            <HeaderButton
               onPress={onRefresh}
-              disabled={refreshing}
+              loading={refreshing}
               hitSlop={12}
-              style={styles.headerRefreshBtn}
               accessibilityLabel="Refresh hero journey"
-              accessibilityRole="button"
             >
               <Ionicons
-                name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
-                size={28}
-                color={refreshing ? Colors.textTertiary : colors.textSecondary}
+                name="refresh-circle-outline"
+                size={20}
+                color={colors.textSecondary}
               />
-            </PressableRipple>
+            </HeaderButton>
           </View>
         </View>
 
@@ -1015,15 +1012,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
   },
-  headerRefreshBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.textPrimary + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryCard: {
+summaryCard: {
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.base,
     padding: Spacing.base,
@@ -1185,17 +1174,7 @@ const styles = StyleSheet.create({
     color: Colors.bg,
     opacity: 0.7,
   },
-  currentBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.sm,
-    borderWidth: 0.75,
-    borderColor: Colors.warning +'60',
-    backgroundColor: Colors.warning+'20',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noResults: {
+noResults: {
     ...Typography.subhead,
     color: Colors.textTertiary,
     textAlign: 'center',
