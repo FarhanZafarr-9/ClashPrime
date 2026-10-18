@@ -88,6 +88,10 @@ export default function RootLayout() {
   if (!checked || !fontsReady) return null;
 
   return (
+    // Note: initialWindowMetrics is hard-coded to null in safe-area-context v5, so
+    // passing it seeds nothing. Insets only arrive via an async native event,
+//    which is why screens use Screen (StatusBar.currentHeight) for their top
+    // padding instead of the provider.
     <SafeAreaProvider>
       <PlayerProvider>
         <GameDataProvider>
