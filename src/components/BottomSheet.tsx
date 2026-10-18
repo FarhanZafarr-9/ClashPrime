@@ -200,10 +200,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardIconImage: {
-    width: 28,
-    height: 28,
-  },
+cardIconImage: {
+      width: 28,
+      height: 28,
+      // The chip it sits in is rounded, so an unrounded image (the developer
+      // avatar) shows square corners against it. Matches the inset the 28 sits
+      // at inside the 36 chip.
+      borderRadius: Radius.sm,
+    },
   cardHeaderText: {
     flex: 1,
     justifyContent: 'center',
