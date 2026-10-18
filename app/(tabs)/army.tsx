@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -13,7 +14,6 @@ import HeaderButton from '../../src/components/HeaderButton';
 import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { SPELL_STAT_ICONS } from '../../src/utils/statImages';
 import { useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme, clashFontFamily, useGlobalLevels } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -1304,7 +1304,7 @@ to={pivot}
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView
         contentContainerStyle={styles.scroll}
         overScrollMode="never"
@@ -1920,7 +1920,7 @@ to={pivot}
       >
         {sheetName ? renderDetailPanel(sheetName) : null}
       </BottomSheet>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
