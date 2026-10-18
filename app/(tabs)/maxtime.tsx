@@ -1,6 +1,6 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { SectionHeader } from '../../src/components/SectionHeader';
@@ -956,7 +956,7 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} >
+    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
       <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
@@ -1408,7 +1408,7 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
           }
         </SharePreviewModal>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
