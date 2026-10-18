@@ -1,3 +1,4 @@
+import Screen from '../src/components/Screen';
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -8,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -696,7 +696,7 @@ export default function ImportExportScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -1037,7 +1037,7 @@ export default function ImportExportScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       <Dialog />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
