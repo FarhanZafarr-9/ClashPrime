@@ -237,6 +237,8 @@ export default function OnboardingScreen() {
       setError(e.message || 'Failed to connect. Check your token.');
       showDialog({
         title: 'Sign-in Failed',
+        subtitle: 'Could not finish the import',
+        icon: 'alert-circle-outline',
         message: e.message || 'Failed to connect. Check your token.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
@@ -293,6 +295,8 @@ export default function OnboardingScreen() {
       setError(e.message || 'Failed to connect. Check your token and tag.');
       showDialog({
         title: 'Sign-in Failed',
+        subtitle: 'Could not load your profile',
+        icon: 'alert-circle-outline',
         message: e.message || 'Failed to connect. Check your token and tag.',
         actions: [{ label: 'OK', primary: true, onPress: () => { } }],
       });
