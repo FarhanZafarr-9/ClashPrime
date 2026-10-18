@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
@@ -13,7 +14,6 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import PressableRipple from '../../src/components/PressableRipple';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../src/theme';
 import { Card } from '../../src/components/Card';
@@ -269,7 +269,7 @@ export default function PlayerInspectScreen() {
       ];
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <View style={styles.header}>
         <PressableRipple style={styles.backBtn} onPress={() => router.back()} hitSlop={12} accessibilityLabel="Go back" accessibilityRole="button">
           <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
@@ -618,7 +618,7 @@ export default function PlayerInspectScreen() {
           <Text style={styles.emptySub}>Enter a player tag above to inspect their profile.</Text>
         </View>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
