@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -23,7 +24,6 @@ import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
 import HeaderButton from '../../src/components/HeaderButton';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -1348,7 +1348,7 @@ export default function HomeScreen() {
 
   if (error && !player) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Screen style={styles.container}>
         <View style={styles.center}>
           <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>Connection Error</Text>
@@ -1357,7 +1357,7 @@ export default function HomeScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </PressableRipple>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -1643,7 +1643,7 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} >
+    <Screen style={styles.container} >
       <View style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -2714,7 +2714,7 @@ const groupDesc = group.pending
           </View>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
