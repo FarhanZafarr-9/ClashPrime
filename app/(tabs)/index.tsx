@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import { HomeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -729,6 +730,8 @@ export default function HomeScreen() {
       if (!online) {
         showDialog({
           title: 'No Internet Connection',
+          subtitle: 'GitHub was unreachable',
+          icon: 'cloud-offline-outline',
           message: 'Could not reach GitHub to check for updates. Check your Wi-Fi or mobile data, then try again.',
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
@@ -742,6 +745,8 @@ export default function HomeScreen() {
       if (hasUpdate) {
         showDialog({
           title: 'Update Available',
+          subtitle: `You have v${currentVersion}`,
+          icon: 'cloud-download-outline',
           message: `A new version of ClashPrime (v${v}) has been published — you are running v${currentVersion}. New builds are released as APKs on GitHub, so grab the latest one there to update.`,
           actions: [
             { label: 'Later', onPress: () => { } },
@@ -751,12 +756,16 @@ export default function HomeScreen() {
       } else if (v !== currentVersion) {
         showDialog({
           title: "You're Ahead of the Releases",
+          subtitle: 'Development build detected',
+          icon: 'flask-outline',
           message: `Your build (v${currentVersion}) is newer than the latest published release (v${v}). This usually means you are running an unreleased development build — nothing to update.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
       } else {
         showDialog({
           title: "You're Up to Date",
+          subtitle: `v${currentVersion} is current`,
+          icon: 'checkmark-circle-outline',
           message: `ClashPrime v${currentVersion} matches the latest published release. Check back later for new versions.`,
           actions: [{ label: 'OK', primary: true, onPress: () => { } }],
         });
@@ -778,6 +787,8 @@ export default function HomeScreen() {
         if (navigation.canGoBack()) return false;
         showDialog({
           title: 'Exit ClashPrime?',
+          subtitle: 'Close the app',
+          icon: 'power-outline',
           message: 'Are you sure you want to close the app?',
           actions: [
             { label: 'Cancel', onPress: () => { } },
@@ -1659,20 +1670,24 @@ export default function HomeScreen() {
               )}
               <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
                 {player && (
-                  <PressableRipple style={styles.switchBtn} onPress={handleOpenShare}>
+                  <HeaderButton onPress={handleOpenShare} accessibilityLabel="Share base">
                     <Ionicons name="images-outline" size={18} color={Colors.textSecondary} />
-                  </PressableRipple>
+                  </HeaderButton>
                 )}
-                <PressableRipple style={styles.switchBtn} onPress={handleCheckUpdates}>
-                  {checkingUpdate ? (
-                    <ActivityIndicator size="small" color={Colors.textSecondary} />
-                  ) : (
-                    <Ionicons name={updateAvailable ? 'cloud-download-outline' : 'cloud-done-outline'} size={18} color={updateAvailable ? Colors.warning : Colors.textSecondary} />
-                  )}
-                </PressableRipple>
-                <PressableRipple style={styles.switchBtn} onPress={() => setSwitcherVisible(true)}>
+                <HeaderButton
+                  onPress={handleCheckUpdates}
+                  loading={checkingUpdate}
+                  accessibilityLabel="Check for updates"
+                >
+                  <Ionicons
+                    name={updateAvailable ? 'cloud-download-outline' : 'cloud-done-outline'}
+                    size={18}
+                    color={updateAvailable ? Colors.warning : Colors.textSecondary}
+                  />
+                </HeaderButton>
+                <HeaderButton onPress={() => setSwitcherVisible(true)} accessibilityLabel="Switch account">
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
-                </PressableRipple>
+                </HeaderButton>
               </View>
             </View>
             <Text style={styles.timestamp}>
@@ -2772,15 +2787,7 @@ const styles = StyleSheet.create({
     color: Colors.warning,
     fontWeight: '700',
   },
-  switchBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.accentGhost,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timestamp: {
+timestamp: {
     ...Typography.caption,
     color: Colors.textMuted,
     marginTop: 2,
