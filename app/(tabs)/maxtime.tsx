@@ -7,6 +7,7 @@ import { SectionHeader } from '../../src/components/SectionHeader';
 import { SettingRow, useSettingRowSurface } from '../../src/components/SettingRow';
 import { ItemCard } from '../../src/components/ItemCard';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { MaxTimeScreenSkeleton } from '../../src/components/SkeletonScreens';
 import { usePlayer } from '../../src/hooks/usePlayerContext';
@@ -961,18 +962,17 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
           <View style={styles.headerRow}>
             <Text style={styles.title}>Time to Max</Text>
             <View style={styles.headerActions}>
-              <PressableRipple
+              <HeaderButton
                 onPress={() => {
                   // Share whichever village is on screen, so the preview matches
                   // what the user just tapped share on.
                   setShareVillage(village);
                   setShareVisible(true);
                 }}
-                hitSlop={8}
-                style={styles.headerBtn}
+                accessibilityLabel="Share time to max"
               >
-                <Ionicons name="share-outline" size={20} color={Colors.textSecondary} />
-              </PressableRipple>
+                <Ionicons name="share-outline" size={18} color={Colors.textSecondary} />
+              </HeaderButton>
             </View>
           </View>
           <Text style={styles.subtitle}>
@@ -1435,15 +1435,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bgSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareOverlay: {
+shareOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
