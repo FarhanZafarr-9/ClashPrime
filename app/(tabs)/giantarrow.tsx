@@ -1,3 +1,4 @@
+import Screen from '../../src/components/Screen';
 import React, {
   useCallback,
   useEffect,
@@ -21,7 +22,6 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -384,7 +384,7 @@ show({
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.container} >
+      <Screen style={styles.container} >
         {uri && aspect != null ? (
           <View style={styles.editor}>
             <View style={styles.editorHeader}>
@@ -557,7 +557,7 @@ show({
                   />
                 </View>
               </View>
-              <SafeAreaView style={styles.fullBottomBar} edges={['bottom']}>
+              <Screen style={styles.fullBottomBar} edges={['bottom']}>
                 <View style={styles.fullHintRow}>
                   <Text style={styles.fullHintKicker}>HINT</Text>
                   <Text style={styles.fullHint} numberOfLines={2}>
@@ -583,12 +583,12 @@ show({
                     <Text style={[styles.fullBtnText, styles.fullBtnTextPrimary]}>Done</Text>
                   </Pressable>
                 </View>
-              </SafeAreaView>
+              </Screen>
             </GestureHandlerRootView>
           </Modal>
         )}
         <Dialog />
-      </SafeAreaView>
+      </Screen>
     </GestureHandlerRootView>
   );
 }
