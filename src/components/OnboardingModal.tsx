@@ -29,6 +29,7 @@ interface OnboardingModalProps {
   setOnboardingPlayer: (player: ClashPlayer | null) => void;
   onboardingBuilderCount: number;
   setOnboardingBuilderCount: (count: number) => void;
+  onboardingHutsDetected: boolean;
   onboardingThLevel: string;
   setOnboardingThLevel: (level: string) => void;
   onboardingImportJson: string;
@@ -62,6 +63,7 @@ export default function OnboardingModal({
   setOnboardingPlayer,
   onboardingBuilderCount,
   setOnboardingBuilderCount,
+  onboardingHutsDetected,
   onboardingThLevel,
   setOnboardingThLevel,
   onboardingImportJson,
@@ -184,7 +186,7 @@ export default function OnboardingModal({
               <PressableRipple style={[styles.btn, styles.btnGhost]} onPress={onClose}>
                 <Text style={[styles.btnText, styles.btnTextGhost]}>Cancel</Text>
               </PressableRipple>
-              <PressableRipple style={styles.btn} onPress={handleOnboardingSave} disabled={!onboardingTag.trim()}>
+              <PressableRipple style={[styles.btn, styles.btnLower]} onPress={handleOnboardingSave} disabled={!onboardingTag.trim()}>
                 <Text style={styles.btnText}>Next</Text>
               </PressableRipple>
             </View>
@@ -240,13 +242,40 @@ export default function OnboardingModal({
                   <Text style={styles.summaryLabel}>In-progress</Text>
                   <Text style={styles.summaryValue}>{onboardingImportResult.resolved.reduce((s, r) => s + r.timerRows.length, 0)}</Text>
                 </View>
+                <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.summaryLabel}>
+                    Builder Huts
+                    <Text style={styles.summaryHint}>
+                      {onboardingHutsDetected ? '  read from your export' : '  not in export, pick one'}
+                    </Text>
+                  </Text>
+                  {onboardingHutsDetected ? (
+                    <Text style={styles.summaryValue}>{onboardingBuilderCount}</Text>
+                  ) : (
+                    <View style={styles.hutPicker}>
+                      {[2, 3, 4, 5].map((n) => {
+                        const picked = onboardingBuilderCount === n;
+                        return (
+                          <PressableRipple
+                            key={n}
+                            onPress={() => setOnboardingBuilderCount(n)}
+                            style={[styles.hutChip, picked && styles.hutChipActive]}
+                            hitSlop={4}
+                          >
+                            <Text style={[styles.hutChipText, picked && styles.hutChipTextActive]}>{n}</Text>
+                          </PressableRipple>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
               </View>
             ) : null}
             <View style={styles.actions}>
               <PressableRipple style={[styles.btn, styles.btnGhost]} onPress={() => setStep('tag')}>
                 <Text style={[styles.btnText, styles.btnTextGhost]}>Back</Text>
               </PressableRipple>
-              <PressableRipple style={styles.btn} onPress={handleOnboardingImportContinue} disabled={!onboardingImportResult}>
+              <PressableRipple style={[styles.btn, styles.btnLower]} onPress={handleOnboardingImportContinue} disabled={!onboardingImportResult}>
                 <Text style={styles.btnText}>Continue</Text>
               </PressableRipple>
             </View>
@@ -281,7 +310,7 @@ export default function OnboardingModal({
               <PressableRipple style={[styles.btn, styles.btnGhost]} onPress={() => setStep('import')}>
                 <Text style={[styles.btnText, styles.btnTextGhost]}>Back</Text>
               </PressableRipple>
-              <PressableRipple style={styles.btn} onPress={handleTokenContinue}>
+              <PressableRipple style={[styles.btn, styles.btnLower]} onPress={handleTokenContinue}>
                 <Text style={styles.btnText}>Continue</Text>
               </PressableRipple>
             </View>
@@ -327,7 +356,7 @@ export default function OnboardingModal({
               >
                 <Text style={[styles.btnText, styles.btnTextGhost]}>Back</Text>
               </PressableRipple>
-              <PressableRipple style={styles.btn} onPress={handleOnboardingSave}>
+              <PressableRipple style={[styles.btn, styles.btnLower]} onPress={handleOnboardingSave}>
                 <Text style={styles.btnText}>Confirm & Continue</Text>
               </PressableRipple>
             </View>
@@ -364,7 +393,7 @@ export default function OnboardingModal({
               <PressableRipple style={[styles.btn, styles.btnGhost]} onPress={() => setStep('profile')}>
                 <Text style={[styles.btnText, styles.btnTextGhost]}>Back</Text>
               </PressableRipple>
-              <PressableRipple style={styles.btn} onPress={handleOnboardingSave}>
+              <PressableRipple style={[styles.btn, styles.btnLower]} onPress={handleOnboardingSave}>
                 <Text style={styles.btnText}>Continue</Text>
               </PressableRipple>
             </View>
@@ -402,7 +431,7 @@ export default function OnboardingModal({
               <PressableRipple style={[styles.btn, styles.btnGhost]} onPress={() => setStep('builderCount')}>
                 <Text style={[styles.btnText, styles.btnTextGhost]}>Back</Text>
               </PressableRipple>
-              <PressableRipple style={styles.btn} onPress={handleOnboardingSave} disabled={!onboardingThLevel}>
+              <PressableRipple style={[styles.btn, styles.btnLower]} onPress={handleOnboardingSave} disabled={!onboardingThLevel}>
                 <Text style={styles.btnText}>Continue</Text>
               </PressableRipple>
             </View>
@@ -468,13 +497,19 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginTop: Spacing.md,
   },
-  btn: {
-    backgroundColor: Colors.textPrimary,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    width: '100%',
-  },
+btn: {
+      backgroundColor: Colors.textPrimary,
+      paddingVertical: Spacing.md,
+      borderRadius: Radius.md,
+      alignItems: 'center',
+      width: '100%',
+      minHeight: 50,
+    },
+    // The primary button is always the lower of the two in an actions stack, so
+    // it carries the extra height to stay an easy target at the bottom.
+    btnLower: {
+      minHeight: 56,
+    },
   btnGhost: {
     backgroundColor: 'transparent',
     borderWidth: 1,
@@ -489,14 +524,15 @@ const styles = StyleSheet.create({
   btnTextGhost: {
     color: Colors.textSecondary,
   },
-  importBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.base,
-    borderRadius: Radius.sm,
+importBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.base,
+      borderRadius: Radius.sm,
+      minHeight: 50,
     borderBottomLeftRadius: Radius.xl * 1.25,
     borderBottomRightRadius: Radius.xl * 1.25,
     borderWidth: 1,
@@ -570,6 +606,37 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '600',
+  },
+  summaryHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontWeight: '400',
+  },
+  hutPicker: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  hutChip: {
+    minWidth: 28,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.bgCardHover,
+  },
+  hutChipActive: {
+    backgroundColor: Colors.accentGhost,
+    borderWidth: 1,
+    borderColor: Colors.accent + '66',
+  },
+  hutChipText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  hutChipTextActive: {
+    color: Colors.textPrimary,
+    fontWeight: '700',
   },
   errorText: {
     ...Typography.caption,
