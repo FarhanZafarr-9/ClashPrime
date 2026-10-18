@@ -9,6 +9,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import PressableRipple from '../../src/components/PressableRipple';
+import HeaderButton from '../../src/components/HeaderButton';
 import SegmentedSwitch from '../../src/components/SegmentedSwitch';
 import { SPELL_STAT_ICONS } from '../../src/utils/statImages';
 import { useLocalSearchParams } from 'expo-router';
@@ -1103,7 +1104,7 @@ to={pivot}
                 <View style={{ marginBottom: Spacing.sm }}>
                   {legendEntries.map((e, li) => (
                     <Text key={`${e.acronym}-${li}`} style={[styles.panelLegend, { color: colors.textTertiary }]}>
-                      <Text style={{ fontWeight: '700', fontFamily: clashFontFamily(700) }}>{e.acronym}</Text> = {e.full}
+                      <Text style={styles.panelLegendAcronym}>{e.acronym}</Text> = {e.full}
                     </Text>
                   ))}
                 </View>
@@ -1324,20 +1325,18 @@ to={pivot}
             <Text style={styles.subtitle}>All your troops, heroes, spells & equipment</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-            <PressableRipple
+            <HeaderButton
               onPress={onRefresh}
-              disabled={refreshing}
+              loading={refreshing}
               hitSlop={12}
-              style={styles.headerRefreshBtn}
               accessibilityLabel="Force refresh all images and details"
-              accessibilityRole="button"
             >
               <Ionicons
-                name={refreshing ? 'sync-circle' : 'refresh-circle-outline'}
-                size={28}
-                color={refreshing ? Colors.textTertiary : colors.textSecondary}
+                name="refresh-circle-outline"
+                size={20}
+                color={colors.textSecondary}
               />
-            </PressableRipple>
+            </HeaderButton>
           </View>
         </View>
 
@@ -1954,11 +1953,8 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  headerRefreshBtn: {
-    padding: Spacing.xs,
-  },
-  title: {
-    ...Typography.largeTitle,
+title: {
+      ...Typography.largeTitle,
     color: Colors.textPrimary,
   },
   subtitle: {
@@ -2112,6 +2108,12 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     fontSize: 10,
     marginBottom: Spacing.sm,
+  },
+  // Nested inside panelLegend, so the acronym inherits that family's font and
+  // size. Setting it here explicitly dropped the Clash face entirely under the
+  // "titles" preference, where clashFontFamily rejects a missing size.
+  panelLegendAcronym: {
+    fontWeight: '700',
   },
   troopLevelGridBorder: {
     borderRadius: Radius.sm,
