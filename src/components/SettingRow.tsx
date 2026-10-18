@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PressableRipple from './PressableRipple';
-import { Colors, useTheme, Radius, Spacing } from '../theme';
+import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
 const DANGER = '#F44336';
 
@@ -217,9 +217,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   settingDesc: {
-    fontSize: 12,
+    ...Typography.footnote,
     color: Colors.textTertiary,
-    opacity: 0.85,
+    // A touch taller than the footnote default, since descriptions here run to
+    // full sentences rather than a single short line.
+    lineHeight: 18,
+    opacity: 0.95,
   },
   pill: {
     paddingHorizontal: 8,
