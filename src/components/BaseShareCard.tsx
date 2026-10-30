@@ -155,8 +155,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     overflow: 'hidden',
     backgroundColor: Colors.bgCard,
-    borderWidth: 0.75,
-    borderColor: Colors.borderSubtle,
   },
   previewImage: {
     width: '100%',
