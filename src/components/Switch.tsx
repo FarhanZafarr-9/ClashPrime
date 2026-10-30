@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-  Animated,
   StyleSheet,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import Animated, { interpolate, interpolateColor, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import PressableRipple from './PressableRipple';
 import { useTheme } from '../theme';
 
@@ -16,44 +17,37 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-const TRACK_WIDTH = 44;
-const TRACK_HEIGHT = 28;
-const TRACK_BORDER = 1.5;
-const TRACK_PADDING = 3;
-const BALL_SIZE = 18;
+const TRACK_WIDTH = 58;
+const TRACK_HEIGHT = 32;
+const TRACK_BORDER = 2;
+const TRACK_PADDING = 2;
+const BALL_SIZE = 24;
 const TRAVEL = TRACK_WIDTH - TRACK_BORDER * 2 - TRACK_PADDING * 2 - BALL_SIZE;
 
 /**
- * Hollow pill switch: an outlined rounded rectangle holding a single ball that
- * slides corner to corner. Nothing is filled, so the state reads from colour
- * alone — a muted outline and ball when off, the accent when on.
+ * Material-style switch with a highlighted track and state icons on the thumb.
  */
 export default function Switch({ value, onValueChange, disabled, style }: Props) {
   const { colors } = useTheme();
-  const progress = useState(() => new Animated.Value(value ? 1 : 0))[0];
+  const progress = useSharedValue(value ? 1 : 0);
 
   useEffect(() => {
-    Animated.timing(progress, {
-      toValue: value ? 1 : 0,
+    progress.value = withTiming(value ? 1 : 0, {
       duration: 180,
-      useNativeDriver: false,
-    }).start();
+      reduceMotion: ReduceMotion.System,
+    });
   }, [progress, value]);
 
-  const translateX = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, TRAVEL],
-  });
-
-  const trackBorderColor = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.border, colors.textPrimary],
-  });
-
-  const ballColor = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.textMuted, colors.textPrimary],
-  });
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(progress.value, [0, 1], [colors.textMuted, colors.textPrimary]),
+    borderColor: interpolateColor(progress.value, [0, 1], [colors.textTertiary, colors.textPrimary]),
+  }));
+  const thumbStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(progress.value, [0, 1], [colors.textSecondary, colors.bgCard]),
+    transform: [{ translateX: interpolate(progress.value, [0, 1], [0, TRAVEL]) }],
+  }));
+  const checkStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+  const crossStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
 
   return (
     <PressableRipple
@@ -65,8 +59,19 @@ export default function Switch({ value, onValueChange, disabled, style }: Props)
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled }}
     >
-      <Animated.View style={[styles.track, { borderColor: trackBorderColor }]}>
-        <Animated.View style={[styles.ball, { backgroundColor: ballColor, transform: [{ translateX }] }]} />
+      <Animated.View style={[styles.track, trackStyle]}>
+        <Animated.View style={[styles.ball, thumbStyle]}>
+          <Animated.View style={[styles.icon, crossStyle]} collapsable={false} accessible={false} importantForAccessibility="no-hide-descendants">
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path d="M7 7L17 17M17 7L7 17" stroke={colors.bgCard} strokeWidth={2.5} strokeLinecap="round" />
+            </Svg>
+          </Animated.View>
+          <Animated.View style={[styles.icon, checkStyle]} collapsable={false} accessible={false} importantForAccessibility="no-hide-descendants">
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path d="M5 12L10 17L19 7" fill="none" stroke={colors.textPrimary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </Animated.View>
+        </Animated.View>
       </Animated.View>
     </PressableRipple>
   );
@@ -90,11 +95,19 @@ const styles = StyleSheet.create({
     padding: TRACK_PADDING,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
   },
   ball: {
     width: BALL_SIZE,
     height: BALL_SIZE,
     borderRadius: BALL_SIZE / 2,
+  },
+  icon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: BALL_SIZE,
+    height: BALL_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
