@@ -1465,8 +1465,6 @@ shareOverlay: {
     height: 46,
     borderRadius: Radius.md,
     backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
