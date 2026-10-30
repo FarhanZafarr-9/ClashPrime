@@ -22,7 +22,7 @@ import { openURL } from 'expo-linking';
 import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref, useGlobalLevels } from '../../src/theme';
 import { useBaseSourcePref } from '../../src/api/baseScraper';
-import { Chip } from '../../src/components/Chip';
+import OptionSelector from '../../src/components/OptionSelector';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getMaxTownHall } from '../../src/utils/buildingData';
 import { parseCocExport, cocExportToBuildingLevels, normalizeTag, detectBuilderHutCount, CocImportResult } from '../../src/utils/cocExport';
@@ -1083,11 +1083,12 @@ export default function SettingsScreen() {
               desc={clashFontDesc}
               compact
             >
-              <View style={styles.fontChipRow}>
-                <Chip label="Off" selected={fontPref === 'off'} onPress={() => setClashFontPref('off')} />
-                <Chip label="Titles" selected={fontPref === 'titles'} onPress={() => setClashFontPref('titles')} />
-                <Chip label="All" selected={fontPref === 'all'} onPress={() => setClashFontPref('all')} />
-              </View>
+              <OptionSelector
+                label="Clash Font"
+                value={fontPref}
+                options={[{ value: 'off', label: 'Off' }, { value: 'titles', label: 'Titles' }, { value: 'all', label: 'All' }]}
+                onChange={setClashFontPref}
+              />
             </SettingRow>
             <SettingRow
               icon="globe-outline"
@@ -1107,11 +1108,12 @@ export default function SettingsScreen() {
               compact
               isLast
             >
-              <View style={styles.fontChipRow}>
-                <Chip label="ClashLy" selected={basePref === 'clashly'} onPress={() => setBasePref('clashly')} />
-                <Chip label="Both" selected={basePref === 'both'} onPress={() => setBasePref('both')} />
-                <Chip label="Clash Bases" selected={basePref === 'clash-bases'} onPress={() => setBasePref('clash-bases')} />
-              </View>
+              <OptionSelector
+                label="Base Sources"
+                value={basePref}
+                options={[{ value: 'clashly', label: 'ClashLy' }, { value: 'both', label: 'Both' }, { value: 'clash-bases', label: 'Clash Bases' }]}
+                onChange={setBasePref}
+              />
             </SettingRow>
           </SettingSection>
 
@@ -1700,13 +1702,6 @@ settingSections: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-  },
-  fontChipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    flexShrink: 1,
-    flexWrap: 'wrap',
   },
   chipRow: {
     flexDirection: 'row',
