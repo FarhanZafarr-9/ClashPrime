@@ -1,3 +1,4 @@
+import CollapsibleContent from '../../src/components/CollapsibleContent';
 import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, Pressable, Alert } from 'react-native';
@@ -127,13 +128,13 @@ function RowBadge({
   return (
     <View style={[
       square ? styles.headerBadge : styles.pipelineBadge,
-      inverted && { backgroundColor: colors.bg },
+      inverted && { backgroundColor: colors.invertedChip },
       topRounded && index === 0 && styles.rowBadgeFirst,
       bottomRounded && index === count - 1 && styles.rowBadgeLast,
     ]}>
       <Text style={[
         tone === 'marker' ? styles.headerBadgeMarker : styles.pipelineTime,
-        inverted && { color: colors.textPrimary },
+        inverted && { color: colors.bgCard },
       ]}>{label}</Text>
     </View>
   );
@@ -725,8 +726,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
             })()}
           </View>
         </SettingRow>
-        {isOpen && (
-          <View style={styles.pipelineBody}>
+        <CollapsibleContent expanded={!!(isOpen)}>
+          {() => (<View style={styles.pipelineBody}>
             {rows.length === 0 ? (
               <Text style={styles.emptyText}>Nothing left to upgrade</Text>
             ) : (
@@ -818,8 +819,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
               </>
             )}
             {!isLast && <View style={styles.sectionSeparator} />}
-          </View>
-        )}
+          </View>)}
+        </CollapsibleContent>
       </React.Fragment>
     );
   };
@@ -1071,8 +1072,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                   />
                 )}
               </SettingRow>
-              {readinessOpen && readiness && (
-                <View style={styles.readinessBody}>
+              <CollapsibleContent expanded={!!(readinessOpen && readiness)}>
+                {() => (readiness && (<View style={styles.readinessBody}>
                   <View style={styles.readinessTop}>
                     <Text
                       style={[
@@ -1093,10 +1094,10 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                       Unlocks at TH{readiness.nextTh}: {readiness.nextUnlocks.map((u) => u.value).join(' · ')}
                     </Text>
                   )}
-                </View>
-              )}
-              {readinessOpen && readiness && (
-                <React.Fragment>
+                </View>))}
+              </CollapsibleContent>
+              <CollapsibleContent expanded={!!(readinessOpen && readiness)}>
+                {() => (readiness && (<React.Fragment>
                   {readiness.pipelines.map((p, i) => {
                     const isBuilders = p.key === 'builders';
                     const isLab = p.key === 'lab';
@@ -1125,8 +1126,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                             />
                           </View>
                         </SettingRow>
-                        {isExpandable && isOpen && (
-                          <View style={styles.pipelineExpandBody}>
+                        <CollapsibleContent expanded={!!(isExpandable && isOpen)}>
+                          {() => (<View style={styles.pipelineExpandBody}>
                             {p.children.map((c) => (
                               <View key={c.key} style={styles.readinessCatRow}>
                                 <Text style={styles.readinessCatLabel}>{c.label}</Text>
@@ -1136,15 +1137,15 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                                 <Text style={styles.readinessCatPct}>{Math.round(c.pct)}%</Text>
                               </View>
                             ))}
-                          </View>
-                        )}
+                          </View>)}
+                        </CollapsibleContent>
                       </React.Fragment>
                     );
                   })}
-                </React.Fragment>
-              )}
-              {readinessOpen && readiness && discounted && nextDiscounted && !isMaxTh && (
-                <React.Fragment>
+                </React.Fragment>))}
+              </CollapsibleContent>
+              <CollapsibleContent expanded={!!(readinessOpen && readiness && discounted && nextDiscounted && !isMaxTh)}>
+                {() => (readiness && discounted && nextDiscounted && !isMaxTh && (<React.Fragment>
                   <SettingRow
                     icon="trending-up-outline"
                     title={`Rush to TH${readiness.nextTh}`}
@@ -1166,8 +1167,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                       />
                     </View>
                   </SettingRow>
-                  {rushExpanded && (
-                    <View style={styles.rushExpandBody}>
+                  <CollapsibleContent expanded={!!(rushExpanded)}>
+                    {() => (<View style={styles.rushExpandBody}>
                       {thUpgrade && (
                         <ItemCard
                           name="Town Hall"
@@ -1311,12 +1312,12 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                       ) : (
                         <Text style={styles.rushNewItemLabel}>No new items</Text>
                       )}
-                    </View>
-                  )}
-                </React.Fragment>
-              )}
-              {readinessOpen && readiness && isMaxTh && (
-                <View style={styles.maxThCelebration}>
+                    </View>)}
+                  </CollapsibleContent>
+                </React.Fragment>))}
+              </CollapsibleContent>
+              <CollapsibleContent expanded={!!(readinessOpen && readiness && isMaxTh)}>
+                {() => (readiness && isMaxTh && (<View style={styles.maxThCelebration}>
                   <Ionicons name="trophy" size={48} color={Colors.warning} />
                   <Text style={styles.maxThTitle}>Maximum Town Hall Reached!</Text>
                   <Text style={styles.maxThSubtitle}>Congratulations, Chief! 🎉</Text>
@@ -1327,8 +1328,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                   <Text style={styles.maxThBody}>
                     Thank you for choosing ClashPrime for your journey.
                   </Text>
-                </View>
-              )}
+                </View>))}
+              </CollapsibleContent>
             </View>
           </>
         )}
