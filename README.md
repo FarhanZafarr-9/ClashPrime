@@ -146,7 +146,7 @@ Plan the Archer Queen's arrow on a base screenshot and share it as a high-res PN
 <tr>
 <td width="160" align="center" valign="middle"><img src="screenshots/settings.png" width="140" alt="Settings" /></td>
 <td valign="middle"><b>Settings</b><br/>
-API token, dark mode, discounts, account management, a Show Global Levels toggle and a What's New changelog.</td>
+API token, dark mode, discounts, account management, a Show Global Levels toggle and a What's New changelog. Animated sections, Material-style switches and compact left/right selectors for font and base-source preferences.</td>
 </tr>
 <tr>
 <td colspan="2" valign="middle"><b>Onboarding</b><br/>
@@ -345,6 +345,8 @@ Download the `ClashPrime.vX.Y.Z.apk` asset from the [latest release](https://git
 
 ## Getting Started
 
+Use **Node.js 24 or newer**, as required by the bundled `clash-of-clans-data` package.
+
 ```bash
 # Install dependencies
 npm install
@@ -401,7 +403,17 @@ time with `npm run check:coc-data`; add `--json` for machine-readable output or
 `images` fields are excluded from the diff — they are asset paths, not game data — and key order is
 normalized, so only real data changes are reported.
 
-Then commit the regenerated `src/data/` files + lockfile, push, and tag the release (e.g. `v6.0.0`) so the in-app version checker picks it up.
+Then commit the regenerated assets, `src/data/` files, `package.json` and lockfile. Publish the matching version tag with the release so the in-app version checker picks it up.
+
+### Production releases
+
+Keep `expo.version` in `app.json`, the version in `package.json`, the root versions in `package-lock.json`, and the latest entry in `src/components/ChangelogSheet.tsx` aligned. Before distributing an Android update, verify that its `android.versionCode` exceeds the previous APK's code; the current EAS configuration uses local versions without automatic increments.
+
+```bash
+eas build --platform android --profile production
+```
+
+The production profile produces an APK. Attach it as `ClashPrime.vX.Y.Z.apk` to the matching GitHub release (for example, `v7.2.0`) and retain the existing production signing key so users can update in place.
 
 > The old Fandom wiki scrapers in `scraper/` are deprecated — all building/troop data now comes from `clash-of-clans-data` npm package.
 
