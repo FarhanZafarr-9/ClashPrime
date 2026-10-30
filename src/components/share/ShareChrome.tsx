@@ -127,8 +127,6 @@ export const shareStyles = StyleSheet.create({
     padding: Spacing.lg,
     paddingBottom: Spacing.base,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   watermark: {
     position: 'absolute',
