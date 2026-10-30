@@ -8,7 +8,7 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PressableRipple from '../../src/components/PressableRipple';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +22,7 @@ import type { ClanWar, WarLogEntry, WarClanDetail, WarMember, WarState, ClashPla
 import { filterHomeTroops } from '../../src/types/clash';
 import { Card } from '../../src/components/Card';
 import { SettingRow } from '../../src/components/SettingRow';
+import CollapsibleContent from '../../src/components/CollapsibleContent';
 import { getTownHallImageSource } from '../../src/utils/buildingImages';
 import { getAllItemsAtTH } from '../../src/utils/thMaxLevels';
 
@@ -343,16 +344,14 @@ function WarScreenSkeleton() {
         <Skeleton width={140} height={14} borderRadius={4} style={{ marginTop: 4 }} />
       </View>
 
-      {/* Top tabs */}
-      <SegmentedSwitch
-        style={styles.screenToggle}
-        options={SCREEN_VIEW_OPTIONS}
-        value="current"
-        onChange={() => { }}
-        loading
-      />
-
       <View style={styles.skeletonContent}>
+        <SegmentedSwitch
+          style={styles.screenToggle}
+          options={SCREEN_VIEW_OPTIONS}
+          value="current"
+          onChange={() => { }}
+          loading
+        />
         {/* Legend card */}
         <View style={[styles.skeletonCard, { backgroundColor: colors.bgCardHover }]}>
           <Skeleton width={32} height={32} borderRadius={Radius.md} />
@@ -701,13 +700,6 @@ export default function WarScreen() {
         </Text>
       </View>
 
-      <SegmentedSwitch
-        style={styles.screenToggle}
-        options={SCREEN_VIEW_OPTIONS}
-        value={screenView}
-        onChange={setScreenView}
-      />
-
       <ScrollView
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
@@ -720,6 +712,12 @@ export default function WarScreen() {
           />
         }
       >
+        <SegmentedSwitch
+          style={styles.screenToggle}
+          options={SCREEN_VIEW_OPTIONS}
+          value={screenView}
+          onChange={setScreenView}
+        />
         <LegendCard />
 
         {screenView === 'current' ? (
@@ -875,6 +873,7 @@ export default function WarScreen() {
 }
 
 function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, player, embedded = false }: { war: ClanWar; now: number; isCwl?: boolean; myClanTag?: string | null; myPlayerTag?: string | null; player?: ClashPlayer | null; embedded?: boolean }) {
+  const { colors } = useTheme();
   const [showEnemy, setShowEnemy] = useState(false);
   const [showMine, setShowMine] = useState(true);
   const isPreparation = war.state === 'preparation';
@@ -1057,17 +1056,20 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
               compact
               isFirst
               isLast={!showMine}
+              expanded={showMine}
             >
-              <Ionicons name={showMine ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
+              <Ionicons name={showMine ? 'chevron-up' : 'chevron-down'} size={16} color={showMine ? colors.bgCard : colors.textSecondary} />
             </SettingRow>
           </View>
-          {showMine && (
-            <View style={styles.memberList}>
-              {members.map((m, i) => (
-                <MemberRow key={m.tag} member={m} defenderName={defenderLabel} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isLast={i === members.length - 1} />
-              ))}
-            </View>
-          )}
+          <CollapsibleContent expanded={showMine}>
+            {() => (
+              <View style={styles.memberList}>
+                {members.map((m, i) => (
+                  <MemberRow key={m.tag} member={m} defenderName={defenderLabel} isCwl={isCwl} isMine={myPlayerTag != null && m.tag === myPlayerTag} isLast={i === members.length - 1} />
+                ))}
+              </View>
+            )}
+          </CollapsibleContent>
 
           <View style={styles.sectionHeader}>
             <Ionicons name="shield-outline" size={16} color={Colors.textSecondary} />
@@ -1082,19 +1084,20 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
               compact
               isFirst
               isLast={!showEnemy}
+              expanded={showEnemy}
             >
-              <Ionicons name={showEnemy ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
+              <Ionicons name={showEnemy ? 'chevron-up' : 'chevron-down'} size={16} color={showEnemy ? colors.bgCard : colors.textSecondary} />
             </SettingRow>
           </View>
-          {showEnemy && (
-            <React.Fragment>
+          <CollapsibleContent expanded={showEnemy}>
+            {() => (
               <View style={styles.memberList}>
                 {opponentMembers.map((m, i) => (
                   <MemberRow key={m.tag} member={m} defenderName={defenderLabel} isCwl={isCwl} isMine={false} isLast={i === opponentMembers.length - 1} />
                 ))}
               </View>
-            </React.Fragment>
-          )}
+            )}
+          </CollapsibleContent>
         </>
       )}
     </View>
@@ -1221,25 +1224,27 @@ const ATTACK_DOT_COLORS: Record<0 | 1 | 2, string> = {
   2: '#4CAF50',
 };
 
-function shieldConfig(member: WarMember): { name: keyof typeof Ionicons.glyphMap; color: string } | null {
+function shieldConfig(member: WarMember, perfectColor: string): { name: keyof typeof Ionicons.glyphMap; color: string } | null {
   const attacked = member.opponentAttacks ?? 0;
   if (attacked === 0) return null;
   const conceded = member.bestOpponentAttack?.stars ?? 0;
   const saved = 3 - conceded;
-  if (saved >= 3) return { name: 'shield-checkmark', color: '#FFFFFF' };
+  if (saved >= 3) return { name: 'shield-checkmark', color: perfectColor };
   if (saved === 2) return { name: 'shield-checkmark-outline', color: '#4CAF50' };
   if (saved === 1) return { name: 'shield-half-outline', color: '#FFB74D' };
   return { name: 'shield-outline', color: '#f44336' };
 }
 
 function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirst, isLast }: { member: WarMember; defenderName: (tag: string) => string; isCwl?: boolean; isMine?: boolean; isFirst?: boolean; isLast?: boolean }) {
-  const router = useRouter();
+  const { colors } = useTheme();
   const attacks = member.attacks ?? [];
   const maxAttacks = isCwl ? 1 : 2;
+  const starsEarned = attacks.reduce((total, attack) => total + attack.stars, 0);
+  const maxStars = maxAttacks * 3;
   const thImg = getTownHallImageSource(member.townhallLevel);
   const [expanded, setExpanded] = useState(false);
 
-  const shield = shieldConfig(member);
+  const shield = shieldConfig(member, colors.textPrimary);
 
   return (
     <View>
@@ -1267,16 +1272,25 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
               <Text style={[styles.memberPosition, isMine && styles.memberPositionMine]}>#{member.mapPosition}</Text>
               <View style={styles.memberSubDot} />
               <Text style={[styles.memberTh, isMine && styles.memberThMine]}>TH{member.townhallLevel}</Text>
+              {attacks.length > 0 && (
+                <>
+                  <View style={styles.memberSubDot} />
+                  <Text style={[styles.memberTh, isMine && styles.memberThMine]}>
+                    {attacks.length}/{maxAttacks} attacks
+                  </Text>
+                  <View style={styles.memberSubDot} />
+                  <Text
+                    style={[styles.memberTh, isMine && styles.memberThMine]}
+                    accessibilityLabel={`${starsEarned} of ${maxStars} stars`}
+                  >
+                    {starsEarned}/{maxStars}★
+                  </Text>
+                </>
+              )}
             </View>
           </View>
         </View>
         <View style={styles.memberRight}>
-          <Ionicons
-            name={shield ? shield.name : 'shield-outline'}
-            size={13}
-            color={shield ? shield.color : Colors.textTertiary}
-          />
-          <View style={styles.memberDivider} />
           <View style={styles.attackDots}>
             {Array.from({ length: 2 }).map((_, i) => {
               if (isCwl && i >= maxAttacks) {
@@ -1289,7 +1303,7 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
               const attack = attacks[i];
               const dotStyle = attack
                 ? attack.stars >= 3
-                  ? styles.attackDotBest
+                  ? { backgroundColor: colors.textPrimary }
                   : { backgroundColor: ATTACK_DOT_COLORS[attack.stars as 0 | 1 | 2] }
                 : styles.attackDotEmpty;
               return (
@@ -1303,16 +1317,12 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
               );
             })}
           </View>
-          <PressableRipple
-            style={[styles.memberInspectBtn, isMine && styles.memberInspectBtnDisabled]}
-            onPress={() => router.push({ pathname: '/player', params: { tag: member.tag } })}
-            hitSlop={6}
-            disabled={isMine}
-            accessibilityLabel={`Inspect ${member.name}`}
-          >
-            <Ionicons name="search-outline" size={14} color={isMine ? Colors.border : Colors.textTertiary} />
-          </PressableRipple>
-          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
+          <View style={styles.memberDivider} />
+          <Ionicons
+            name={shield ? shield.name : 'shield-outline'}
+            size={13}
+            color={shield ? shield.color : colors.textTertiary}
+          />
         </View>
       </PressableRipple>
       {expanded && (
@@ -1374,6 +1384,7 @@ function MemberRow({ member, defenderName, isCwl = false, isMine = false, isFirs
 }
 
 function LegendCard() {
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const attackRows: { dot: 'best' | 'empty' | string; label: string }[] = [
     { dot: 'best', label: '3★ attack' },
@@ -1383,7 +1394,7 @@ function LegendCard() {
     { dot: 'empty', label: 'Attack not used' },
   ];
   const shieldRows: { icon: keyof typeof Ionicons.glyphMap; color: string; label: string }[] = [
-    { icon: 'shield-checkmark', color: '#FFFFFF', label: 'Perfect defense (0★ taken)' },
+    { icon: 'shield-checkmark', color: colors.textPrimary, label: 'Perfect defense (0★ taken)' },
     { icon: 'shield-checkmark-outline', color: '#4CAF50', label: '1★ conceded' },
     { icon: 'shield-half-outline', color: '#FFB74D', label: '2★ conceded' },
     { icon: 'shield-outline', color: '#f44336', label: '3★ conceded' },
@@ -1413,7 +1424,7 @@ function LegendCard() {
                   <View
                     style={[
                       styles.legendDot,
-                      r.dot === 'best' && styles.legendDotBest,
+                      r.dot === 'best' && { backgroundColor: colors.textPrimary },
                       r.dot === 'empty' && styles.legendDotEmpty,
                       r.dot !== 'best' && r.dot !== 'empty' && { backgroundColor: r.dot },
                     ]}
@@ -1457,7 +1468,7 @@ function AttackPlanCard({ plan, preparing = false }: { plan: AttackPlan; prepari
 
   return (
     <Card compact style={styles.planCard}>
-      <PressableRipple style={styles.planHeader} onPress={() => setOpen(o => !o)}>
+      <PressableRipple style={[styles.planHeader, styles.planCardHeader]} onPress={() => setOpen(o => !o)}>
         <View style={styles.planHeaderIcon}>
           <Ionicons name="locate-outline" size={15} color={Colors.textPrimary} />
         </View>
@@ -1946,32 +1957,16 @@ const styles = StyleSheet.create({
   memberName: { ...Typography.subhead, color: Colors.textPrimary, flexShrink: 1 },
   memberNameMine: { color: Colors.bg, fontWeight: '700' },
   memberInfo: { flex: 1, gap: 2, minWidth: 0 },
-  memberSubRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  memberSubRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 2 },
   memberPosition: { ...Typography.caption, color: Colors.textTertiary, fontSize: 11 },
   memberPositionMine: { color: Colors.bg, opacity: 0.75 },
   memberSubDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: Colors.border },
   memberTh: { ...Typography.caption, color: Colors.textTertiary, fontSize: 11 },
   memberThMine: { color: Colors.bg, opacity: 0.75 },
   memberRight: { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  memberInspectBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.bgSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  memberInspectBtnDisabled: {
-    backgroundColor: 'transparent',
-  },
   memberDivider: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: Colors.border },
   attackDots: { flexDirection: 'row', gap: 6 },
   attackDot: { width: 10, height: 10, borderRadius: 3 },
-  attackDotBest: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#3A3A3A',
-  },
   attackDotEmpty: { backgroundColor: Colors.border },
   attackDotDisabled: {
     backgroundColor: 'transparent',
@@ -2003,14 +1998,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   memberDetailEmpty: { ...Typography.caption, color: Colors.textMuted, paddingVertical: 2 },
-  planCard: { marginTop: Spacing.md },
-  legendCard: { marginBottom: Spacing.xs },
+  planCard: { marginTop: Spacing.md, padding: 0, overflow: 'hidden' },
+  planCardHeader: { padding: Spacing.md },
+  legendCard: { marginBottom: Spacing.xs, borderStyle: 'dashed', borderWidth: 1 },
   legendBody: { flexDirection: 'row', gap: Spacing.lg, marginTop: Spacing.sm },
   legendColumn: { flex: 1, gap: 6 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   legendDotSlot: { width: 16, alignItems: 'center', justifyContent: 'center' },
   legendDot: { width: 10, height: 10, borderRadius: 4 },
-  legendDotBest: { backgroundColor: '#FFFFFF' },
   legendDotEmpty: { backgroundColor: Colors.border },
   legendShieldSlot: { width: 16, alignItems: 'center', justifyContent: 'center' },
   legendLabel: { ...Typography.caption, color: Colors.textSecondary, fontSize: 11, flex: 1 },
@@ -2026,7 +2021,7 @@ const styles = StyleSheet.create({
   planHeaderText: { flex: 1 },
   planTitle: { ...Typography.subhead, color: Colors.textPrimary, fontWeight: '700' },
   planSubtitle: { ...Typography.caption, color: Colors.textTertiary, fontSize: 10, marginTop: 1 },
-  planBody: { marginTop: Spacing.sm, gap: Spacing.xs },
+  planBody: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, gap: Spacing.xs },
   planMirror: {
     flexDirection: 'row',
     alignItems: 'center',
