@@ -10,8 +10,17 @@ import { Colors, Radius, Spacing, Typography } from '../theme';
 export const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
     version: '7.2.0',
-    date: 'October 18, 2026',
+    date: 'October 30, 2026',
     items: [
+      'Game data: updated the bundled database to 0.19.1, including Portal Pendant and the latest building costs, upgrade times and balance changes.',
+      'Expandable sections: Home, Settings, Time to Max and War member lists now slide and fade open and closed, with reduced-motion support.',
+      'Rows: expanded headers smoothly transition their colors and corners; icon chips and neutral badges invert with the surface and remain readable in both themes.',
+      'Settings: switches now have a highlighted track and checkmark/cross thumb icons; Clash Font and Base Sources use compact left/right option selectors.',
+      'War: cleaner member rows place the defense shield after the attack dots, with attacks used and stars earned shown after TH when attacks have been used.',
+      'War: perfect-attack dots and perfect-defense shields now adapt to the theme, with matching legend colors.',
+      'War: the Current / History switch scrolls with the content, the Legend card has a dashed border, and the Attack Plan header ripple fills the card width.',
+      'Share previews: removed card, preview-image and Close-button outlines for a cleaner appearance.',
+      'Home: removed the profile-card border from the loading skeleton.',
       'Headers: one shared header button across every screen, so the square action buttons no longer differ in background, radius and border from screen to screen.',
       'Headers: all top buttons now share the bgCardHover surface with a dashed border, and carry an accessibility label so screen readers announce them.',
       'Layout: screens no longer shift down on first open - the top inset is read from the status bar synchronously instead of arriving after the first paint.',
@@ -25,7 +34,7 @@ export const CHANGELOG: { version: string; date: string; items: string[] }[] = [
       'Import: builder huts read off a pasted export are acknowledged, prefilled and verified - previously an import saved the default of 2.',
       'War: opens from its last known data and refreshes in the background, instead of holding the skeleton through a full API round trip.',
       'War: the Current / History tabs now use the same segmented switch as the rest of the app, and the stats table has a dashed frame.',
-      'Hero Journey: stops waiting on an idle callback with a five second timeout, which could leave the tab stuck on its skeleton.',
+      'Hero Journey: replaces the deprecated InteractionManager with an idle callback using a short timeout, avoiding the old five-second skeleton delay.',
       'Settings: the token and tag sheets have subtitles, account rows are padded, and the Close button matches the Add button height.',
       'Settings: fixed the builder count ranges, which were rendering as 1"3 and 2"6, the sheet breadcrumbs showing as apostrophes, and the API token prefix losing its Clash font.',
       'Settings: row descriptions now sit on the type scale with a taller line height and less dimmed opacity.',
