@@ -1,10 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
+import { View, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
+import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming, interpolate, interpolateColor, ReduceMotion } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import PressableRipple from './PressableRipple';
 import { Colors, useTheme, Radius, Spacing, Typography } from '../theme';
 
 const DANGER = '#F44336';
+const AnimatedIonicons = Animated.createAnimatedComponent(Ionicons);
+
+function fadeColor(progress: number, from: string, to: string) {
+  'worklet';
+  // Linear RGB avoids a dark-to-light transition jumping in brightness early.
+  return interpolateColor(progress, [0, 1], [from, to], 'RGB', { gamma: 1 });
+}
 
 /**
  * Whether the row is currently drawing on its inverted surface.
@@ -58,9 +66,8 @@ interface SettingRowProps {
   isLast?: boolean;
   compact?: boolean;
   /**
-   * For a row whose content is revealed underneath it. Lifts the block onto
-   * bgCardHover so the open state reads at a glance and the header looks
-   * continuous with what it opened, rather than joining the flat closed rows.
+   * For a row whose content is revealed underneath it. Animates the inverted
+   * surface and rounded corners so the open state reads at a glance.
    */
   expanded?: boolean;
 }
@@ -87,7 +94,7 @@ export function SettingRow({
   compact,
   expanded,
 }: SettingRowProps) {
-const { colors } = useTheme();
+  const { colors } = useTheme();
   const accent = destructive ? DANGER : accentColor || null;
   /**
    * An expanded row inverts the card - text-coloured fill, surface-coloured
@@ -96,17 +103,56 @@ const { colors } = useTheme();
    * inverting those would strand accent text on a dark fill.
    */
   const inverted = !!expanded && !isExtra && !accent;
-  const fg = inverted ? colors.bgCard : null;
+  const progress = useSharedValue(expanded ? 1 : 0);
+  React.useLayoutEffect(() => {
+    progress.value = withTiming(expanded ? 1 : 0, {
+      duration: expanded ? 260 : 160,
+      easing: Easing.inOut(Easing.quad),
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [expanded, progress]);
+  const canInvert = !isExtra && !accent;
+  const surfaceStyle = useAnimatedStyle(() => {
+    const inner = interpolate(progress.value, [0, 1], [Radius.sm, 0]);
+    return {
+      backgroundColor: accent ? `${accent}1a` : isExtra ? colors.accentGhost : fadeColor(progress.value, colors.bgCard, colors.textPrimary),
+      borderTopLeftRadius: isFirst ? Radius.xl * 1.25 : inner,
+      borderTopRightRadius: isFirst ? Radius.xl * 1.25 : inner,
+      borderBottomLeftRadius: isLast ? Radius.xl * 1.25 : inner,
+      borderBottomRightRadius: isLast ? Radius.xl * 1.25 : inner,
+    };
+  });
+  const titleStyle = useAnimatedStyle(() => ({
+    color: accent || (canInvert ? fadeColor(progress.value, colors.textPrimary, colors.bgCard) : colors.textPrimary),
+  }));
+  const descStyle = useAnimatedStyle(() => ({
+    color: accent || (canInvert ? fadeColor(progress.value, colors.textTertiary, colors.bgCard) : colors.textTertiary),
+    opacity: canInvert ? interpolate(progress.value, [0, 1], [0.95, 0.7]) : 0.95,
+  }));
+  const chipStyle = useAnimatedStyle(() => ({
+    backgroundColor: accent ? `${accent}2e` : canInvert ? fadeColor(progress.value, colors.bgCardHover, colors.invertedChip) : colors.bgCardHover,
+  }));
+  const glyphStyle = useAnimatedStyle(() => ({
+    color: accent || (canInvert ? fadeColor(progress.value, colors.textPrimary, colors.bgCard) : colors.textPrimary),
+  }));
+  const pillStyle = useAnimatedStyle(() => ({
+    backgroundColor: canInvert ? fadeColor(progress.value, colors.textPrimary, colors.bg) : colors.textPrimary,
+    borderColor: colors.border,
+  }));
+  const pillTextStyle = useAnimatedStyle(() => ({
+    color: canInvert ? fadeColor(progress.value, colors.bg, colors.textPrimary) : colors.bg,
+  }));
   return (
     <View style={styles.settingRowContainer}>
       {pillText && (
         <View style={getPillPos(pillPosition, pillTopOffset, pillRightOffset)}>
-          <View style={[styles.pill, destructive ? styles.pillDanger : { backgroundColor: inverted ? colors.bg : colors.textPrimary, borderColor: colors.border }]}>
-            <Text style={[styles.pillText, destructive ? styles.pillTextDanger : { color: inverted ? colors.textPrimary : colors.bg }]}>{pillText}</Text>
-          </View>
+          <Animated.View style={[styles.pill, destructive ? styles.pillDanger : pillStyle]}>
+            <Animated.Text style={[styles.pillText, destructive ? styles.pillTextDanger : pillTextStyle]}>{pillText}</Animated.Text>
+          </Animated.View>
         </View>
       )}
       <SettingRowSurfaceContext.Provider value={inverted}>
+      <Animated.View style={[surfaceStyle, { overflow: 'hidden', opacity: disabled ? 0.5 : 1 }]}>
       <PressableRipple
         onPress={onPress}
         onLongPress={onLongPress}
@@ -114,20 +160,16 @@ const { colors } = useTheme();
         style={[
           styles.settingBlock,
           compact && styles.settingBlockCompact,
-          { backgroundColor: isExtra ? colors.accentGhost : inverted ? colors.textPrimary : colors.bgCard, borderColor: colors.border },
-          accent && { backgroundColor: `${accent}1a`, borderColor: `${accent}40` },
-          disabled && styles.settingBlockDisabled,
+          { backgroundColor: 'transparent', borderColor: accent ? `${accent}40` : colors.border },
           isFirst && styles.settingBlockFirst,
           isLast && styles.settingBlockLast,
         ]}
       >
         {(icon || iconSource || iconUrl) && (
-          <View style={[
+          <Animated.View style={[
             styles.settingRowIcon,
-            // The glyph knocks out of the chip, so it takes the card's colour - not the
-            // chip's. Matching the chip made it invisible in both themes.
-            inverted && { backgroundColor: colors.bg },
-            accent && { backgroundColor: `${accent}2e` },
+            // Chip and glyph invert together with the row surface.
+            chipStyle,
             isFirst && styles.settingRowIconFirst,
             isLast && styles.settingRowIconLast,
           ]}>
@@ -136,26 +178,25 @@ const { colors } = useTheme();
             ) : iconUrl ? (
               <Image source={{ uri: iconUrl }} style={styles.settingRowImage} resizeMode="contain" />
             ) : (
-              <Ionicons
+              <AnimatedIonicons
                 name={icon as any}
                 size={15}
-                // Knocks out of the inverted chip, so the glyph takes the card's
-                // colour rather than the chip's.
-                color={accent || colors.textPrimary}
+                style={glyphStyle}
               />
             )}
-          </View>
+          </Animated.View>
         )}
         <View style={styles.settingTextBlock}>
-          <Text style={[styles.settingTitle, accent && { color: accent }, fg && { color: fg }]}>{title}</Text>
+          <Animated.Text style={[styles.settingTitle, titleStyle]}>{title}</Animated.Text>
           {desc != null
             ? typeof desc === 'string'
-              ? <Text style={[styles.settingDesc, accent && { color: accent }, fg && { color: fg, opacity: 0.7 }]}>{desc}</Text>
+              ? <Animated.Text style={[styles.settingDesc, descStyle]}>{desc}</Animated.Text>
               : desc
             : null}
         </View>
         {children}
       </PressableRipple>
+      </Animated.View>
       </SettingRowSurfaceContext.Provider>
     </View>
   );
@@ -176,9 +217,6 @@ const styles = StyleSheet.create({
   },
   settingBlockCompact: {
     paddingHorizontal: Spacing.md,
-  },
-  settingBlockDisabled: {
-    opacity: 0.5,
   },
   settingBlockFirst: {
     borderTopLeftRadius: Radius.xl * 1.25,
