@@ -185,7 +185,7 @@ export function HomeScreenSkeleton() {
           <Skeleton width={100} height={12} borderRadius={4} style={{ marginTop: 4 }} />
         </View>
         {/* Player card */}
-        <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <View style={[styles.card, { backgroundColor: colors.bgCard, borderWidth: 0 }]}>
           <View style={styles.playerRow}>
             <Skeleton width={52} height={52} borderRadius={Radius.lg} />
             <View style={{ flex: 1, gap: 6 }}>

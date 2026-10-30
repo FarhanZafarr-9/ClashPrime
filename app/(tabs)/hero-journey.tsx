@@ -7,7 +7,6 @@ import {
   StyleSheet,
   RefreshControl,
   Image,
-  InteractionManager,
   type LayoutChangeEvent,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -251,19 +250,17 @@ export default function HeroJourneyScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const rowY = useRef<Map<number, number>>(new Map());
 
-  // The journey build is CPU work on the JS thread, so it is held until the tab
-  // transition finishes rather than running mid-animation. requestIdleCallback
-  // was the wrong tool: on a screen the user is actively looking at, idle can
-  // be a long way off, and its timeout left the skeleton up for 5s.
+  // Give the JS thread an idle opportunity before building the journey, with a
+  // short timeout so a busy screen does not leave the skeleton up for seconds.
   useEffect(() => {
     if (!player) return;
     let cancelled = false;
-    const handle = InteractionManager.runAfterInteractions(() => {
+    const handle = requestIdleCallback(() => {
       if (!cancelled) setJourney(computeHeroJourney(player));
-    });
+    }, { timeout: 250 });
     return () => {
       cancelled = true;
-      handle.cancel();
+      cancelIdleCallback(handle);
     };
   }, [player]);
 

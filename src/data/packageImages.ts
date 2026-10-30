@@ -974,6 +974,10 @@ export const PACKAGE_IMAGES: Record<string, PackageItemImages> = {
     icon: require('../../assets/package-images/images/home/hero-equipment/rocket-spear/icon.webp'),
     levels: {},
   },
+  "Portal Pendant": {
+    icon: require('../../assets/package-images/images/home/hero-equipment/portal-pendant/icon.webp'),
+    levels: {},
+  },
   "Wall Wrecker": {
     icon: require('../../assets/package-images/images/home/siege-machines/wall-wrecker/icon.webp'),
     levels: {
