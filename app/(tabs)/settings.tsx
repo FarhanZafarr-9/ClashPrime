@@ -1,3 +1,4 @@
+import CollapsibleContent from '../../src/components/CollapsibleContent';
 import ChangelogBody, { CHANGELOG } from '../../src/components/ChangelogSheet';
 import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useRef } from 'react';
@@ -84,14 +85,13 @@ function SectionBadge({ label, isFirst, isOpen, isLast }: { label: string; isFir
   return (
     <View style={[
       styles.sectionBadge,
-      // Knocked out of the inverted card, like the icon chip.
-      inverted && { backgroundColor: colors.bg },
+      inverted && { backgroundColor: colors.invertedChip },
       // Mirrors the row's own corner logic, so the chip follows the card's
       // rounded outer edge instead of floating as its own pill.
       (isFirst || isOpen) && styles.sectionBadgeFirst,
       isLast && !isOpen && styles.sectionBadgeLast,
     ]}>
-      <Text style={[styles.sectionBadgeText, inverted && { color: colors.textPrimary }]}>{label}</Text>
+      <Text style={[styles.sectionBadgeText, inverted && { color: colors.bgCard }]}>{label}</Text>
     </View>
   );
 }
@@ -129,12 +129,12 @@ function SettingSection({
           <SectionBadge label={badge} isFirst={isFirst} isOpen={isOpen} isLast={isLast} />
         )}
       </SettingRow>
-      {isOpen && (
-        <View style={styles.settingBody}>
+      <CollapsibleContent expanded={!!(isOpen)}>
+        {() => (<View style={styles.settingBody}>
           {children}
           {!isLast && <View style={styles.sectionSeparator} />}
-        </View>
-      )}
+        </View>)}
+      </CollapsibleContent>
     </>
   );
 }
