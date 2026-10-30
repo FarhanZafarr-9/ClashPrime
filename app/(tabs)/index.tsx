@@ -1,3 +1,4 @@
+import CollapsibleContent from '../../src/components/CollapsibleContent';
 import Screen from '../../src/components/Screen';
 import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import {
@@ -439,6 +440,8 @@ function CollapsibleSection({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
+  const { colors } = useTheme();
+  const inverted = open && !destructive && !accentColor;
   if (count === 0 && !maxed) return null;
   const isSectionMaxed = totalMax > 0 && totalLevel >= totalMax;
   const toggle = () => {
@@ -463,6 +466,9 @@ function CollapsibleSection({
         : [{ key: 'count', value: count, tone: 'default' }];
 
   const renderBadge = (b: SectionBadgeConfig, i: number) => {
+    const invertBadge = inverted && (!b.tone || b.tone === 'default');
+    const surfaceStyle = invertBadge ? { backgroundColor: colors.invertedChip } : undefined;
+    const textStyle = invertBadge ? { color: colors.bgCard } : undefined;
     const isFirstBadge = (isFirst || open) && i === 0;
     const isLastBadge = isLast && !open && i === badgeList.length - 1;
     const cornerStyles = [
@@ -477,11 +483,12 @@ function CollapsibleSection({
           b.tone === 'maxed' && styles.sectionBadgeMaxed,
           b.tone === 'danger' && styles.sectionBadgeDanger,
           b.tone === 'warning' && styles.sectionBadgeWarning,
+          surfaceStyle,
           ...cornerStyles,
         ]}
       >
         {b.icon ? (
-          <Ionicons name={b.icon} size={18} color={b.tone === 'maxed' ? Colors.bg : Colors.textPrimary} />
+          <Ionicons name={b.icon} size={18} color={invertBadge ? colors.bgCard : b.tone === 'maxed' ? Colors.bg : Colors.textPrimary} />
         ) : (
           <>
             {b.value != null && (
@@ -491,6 +498,7 @@ function CollapsibleSection({
                   b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
                   b.tone === 'danger' && styles.sectionBadgeDangerText,
                   b.tone === 'warning' && styles.sectionBadgeWarningText,
+                  textStyle,
                 ]}
               >
                 {b.value}
@@ -503,6 +511,7 @@ function CollapsibleSection({
                   b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
                   b.tone === 'danger' && styles.sectionBadgeDangerText,
                   b.tone === 'warning' && styles.sectionBadgeWarningText,
+                  textStyle,
                 ]}
               >
                 {b.label}
@@ -520,13 +529,14 @@ function CollapsibleSection({
           b.tone === 'maxed' && styles.sectionBadgeMaxed,
           b.tone === 'danger' && styles.sectionBadgeDanger,
           b.tone === 'warning' && styles.sectionBadgeWarning,
+          surfaceStyle,
           ...cornerStyles,
         ]}
         onPress={b.action}
         hitSlop={6}
       >
         {b.icon ? (
-          <Ionicons name={b.icon} size={18} color={b.tone === 'maxed' ? Colors.bg : Colors.textPrimary} />
+          <Ionicons name={b.icon} size={18} color={invertBadge ? colors.bgCard : b.tone === 'maxed' ? Colors.bg : Colors.textPrimary} />
         ) : (
           <>
             {b.value != null && (
@@ -536,6 +546,7 @@ function CollapsibleSection({
                   b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
                   b.tone === 'danger' && styles.sectionBadgeDangerText,
                   b.tone === 'warning' && styles.sectionBadgeWarningText,
+                  textStyle,
                 ]}
               >
                 {b.value}
@@ -548,6 +559,7 @@ function CollapsibleSection({
                   b.tone === 'maxed' && styles.sectionBadgeTextMaxed,
                   b.tone === 'danger' && styles.sectionBadgeDangerText,
                   b.tone === 'warning' && styles.sectionBadgeWarningText,
+                  textStyle,
                 ]}
               >
                 {b.label}
@@ -581,12 +593,12 @@ function CollapsibleSection({
           {badgeList.map(renderBadge)}
         </View>
       </SettingRow>
-      {open && (
-        <View style={styles.sectionBody}>
+      <CollapsibleContent expanded={!!(open)}>
+        {() => (<View style={styles.sectionBody}>
           {children}
           {!isLast && <View style={styles.sectionSeparator} />}
-        </View>
-      )}
+        </View>)}
+      </CollapsibleContent>
     </>
   );
 }
