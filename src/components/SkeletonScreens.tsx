@@ -1,4 +1,4 @@
-import Screen from './Screen';
+import PageScreen from './PageScreen';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from './Skeleton';
@@ -63,14 +63,9 @@ export function BasesScreenSkeleton() {
 export function EventsScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
+    <PageScreen title="Events" subtitle="Upcoming in-game events">
       <View style={{ flex: 1, paddingBottom: 64 }}>
-        <View style={styles.header}>
-          <View style={{ gap: 6 }}>
-            <Skeleton width={80} height={20} borderRadius={6} />
-            <Skeleton width={190} height={12} borderRadius={4} />
-          </View>
-        </View>
+
         <View style={styles.eventsSectionRow}>
           <Skeleton width={6} height={6} borderRadius={3} />
           <Skeleton width={90} height={13} borderRadius={4} />
@@ -163,7 +158,7 @@ export function EventsScreenSkeleton() {
           </View>
         ))}
       </View>
-    </Screen>
+    </PageScreen>
   );
 }
 
@@ -172,18 +167,10 @@ export function HomeScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
+    <PageScreen title="ClashPrime" subtitle="The Prime Clash experience">
       <View style={{ flex: 1, paddingBottom: 64 }}>
         {/* Header: title + icon buttons + timestamp */}
-        <View style={styles.header}>
-          <View style={styles.headerTitleRowSkeleton}>
-            <Skeleton width={130} height={20} borderRadius={6} />
-            <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-              <Skeleton width={36} height={36} borderRadius={Radius.md} />
-            </View>
-          </View>
-          <Skeleton width={100} height={12} borderRadius={4} style={{ marginTop: 4 }} />
-        </View>
+
         {/* Player card */}
         <View style={[styles.card, { backgroundColor: colors.bgCard, borderWidth: 0 }]}>
           <View style={styles.playerRow}>
@@ -299,7 +286,7 @@ export function HomeScreenSkeleton() {
         </View>
         <View style={{ height: 100 }} />
       </View>
-    </Screen>
+    </PageScreen>
   );
 }
 
@@ -308,13 +295,10 @@ export function MaxTimeScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
+    <PageScreen title="Time to Max" subtitle="Remaining upgrades for your village">
       <View style={{ flex: 1, paddingBottom: 150 }}>
         {/* Header */}
-        <View style={styles.header}>
-          <Skeleton width={150} height={26} borderRadius={6} />
-          <Skeleton width={220} height={13} borderRadius={4} style={{ marginTop: 6 }} />
-        </View>
+
         {/* Hero card */}
         <View style={[styles.maxTimeHeroCard, { backgroundColor: colors.bgCard }]}>
           <Skeleton width={160} height={11} borderRadius={3} />
@@ -379,7 +363,7 @@ export function MaxTimeScreenSkeleton() {
         </View>
         <View style={{ height: 40 }} />
       </View>
-    </Screen>
+    </PageScreen>
   );
 }
 
@@ -387,11 +371,9 @@ export function MaxTimeScreenSkeleton() {
 export function ProfileScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
+    <PageScreen title="Player Inspect" subtitle="Search any player by tag">
       <View style={{ flex: 1, paddingBottom: 64 }}>
-        <View style={styles.header}>
-          <Skeleton width={90} height={20} borderRadius={6} />
-        </View>
+
         <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <View style={styles.playerRow}>
             <Skeleton width={56} height={56} borderRadius={28} />
@@ -424,7 +406,7 @@ export function ProfileScreenSkeleton() {
           ))}
         </View>
       </View>
-    </Screen>
+    </PageScreen>
   );
 }
 
@@ -632,16 +614,10 @@ function journeyPillCornerStyle(index: number, total: number) {
 export function HeroJourneyScreenSkeleton() {
   const { colors } = useTheme();
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
+    <PageScreen title="Hero Journey" subtitle="Rewards track · progress by upgrading heroes">
       <View style={{ flex: 1, paddingBottom: 64 }}>
         {/* Header + refresh */}
-        <View style={styles.heroJourneyHeader}>
-          <View style={styles.heroJourneyHeaderLeft}>
-            <Skeleton width={150} height={34} borderRadius={8} />
-            <Skeleton width={230} height={13} borderRadius={4} />
-          </View>
-          <Skeleton width={36} height={36} borderRadius={Radius.md} />
-        </View>
+
 
         {/* Summary card */}
         <View style={[styles.heroJourneySummaryCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -759,7 +735,7 @@ export function HeroJourneyScreenSkeleton() {
           ))}
         </View>
       </View>
-    </Screen>
+    </PageScreen>
   );
 }
 
