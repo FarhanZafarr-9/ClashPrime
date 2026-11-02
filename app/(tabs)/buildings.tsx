@@ -1,4 +1,4 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -1781,28 +1781,33 @@ export default function BuildingsScreen() {
   };
 
   return (
-    <Screen style={styles.container} >
-      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>Buildings</Text>
-            <View style={styles.headerActions}>
-              <HeaderButton onPress={maxOutAllBuildings} accessibilityLabel="Max out all buildings">
+    <PageScreen
+      style={styles.container}
+      title={<>Buildings</>}
+      subtitle={<>
+            {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
+          </>}
+      actions={[<HeaderButton key="action-0" onPress={maxOutAllBuildings} accessibilityLabel="Max out all buildings">
                 <Ionicons name="rocket-outline" size={18} color={Colors.textSecondary} />
-              </HeaderButton>
-              <HeaderButton
+              </HeaderButton>,
+<HeaderButton key="action-1"
                 onPress={() => router.push(`/onboarding?mode=reset&th=${th}`)}
                 accessibilityLabel="Reset account data"
               >
                 <Ionicons name="flag-outline" size={18} color={Colors.textSecondary} />
-              </HeaderButton>
-            </View>
-          </View>
-          <Dialog />
-          <Text style={styles.subtitle}>
-            {isBB ? `Max levels for BH${bh} · Builder Base` : `Max levels for TH${th} · Tap to expand`}
-          </Text>
-        </View>
+              </HeaderButton>]}
+      contentContainerStyle={styles.scroll}
+      overlays={<><BottomSheet
+        visible={sheetName !== null}
+        onClose={() => setSheetName(null)}
+        header={sheetSection ? renderSheetHeader(sheetSection) : undefined}
+        headerPaddingHorizontal={Spacing.sm}
+      >
+        {sheetSection ? renderSheetBody(sheetSection) : null}
+      </BottomSheet></>}
+    >
+      <>
+        <Dialog />
 
         {showBB && (
           <SegmentedSwitch
@@ -1939,17 +1944,10 @@ export default function BuildingsScreen() {
         })}
 
         <View style={{ height: 100 }} />
-      </ScrollView>
+      </>
 
-      <BottomSheet
-        visible={sheetName !== null}
-        onClose={() => setSheetName(null)}
-        header={sheetSection ? renderSheetHeader(sheetSection) : undefined}
-        headerPaddingHorizontal={Spacing.sm}
-      >
-        {sheetSection ? renderSheetBody(sheetSection) : null}
-      </BottomSheet>
-    </Screen>
+
+    </PageScreen>
   );
 }
 
