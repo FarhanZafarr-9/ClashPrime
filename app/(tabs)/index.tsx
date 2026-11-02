@@ -1,10 +1,12 @@
+import { useImportedUpgrades } from '../../src/hooks/useImportedUpgrades';
+import { isImportedCompletionSynced } from '../../src/utils/importedUpgradeCompletion';
+import type { ImportedUpgrade } from '../../src/types/importedUpgrade';
+import PageScreen from '../../src/components/PageScreen';
 import CollapsibleContent from '../../src/components/CollapsibleContent';
-import Screen from '../../src/components/Screen';
 import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   RefreshControl,
   Image,
@@ -655,11 +657,38 @@ function ProgressRow({
 export default function HomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag } = usePlayer();
+  const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag, completeImportedUpgrade } = usePlayer();
+  const { upgrades: importedUpgrades, confirm: confirmUpgrade } = useImportedUpgrades(player?.tag ?? '');
+  const pendingImported = importedUpgrades.filter(row => !row.confirmed);
+  const confirmingUpgrade = useRef(false);
+  const upgradeGroups = [
+    { key: 'buildings', title: 'Buildings', rows: pendingImported.filter(r => r.kind === 'buildings') },
+    { key: 'heroes', title: 'Heroes', rows: pendingImported.filter(r => r.kind === 'heroes') },
+    { key: 'research', title: 'Research & pets', rows: pendingImported.filter(r => ['troops', 'spells', 'pets'].includes(r.kind)) },
+    { key: 'other', title: 'Other upgrades', rows: pendingImported.filter(r => r.kind === 'other') },
+  ].filter(group => group.rows.length > 0);
+  useEffect(() => {
+    if (!player) return;
+    for (const row of importedUpgrades.filter(r => !r.confirmed)) {
+      const siblings = importedUpgrades.filter(r => r.dataId === row.dataId && r.level === row.level && r.village === row.village);
+      if (isImportedCompletionSynced(player, row, row.baselineTargetCopies + siblings.length)) void confirmUpgrade(row.id);
+    }
+  }, [player, importedUpgrades, confirmUpgrade]);
   const { superTroopNames, petNames, siegeMachineNames } = useGameData();
   const { reminders, addTimer, updateTimer, dismissTimer, hasPermission } = useTimers();
   const { count: builderCount } = useBuilderCount();
   const { show: showDialog, Dialog } = useDialog();
+  const handleConfirmUpgrade = async (row: ImportedUpgrade) => {
+    if (confirmingUpgrade.current || nowTick < row.completesAt) return;
+    confirmingUpgrade.current = true;
+    try {
+      const confirmedSiblings = importedUpgrades.filter(r => r.confirmed && r.dataId === row.dataId && r.level === row.level && r.village === row.village).length;
+      await completeImportedUpgrade(row, row.baselineTargetCopies + confirmedSiblings + 1);
+      await confirmUpgrade(row.id);
+    } catch {
+      showDialog({ title: 'Could not confirm upgrade', message: 'Your upgrade is still tracked. Try confirming it again.', actions: [{ label: 'OK', primary: true, onPress: () => {} }] });
+    } finally { confirmingUpgrade.current = false; }
+  };
   const [refreshing, setRefreshing] = useState(false);
   const [progressDiff, setProgressDiff] = useState<ProgressDiff | null>(null);
   const [addTimerVisible, setAddTimerVisible] = useState(false);
@@ -1360,7 +1389,10 @@ export default function HomeScreen() {
 
   if (error && !player) {
     return (
-      <Screen style={styles.container}>
+      <PageScreen
+      title="ClashPrime"
+      subtitle="The Prime Clash experience"
+    >
         <View style={styles.center}>
           <Ionicons name="cloud-offline-outline" size={48} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>Connection Error</Text>
@@ -1369,7 +1401,7 @@ export default function HomeScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </PressableRipple>
         </View>
-      </Screen>
+      </PageScreen>
     );
   }
 
@@ -1655,38 +1687,24 @@ export default function HomeScreen() {
   ];
 
   return (
-    <Screen style={styles.container} >
-      <View style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={Colors.textSecondary}
-              colors={[Colors.textSecondary]}
-              progressBackgroundColor={Colors.bgCard}
-            />
-          }
-        >
-          <View style={styles.header}>
-            <View style={styles.headerTitleRow}>
-              <Text style={styles.greeting}>ClashPrime</Text>
-              {updateAvailable && (
-                <View style={styles.updateBadge}>
+    <PageScreen
+      style={styles.container}
+      title={<>ClashPrime</>}
+      subtitle={<>
+              {'The Prime Clash experience'}
+            </>}
+      actions={[updateAvailable && (
+                <View key="action-0" style={styles.updateBadge}>
                   <Ionicons name="cloud-download-outline" size={14} color={Colors.warning} />
                   <Text style={styles.updateBadgeText}>v{latestVersion}</Text>
                 </View>
-              )}
-              <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-                {player && (
-                  <HeaderButton onPress={handleOpenShare} accessibilityLabel="Share base">
+              ),
+player && (
+                  <HeaderButton key="action-1" onPress={handleOpenShare} accessibilityLabel="Share base">
                     <Ionicons name="images-outline" size={18} color={Colors.textSecondary} />
                   </HeaderButton>
-                )}
-                <HeaderButton
+                ),
+<HeaderButton key="action-2"
                   onPress={handleCheckUpdates}
                   loading={checkingUpdate}
                   accessibilityLabel="Check for updates"
@@ -1696,16 +1714,394 @@ export default function HomeScreen() {
                     size={18}
                     color={updateAvailable ? Colors.warning : Colors.textSecondary}
                   />
-                </HeaderButton>
-                <HeaderButton onPress={() => setSwitcherVisible(true)} accessibilityLabel="Switch account">
+                </HeaderButton>,
+<HeaderButton key="action-3" onPress={() => setSwitcherVisible(true)} accessibilityLabel="Switch account">
                   <Ionicons name="people-outline" size={18} color={Colors.textSecondary} />
-                </HeaderButton>
+                </HeaderButton>]}
+      contentContainerStyle={styles.scroll}
+      scrollProps={{refreshControl: <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.textSecondary}
+              colors={[Colors.textSecondary]}
+              progressBackgroundColor={Colors.bgCard}
+            />}}
+      overlays={<><Dialog />
+<Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => { setEditingTimer(null); setAddTimerVisible(false); }} statusBarTranslucent>
+        <View style={styles.modalRoot}>
+          <KeyboardAvoidingView
+            style={styles.modalRoot}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => { setEditingTimer(null); setAddTimerVisible(false); }}>
+              <Animated.View
+                style={[
+                  styles.modalCard,
+                  {
+                    opacity: timerCardAnim,
+                    transform: [
+                      { scale: timerCardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
+                    ],
+                  },
+                ]}
+                onStartShouldSetResponder={() => true}
+              >
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalHeaderIcon}>
+                    <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
+                  </View>
+                  <View style={styles.modalHeaderText}>
+                    <Text style={styles.modalTitle}>{editingTimer ? 'Edit Timer' : 'New Timer'}</Text>
+                    {editingTimer ? (
+                      <Text style={styles.modalSubtitle}>Restart the countdown for &ldquo;{editingTimer.label}&rdquo;</Text>
+                    ) : (
+                      <Text style={styles.modalSubtitle}>Get a reminder when the time is up</Text>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>LABEL</Text>
+                  <TextInput
+                    style={[styles.modalInput, timerInputFocused && styles.modalInputFocused]}
+                    placeholder="e.g. Archer Queen"
+                    placeholderTextColor={Colors.textMuted}
+                    value={timerLabel}
+                    onChangeText={setTimerLabel}
+                    onFocus={() => setTimerInputFocused(true)}
+                    onBlur={() => setTimerInputFocused(false)}
+                    maxLength={40}
+                    returnKeyType="done"
+                  />
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>DURATION</Text>
+                  <View style={styles.durationPresets}>
+                    {[15, 30, 60, 120, 240, 480, 720, 1440].map((m) => {
+                      const label = m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 60 / 24}d`;
+                      return (
+                        <PressableRipple
+                          key={m}
+                          style={[styles.durationPill, customMinutes == null && timerMinutes === m && styles.durationPillActive]}
+                          onPress={() => { setTimerMinutes(m); setTimerCustom(''); }}
+                        >
+                          <Text style={[styles.durationPillText, customMinutes == null && timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
+                        </PressableRipple>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    style={[styles.modalInput, styles.modalCustomInput, timerCustomFocused && styles.modalInputFocused]}
+                    placeholder="Custom — e.g. 1d 2h 30m"
+                    placeholderTextColor={Colors.textMuted}
+                    value={timerCustom}
+                    onChangeText={setTimerCustom}
+                    onFocus={() => setTimerCustomFocused(true)}
+                    onBlur={() => setTimerCustomFocused(false)}
+                    keyboardType="numbers-and-punctuation"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    maxLength={24}
+                    returnKeyType="done"
+                  />
+                  <View style={styles.durationSummary}>
+                    <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
+                    <Text style={styles.durationSummaryText}>
+                      {customMinutes == null && timerCustom.trim() !== '' ? (
+                        <Text style={styles.durationSummaryError}>Use formats like 1d 2h 30m, 1h 32m or 45m</Text>
+                      ) : (
+                        <>
+                          Ends at{' '}
+                          <Text style={styles.durationSummaryTime}>
+                            {new Date(nowTick + effectiveMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                          </Text>
+                        </>
+                      )}
+                    </Text>
+                  </View>
+                </View>
+
+                {!hasPermission && (
+                  <View style={styles.notifHint}>
+                    <Ionicons name="notifications-off-outline" size={13} color={Colors.warning} />
+                    <Text style={styles.notifHintText}>Notifications are off — you won&apos;t get a reminder.</Text>
+                  </View>
+                )}
+
+                <View style={styles.modalActions}>
+                  <PressableRipple style={styles.modalCancelBtn} onPress={() => { setEditingTimer(null); setAddTimerVisible(false); }}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </PressableRipple>
+                  <PressableRipple
+                    style={[styles.modalConfirmBtn, (!timerLabel.trim() || !hasValidDuration || addingTimer) && { opacity: 0.4 }]}
+                    disabled={!timerLabel.trim() || !hasValidDuration || addingTimer}
+                    onPress={async () => {
+                      setAddingTimer(true);
+                      if (editingTimer) {
+                        await updateTimer(editingTimer.id, timerLabel.trim(), effectiveMinutes);
+                      } else {
+                        await addTimer(timerLabel.trim(), effectiveMinutes);
+                      }
+                      setAddingTimer(false);
+                      setEditingTimer(null);
+                      setAddTimerVisible(false);
+                    }}
+                  >
+                    {addingTimer ? (
+                      <ActivityIndicator size="small" color={Colors.bg} />
+                    ) : (
+                      <Text style={styles.modalConfirmText}>{editingTimer ? 'Save' : 'Start Timer'}</Text>
+                    )}
+                  </PressableRipple>
+                </View>
+              </Animated.View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+<BottomSheet
+        visible={switcherVisible}
+        onClose={() => setSwitcherVisible(false)}
+        maxHeight="90%"
+        title="Accounts"
+        subtitle="Tap an account to switch"
+        icon="swap-horizontal-outline"
+        contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}
+      >
+        <View style={styles.switcherCard}>
+          {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
+          {accounts.map((acct) => {
+            const isActive = acct.tag === activeAccount?.tag;
+            const isSyncing = acct.tag === syncingTag;
+            const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
+            const thLabel = acct.townHallLevel > 0 ? `TH${acct.townHallLevel}` : 'No Town Hall';
+            return (
+              <PressableRipple
+                key={acct.tag}
+                style={[
+                  styles.switcherItem,
+                  isActive && styles.switcherItemActive,
+                ]}
+                onPress={() => handleHomeSwitch(acct.tag)}
+              >
+                <View style={styles.switcherAvatar}>
+                  {acctThImage ? (
+                    <Image source={acctThImage} style={styles.switcherAvatarImg} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="person" size={18} color={Colors.textSecondary} />
+                  )}
+                </View>
+                <View style={styles.switcherItemText}>
+                  <View style={styles.switcherItemNameRow}>
+                    <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
+                  </View>
+                  <View style={styles.switcherItemSubRow}>
+                    <Text style={styles.switcherItemTag} numberOfLines={1}>
+                      {`${thLabel} · ${acct.tag}`}
+                    </Text>
+                    {acct.lastSyncedAt && (
+                      <Text style={styles.switcherItemSynced} numberOfLines={1}>
+                        {`Synced ${new Date(acct.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {isSyncing && (
+                  <View style={styles.switcherSyncingBadge}>
+                    <ActivityIndicator size="small" color={Colors.textSecondary} />
+                  </View>
+                )}
+              </PressableRipple>
+            );
+          })}
+          <PressableRipple
+            style={styles.switcherAdd}
+            onPress={() => {
+              setSwitcherVisible(false);
+              router.push('/onboarding?mode=add');
+            }}
+          >
+            <Ionicons name="link-outline" size={16} color={Colors.textPrimary} />
+            <Text style={styles.switcherAddText}>Add Account</Text>
+          </PressableRipple>
+          <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
+            <Text style={styles.switcherCloseText}>Close</Text>
+          </PressableRipple>
+        </View>
+      </BottomSheet>
+{player && (
+        <Modal visible={shareVisible} transparent animationType="fade" onRequestClose={() => setShareVisible(false)} statusBarTranslucent>
+          <View style={styles.shareOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setShareVisible(false)} />
+            <View style={styles.sharePreviewCard}>
+              <View
+                collapsable={false}
+                ref={shareCardRef}
+                onLayout={(e) => setShareCardSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
+              >
+                <ShareCard
+                  player={player}
+                  categories={shareCategories}
+                  showBH={showBH}
+                  width={shareCardWidth}
+                  measure={shareCardSize}
+                  subtitle={lastSync ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : undefined}
+                />
+              </View>
+              <View style={[styles.shareActions, { width: shareCardWidth }]}>
+                <PressableRipple style={styles.shareActionGhost} onPress={() => setShareVisible(false)}>
+                  <Text style={styles.shareActionGhostText}>Close</Text>
+                </PressableRipple>
+                <PressableRipple style={[styles.shareActionPrimary, sharing && { opacity: 0.5 }]} disabled={sharing} onPress={handleShareProgress}>
+                  {sharing ? (
+                    <ActivityIndicator size="small" color={Colors.bg} />
+                  ) : (
+                    <Text style={styles.shareActionPrimaryText}>Share</Text>
+                  )}
+                </PressableRipple>
               </View>
             </View>
-            <Text style={styles.timestamp}>
-              {'The Prime Clash experience'}
-            </Text>
           </View>
+        </Modal>
+      )}
+<Modal visible={progressDiff !== null} transparent animationType="fade" onRequestClose={() => setProgressDiff(null)} statusBarTranslucent>
+        <Pressable style={styles.progressOverlay} onPress={() => setProgressDiff(null)}>
+          <View style={styles.progressCard} onStartShouldSetResponder={() => true}>
+            <View style={styles.progressHeader}>
+              <View style={styles.progressHeaderIcon}>
+                <Ionicons name="trending-up" size={20} color={Colors.textPrimary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.progressTitle}>Progress Achieved</Text>
+                <Text style={styles.progressSubtitle}>
+                  {progressDiff && progressDiff.since > 0
+                    ? `Since ${new Date(progressDiff.since).toLocaleDateString()}`
+                    : 'Since your last refresh'}
+                </Text>
+              </View>
+            </View>
+
+            {progressDiff?.townHall && (
+              <View style={styles.progressThBanner}>
+                <View style={styles.progressThIcon}>
+                  {(() => {
+                    const thImg = getTownHallImageSource(progressDiff!.townHall!.after);
+                    return thImg ? (
+                      <Image source={thImg} style={styles.progressThImage} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="home" size={20} color={Colors.textPrimary} />
+                    );
+                  })()}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.progressThTitleRow}>
+                    <Text style={styles.progressThTitle}>Town Hall</Text>
+                    <Text style={styles.progressThTitle}>{progressDiff.townHall.before}</Text>
+                    <Ionicons name="chevron-forward" size={11} color={Colors.bg} />
+                    <Text style={styles.progressThTitle}>{progressDiff.townHall.after}</Text>
+                  </View>
+                  <Text style={styles.progressThSub}>
+                    {progressDiff.townHall.after - progressDiff.townHall.before > 1
+                      ? `Skipped ${progressDiff.townHall.after - progressDiff.townHall.before - 1} Town Hall${progressDiff.townHall.after - progressDiff.townHall.before - 1 > 1 ? 's' : ''} — new unlocks, new caps`
+                      : 'New unlocks and higher caps across the board'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {progressDiff && progressDiff.categories.length > 0 && (
+              <>
+                <Text style={styles.progressSectionTitle}>Overall Progress</Text>
+                <View style={styles.progressRowsList}>
+                  {progressDiff.categories.map((c, i, arr) => {
+                    const meta = CATEGORY_META[c.key];
+                    const buildingImg = progressCategoryImage(c.key);
+                    const isFirst = i === 0;
+                    const isLast = i === arr.length - 1;
+                    return (
+                      <View
+                        key={c.key}
+                        style={[
+                          styles.progressRow,
+                          isFirst && styles.progressRowFirst,
+                          isLast && styles.progressRowLast,
+                        ]}
+                      >
+                        <View style={styles.progressRowIcon}>
+                          {buildingImg ? (
+                            <Image source={buildingImg} style={styles.progressRowBuildingImg} resizeMode="contain" />
+                          ) : meta.icon.set === 'mc' ? (
+                            <MaterialCommunityIcons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
+                          ) : (
+                            <Ionicons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
+                          )}
+                        </View>
+                        <View style={styles.progressRowText}>
+                          <Text style={styles.progressRowLabel}>{meta.label}</Text>
+                          <Text style={styles.progressRowSub}>{meta.sub}</Text>
+                        </View>
+                        <View style={styles.progressRowBadge}>
+                          <Text style={styles.progressRowBadgeBefore}>{Math.round(c.before * 100)}%</Text>
+                          <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
+                          <Text style={styles.progressRowBadgeAfter}>{Math.round(c.after * 100)}%</Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            {progressDiff && progressDiff.levelUps.length > 0 && (
+              <>
+                <Text style={styles.progressSectionTitle}>Level Ups ({progressDiff.levelUps.length})</Text>
+                <View style={styles.progressLevelGrid}>
+                  {progressDiff.levelUps.map((u, index, arr) => {
+                    const img = levelUpImage(u.key, u.name);
+                    return (
+                      <View
+                        key={`${u.key}-${u.name}`}
+                        style={[
+                          styles.progressLevelCell,
+                          index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
+                          (index === 1 || progressDiff?.levelUps?.length === 1) && { borderTopRightRadius: Radius.xl * 1.25 },
+                          ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
+                          index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
+                        ]}
+                      >
+                        {img ? (
+                          typeof img === 'number' ? (
+                            <Image source={img} style={styles.progressLevelCellImage} resizeMode="contain" />
+                          ) : (
+                            <Image source={{ uri: img }} style={styles.progressLevelCellImage} resizeMode="contain" />
+                          )
+                        ) : (
+                          <Text style={styles.progressLevelCellFallback}>{u.name.charAt(0)}</Text>
+                        )}
+                        <View style={{ flex: 1 }} />
+                        <View style={styles.progressLevelCellValue}>
+                          <Text style={[styles.progressRowBefore, styles.progressLevelText]}>Lv{u.before}</Text>
+                          <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
+                          <Text style={[styles.progressRowAfter, styles.progressLevelText]}>Lv{u.after}</Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            <PressableRipple style={styles.progressClose} onPress={() => setProgressDiff(null)}>
+              <Text style={styles.progressCloseText}>Nice!</Text>
+            </PressableRipple>
+          </View>
+        </Pressable>
+      </Modal></>}
+    >
+      <>
+        <>
+
 
           <Card style={styles.playerCard}>
             <View style={styles.playerCardInner}>
@@ -2036,7 +2432,7 @@ export default function HomeScreen() {
 
             {(unlockableItems.length > 0 || rushedItems.length > 0) && (
               <CollapsibleSection
-                isLast
+                isLast={pendingImported.length === 0}
                 iconSource={require('../../assets/images/chiefs-journey/icon.png')}
                 title="Backlog"
                 compact
@@ -2182,6 +2578,60 @@ const groupDesc = group.pending
                 </View>
               </CollapsibleSection>
             )}
+
+
+          {pendingImported.length > 0 && (
+            <CollapsibleSection
+              title="Upgrades in progress"
+              icon="hammer-outline"
+              description={pendingImported.some(r => r.completesAt <= nowTick) ? 'Completed upgrades ready to confirm' : `Next completion in ${formatTimeShort(Math.max(0, (pendingImported[0].completesAt - nowTick) / 1000))}`}
+              count={pendingImported.length}
+              totalLevel={0}
+              totalMax={0}
+              compact
+              isLast
+            >
+              <View style={styles.backlogSections}>
+                {upgradeGroups.map((group, groupIndex) => (
+                  <CollapsibleSection
+                    key={group.key}
+                    title={group.title}
+                    icon={group.key === 'heroes' ? 'shield-half-outline' : group.key === 'research' ? 'flask-outline' : 'hammer-outline'}
+                    description={`${group.rows.length} upgrade${group.rows.length === 1 ? '' : 's'} tracked`}
+                    count={group.rows.length}
+                    totalLevel={0}
+                    totalMax={0}
+                    compact
+                    isLast={groupIndex === upgradeGroups.length - 1}
+                  >
+                    {group.rows.map((row, index) => {
+                      const done = row.completesAt <= nowTick;
+                      const image = row.kind === 'buildings' ? getBuildingLevelImageSource(toJsonName(row.storeName ?? row.name), row.level) : getArmyItemImage(row.name, null);
+                      const duplicateCount = group.rows.filter(r => r.dataId === row.dataId && r.level === row.level && r.village === row.village).length;
+                      return (
+                        <ItemCard
+                          key={row.id}
+                          name={row.name + (duplicateCount > 1 ? ` · copy ${row.copy + 1}` : '')}
+                          level={row.level}
+                          maxLevel={row.targetLevel}
+                          subtitle={`Lv ${row.level} › Lv ${row.targetLevel} · ${row.village === 'home' ? 'Home Village' : 'Builder Base'}`}
+                          subtitleWithBar
+                          timeLabel={done ? (row.kind === 'other' ? 'Completed — dismiss' : 'Completed — confirm') : formatTimeShort(Math.max(0, (row.completesAt - nowTick) / 1000))}
+                          iconSource={image ?? undefined}
+                          iconName="hammer-outline"
+                          actionIcon={done ? 'checkmark-outline' : undefined}
+                          actionAccessibilityLabel={row.kind === 'other' ? 'Dismiss completed upgrade' : 'Confirm completed upgrade'}
+                          onActionPress={done ? () => { void handleConfirmUpgrade(row); } : undefined}
+                          isLast={index === group.rows.length - 1}
+                        />
+                      );
+                    })}
+                  </CollapsibleSection>
+                ))}
+              </View>
+            </CollapsibleSection>
+          )}
+
           </View>
 
           <View style={styles.sectionLabel}>
@@ -2347,386 +2797,19 @@ const groupDesc = group.pending
           )}
 
           <View style={{ height: 100 }} />
-        </ScrollView>
-      </View>
+        </>
+      </>
 
-      <Dialog />
 
-      <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => { setEditingTimer(null); setAddTimerVisible(false); }} statusBarTranslucent>
-        <View style={styles.modalRoot}>
-          <KeyboardAvoidingView
-            style={styles.modalRoot}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          >
-            <Pressable style={styles.modalOverlay} onPress={() => { setEditingTimer(null); setAddTimerVisible(false); }}>
-              <Animated.View
-                style={[
-                  styles.modalCard,
-                  {
-                    opacity: timerCardAnim,
-                    transform: [
-                      { scale: timerCardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
-                    ],
-                  },
-                ]}
-                onStartShouldSetResponder={() => true}
-              >
-                <View style={styles.modalHeader}>
-                  <View style={styles.modalHeaderIcon}>
-                    <Ionicons name="alarm-outline" size={20} color={Colors.textPrimary} />
-                  </View>
-                  <View style={styles.modalHeaderText}>
-                    <Text style={styles.modalTitle}>{editingTimer ? 'Edit Timer' : 'New Timer'}</Text>
-                    {editingTimer ? (
-                      <Text style={styles.modalSubtitle}>Restart the countdown for &ldquo;{editingTimer.label}&rdquo;</Text>
-                    ) : (
-                      <Text style={styles.modalSubtitle}>Get a reminder when the time is up</Text>
-                    )}
-                  </View>
-                </View>
 
-                <View style={styles.fieldBlock}>
-                  <Text style={styles.fieldLabel}>LABEL</Text>
-                  <TextInput
-                    style={[styles.modalInput, timerInputFocused && styles.modalInputFocused]}
-                    placeholder="e.g. Archer Queen"
-                    placeholderTextColor={Colors.textMuted}
-                    value={timerLabel}
-                    onChangeText={setTimerLabel}
-                    onFocus={() => setTimerInputFocused(true)}
-                    onBlur={() => setTimerInputFocused(false)}
-                    maxLength={40}
-                    returnKeyType="done"
-                  />
-                </View>
 
-                <View style={styles.fieldBlock}>
-                  <Text style={styles.fieldLabel}>DURATION</Text>
-                  <View style={styles.durationPresets}>
-                    {[15, 30, 60, 120, 240, 480, 720, 1440].map((m) => {
-                      const label = m < 60 ? `${m}m` : m < 1440 ? `${m / 60}h` : `${m / 60 / 24}d`;
-                      return (
-                        <PressableRipple
-                          key={m}
-                          style={[styles.durationPill, customMinutes == null && timerMinutes === m && styles.durationPillActive]}
-                          onPress={() => { setTimerMinutes(m); setTimerCustom(''); }}
-                        >
-                          <Text style={[styles.durationPillText, customMinutes == null && timerMinutes === m && styles.durationPillTextActive]}>{label}</Text>
-                        </PressableRipple>
-                      );
-                    })}
-                  </View>
-                  <TextInput
-                    style={[styles.modalInput, styles.modalCustomInput, timerCustomFocused && styles.modalInputFocused]}
-                    placeholder="Custom — e.g. 1d 2h 30m"
-                    placeholderTextColor={Colors.textMuted}
-                    value={timerCustom}
-                    onChangeText={setTimerCustom}
-                    onFocus={() => setTimerCustomFocused(true)}
-                    onBlur={() => setTimerCustomFocused(false)}
-                    keyboardType="numbers-and-punctuation"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    maxLength={24}
-                    returnKeyType="done"
-                  />
-                  <View style={styles.durationSummary}>
-                    <Ionicons name="time-outline" size={13} color={Colors.textTertiary} />
-                    <Text style={styles.durationSummaryText}>
-                      {customMinutes == null && timerCustom.trim() !== '' ? (
-                        <Text style={styles.durationSummaryError}>Use formats like 1d 2h 30m, 1h 32m or 45m</Text>
-                      ) : (
-                        <>
-                          Ends at{' '}
-                          <Text style={styles.durationSummaryTime}>
-                            {new Date(nowTick + effectiveMinutes * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                          </Text>
-                        </>
-                      )}
-                    </Text>
-                  </View>
-                </View>
 
-                {!hasPermission && (
-                  <View style={styles.notifHint}>
-                    <Ionicons name="notifications-off-outline" size={13} color={Colors.warning} />
-                    <Text style={styles.notifHintText}>Notifications are off — you won&apos;t get a reminder.</Text>
-                  </View>
-                )}
 
-                <View style={styles.modalActions}>
-                  <PressableRipple style={styles.modalCancelBtn} onPress={() => { setEditingTimer(null); setAddTimerVisible(false); }}>
-                    <Text style={styles.modalCancelText}>Cancel</Text>
-                  </PressableRipple>
-                  <PressableRipple
-                    style={[styles.modalConfirmBtn, (!timerLabel.trim() || !hasValidDuration || addingTimer) && { opacity: 0.4 }]}
-                    disabled={!timerLabel.trim() || !hasValidDuration || addingTimer}
-                    onPress={async () => {
-                      setAddingTimer(true);
-                      if (editingTimer) {
-                        await updateTimer(editingTimer.id, timerLabel.trim(), effectiveMinutes);
-                      } else {
-                        await addTimer(timerLabel.trim(), effectiveMinutes);
-                      }
-                      setAddingTimer(false);
-                      setEditingTimer(null);
-                      setAddTimerVisible(false);
-                    }}
-                  >
-                    {addingTimer ? (
-                      <ActivityIndicator size="small" color={Colors.bg} />
-                    ) : (
-                      <Text style={styles.modalConfirmText}>{editingTimer ? 'Save' : 'Start Timer'}</Text>
-                    )}
-                  </PressableRipple>
-                </View>
-              </Animated.View>
-            </Pressable>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
 
-      <BottomSheet
-        visible={switcherVisible}
-        onClose={() => setSwitcherVisible(false)}
-        maxHeight="90%"
-        title="Accounts"
-        subtitle="Tap an account to switch"
-        icon="swap-horizontal-outline"
-        contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}
-      >
-        <View style={styles.switcherCard}>
-          {accounts.length === 0 && <Text style={styles.switcherEmpty}>No accounts added</Text>}
-          {accounts.map((acct) => {
-            const isActive = acct.tag === activeAccount?.tag;
-            const isSyncing = acct.tag === syncingTag;
-            const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
-            const thLabel = acct.townHallLevel > 0 ? `TH${acct.townHallLevel}` : 'No Town Hall';
-            return (
-              <PressableRipple
-                key={acct.tag}
-                style={[
-                  styles.switcherItem,
-                  isActive && styles.switcherItemActive,
-                ]}
-                onPress={() => handleHomeSwitch(acct.tag)}
-              >
-                <View style={styles.switcherAvatar}>
-                  {acctThImage ? (
-                    <Image source={acctThImage} style={styles.switcherAvatarImg} resizeMode="contain" />
-                  ) : (
-                    <Ionicons name="person" size={18} color={Colors.textSecondary} />
-                  )}
-                </View>
-                <View style={styles.switcherItemText}>
-                  <View style={styles.switcherItemNameRow}>
-                    <Text style={styles.switcherItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
-                  </View>
-                  <View style={styles.switcherItemSubRow}>
-                    <Text style={styles.switcherItemTag} numberOfLines={1}>
-                      {`${thLabel} · ${acct.tag}`}
-                    </Text>
-                    {acct.lastSyncedAt && (
-                      <Text style={styles.switcherItemSynced} numberOfLines={1}>
-                        {`Synced ${new Date(acct.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                {isSyncing && (
-                  <View style={styles.switcherSyncingBadge}>
-                    <ActivityIndicator size="small" color={Colors.textSecondary} />
-                  </View>
-                )}
-              </PressableRipple>
-            );
-          })}
-          <PressableRipple
-            style={styles.switcherAdd}
-            onPress={() => {
-              setSwitcherVisible(false);
-              router.push('/onboarding?mode=add');
-            }}
-          >
-            <Ionicons name="link-outline" size={16} color={Colors.textPrimary} />
-            <Text style={styles.switcherAddText}>Add Account</Text>
-          </PressableRipple>
-          <PressableRipple style={styles.switcherClose} onPress={() => setSwitcherVisible(false)}>
-            <Text style={styles.switcherCloseText}>Close</Text>
-          </PressableRipple>
-        </View>
-      </BottomSheet>
 
-      {player && (
-        <Modal visible={shareVisible} transparent animationType="fade" onRequestClose={() => setShareVisible(false)} statusBarTranslucent>
-          <View style={styles.shareOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setShareVisible(false)} />
-            <View style={styles.sharePreviewCard}>
-              <View
-                collapsable={false}
-                ref={shareCardRef}
-                onLayout={(e) => setShareCardSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
-              >
-                <ShareCard
-                  player={player}
-                  categories={shareCategories}
-                  showBH={showBH}
-                  width={shareCardWidth}
-                  measure={shareCardSize}
-                  subtitle={lastSync ? `Synced ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : undefined}
-                />
-              </View>
-              <View style={[styles.shareActions, { width: shareCardWidth }]}>
-                <PressableRipple style={styles.shareActionGhost} onPress={() => setShareVisible(false)}>
-                  <Text style={styles.shareActionGhostText}>Close</Text>
-                </PressableRipple>
-                <PressableRipple style={[styles.shareActionPrimary, sharing && { opacity: 0.5 }]} disabled={sharing} onPress={handleShareProgress}>
-                  {sharing ? (
-                    <ActivityIndicator size="small" color={Colors.bg} />
-                  ) : (
-                    <Text style={styles.shareActionPrimaryText}>Share</Text>
-                  )}
-                </PressableRipple>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
 
-      <Modal visible={progressDiff !== null} transparent animationType="fade" onRequestClose={() => setProgressDiff(null)} statusBarTranslucent>
-        <Pressable style={styles.progressOverlay} onPress={() => setProgressDiff(null)}>
-          <View style={styles.progressCard} onStartShouldSetResponder={() => true}>
-            <View style={styles.progressHeader}>
-              <View style={styles.progressHeaderIcon}>
-                <Ionicons name="trending-up" size={20} color={Colors.textPrimary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.progressTitle}>Progress Achieved</Text>
-                <Text style={styles.progressSubtitle}>
-                  {progressDiff && progressDiff.since > 0
-                    ? `Since ${new Date(progressDiff.since).toLocaleDateString()}`
-                    : 'Since your last refresh'}
-                </Text>
-              </View>
-            </View>
 
-            {progressDiff?.townHall && (
-              <View style={styles.progressThBanner}>
-                <View style={styles.progressThIcon}>
-                  {(() => {
-                    const thImg = getTownHallImageSource(progressDiff!.townHall!.after);
-                    return thImg ? (
-                      <Image source={thImg} style={styles.progressThImage} resizeMode="contain" />
-                    ) : (
-                      <Ionicons name="home" size={20} color={Colors.textPrimary} />
-                    );
-                  })()}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={styles.progressThTitleRow}>
-                    <Text style={styles.progressThTitle}>Town Hall</Text>
-                    <Text style={styles.progressThTitle}>{progressDiff.townHall.before}</Text>
-                    <Ionicons name="chevron-forward" size={11} color={Colors.bg} />
-                    <Text style={styles.progressThTitle}>{progressDiff.townHall.after}</Text>
-                  </View>
-                  <Text style={styles.progressThSub}>
-                    {progressDiff.townHall.after - progressDiff.townHall.before > 1
-                      ? `Skipped ${progressDiff.townHall.after - progressDiff.townHall.before - 1} Town Hall${progressDiff.townHall.after - progressDiff.townHall.before - 1 > 1 ? 's' : ''} — new unlocks, new caps`
-                      : 'New unlocks and higher caps across the board'}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {progressDiff && progressDiff.categories.length > 0 && (
-              <>
-                <Text style={styles.progressSectionTitle}>Overall Progress</Text>
-                <View style={styles.progressRowsList}>
-                  {progressDiff.categories.map((c, i, arr) => {
-                    const meta = CATEGORY_META[c.key];
-                    const buildingImg = progressCategoryImage(c.key);
-                    const isFirst = i === 0;
-                    const isLast = i === arr.length - 1;
-                    return (
-                      <View
-                        key={c.key}
-                        style={[
-                          styles.progressRow,
-                          isFirst && styles.progressRowFirst,
-                          isLast && styles.progressRowLast,
-                        ]}
-                      >
-                        <View style={styles.progressRowIcon}>
-                          {buildingImg ? (
-                            <Image source={buildingImg} style={styles.progressRowBuildingImg} resizeMode="contain" />
-                          ) : meta.icon.set === 'mc' ? (
-                            <MaterialCommunityIcons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
-                          ) : (
-                            <Ionicons name={meta.icon.name as any} size={15} color={Colors.textSecondary} />
-                          )}
-                        </View>
-                        <View style={styles.progressRowText}>
-                          <Text style={styles.progressRowLabel}>{meta.label}</Text>
-                          <Text style={styles.progressRowSub}>{meta.sub}</Text>
-                        </View>
-                        <View style={styles.progressRowBadge}>
-                          <Text style={styles.progressRowBadgeBefore}>{Math.round(c.before * 100)}%</Text>
-                          <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
-                          <Text style={styles.progressRowBadgeAfter}>{Math.round(c.after * 100)}%</Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-
-            {progressDiff && progressDiff.levelUps.length > 0 && (
-              <>
-                <Text style={styles.progressSectionTitle}>Level Ups ({progressDiff.levelUps.length})</Text>
-                <View style={styles.progressLevelGrid}>
-                  {progressDiff.levelUps.map((u, index, arr) => {
-                    const img = levelUpImage(u.key, u.name);
-                    return (
-                      <View
-                        key={`${u.key}-${u.name}`}
-                        style={[
-                          styles.progressLevelCell,
-                          index === 0 && { borderTopLeftRadius: Radius.xl * 1.25 },
-                          (index === 1 || progressDiff?.levelUps?.length === 1) && { borderTopRightRadius: Radius.xl * 1.25 },
-                          ((index === arr.length - 2 && index % 2 === 0) || (index === arr.length - 1 && index % 2 === 0)) && { borderBottomLeftRadius: Radius.xl * 1.25 },
-                          index === arr.length - 1 && { borderBottomRightRadius: Radius.xl * 1.25 },
-                        ]}
-                      >
-                        {img ? (
-                          typeof img === 'number' ? (
-                            <Image source={img} style={styles.progressLevelCellImage} resizeMode="contain" />
-                          ) : (
-                            <Image source={{ uri: img }} style={styles.progressLevelCellImage} resizeMode="contain" />
-                          )
-                        ) : (
-                          <Text style={styles.progressLevelCellFallback}>{u.name.charAt(0)}</Text>
-                        )}
-                        <View style={{ flex: 1 }} />
-                        <View style={styles.progressLevelCellValue}>
-                          <Text style={[styles.progressRowBefore, styles.progressLevelText]}>Lv{u.before}</Text>
-                          <Ionicons name="chevron-forward" size={11} color={Colors.textMuted} />
-                          <Text style={[styles.progressRowAfter, styles.progressLevelText]}>Lv{u.after}</Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-
-            <PressableRipple style={styles.progressClose} onPress={() => setProgressDiff(null)}>
-              <Text style={styles.progressCloseText}>Nice!</Text>
-            </PressableRipple>
-          </View>
-        </Pressable>
-      </Modal>
-    </Screen>
+    </PageScreen>
   );
 }
 
