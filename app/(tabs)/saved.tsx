@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Linking,
   Share,
@@ -224,10 +223,12 @@ export default function SavedScreen() {
   };
 
   return (
-    <Screen style={styles.container} >
-      <View style={styles.header}>
-        <Text style={styles.title}>Saved & Favorites</Text>
-      </View>
+    <PageScreen
+      style={styles.container}
+      title={<>Saved & Favorites</>}
+      actions={[]}
+    >
+
 
       {sections.length === 0 ? (
         <View style={styles.empty}>
@@ -236,7 +237,7 @@ export default function SavedScreen() {
           <Text style={styles.emptyDesc}>Save bases and armies to find them here quickly.</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list} overScrollMode="never" showsVerticalScrollIndicator={false}>
+        <View style={styles.list}>
           {sections.map((section) => (
             <View key={section.title} style={styles.section}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -326,9 +327,9 @@ export default function SavedScreen() {
             </View>
           ))}
           <View style={{ height: 100 }} />
-        </ScrollView>
+        </View>
       )}
-    </Screen>
+    </PageScreen>
   );
 }
 
