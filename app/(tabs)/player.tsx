@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   TextInput,
   ActivityIndicator,
@@ -269,16 +268,15 @@ export default function PlayerInspectScreen() {
       ];
 
   return (
-    <Screen style={styles.container} >
-      <View style={styles.header}>
-        <PressableRipple style={styles.backBtn} onPress={() => router.back()} hitSlop={12} accessibilityLabel="Go back" accessibilityRole="button">
+    <PageScreen
+      style={styles.container}
+      title={<>Player Inspect</>}
+      subtitle={<>Search any player by tag</>}
+      actions={[<PressableRipple key="action-0" style={styles.backBtn} onPress={() => router.back()} hitSlop={12} accessibilityLabel="Go back" accessibilityRole="button">
           <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
-        </PressableRipple>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>Player Inspect</Text>
-          <Text style={styles.subtitle}>Search any player by tag</Text>
-        </View>
-      </View>
+        </PressableRipple>]}
+    >
+
 
       <View style={styles.searchWrap}>
         <View style={styles.searchBox}>
@@ -310,7 +308,7 @@ export default function PlayerInspectScreen() {
           <ActivityIndicator size="large" color={Colors.textPrimary} />
         </View>
       ) : error ? (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.scroll}>
           <Card>
             <View style={styles.errorRow}>
               <Ionicons name="alert-circle-outline" size={18} color={Colors.textTertiary} />
@@ -320,9 +318,9 @@ export default function PlayerInspectScreen() {
               <Text style={styles.retryText}>Retry</Text>
             </PressableRipple>
           </Card>
-        </ScrollView>
+        </View>
       ) : player ? (
-        <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
+        <View style={styles.scroll}>
           {/* ── Identity card ── */}
           <Card>
             <View style={styles.playerRow}>
@@ -610,7 +608,7 @@ export default function PlayerInspectScreen() {
           )}
 
           <View style={{ height: 100 }} />
-        </ScrollView>
+        </View>
       ) : (
         <View style={styles.centerBox}>
           <Ionicons name="person-outline" size={40} color={Colors.textTertiary} />
@@ -618,7 +616,7 @@ export default function PlayerInspectScreen() {
           <Text style={styles.emptySub}>Enter a player tag above to inspect their profile.</Text>
         </View>
       )}
-    </Screen>
+    </PageScreen>
   );
 }
 
