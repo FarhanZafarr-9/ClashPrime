@@ -1,6 +1,8 @@
+import { toJsonName } from '../../src/utils/buildingCopies';
+import { importUpgradeSnapshot } from '../../src/utils/importedUpgrades';
+import PageScreen from '../../src/components/PageScreen';
 import CollapsibleContent from '../../src/components/CollapsibleContent';
 import ChangelogBody, { CHANGELOG } from '../../src/components/ChangelogSheet';
-import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -23,8 +25,8 @@ import { getStringAsync, setStringAsync } from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, useTheme, useClashFontPref, useGlobalLevels } from '../../src/theme';
 import { useBaseSourcePref } from '../../src/api/baseScraper';
 import OptionSelector from '../../src/components/OptionSelector';
-import { getTownHallImageSource } from '../../src/utils/buildingImages';
-import { getMaxTownHall } from '../../src/utils/buildingData';
+import { getTownHallImageSource, getBuildingEffectiveMax } from '../../src/utils/buildingImages';
+import { getMaxTownHall, isBuilderName } from '../../src/utils/buildingData';
 import { parseCocExport, cocExportToBuildingLevels, normalizeTag, detectBuilderHutCount, CocImportResult } from '../../src/utils/cocExport';
 import type { ClashPlayer } from '../../src/types/clash';
 import { seedBuildingLevelsForTH } from '../../src/utils/seedBuildingLevels';
@@ -525,6 +527,7 @@ export default function SettingsScreen() {
       const mergedPlayer: ClashPlayer = {
         ...data,
         buildingLevels: onboardingImportResult.levels,
+        buildings: onboardingImportResult.resolved.flatMap(item => item.levels.map(level => ({ name: toJsonName(item.storeName), level, maxLevel: getBuildingEffectiveMax(item.storeName, isBuilderName(item.storeName) ? data.builderHallLevel ?? 1 : data.townHallLevel) }))),
         lastMaxedTH: data.townHallLevel || getMaxTownHall(),
       };
 
@@ -538,6 +541,7 @@ export default function SettingsScreen() {
       await setPlayerTag(onboardingImportTag!);
       await setApiToken(token);
       await cachePlayer(mergedPlayer, onboardingImportTag!);
+      await importUpgradeSnapshot(onboardingImportTag!, onboardingImportResult);
 
       // Import provides all building levels; skip profile/TH/builder steps.
       // The count still has to land: this branch used to skip the step without
@@ -953,11 +957,285 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen style={styles.container} >
-      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
-        </View>
+    <PageScreen
+      style={styles.container}
+      title={<>Settings</>}
+      actions={[]}
+      contentContainerStyle={styles.scroll}
+      overlays={<><BottomSheet
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onShow={() => modalInputRef.current?.focus()}
+        icon={modalType === 'tag' ? 'person-outline' : 'key-outline'}
+        title={modalTitle}
+        subtitle={modalSubtitle}
+      >
+        <View style={styles.modalContent}>
+            <View style={styles.modalHint}>
+              {modalType === 'tag' ? (
+                <Text style={styles.modalHintText}>
+                  Your unique player identifier starting with #. Find it in-game under Settings › More › Show Tag.
+                </Text>
+              ) : (
+                <>
+                  <Text style={styles.modalHintText}>
+                    A long alphanumeric string (starts with <Text style={styles.modalCode}>eyJ</Text>) that grants read-only access to your profile.
+                  </Text>
+                  <View style={styles.modalSteps}>
+                    <View style={styles.modalStep}>
+                      <Text style={styles.modalStepNum}>1</Text>
+                      <Text style={styles.modalStepText}>
+                        Open <Text style={styles.modalLink}>developer.clashofclans.com</Text> and sign in with your Supercell ID
+                      </Text>
+                    </View>
+                    <View style={styles.modalStep}>
+                      <Text style={styles.modalStepNum}>2</Text>
+                      <Text style={styles.modalStepText}>
+                        Go to <Text style={styles.modalLink}>My Account › Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
+                      </Text>
+                    </View>
+                    <View style={styles.modalStep}>
+                      <Text style={styles.modalStepNum}>3</Text>
+                      <Text style={styles.modalStepText}>
+                        Copy the token, then <Text style={styles.modalImportant}>add IP 45.79.218.79 to the whitelist</Text> (app uses a proxy)
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+            </View>
+            <View style={styles.modalInputRow}>
+              <TextInput
+                ref={modalInputRef}
+                style={styles.modalInput}
+                value={modalValue}
+                onChangeText={(t) => { setModalValue(t); setModalError(''); }}
+                placeholder={modalPlaceholder}
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry={modalType === 'token'}
+                keyboardAppearance="dark"
+              />
+              {modalType === 'token' && (
+                <PressableRipple style={styles.modalIconBtn} onPress={async () => { const t = await getStringAsync(); if (t) setModalValue(t); }} hitSlop={8}>
+                  <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
+                </PressableRipple>
+              )}
+              {modalValue.length > 0 && (
+                <PressableRipple style={styles.modalClearBtn} onPress={() => setModalValue('')} hitSlop={8}>
+                  <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+                </PressableRipple>
+              )}
+            </View>
+            {modalError ? (
+              <Text style={styles.modalErrorText}>{modalError}</Text>
+            ) : null}
+            <View style={styles.modalActions}>
+              <PressableRipple
+                style={styles.modalCancelBtn}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </PressableRipple>
+              <PressableRipple
+                style={styles.modalSaveBtn}
+                onPress={() => modalOnSave(modalValue)}
+              >
+                <Text style={styles.modalSaveText}>Save</Text>
+              </PressableRipple>
+            </View>
+          </View>
+      </BottomSheet>
+<BottomSheet
+        visible={contentVisible}
+        onClose={() => setContentVisible(false)}
+        maxHeight="92%"
+        title={contentTitle}
+        subtitle={contentSubtitle || undefined}
+        icon={contentIcon}
+        iconSource={contentIconSource}
+        contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+      >
+            <ScrollView
+              style={[styles.contentBody, contentIsChangelog && styles.contentBodyTall]}
+              contentContainerStyle={styles.contentBodyInner}
+              showsVerticalScrollIndicator={false}
+            >
+              {contentIsChangelog ? (
+                <ChangelogBody
+                  expanded={changelogExpanded}
+                  onToggle={(v) => setChangelogExpanded((prev) => ({ ...prev, [v]: !prev[v] }))}
+                />
+              ) : (
+                contentBody
+              )}
+            </ScrollView>
+            <View style={styles.contentActions}>
+              {contentActions.map((a, i) => (
+                <PressableRipple
+                  key={`${a.label}-${i}`}
+                  style={[styles.contentBtn, a.primary && styles.contentBtnPrimary, a.destructive && styles.contentBtnDestructive]}
+                  onPress={() => {
+                    a.onPress?.();
+                    setContentVisible(false);
+                  }}
+                >
+                  <Text style={[styles.contentBtnText, a.primary && styles.contentBtnTextPrimary, a.destructive && styles.contentBtnTextDestructive]}>
+                    {a.label}
+                  </Text>
+                </PressableRipple>
+              ))}
+            </View>
+      </BottomSheet>
+<OnboardingModal
+        visible={showOnboarding}
+        onClose={() => { setShowOnboarding(false); setOnboardingStep('tag'); setOnboardingPlayer(null); }}
+        step={onboardingStep}
+        setStep={setOnboardingStep}
+        onboardingTag={onboardingTag}
+        setOnboardingTag={setOnboardingTag}
+        onboardingPlayer={onboardingPlayer}
+        setOnboardingPlayer={setOnboardingPlayer}
+onboardingBuilderCount={onboardingBuilderCount}
+                setOnboardingBuilderCount={setOnboardingBuilderCount}
+                onboardingHutsDetected={onboardingHutsDetected}
+        onboardingThLevel={onboardingThLevel}
+        setOnboardingThLevel={setOnboardingThLevel}
+        onboardingImportJson={onboardingImportJson}
+        setOnboardingImportJson={setOnboardingImportJson}
+        onboardingImportResult={onboardingImportResult}
+        setOnboardingImportResult={setOnboardingImportResult}
+        onboardingImportTag={onboardingImportTag}
+        setOnboardingImportTag={setOnboardingImportTag}
+        onboardingImportError={onboardingImportError}
+        setOnboardingImportError={setOnboardingImportError}
+        handleOnboardingSave={handleOnboardingSave}
+        handleOnboardingImportPaste={handleOnboardingImportPaste}
+        handleOnboardingImportParse={handleOnboardingImportParse}
+        handleOnboardingImportContinue={handleOnboardingImportContinue}
+        handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
+      />
+<BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch · hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}>
+        <View style={styles.switchCard}>
+          {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
+
+          <ScrollView style={styles.switchList} showsVerticalScrollIndicator={false}>
+            {accounts.map((acct) => {
+              const isActive = acct.tag === activeAccount?.tag;
+              const isSyncing = acct.tag === syncingTag;
+              const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
+              return (
+                <PressableRipple
+                  key={acct.tag}
+                  style={[styles.switchItem, isActive && styles.switchItemActive]}
+                  onPress={async () => {
+                    if (isActive || switchingAccount || isSyncing) return;
+                    setSwitchModalVisible(false);
+                    await handleSwitchAccount(acct.tag);
+                  }}
+                  onLongPress={() => {
+                    const isLast = accounts.length <= 1;
+                    showDialog({
+                      title: isLast ? 'Sign Out' : 'Remove Account',
+                      subtitle: isLast ? 'Wipes everything for this account' : 'This only affects ClashPrime',
+                      icon: isLast ? 'log-out-outline' : 'trash-outline',
+                      message: isLast
+                        ? `Sign out of ${acct.tag}? This is your only account, so ClashPrime will erase its cached player data, API token, saved bases, favourites and progress from this device. Your Clash of Clans account is untouched.`
+                        : `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
+                      actions: [
+                        { label: 'Cancel', onPress: () => { } },
+                        {
+                          label: isLast ? 'Sign Out' : 'Remove', primary: true, destructive: true, onPress: async () => {
+                            if (isLast) {
+                              await signOutAccount(acct.tag);
+                              await refreshAccounts();
+                              setSwitchModalVisible(false);
+                              // replace, not push: the tabs must not stay behind
+                              // onboarding, or back would land on a settings screen
+                              // for an account that no longer exists. The root
+                              // layout only redirects to onboarding on mount, so
+                              // this has to happen here.
+                              router.replace('/onboarding');
+                            } else {
+                              await removeAccount(acct.tag);
+                              await refreshAccounts();
+                              if (isActive) {
+                                const remaining = await getAccounts();
+                                if (remaining.length > 0) {
+                                  await handleSwitchAccount(remaining[0].tag);
+                                }
+                              }
+                            }
+                          }
+                        },
+                      ],
+                    });
+                  }}
+                >
+                  <View style={styles.switchAvatar}>
+                    {acctThImage ? (
+                      <Image source={acctThImage} style={styles.switchAvatarImg} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="person" size={18} color={Colors.textSecondary} />
+                    )}
+                  </View>
+                  <View style={styles.switchItemText}>
+                    <View style={styles.switchItemNameRow}>
+                      <Text style={styles.switchItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
+                    </View>
+                    <Text style={styles.switchItemTag}>{acct.tag}</Text>
+                  </View>
+                  {isSyncing && (
+                    <View style={styles.switchSyncingBadge}>
+                      <ActivityIndicator size="small" color={Colors.textSecondary} />
+                    </View>
+                  )}
+                  {acct.townHallLevel > 0 && (
+                    <View style={[styles.switchThBox, isActive && styles.switchThBoxActive]}>
+                      <Text style={[styles.switchThBoxLevel, isActive && styles.switchThBoxLevelActive]}>{acct.townHallLevel}</Text>
+                      <Text style={[styles.switchThBoxLabel, isActive && styles.switchThBoxLabelActive]}>TH</Text>
+                    </View>
+                  )}
+                </PressableRipple>
+              );
+            })}
+          </ScrollView>
+
+          <PressableRipple
+            style={styles.switchAdd}
+              onPress={() => {
+                setSwitchModalVisible(false);
+                setOnboardingTag('');
+                setOnboardingThLevel('');
+                setShowOnboarding(true);
+              }}
+            >
+              <Ionicons name="link-outline" size={18} color={Colors.textSecondary} />
+              <Text style={styles.switchAddText}>Add Account</Text>
+            </PressableRipple>
+
+            <PressableRipple style={styles.switchClose} onPress={() => setSwitchModalVisible(false)}>
+              <Text style={styles.switchCloseText}>Close</Text>
+            </PressableRipple>
+          </View>
+      </BottomSheet>
+<DiscountModal
+        visible={discountModalScope !== null}
+        onClose={() => setDiscountModalScope(null)}
+        scope={discountModalScope ?? 'buildings'}
+        buildings={discounts.buildings}
+        army={discounts.army}
+        onBuildingCostChange={setBuildingCost}
+        onBuildingTimeChange={setBuildingTime}
+        onArmyCostChange={setArmyCost}
+        onArmyTimeChange={setArmyTime}
+        onReset={resetDiscounts}
+      />
+<Dialog /></>}
+    >
+      <>
+
 
         <View style={styles.settingSections}>
           <SettingSection
@@ -1353,285 +1631,20 @@ export default function SettingsScreen() {
         </View>
 
         <View style={{ height: 100 }} />
-      </ScrollView>
+      </>
 
-      <BottomSheet
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onShow={() => modalInputRef.current?.focus()}
-        icon={modalType === 'tag' ? 'person-outline' : 'key-outline'}
-        title={modalTitle}
-        subtitle={modalSubtitle}
-      >
-        <View style={styles.modalContent}>
-            <View style={styles.modalHint}>
-              {modalType === 'tag' ? (
-                <Text style={styles.modalHintText}>
-                  Your unique player identifier starting with #. Find it in-game under Settings › More › Show Tag.
-                </Text>
-              ) : (
-                <>
-                  <Text style={styles.modalHintText}>
-                    A long alphanumeric string (starts with <Text style={styles.modalCode}>eyJ</Text>) that grants read-only access to your profile.
-                  </Text>
-                  <View style={styles.modalSteps}>
-                    <View style={styles.modalStep}>
-                      <Text style={styles.modalStepNum}>1</Text>
-                      <Text style={styles.modalStepText}>
-                        Open <Text style={styles.modalLink}>developer.clashofclans.com</Text> and sign in with your Supercell ID
-                      </Text>
-                    </View>
-                    <View style={styles.modalStep}>
-                      <Text style={styles.modalStepNum}>2</Text>
-                      <Text style={styles.modalStepText}>
-                        Go to <Text style={styles.modalLink}>My Account › Create New Key</Text>, name it {"\u201C"}ClashPrime{"\u201D"}
-                      </Text>
-                    </View>
-                    <View style={styles.modalStep}>
-                      <Text style={styles.modalStepNum}>3</Text>
-                      <Text style={styles.modalStepText}>
-                        Copy the token, then <Text style={styles.modalImportant}>add IP 45.79.218.79 to the whitelist</Text> (app uses a proxy)
-                      </Text>
-                    </View>
-                  </View>
-                </>
-              )}
-            </View>
-            <View style={styles.modalInputRow}>
-              <TextInput
-                ref={modalInputRef}
-                style={styles.modalInput}
-                value={modalValue}
-                onChangeText={(t) => { setModalValue(t); setModalError(''); }}
-                placeholder={modalPlaceholder}
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                secureTextEntry={modalType === 'token'}
-                keyboardAppearance="dark"
-              />
-              {modalType === 'token' && (
-                <PressableRipple style={styles.modalIconBtn} onPress={async () => { const t = await getStringAsync(); if (t) setModalValue(t); }} hitSlop={8}>
-                  <Ionicons name="clipboard-outline" size={18} color={Colors.textMuted} />
-                </PressableRipple>
-              )}
-              {modalValue.length > 0 && (
-                <PressableRipple style={styles.modalClearBtn} onPress={() => setModalValue('')} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
-                </PressableRipple>
-              )}
-            </View>
-            {modalError ? (
-              <Text style={styles.modalErrorText}>{modalError}</Text>
-            ) : null}
-            <View style={styles.modalActions}>
-              <PressableRipple
-                style={styles.modalCancelBtn}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </PressableRipple>
-              <PressableRipple
-                style={styles.modalSaveBtn}
-                onPress={() => modalOnSave(modalValue)}
-              >
-                <Text style={styles.modalSaveText}>Save</Text>
-              </PressableRipple>
-            </View>
-          </View>
-      </BottomSheet>
 
-      <BottomSheet
-        visible={contentVisible}
-        onClose={() => setContentVisible(false)}
-        maxHeight="92%"
-        title={contentTitle}
-        subtitle={contentSubtitle || undefined}
-        icon={contentIcon}
-        iconSource={contentIconSource}
-        contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
-      >
-            <ScrollView
-              style={[styles.contentBody, contentIsChangelog && styles.contentBodyTall]}
-              contentContainerStyle={styles.contentBodyInner}
-              showsVerticalScrollIndicator={false}
-            >
-              {contentIsChangelog ? (
-                <ChangelogBody
-                  expanded={changelogExpanded}
-                  onToggle={(v) => setChangelogExpanded((prev) => ({ ...prev, [v]: !prev[v] }))}
-                />
-              ) : (
-                contentBody
-              )}
-            </ScrollView>
-            <View style={styles.contentActions}>
-              {contentActions.map((a, i) => (
-                <PressableRipple
-                  key={`${a.label}-${i}`}
-                  style={[styles.contentBtn, a.primary && styles.contentBtnPrimary, a.destructive && styles.contentBtnDestructive]}
-                  onPress={() => {
-                    a.onPress?.();
-                    setContentVisible(false);
-                  }}
-                >
-                  <Text style={[styles.contentBtnText, a.primary && styles.contentBtnTextPrimary, a.destructive && styles.contentBtnTextDestructive]}>
-                    {a.label}
-                  </Text>
-                </PressableRipple>
-              ))}
-            </View>
-      </BottomSheet>
 
-      <OnboardingModal
-        visible={showOnboarding}
-        onClose={() => { setShowOnboarding(false); setOnboardingStep('tag'); setOnboardingPlayer(null); }}
-        step={onboardingStep}
-        setStep={setOnboardingStep}
-        onboardingTag={onboardingTag}
-        setOnboardingTag={setOnboardingTag}
-        onboardingPlayer={onboardingPlayer}
-        setOnboardingPlayer={setOnboardingPlayer}
-onboardingBuilderCount={onboardingBuilderCount}
-                setOnboardingBuilderCount={setOnboardingBuilderCount}
-                onboardingHutsDetected={onboardingHutsDetected}
-        onboardingThLevel={onboardingThLevel}
-        setOnboardingThLevel={setOnboardingThLevel}
-        onboardingImportJson={onboardingImportJson}
-        setOnboardingImportJson={setOnboardingImportJson}
-        onboardingImportResult={onboardingImportResult}
-        setOnboardingImportResult={setOnboardingImportResult}
-        onboardingImportTag={onboardingImportTag}
-        setOnboardingImportTag={setOnboardingImportTag}
-        onboardingImportError={onboardingImportError}
-        setOnboardingImportError={setOnboardingImportError}
-        handleOnboardingSave={handleOnboardingSave}
-        handleOnboardingImportPaste={handleOnboardingImportPaste}
-        handleOnboardingImportParse={handleOnboardingImportParse}
-        handleOnboardingImportContinue={handleOnboardingImportContinue}
-        handleOnboardingImportTokenSubmit={handleOnboardingImportTokenSubmit}
-      />
 
-      <BottomSheet visible={switchModalVisible} onClose={() => setSwitchModalVisible(false)} maxHeight="90%" title="Accounts" subtitle="Tap to switch · hold to remove" icon="swap-horizontal-outline" contentContainerStyle={{ paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, paddingBottom: Spacing.xxxl }}>
-        <View style={styles.switchCard}>
-          {accounts.length === 0 && <Text style={styles.switchEmpty}>No accounts added</Text>}
 
-          <ScrollView style={styles.switchList} showsVerticalScrollIndicator={false}>
-            {accounts.map((acct) => {
-              const isActive = acct.tag === activeAccount?.tag;
-              const isSyncing = acct.tag === syncingTag;
-              const acctThImage = acct.townHallLevel > 0 ? getTownHallImageSource(acct.townHallLevel) : null;
-              return (
-                <PressableRipple
-                  key={acct.tag}
-                  style={[styles.switchItem, isActive && styles.switchItemActive]}
-                  onPress={async () => {
-                    if (isActive || switchingAccount || isSyncing) return;
-                    setSwitchModalVisible(false);
-                    await handleSwitchAccount(acct.tag);
-                  }}
-                  onLongPress={() => {
-                    const isLast = accounts.length <= 1;
-                    showDialog({
-                      title: isLast ? 'Sign Out' : 'Remove Account',
-                      subtitle: isLast ? 'Wipes everything for this account' : 'This only affects ClashPrime',
-                      icon: isLast ? 'log-out-outline' : 'trash-outline',
-                      message: isLast
-                        ? `Sign out of ${acct.tag}? This is your only account, so ClashPrime will erase its cached player data, API token, saved bases, favourites and progress from this device. Your Clash of Clans account is untouched.`
-                        : `Remove ${acct.tag}? This will not delete your Clash of Clans account, only remove it from ClashPrime.`,
-                      actions: [
-                        { label: 'Cancel', onPress: () => { } },
-                        {
-                          label: isLast ? 'Sign Out' : 'Remove', primary: true, destructive: true, onPress: async () => {
-                            if (isLast) {
-                              await signOutAccount(acct.tag);
-                              await refreshAccounts();
-                              setSwitchModalVisible(false);
-                              // replace, not push: the tabs must not stay behind
-                              // onboarding, or back would land on a settings screen
-                              // for an account that no longer exists. The root
-                              // layout only redirects to onboarding on mount, so
-                              // this has to happen here.
-                              router.replace('/onboarding');
-                            } else {
-                              await removeAccount(acct.tag);
-                              await refreshAccounts();
-                              if (isActive) {
-                                const remaining = await getAccounts();
-                                if (remaining.length > 0) {
-                                  await handleSwitchAccount(remaining[0].tag);
-                                }
-                              }
-                            }
-                          }
-                        },
-                      ],
-                    });
-                  }}
-                >
-                  <View style={styles.switchAvatar}>
-                    {acctThImage ? (
-                      <Image source={acctThImage} style={styles.switchAvatarImg} resizeMode="contain" />
-                    ) : (
-                      <Ionicons name="person" size={18} color={Colors.textSecondary} />
-                    )}
-                  </View>
-                  <View style={styles.switchItemText}>
-                    <View style={styles.switchItemNameRow}>
-                      <Text style={styles.switchItemName} numberOfLines={1}>{acct.name || acct.tag}</Text>
-                    </View>
-                    <Text style={styles.switchItemTag}>{acct.tag}</Text>
-                  </View>
-                  {isSyncing && (
-                    <View style={styles.switchSyncingBadge}>
-                      <ActivityIndicator size="small" color={Colors.textSecondary} />
-                    </View>
-                  )}
-                  {acct.townHallLevel > 0 && (
-                    <View style={[styles.switchThBox, isActive && styles.switchThBoxActive]}>
-                      <Text style={[styles.switchThBoxLevel, isActive && styles.switchThBoxLevelActive]}>{acct.townHallLevel}</Text>
-                      <Text style={[styles.switchThBoxLabel, isActive && styles.switchThBoxLabelActive]}>TH</Text>
-                    </View>
-                  )}
-                </PressableRipple>
-              );
-            })}
-          </ScrollView>
 
-          <PressableRipple
-            style={styles.switchAdd}
-              onPress={() => {
-                setSwitchModalVisible(false);
-                setOnboardingTag('');
-                setOnboardingThLevel('');
-                setShowOnboarding(true);
-              }}
-            >
-              <Ionicons name="link-outline" size={18} color={Colors.textSecondary} />
-              <Text style={styles.switchAddText}>Add Account</Text>
-            </PressableRipple>
 
-            <PressableRipple style={styles.switchClose} onPress={() => setSwitchModalVisible(false)}>
-              <Text style={styles.switchCloseText}>Close</Text>
-            </PressableRipple>
-          </View>
-      </BottomSheet>
 
-      <DiscountModal
-        visible={discountModalScope !== null}
-        onClose={() => setDiscountModalScope(null)}
-        scope={discountModalScope ?? 'buildings'}
-        buildings={discounts.buildings}
-        army={discounts.army}
-        onBuildingCostChange={setBuildingCost}
-        onBuildingTimeChange={setBuildingTime}
-        onArmyCostChange={setArmyCost}
-        onArmyTimeChange={setArmyTime}
-        onReset={resetDiscounts}
-      />
 
-      <Dialog />
-    </Screen>
+
+
+
+    </PageScreen>
   );
 }
 
