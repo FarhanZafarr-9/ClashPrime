@@ -1,7 +1,7 @@
+import PageScreen from '../../src/components/PageScreen';
 import CollapsibleContent from '../../src/components/CollapsibleContent';
-import Screen from '../../src/components/Screen';
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { SectionHeader } from '../../src/components/SectionHeader';
@@ -957,13 +957,13 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
   };
 
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
-      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>Time to Max</Text>
-            <View style={styles.headerActions}>
-              <HeaderButton
+    <PageScreen
+      style={[styles.container, { backgroundColor: colors.bg }]}
+      title={<>Time to Max</>}
+      subtitle={<>
+            {isBB ? `Remaining upgrades for Builder Hall ${bh}` : `Remaining upgrades for Town Hall ${th}`}
+          </>}
+      actions={[<HeaderButton key="action-0"
                 onPress={() => {
                   // Share whichever village is on screen, so the preview matches
                   // what the user just tapped share on.
@@ -973,13 +973,31 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                 accessibilityLabel="Share time to max"
               >
                 <Ionicons name="share-outline" size={18} color={Colors.textSecondary} />
-              </HeaderButton>
-            </View>
-          </View>
-          <Text style={styles.subtitle}>
-            {isBB ? `Remaining upgrades for Builder Hall ${bh}` : `Remaining upgrades for Town Hall ${th}`}
-          </Text>
-        </View>
+              </HeaderButton>]}
+      contentContainerStyle={styles.scroll}
+      overlays={<>{player && (
+        <SharePreviewModal
+          visible={shareVisible}
+          onClose={() => setShareVisible(false)}
+          cardWidth={shareCardWidth}
+          header={shareVillageToggle}
+          ready={activeShare !== null}
+          shareTitle="Time to max"
+          onError={(message) => Alert.alert('Share Failed', message)}
+        >
+          {({ measure }) =>
+            activeShare ? (
+              <MaxtimeShareCard
+                player={player}
+                data={{ ...activeShare, width: shareCardWidth, measure }}
+              />
+            ) : null
+          }
+        </SharePreviewModal>
+      )}</>}
+    >
+      <>
+
 
         {showBB && (
           <SegmentedSwitch
@@ -1387,29 +1405,10 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
             </View>
           </>
         )}
-      </ScrollView>
+      </>
 
-      {player && (
-        <SharePreviewModal
-          visible={shareVisible}
-          onClose={() => setShareVisible(false)}
-          cardWidth={shareCardWidth}
-          header={shareVillageToggle}
-          ready={activeShare !== null}
-          shareTitle="Time to max"
-          onError={(message) => Alert.alert('Share Failed', message)}
-        >
-          {({ measure }) =>
-            activeShare ? (
-              <MaxtimeShareCard
-                player={player}
-                data={{ ...activeShare, width: shareCardWidth, measure }}
-              />
-            ) : null
-          }
-        </SharePreviewModal>
-      )}
-    </Screen>
+
+    </PageScreen>
   );
 }
 
