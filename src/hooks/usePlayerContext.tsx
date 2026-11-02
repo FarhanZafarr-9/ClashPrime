@@ -1,3 +1,5 @@
+import type { ImportedUpgrade } from '../types/importedUpgrade';
+import { applyImportedCompletion } from '../utils/importedUpgradeCompletion';
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { ClashPlayer, StoredAccount } from '../types/clash';
 import {
@@ -24,6 +26,7 @@ import { toJsonName, toStoreName } from '../utils/buildingCopies';
 import { seedBuildingLevelsForTH } from '../utils/seedBuildingLevels';
 
 interface PlayerContextValue {
+  completeImportedUpgrade: (row: ImportedUpgrade, requiredCopies: number) => Promise<void>;
   player: ClashPlayer | null;
   loading: boolean;
   error: string | null;
@@ -45,6 +48,7 @@ interface PlayerContextValue {
 }
 
 const PlayerContext = createContext<PlayerContextValue>({
+  completeImportedUpgrade: async () => {},
   player: null,
   loading: true,
   error: null,
@@ -372,6 +376,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const completeImportedUpgrade = useCallback(async (row: ImportedUpgrade, requiredCopies: number) => {
+    const base = playerRef.current;
+    if (!base?.tag) return;
+    const updated = applyImportedCompletion(base, row, requiredCopies);
+    await cachePlayer(updated, base.tag);
+    if (playerRef.current?.tag === base.tag) {
+      playerRef.current = updated;
+      setPlayer(updated);
+    }
+  }, []);
+
   const value: PlayerContextValue & { bumpTagVersion: () => void } = {
     player,
     loading,
@@ -380,6 +395,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     refresh,
     tagVersion,
     bumpTagVersion,
+    completeImportedUpgrade,
     setBuildingCopies,
     setBulkLevels,
     setCraftedLevels,
