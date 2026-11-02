@@ -1,3 +1,5 @@
+import { decodeImportedUpgrades, exportSnapshotAt } from './importedUpgradeDecoder';
+import type { ImportedUpgrade } from '../types/importedUpgrade';
 // Decodes a Clash of Clans JSON Export snapshot (the format produced by the
 // "Clash of Clans JSON Export" app) into building-level records the app can
 // apply via setBulkLevels. Home Village and Builder Base buildings and traps
@@ -57,8 +59,7 @@ export interface CocImportItem {
   /** How many copies were present in the export. */
   copies: number;
   /** Copies with an in-progress upgrade (timer rows): their current level and
-   *  seconds left. These stay at `lvl` but can be bumped to `lvl + 1` when the
-   *  user opts to treat them as done. */
+   *  seconds left. Current levels stay unchanged; upgrades are tracked separately. */
   timerRows: { level: number; remainingSec: number }[];
 }
 
@@ -74,6 +75,8 @@ export interface CocCraftedDefense {
 }
 
 export interface CocImportResult {
+  upgrades: ImportedUpgrade[];
+  snapshotAt: number;
   /** storeName → representative level, ready for setBulkLevels. */
   levels: Record<string, number>;
   /** Buildings the app tracks (Home Village + Builder Base buildings and traps). */
@@ -222,7 +225,11 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
   const levels: Record<string, number> = {};
   for (const item of resolved) levels[item.storeName] = item.level;
 
+  const snapshotAt = exportSnapshotAt(data.timestamp);
+  const upgrades = decodeImportedUpgrades(data, snapshotAt);
   return {
+    upgrades,
+    snapshotAt,
     levels,
     resolved,
     skipped: [...skipped.values()].sort((a, b) => a.storeName.localeCompare(b.storeName)),
