@@ -1,4 +1,4 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -1304,28 +1304,11 @@ to={pivot}
   };
 
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        overScrollMode="never"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.textSecondary}
-            colors={[Colors.textSecondary]}
-            progressBackgroundColor={Colors.bgCard}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>Army</Text>
-            <Text style={styles.subtitle}>All your troops, heroes, spells & equipment</Text>
-          </View>
-          <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-            <HeaderButton
+    <PageScreen
+      style={[styles.container, { backgroundColor: colors.bg }]}
+      title={<>Army</>}
+      subtitle={<>All your troops, heroes, spells & equipment</>}
+      actions={[<HeaderButton key="action-0"
               onPress={onRefresh}
               loading={refreshing}
               hitSlop={12}
@@ -1336,9 +1319,41 @@ to={pivot}
                 size={20}
                 color={colors.textSecondary}
               />
-            </HeaderButton>
-          </View>
-        </View>
+            </HeaderButton>]}
+      contentContainerStyle={styles.scroll}
+      scrollProps={{refreshControl: <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.textSecondary}
+            colors={[Colors.textSecondary]}
+            progressBackgroundColor={Colors.bgCard}
+          />}}
+      overlays={<><BottomSheet
+        visible={sheetName !== null}
+        onClose={() => {
+          setSheetName(null);
+          if (sheetName) {
+            setShowFullLevels((prev) => {
+              const next = { ...prev };
+              delete next[sheetName];
+              return next;
+            });
+            // A pivot is a reading of this visit, not a saved setting: it goes when
+            // the sheet does, so the totals always reopen at the max.
+            setPivotLevels((prev) => {
+              const next = { ...prev };
+              delete next[sheetName];
+              return next;
+            });
+          }
+        }}
+        header={sheetName ? renderSheetHeader(sheetName) : undefined}
+      >
+        {sheetName ? renderDetailPanel(sheetName) : null}
+      </BottomSheet></>}
+    >
+      <>
+
 
         {showBB && (
           <SegmentedSwitch
@@ -1895,32 +1910,10 @@ to={pivot}
         </View>
 
         <View style={{ height: 100 }} />
-      </ScrollView>
+      </>
 
-      <BottomSheet
-        visible={sheetName !== null}
-        onClose={() => {
-          setSheetName(null);
-          if (sheetName) {
-            setShowFullLevels((prev) => {
-              const next = { ...prev };
-              delete next[sheetName];
-              return next;
-            });
-            // A pivot is a reading of this visit, not a saved setting: it goes when
-            // the sheet does, so the totals always reopen at the max.
-            setPivotLevels((prev) => {
-              const next = { ...prev };
-              delete next[sheetName];
-              return next;
-            });
-          }
-        }}
-        header={sheetName ? renderSheetHeader(sheetName) : undefined}
-      >
-        {sheetName ? renderDetailPanel(sheetName) : null}
-      </BottomSheet>
-    </Screen>
+
+    </PageScreen>
   );
 }
 
