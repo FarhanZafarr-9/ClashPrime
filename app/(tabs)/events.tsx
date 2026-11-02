@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   RefreshControl,
   Linking,
@@ -126,25 +125,22 @@ export default function EventsScreen() {
   }
 
   return (
-    <Screen style={styles.container} >
-      <ScrollView
-contentContainerStyle={styles.scroll}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-          <RefreshControl
+    <PageScreen
+      style={styles.container}
+      title={<>Events</>}
+      subtitle={<>Upcoming in-game events</>}
+      actions={[]}
+      contentContainerStyle={styles.scroll}
+      scrollProps={{refreshControl: <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={Colors.textSecondary}
             colors={[Colors.textSecondary]}
             progressBackgroundColor={Colors.bgCard}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Events</Text>
-          <Text style={styles.subtitle}>Upcoming in-game events</Text>
-        </View>
+          />}}
+    >
+      <>
+
 
         <PressableRipple style={styles.storeBanner} onPress={() => Linking.openURL('https://store.supercell.com/clashofclans')}>
           <View style={styles.storeBannerIcon}>
@@ -254,8 +250,8 @@ contentContainerStyle={styles.scroll}
         )}
 
         <View style={{ height: 100 }} />
-      </ScrollView>
-    </Screen>
+      </>
+    </PageScreen>
   );
 }
 
