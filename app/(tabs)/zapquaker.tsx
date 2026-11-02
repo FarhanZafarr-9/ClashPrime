@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   RefreshControl,
   Image,
@@ -321,25 +320,71 @@ export default function ZapquakerScreen() {
   const noData = refs.lightningLevels.length === 0 || refs.eqLevels.length === 0;
 
   return (
-    <Screen style={styles.container} >
-      <ScrollView
-contentContainerStyle={styles.scroll}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-          <RefreshControl
+    <PageScreen
+      style={styles.container}
+      title={<>Zapquaker</>}
+      subtitle={<>Lightning + Earthquake combos per building</>}
+      actions={[]}
+      contentContainerStyle={styles.scroll}
+      scrollProps={{refreshControl: <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={Colors.textSecondary}
             colors={[Colors.textSecondary]}
             progressBackgroundColor={Colors.bgCard}
-          />
-        }
+          />}}
+      overlays={<><BottomSheet
+        visible={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="Pick a building"
+        subtitle="Town Hall, Clan Castle & storages are excluded"
+        icon="grid-outline"
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Zapquaker</Text>
-          <Text style={styles.subtitle}>Lightning + Earthquake combos per building</Text>
-        </View>
+        {groupedTargets.map((group) => (
+          <View key={group.category} style={styles.groupBlock}>
+            <Text style={styles.groupHeader}>{group.category}</Text>
+            {group.items.map((t, ti) => {
+              const selected = targetNames.includes(t.name);
+              // Same resolver the card uses, so the sheet and the row can never
+              // disagree about a building's level. An override set on the main
+              // screen wins, since that is a deliberate choice by the user.
+              const level = clampLevel(
+                levelOverrides[t.name] ?? getDefaultTargetLevel(player, t, th, getBuildingMaxLevelAtTH),
+                t.levels.length,
+              );
+              const icon = t.category === 'Heroes'
+                ? getArmyItemImage(t.name, level) ?? getBuildingLevelImageSource(t.name, level)
+                : getBuildingLevelImageSource(t.name, level);
+              const isFirst = ti === 0;
+              const isLast = ti === group.items.length - 1;
+              return (
+                <PressableRipple
+                  key={t.name}
+                  style={[
+                    styles.listRow,
+                    isFirst && styles.listRowFirst,
+                    isLast && styles.listRowLast,
+                    selected && { backgroundColor: colors.bgCardHover },
+                  ]}
+                  onPress={() => toggleTarget(t.name)}
+                >
+                  <View style={styles.listRowMain}>
+                    {icon && <Image source={icon} style={styles.listRowIcon} resizeMode="contain" />}
+                    <Text style={[styles.listRowText, selected && styles.listRowTextSelected]}>{t.name}</Text>
+                  </View>
+                  <View style={styles.listRowEnd}>
+                    {selected && <Ionicons name="checkmark-circle" size={18} color={Colors.accent} />}
+                    <Text style={styles.listRowMeta}>Lv {level}</Text>
+                  </View>
+                </PressableRipple>
+              );
+            })}
+          </View>
+        ))}
+      </BottomSheet></>}
+    >
+      <>
+
 
         {noData && (
           <Card>
@@ -601,58 +646,10 @@ contentContainerStyle={styles.scroll}
             </View>
           </>
         )}
-      </ScrollView>
+      </>
 
-      <BottomSheet
-        visible={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        title="Pick a building"
-        subtitle="Town Hall, Clan Castle & storages are excluded"
-        icon="grid-outline"
-      >
-        {groupedTargets.map((group) => (
-          <View key={group.category} style={styles.groupBlock}>
-            <Text style={styles.groupHeader}>{group.category}</Text>
-            {group.items.map((t, ti) => {
-              const selected = targetNames.includes(t.name);
-              // Same resolver the card uses, so the sheet and the row can never
-              // disagree about a building's level. An override set on the main
-              // screen wins, since that is a deliberate choice by the user.
-              const level = clampLevel(
-                levelOverrides[t.name] ?? getDefaultTargetLevel(player, t, th, getBuildingMaxLevelAtTH),
-                t.levels.length,
-              );
-              const icon = t.category === 'Heroes'
-                ? getArmyItemImage(t.name, level) ?? getBuildingLevelImageSource(t.name, level)
-                : getBuildingLevelImageSource(t.name, level);
-              const isFirst = ti === 0;
-              const isLast = ti === group.items.length - 1;
-              return (
-                <PressableRipple
-                  key={t.name}
-                  style={[
-                    styles.listRow,
-                    isFirst && styles.listRowFirst,
-                    isLast && styles.listRowLast,
-                    selected && { backgroundColor: colors.bgCardHover },
-                  ]}
-                  onPress={() => toggleTarget(t.name)}
-                >
-                  <View style={styles.listRowMain}>
-                    {icon && <Image source={icon} style={styles.listRowIcon} resizeMode="contain" />}
-                    <Text style={[styles.listRowText, selected && styles.listRowTextSelected]}>{t.name}</Text>
-                  </View>
-                  <View style={styles.listRowEnd}>
-                    {selected && <Ionicons name="checkmark-circle" size={18} color={Colors.accent} />}
-                    <Text style={styles.listRowMeta}>Lv {level}</Text>
-                  </View>
-                </PressableRipple>
-              );
-            })}
-          </View>
-        ))}
-      </BottomSheet>
-    </Screen>
+
+    </PageScreen>
   );
 }
 
