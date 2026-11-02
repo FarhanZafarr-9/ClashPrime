@@ -1,6 +1,6 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PressableRipple from '../../src/components/PressableRipple';
@@ -181,12 +181,15 @@ export default function BobPlannerScreen() {
     : [];
 
   return (
-    <Screen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>6th Builder</Text>
-          <Text style={styles.subtitle}>Plan B.O.B.: gear-ups, research, heroes and the Builder Hall</Text>
-        </View>
+    <PageScreen
+      style={styles.container}
+      title={<>6th Builder</>}
+      subtitle={<>Plan B.O.B.: gear-ups, research, heroes and the Builder Hall</>}
+      actions={[]}
+      contentContainerStyle={styles.scroll}
+    >
+      <>
+
 
         {!player ? (
           <View style={styles.card}>
@@ -413,8 +416,8 @@ export default function BobPlannerScreen() {
             ) : null}
           </>
         ) : null}
-      </ScrollView>
-    </Screen>
+      </>
+    </PageScreen>
   );
 }
 
