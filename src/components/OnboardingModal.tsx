@@ -240,7 +240,7 @@ export default function OnboardingModal({
                 </View>
                 <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
                   <Text style={styles.summaryLabel}>In-progress</Text>
-                  <Text style={styles.summaryValue}>{onboardingImportResult.resolved.reduce((s, r) => s + r.timerRows.length, 0)}</Text>
+                  <Text style={styles.summaryValue}>{(onboardingImportResult.upgrades?.length ?? 0)}</Text>
                 </View>
                 <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
                   <Text style={styles.summaryLabel}>
