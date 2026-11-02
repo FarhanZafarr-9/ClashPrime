@@ -1,0 +1,105 @@
+// Regression checks for imported timers. Native storage/alerts are replaced with in-memory adapters.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const ts = require('typescript');
+const root = path.resolve(__dirname, '..');
+const cache = new Map();
+const values = new Map(), alerts = new Map();
+const dataStub = {
+  HOME_CATEGORIES: { defenses: ['Cannon'] }, BB_BUILDINGS: [],
+  isBuilderName: name => name.startsWith('BB ') || name === 'Builder Hall',
+  getBuildingCountAtTH: () => 3,
+  getBuildingCountAtBH: () => 3,
+};
+function load(file) {
+  file = path.resolve(root, file);
+  if (cache.has(file)) return cache.get(file).exports;
+  const module = { exports: {} }; cache.set(file, module);
+  const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
+  const requireLocal = id => {
+    if (id === '@react-native-async-storage/async-storage') return { getItem: async k => values.get(k) ?? null, setItem: async (k,v) => { values.set(k,v); }, removeItem: async k => { values.delete(k); } };
+    if (id.endsWith('/useReminders')) return { requestPermission: async () => true, scheduleUpgradeAlert: async (id,label,time,tag) => { alerts.set(id, { label,time,tag }); }, cancelUpgradeAlert: async id => { alerts.delete(id); } };
+    if (id === './buildingData') return dataStub;
+    if (id === './buildingImages') return { getBuildingEffectiveMax: () => 30 };
+    if (id.endsWith('/usePlayer')) return { mergeBuildingCopies: (buildings, items) => {
+      let result = buildings ?? [];
+      for (const item of items) result = result.filter(b => b.name !== item.name).concat(item.levels.map(level => ({ name: item.name, level, maxLevel: item.maxLevel })));
+      return result;
+    } };
+    if (id.startsWith('.')) return load(path.resolve(path.dirname(file), id) + '.ts');
+    return require(id);
+  };
+  vm.runInThisContext(`(function(require,module,exports){${code}\n})`, { filename: file })(requireLocal, module, module.exports);
+  return module.exports;
+}
+async function main() {
+  const { decodeImportedUpgrades: decode } = load('src/utils/importedUpgradeDecoder.ts');
+  const { applyImportedCompletion: apply, isImportedCompletionSynced: synced } = load('src/utils/importedUpgradeCompletion.ts');
+  const store = load('src/utils/importedUpgrades.ts');
+  const snapshot = Math.floor(Date.now() / 1000) - 60;
+  const data = { timestamp: snapshot, buildings: [{ data: 1000008, lvl: 12, cnt: 1 }, { data: 1000008, lvl: 11, timer: 7200 }, { data: 1000008, lvl: 11, timer: 3600 }], heroes: [{ data: 28000001, lvl: 79, timer: 600 }], spells: [{ data: 99999999, lvl: 2, timer: 200 }], heroes2: [{ data: 28000003, lvl: 20, timer: 800 }] };
+  const rows = decode(data);
+  const { cocExportToBuildingLevels: importLevels } = load('src/utils/cocExport.ts');
+  const imported = importLevels(data);
+  assert.equal(imported.levels.Cannon, 12);
+  assert.equal(imported.resolved[0].levels.filter(l => l === 11).length, 2, 'Building import preserves the two ongoing copies at their current level');
+  assert.equal(imported.upgrades.length, 5, 'The building import exposes hero and unknown timers too');
+  assert.equal(rows.length, 5, 'All timer rows, including unknown IDs, are retained');
+  const queen = rows.find(r => r.name === 'Archer Queen');
+  assert.equal(queen.kind, 'heroes');
+  assert.equal(queen.level, 79, 'An ongoing level is not incremented during import');
+  assert.equal(queen.completesAt, snapshot * 1000 + 600000, 'Countdown uses the snapshot timestamp');
+  assert.equal(rows.filter(r => r.kind === 'other').length, 1);
+  assert.equal(rows.find(r => r.dataId === 28000003).village, 'builderBase');
+  assert.equal(decode({ timestamp: snapshot * 1000, heroes: data.heroes })[0].completesAt, queen.completesAt);
+  assert.equal(decode({ heroes: data.heroes }, 1000)[0].completesAt, 601000, 'Missing timestamps use parse time once');
+  assert.equal(decode({ heroes: [{ data: 28000001, timer: Infinity }] }).length, 0);
+  const cannons = rows.filter(r => r.kind === 'buildings');
+  assert.equal(cannons.length, 2);
+  assert.notEqual(cannons[0].id, cannons[1].id, 'Same-level copies retain separate identities');
+  assert.equal(cannons[0].baselineTargetCopies, 1);
+  let player = { tag: '#A', townHallLevel: 15, buildings: [12,11,11].map(level => ({ name: cannons[0].name, level, maxLevel: 30 })), heroes: [{ name: 'Archer Queen', village: 'home', level: 79, maxLevel: 100 }], buildingLevels: {}, spells: [], troops: [], pets: [] };
+  player = apply(player, cannons[1], 2);
+  assert.deepEqual(player.buildings.map(b => b.level), [12,12,11]);
+  player = apply(player, cannons[0], 3);
+  assert.deepEqual(player.buildings.map(b => b.level), [12,12,12], 'Out-of-order confirmations advance exactly one outstanding copy');
+  assert.equal(synced(player, cannons[0], 3), true);
+  assert.deepEqual(apply(player, cannons[0], 3).buildings, player.buildings, 'Already-synced copies are not advanced twice');
+  player = apply(player, queen);
+  assert.equal(player.heroes[0].level, 80);
+  player.heroes[0].level = 82;
+  assert.equal(apply(player, queen).heroes[0].level, 82, 'Confirmation cannot regress a newer API level');
+  const result = { snapshotAt: snapshot * 1000, upgrades: rows };
+  await store.importUpgradeSnapshot('#A', result);
+  await store.importUpgradeSnapshot('#A', result);
+  assert.equal((await store.getImportedUpgrades('#A')).length, 5, 'Repeated imports do not duplicate rows');
+  assert.equal(alerts.size, 5, 'One notification per row');
+  await store.importUpgradeSnapshot('#B', result);
+  assert.equal(alerts.size, 10, 'Accounts own independent notification IDs');
+  await store.confirmImportedUpgrade('#A', queen.id);
+  assert.equal(alerts.size, 9);
+  await store.importUpgradeSnapshot('#A', result);
+  assert.equal((await store.getImportedUpgrades('#A')).find(r => r.id === queen.id).confirmed, true, 'Reimport does not resurrect confirmed work');
+  await store.importUpgradeSnapshot('#A', { snapshotAt: result.snapshotAt - 1000, upgrades: [] });
+  assert.equal((await store.getImportedUpgrades('#A')).length, 5, 'Stale snapshots cannot erase current timers');
+  await store.importUpgradeSnapshot('#A', { snapshotAt: result.snapshotAt + 1000, upgrades: [] });
+  assert.equal((await store.getImportedUpgrades('#A')).length, 0, 'Fresh snapshots reconcile upgrades no longer in progress');
+  assert.equal(alerts.size, 5, 'Reconciliation cancels removed alerts only for its own account');
+  await store.clearImportedUpgrades('#B');
+  assert.equal(alerts.size, 0, 'Removing an account cancels its pending alerts');
+  await store.importUpgradeSnapshot('#COPIES', { snapshotAt: result.snapshotAt, upgrades: cannons });
+  const firstSlot = cannons.find(r => r.copy === 0);
+  const remaining = cannons.find(r => r.copy === 1);
+  await store.confirmImportedUpgrade('#COPIES', firstSlot.id);
+  await store.importUpgradeSnapshot('#COPIES', { snapshotAt: result.snapshotAt + 5000, upgrades: [{ ...remaining, id: firstSlot.id, copy: 0, baselineTargetCopies: 2 }] });
+  const shifted = await store.getImportedUpgrades('#COPIES');
+  assert.equal(shifted.length, 1);
+  assert.equal(shifted[0].confirmed, false, 'A remaining copy cannot inherit a finished copy’s confirmation when export rows shift');
+  assert.equal(shifted[0].id, remaining.id, 'Completion time preserves the remaining copy identity');
+  await store.clearImportedUpgrades('#COPIES');
+  assert.equal(alerts.size, 0);
+  console.log('Imported upgrade regression checks passed.');
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });
