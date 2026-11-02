@@ -339,3 +339,39 @@ export async function markExpiredReminders(accountTag: string): Promise<TimerRem
   if (changed) await saveReminders(accountTag, reminders);
   return reminders;
 }
+
+/** Independent completion alerts for imported work; manual timers keep their pinned card. */
+export async function scheduleUpgradeAlert(id: string, label: string, completesAt: number, accountTag: string): Promise<void> {
+  if (completesAt <= Date.now()) return;
+  if (notifeeLinked && Platform.OS === 'android') {
+    await notifee.createChannel({ id: CHANNEL_ID, name: 'Timer Expiry', importance: AndroidImportance.HIGH });
+    await notifee.createTriggerNotification({
+      id,
+      title: `${label} — finished!`,
+      body: `Upgrade complete for ${accountTag}. Open ClashPrime to confirm the level.`,
+      data: { type: 'imported-upgrade', accountTag },
+      android: { channelId: CHANNEL_ID, smallIcon: 'notification_icon', autoCancel: true, pressAction: { id: 'default' } },
+    }, { type: TriggerType.TIMESTAMP, timestamp: completesAt, alarmManager: { allowWhileIdle: true } } as any);
+    return;
+  }
+  const Notifications = await getExpoNotifications();
+  if (!Notifications) return;
+  await ensureChannel();
+  await Notifications.scheduleNotificationAsync({
+    identifier: id,
+    content: { title: `${label} — finished!`, body: `Upgrade complete for ${accountTag}. Open ClashPrime to confirm the level.`, sound: 'default', data: { type: 'imported-upgrade', accountTag } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(completesAt), channelId: CHANNEL_ID },
+  });
+}
+
+export async function cancelUpgradeAlert(id: string): Promise<void> {
+  if (notifeeLinked && Platform.OS === 'android') {
+    await notifee.cancelNotification(id);
+    return;
+  }
+  const Notifications = await getExpoNotifications();
+  if (Notifications) {
+    await Notifications.cancelScheduledNotificationAsync(id);
+    await Notifications.dismissNotificationAsync(id);
+  }
+}
