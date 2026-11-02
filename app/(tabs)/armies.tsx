@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Linking,
   Share,
@@ -333,16 +332,37 @@ export default function ArmiesScreen() {
   }, [hasMore]);
 
   return (
-    <Screen style={styles.container} >
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Army Library</Text>
-          {loading ? null : <Text style={styles.subtitle}>Community armies from ClashArmies</Text>}
-        </View>
-        <HeaderButton onPress={() => fetchArmies(true)} hitSlop={12} loading={loading} accessibilityLabel="Refresh army library">
+    <PageScreen
+      style={styles.container}
+      title={<>Army Library</>}
+      subtitle={<>Community armies from ClashArmies</>}
+      actions={[<HeaderButton key="action-0" onPress={() => fetchArmies(true)} hitSlop={12} loading={loading} accessibilityLabel="Refresh army library">
           <Ionicons name="refresh-circle-outline" size={20} color={Colors.textSecondary} />
-        </HeaderButton>
-      </View>
+        </HeaderButton>]}
+      scrollProps={{onScroll: handleScroll,
+scrollEventThrottle: 100}}
+      overlays={<><SharePreviewModal
+        visible={cardArmy !== null}
+        onClose={() => setCardArmy(null)}
+        cardWidth={shareCardWidth}
+        shareTitle={cardArmy?.name}
+        onError={(message) => Alert.alert('Share Failed', message)}
+      >
+        {({ measure }) =>
+          cardArmy ? (
+            <ArmyShareCard
+              army={cardArmy}
+              unitsById={unitsById}
+              equipmentById={equipmentById}
+              petsById={petsById}
+              width={shareCardWidth}
+              measure={measure}
+            />
+          ) : null
+        }
+      </SharePreviewModal></>}
+    >
+
 
       {/* Content */}
       {loading ? (
@@ -413,13 +433,7 @@ export default function ArmiesScreen() {
             </View>
           </View>
 
-          <ScrollView
-contentContainerStyle={styles.list}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-            scrollEventThrottle={100}
-          >
+          <View style={styles.list}>
             {currentArmies.length === 0 ? (
               <EmptyState
                 icon={'⚔️'}
@@ -480,31 +494,12 @@ contentContainerStyle={styles.list}
               <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You&apos;ve reached the end</Text>
             )}
             <View style={{ height: 100 }} />
-          </ScrollView>
+          </View>
         </>
       )}
 
-      <SharePreviewModal
-        visible={cardArmy !== null}
-        onClose={() => setCardArmy(null)}
-        cardWidth={shareCardWidth}
-        shareTitle={cardArmy?.name}
-        onError={(message) => Alert.alert('Share Failed', message)}
-      >
-        {({ measure }) =>
-          cardArmy ? (
-            <ArmyShareCard
-              army={cardArmy}
-              unitsById={unitsById}
-              equipmentById={equipmentById}
-              petsById={petsById}
-              width={shareCardWidth}
-              measure={measure}
-            />
-          ) : null
-        }
-      </SharePreviewModal>
-    </Screen>
+
+    </PageScreen>
   );
 }
 
