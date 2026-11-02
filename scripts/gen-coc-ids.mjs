@@ -1,3 +1,4 @@
+import './gen-coc-unit-ids.mjs';
 // Generates src/data/cocBuildingIds.ts — the dataId → name mapping used to
 // decode a Clash of Clans JSON Export snapshot. IDs come from the
 // clash-of-clans-data package (same canonical source as buildingData.ts).
