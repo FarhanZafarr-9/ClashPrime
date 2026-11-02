@@ -1,4 +1,4 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
@@ -430,38 +430,20 @@ export default function HeroJourneyScreen() {
   if (!journey) return <HeroJourneyScreenSkeleton />;
 
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
-      <ScrollView
-ref={scrollRef}
-          contentContainerStyle={styles.scroll}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.textSecondary}
-            colors={[Colors.textSecondary]}
-            progressBackgroundColor={Colors.bgCard}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>Hero Journey</Text>
-            <Text style={styles.subtitle}>Rewards track · progress by upgrading heroes</Text>
-          </View>
-          <View style={styles.headerActions}>
-            {journey.currentMilestone && currentFilteredIndex >= 0 && (
-              <HeaderButton
+    <PageScreen
+      style={[styles.container, { backgroundColor: colors.bg }]}
+      title={<>Hero Journey</>}
+      subtitle={<>Rewards track · progress by upgrading heroes</>}
+      actions={[journey.currentMilestone && currentFilteredIndex >= 0 && (
+              <HeaderButton key="action-0"
                 onPress={scrollToCurrent}
                 tone="warning"
                 accessibilityLabel="Scroll to current milestone"
               >
                 <MaterialCommunityIcons name="flag" size={15} color={Colors.warning} />
               </HeaderButton>
-            )}
-            <HeaderButton
+            ),
+<HeaderButton key="action-1"
               onPress={onRefresh}
               loading={refreshing}
               hitSlop={12}
@@ -472,9 +454,19 @@ ref={scrollRef}
                 size={20}
                 color={colors.textSecondary}
               />
-            </HeaderButton>
-          </View>
-        </View>
+            </HeaderButton>]}
+      contentContainerStyle={styles.scroll}
+      scrollRef={scrollRef}
+      scrollProps={{refreshControl: <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.textSecondary}
+            colors={[Colors.textSecondary]}
+            progressBackgroundColor={Colors.bgCard}
+          />}}
+    >
+      <>
+
 
         <JourneySummary
           journey={journey}
@@ -566,8 +558,8 @@ ref={scrollRef}
         )}
 
         <View style={{ height: 100 }} />
-      </ScrollView>
-    </Screen>
+      </>
+    </PageScreen>
   );
 }
 
