@@ -1,3 +1,4 @@
+import PageScreen from '../../src/components/PageScreen';
 import Screen from '../../src/components/Screen';
 import React, {
   useCallback,
@@ -384,14 +385,77 @@ show({
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <Screen style={styles.container} >
+      <PageScreen
+      style={styles.container}
+      title={<>{PLAN_MODES[mode].title}</>}
+      subtitle={<>{uri && aspect != null ? PLAN_MODES[mode].subtitle : PLAN_MODES[mode].emptySubtitle}</>}
+      actions={[]}
+      overlays={<>{uri && aspect != null && (
+          <Modal
+            animationType="fade"
+            presentationStyle="fullScreen"
+            visible={full}
+            onRequestClose={() => setFull(false)}
+            statusBarTranslucent
+            navigationBarTranslucent
+          >
+            <GestureHandlerRootView style={styles.fullContainer}>
+              <View style={styles.fullCenter}>
+                <View style={{ width: fullW, height: fullH, transform: [{ rotate: '90deg' }] }}>
+                  <PlanCanvas
+                    uri={uri}
+                    aspect={aspect}
+                    center={mode === 'rocket-backpack' ? center : null}
+                    centered={mode === 'rocket-backpack'}
+                    start={start}
+                    end={visualEnd}
+                    pathColor={pathColor}
+                    startIcon={PLAN_MODES[mode].heroIcon}
+                    rotated
+                    onResetCenter={handleResetPivot}
+                    onSetStart={setStart}
+                    onSetEnd={setEnd}
+                    onPlace={handlePlace}
+                    style={{ flex: 1 }}
+                  />
+                </View>
+              </View>
+              <Screen style={styles.fullBottomBar} edges={['bottom']}>
+                <View style={styles.fullHintRow}>
+                  <Text style={styles.fullHintKicker}>HINT</Text>
+                  <Text style={styles.fullHint} numberOfLines={2}>
+                    {hint}
+                  </Text>
+                </View>
+                <View style={styles.fullBtnRow}>
+                  <Pressable
+                    onPress={clearMarkers}
+                    disabled={!hasPins}
+                    hitSlop={4}
+                    style={[styles.fullControlBtn, !hasPins && styles.fullBtnDisabled]}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={16}
+                      color={Colors.textPrimary}
+                    />
+                    <Text style={styles.fullBtnText}>Reset pins</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setFull(false)} hitSlop={4} style={[styles.fullControlBtn, styles.fullControlBtnPrimary]}>
+                    <Ionicons name="checkmark" size={16} color={Colors.bg} />
+                    <Text style={[styles.fullBtnText, styles.fullBtnTextPrimary]}>Done</Text>
+                  </Pressable>
+                </View>
+              </Screen>
+            </GestureHandlerRootView>
+          </Modal>
+        )}
+<Dialog /></>}
+    >
         {uri && aspect != null ? (
           <View style={styles.editor}>
             <View style={styles.editorHeader}>
-              <View style={styles.header}>
-                <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
-                <Text style={styles.subtitle}>{PLAN_MODES[mode].subtitle}</Text>
-              </View>
+
               <View style={styles.toolIconRow}>
                 <PressableRipple
                   onPress={clearMarkers}
@@ -491,10 +555,7 @@ show({
           </View>
         ) : (
           <View style={styles.scroll}>
-            <View style={styles.header}>
-              <Text style={styles.title}>{PLAN_MODES[mode].title}</Text>
-              <Text style={styles.subtitle}>{PLAN_MODES[mode].emptySubtitle}</Text>
-            </View>
+
             <ModeSwitch mode={mode} onSwitch={switchMode} />
             <PressableRipple onPress={onPick} style={styles.uploadZone}>
               <View style={styles.uploadIcon}>
@@ -527,68 +588,9 @@ show({
           </View>
         )}
 
-        {uri && aspect != null && (
-          <Modal
-            animationType="fade"
-            presentationStyle="fullScreen"
-            visible={full}
-            onRequestClose={() => setFull(false)}
-            statusBarTranslucent
-            navigationBarTranslucent
-          >
-            <GestureHandlerRootView style={styles.fullContainer}>
-              <View style={styles.fullCenter}>
-                <View style={{ width: fullW, height: fullH, transform: [{ rotate: '90deg' }] }}>
-                  <PlanCanvas
-                    uri={uri}
-                    aspect={aspect}
-                    center={mode === 'rocket-backpack' ? center : null}
-                    centered={mode === 'rocket-backpack'}
-                    start={start}
-                    end={visualEnd}
-                    pathColor={pathColor}
-                    startIcon={PLAN_MODES[mode].heroIcon}
-                    rotated
-                    onResetCenter={handleResetPivot}
-                    onSetStart={setStart}
-                    onSetEnd={setEnd}
-                    onPlace={handlePlace}
-                    style={{ flex: 1 }}
-                  />
-                </View>
-              </View>
-              <Screen style={styles.fullBottomBar} edges={['bottom']}>
-                <View style={styles.fullHintRow}>
-                  <Text style={styles.fullHintKicker}>HINT</Text>
-                  <Text style={styles.fullHint} numberOfLines={2}>
-                    {hint}
-                  </Text>
-                </View>
-                <View style={styles.fullBtnRow}>
-                  <Pressable
-                    onPress={clearMarkers}
-                    disabled={!hasPins}
-                    hitSlop={4}
-                    style={[styles.fullControlBtn, !hasPins && styles.fullBtnDisabled]}
-                  >
-                    <Ionicons
-                      name="refresh-outline"
-                      size={16}
-                      color={Colors.textPrimary}
-                    />
-                    <Text style={styles.fullBtnText}>Reset pins</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setFull(false)} hitSlop={4} style={[styles.fullControlBtn, styles.fullControlBtnPrimary]}>
-                    <Ionicons name="checkmark" size={16} color={Colors.bg} />
-                    <Text style={[styles.fullBtnText, styles.fullBtnTextPrimary]}>Done</Text>
-                  </Pressable>
-                </View>
-              </Screen>
-            </GestureHandlerRootView>
-          </Modal>
-        )}
-        <Dialog />
-      </Screen>
+
+
+      </PageScreen>
     </GestureHandlerRootView>
   );
 }
