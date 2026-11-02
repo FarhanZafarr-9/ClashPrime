@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Linking,
   Share,
@@ -380,12 +379,10 @@ export default function BaseLibraryScreen() {
   const hallLabel = selectedVillage === 'home' ? 'TH' : 'BH';
 
   return (
-    <Screen style={styles.container} >
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Base Library</Text>
-          {loading ? null : (
-            <Text style={styles.subtitle}>
+    <PageScreen
+      style={styles.container}
+      title={<>Base Library</>}
+      subtitle={<>
               {selectedVillage === 'home'
                 ? `${hallLabel}${hallLevel} layouts · ${
                     sourcePref === 'both'
@@ -395,13 +392,35 @@ export default function BaseLibraryScreen() {
                         : 'from Clash Bases'
                   }`
                 : `${hallLabel}${hallLevel} layouts from ClashLy`}
-            </Text>
-          )}
-        </View>
-        <HeaderButton onPress={fetchBases} hitSlop={12} loading={loading} accessibilityLabel="Refresh bases">
+            </>}
+      actions={[<HeaderButton key="action-0" onPress={fetchBases} hitSlop={12} loading={loading} accessibilityLabel="Refresh bases">
           <Ionicons name="refresh-circle-outline" size={20} color={Colors.textSecondary} />
-        </HeaderButton>
-      </View>
+        </HeaderButton>]}
+      scrollProps={{onScroll: handleScroll,
+scrollEventThrottle: 100}}
+      overlays={<><SharePreviewModal
+        visible={cardBase !== null}
+        onClose={() => setCardBase(null)}
+        cardWidth={shareCardWidth}
+        shareTitle={cardBase?.title}
+        ready={!cardBase?.preview_image_url || previewLoaded}
+        onError={(message) => Alert.alert('Share Failed', message)}
+      >
+        {({ measure }) =>
+          cardBase ? (
+            <BaseShareCard
+              base={cardBase}
+              category={CATEGORY_MAP[cardBase.type] || cardBase.type}
+              width={shareCardWidth}
+              measure={measure}
+              onPreviewLoad={() => setPreviewLoaded(true)}
+              onPreviewError={() => setPreviewLoaded(true)}
+            />
+          ) : null
+        }
+      </SharePreviewModal></>}
+    >
+
 
       {/* Village switch: the same compact hall pills as the Time to Max and Army
           tabs. It stays on screen while loading and shows its own placeholders, so
@@ -514,13 +533,7 @@ export default function BaseLibraryScreen() {
             </Text>
           </View>
 
-          <ScrollView
-contentContainerStyle={styles.list}
-          overScrollMode="never"
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-            scrollEventThrottle={100}
-          >
+          <View style={styles.list}>
             {totalBases === 0 ? (
               <EmptyState
                 icon={'🔍'}
@@ -588,32 +601,12 @@ contentContainerStyle={styles.list}
               <Text style={[styles.endMessage, { color: colors.textTertiary }]}>You&apos;ve reached the end</Text>
             )}
             <View style={{ height: 100 }} />
-          </ScrollView>
+          </View>
         </>
       )}
 
-      <SharePreviewModal
-        visible={cardBase !== null}
-        onClose={() => setCardBase(null)}
-        cardWidth={shareCardWidth}
-        shareTitle={cardBase?.title}
-        ready={!cardBase?.preview_image_url || previewLoaded}
-        onError={(message) => Alert.alert('Share Failed', message)}
-      >
-        {({ measure }) =>
-          cardBase ? (
-            <BaseShareCard
-              base={cardBase}
-              category={CATEGORY_MAP[cardBase.type] || cardBase.type}
-              width={shareCardWidth}
-              measure={measure}
-              onPreviewLoad={() => setPreviewLoaded(true)}
-              onPreviewError={() => setPreviewLoaded(true)}
-            />
-          ) : null
-        }
-      </SharePreviewModal>
-    </Screen>
+
+    </PageScreen>
   );
 }
 
