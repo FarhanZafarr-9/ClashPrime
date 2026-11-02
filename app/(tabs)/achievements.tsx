@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Image,
 } from 'react-native';
@@ -67,11 +66,14 @@ export default function AchievementsScreen() {
 
   if (loading || !player) {
     return (
-      <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
+      <PageScreen
+      title="Awards"
+      subtitle="Milestones across all villages"
+    >
         <View style={styles.center}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
-      </Screen>
+      </PageScreen>
     );
   }
 
@@ -111,12 +113,15 @@ export default function AchievementsScreen() {
   const activeGroups = groupAchievementsByStars(activeAchievements);
 
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]} >
-      <ScrollView contentContainerStyle={styles.scroll} overScrollMode="never" showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Awards</Text>
-          <Text style={styles.subtitle}>Milestones across all villages</Text>
-        </View>
+    <PageScreen
+      style={[styles.container, { backgroundColor: colors.bg }]}
+      title={<>Awards</>}
+      subtitle={<>Milestones across all villages</>}
+      actions={[]}
+      contentContainerStyle={styles.scroll}
+    >
+      <>
+
         {player.achievements.length === 0 ? (
           <View style={styles.center}>
             <EmptyState
@@ -226,8 +231,8 @@ export default function AchievementsScreen() {
           </>
         )}
         <View style={{ height: 100 }} />
-      </ScrollView>
-    </Screen>
+      </>
+    </PageScreen>
   );
 }
 
