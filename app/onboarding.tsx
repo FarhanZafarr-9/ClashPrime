@@ -1,3 +1,5 @@
+import { toJsonName } from '../src/utils/buildingCopies';
+import { importUpgradeSnapshot } from '../src/utils/importedUpgrades';
 import Screen from '../src/components/Screen';
 import React, { useState, type ReactNode } from 'react';
 import {
@@ -19,7 +21,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getStringAsync } from 'expo-clipboard';
 import { openURL } from 'expo-linking';
-import { getMaxTownHall, getBuildingItemImage, getBuildingMaxLevelAtTH } from '../src/utils/buildingData';
+import { isBuilderName, getMaxTownHall, getBuildingItemImage, getBuildingMaxLevelAtTH } from '../src/utils/buildingData';
 import { Colors, Typography, Spacing, Radius } from '../src/theme';
 import { DATA_SOURCE_GROUPS, SUPERCELL_NOTICE } from '../src/data/attribution';
 import {
@@ -32,7 +34,7 @@ import {
 } from '../src/hooks/usePlayer';
 import { usePlayer } from '../src/hooks/usePlayerContext';
 import { ClashAPI } from '../src/api/clash';
-import { getTownHallImageSource } from '../src/utils/buildingImages';
+import { getTownHallImageSource, getBuildingEffectiveMax } from '../src/utils/buildingImages';
 import { seedBuildingLevelsForTH } from '../src/utils/seedBuildingLevels';
 import { parseCocExport, cocExportToBuildingLevels, detectBuilderHutCount, normalizeTag, type CocImportResult } from '../src/utils/cocExport';
 import type { ClashPlayer } from '../src/types/clash';
@@ -200,6 +202,7 @@ export default function OnboardingScreen() {
       const mergedPlayer: ClashPlayer = {
         ...data,
         buildingLevels: importResult.levels,
+        buildings: importResult.resolved.flatMap(item => item.levels.map(level => ({ name: toJsonName(item.storeName), level, maxLevel: getBuildingEffectiveMax(item.storeName, isBuilderName(item.storeName) ? data.builderHallLevel ?? 1 : data.townHallLevel) }))),
         lastMaxedTH: data.townHallLevel || getMaxTownHall(),
       };
 
@@ -215,6 +218,7 @@ export default function OnboardingScreen() {
       await setPlayerTag(importTag!);
       await setApiToken(cleanToken);
       await cachePlayer(mergedPlayer, importTag!);
+      await importUpgradeSnapshot(importTag!, importResult);
 
       // The import path skips the builder hut step, so take the count from the
       // export here — otherwise it stays at the default of 2 and every
@@ -535,7 +539,7 @@ export default function OnboardingScreen() {
                     </View>
                     <View style={styles.summaryRow}>
                       <Text style={styles.summaryLabel}>In-progress upgrades</Text>
-                      <Text style={styles.summaryValue}>{importResult.resolved.reduce((s: number, r: any) => s + r.timerRows.length, 0)}</Text>
+                      <Text style={styles.summaryValue}>{(importResult.upgrades?.length ?? 0)}</Text>
                     </View>
                     <View style={styles.summaryRow}>
                       <Text style={styles.summaryLabel}>Builder huts</Text>
