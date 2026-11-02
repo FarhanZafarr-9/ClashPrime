@@ -1,9 +1,8 @@
-import Screen from '../../src/components/Screen';
+import PageScreen from '../../src/components/PageScreen';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   RefreshControl,
   Image,
@@ -335,14 +334,11 @@ function WarScreenSkeleton() {
   const { colors } = useTheme();
   const rowRadius = Radius.xl * 1.25;
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.bg }]}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <Skeleton width={80} height={28} borderRadius={6} />
-          <Skeleton width={28} height={28} borderRadius={6} />
-        </View>
-        <Skeleton width={140} height={14} borderRadius={4} style={{ marginTop: 4 }} />
-      </View>
+    <PageScreen
+      title="War"
+      subtitle="Current war & history"
+    >
+
 
       <View style={styles.skeletonContent}>
         <SegmentedSwitch
@@ -440,7 +436,7 @@ function WarScreenSkeleton() {
 
         <View style={{ height: 120 }} />
       </View>
-    </Screen>
+    </PageScreen>
   );
 }
 
@@ -657,13 +653,13 @@ export default function WarScreen() {
         message: 'Add a player tag in Settings who belongs to a clan to see war data.',
       };
     return (
-      <Screen style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>War</Text>
-          </View>
-          <Text style={styles.subtitle}>Current war & history</Text>
-        </View>
+      <PageScreen
+      style={styles.container}
+      title={<>War</>}
+      subtitle={<>Current war & history</>}
+      actions={[]}
+    >
+
         <View style={styles.center}>
           {isConfigError ? (
             <>
@@ -682,36 +678,30 @@ export default function WarScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </PressableRipple>
         </View>
-      </Screen>
+      </PageScreen>
     );
   }
 
   return (
-    <Screen style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>War</Text>
-          {player?.clan && player.clan.badgeUrls?.medium && (
-            <Image source={{ uri: player.clan.badgeUrls.medium }} style={styles.clanBadgeImg} />
-          )}
-        </View>
-        <Text style={styles.subtitle}>
+    <PageScreen
+      style={styles.container}
+      title={<>War</>}
+      subtitle={<>
           {player?.clan ? player.clan.name : 'Current war & history'}
-        </Text>
-      </View>
-
-      <ScrollView
-        overScrollMode="never"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
+        </>}
+      actions={[player?.clan && player.clan.badgeUrls?.medium && (
+            <Image key="action-0" source={{ uri: player.clan.badgeUrls.medium }} style={styles.clanBadgeImg} />
+          )]}
+      contentContainerStyle={styles.scrollContent}
+      scrollProps={{refreshControl: <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={Colors.textMuted}
-          />
-        }
-      >
+          />}}
+    >
+
+
+      <>
         <SegmentedSwitch
           style={styles.screenToggle}
           options={SCREEN_VIEW_OPTIONS}
@@ -867,8 +857,8 @@ export default function WarScreen() {
         )}
 
         <View style={{ height: 120 }} />
-      </ScrollView>
-    </Screen>
+      </>
+    </PageScreen>
   );
 }
 
@@ -1148,7 +1138,7 @@ function CwlRoundCard({ round, war, myClanTag, myPlayerTag, player, now, isFirst
         ]}
         onPress={() => setExpanded(e => !e)}
       >
-        <View style={[styles.itemIconTile, 
+        <View style={[styles.itemIconTile,
           isFirst && { borderTopLeftRadius: Radius.lg },
           isLast && { borderBottomLeftRadius: Radius.lg },
         ]}>
