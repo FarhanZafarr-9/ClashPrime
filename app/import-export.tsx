@@ -1,12 +1,12 @@
-import Screen from '../src/components/Screen';
-import React, { useState, useMemo } from 'react';
+import { importUpgradeSnapshot } from '../src/utils/importedUpgrades';
+import { getArmyItemImage } from '../src/utils/armyData';
+import PageScreen from '../src/components/PageScreen';
+import HeaderButton from '../src/components/HeaderButton';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
-  Platform,
-  KeyboardAvoidingView,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -78,11 +78,15 @@ export default function ImportExportScreen() {
   const { count: builderCount, isVerified: buildersVerified, verifyBuilderCount } = useBuilderCount();
   const { count: builderBaseCount } = useBuilderBaseCount(player?.builderHallLevel);
 
+  const [previewNow, setPreviewNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setPreviewNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CocImportResult | null>(null);
   const [exportTag, setExportTag] = useState<string | null>(null);
-  const [markInProgressDone, setMarkInProgressDone] = useState(false);
   const [detectedHuts, setDetectedHuts] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [pastedOk, setPastedOk] = useState(false);
@@ -209,26 +213,8 @@ export default function ImportExportScreen() {
       const effectiveMax = getBuildingEffectiveMax(item.storeName, cap);
       if (effectiveMax <= 0) continue;
       const count = getCountAtTH(item.storeName, cap);
-      // Timer rows describe copies that are mid-upgrade at `lvl`. When the user
-      // opts to treat them as done, those copies import at `lvl + 1` instead.
-      // Sort desc so the copied levels always line up with the app's per-copy
-      // list (also sorted desc) — otherwise re-pasting the same export would
-      // keep proposing the same upgrades for buildings without a timer row.
-      let importedLevels = [...item.levels].map((l) => Math.min(l, effectiveMax)).sort((a, b) => b - a);
-      if (markInProgressDone && item.timerRows.length > 0) {
-        const bump = new Map<number, number>();
-        for (const t of item.timerRows) bump.set(t.level, (bump.get(t.level) ?? 0) + 1);
-        const remaining = new Map(bump);
-        importedLevels = importedLevels
-          .map((lvl) => {
-            const need = remaining.get(lvl);
-            if (need && need > 0) {
-              remaining.set(lvl, need - 1);
-              return Math.min(lvl + 1, effectiveMax);
-            }
-            return lvl;
-          });
-      }
+      // Import the current completed level; timer rows are saved separately.
+      const importedLevels = [...item.levels].map((l) => Math.min(l, effectiveMax)).sort((a, b) => b - a);
       const copiesInfo = getBuildingCopies(
         item.storeName,
         player.buildingLevels,
@@ -280,7 +266,7 @@ export default function ImportExportScreen() {
       });
     }
     return rows.sort((a, b) => b.timeSec - a.timeSec);
-  }, [player, result, markInProgressDone]);
+  }, [player, result]);
 
   // Builders pipeline for the upgrades. Home Village and Builder Base upgrades
   // are scheduled independently against their own builder counts — the two
@@ -405,56 +391,17 @@ export default function ImportExportScreen() {
     return rows.sort((a, b) => b.timeSec - a.timeSec);
   }, [upgradeRows]);
 
-  // Copies with an in-progress upgrade (timer rows in the export), showing the
-  // current level, the upcoming level and time left. Rows that the account has
-  // already absorbed are dropped — e.g. a copy that the last import bumped to
-  // lvl + 1 should never be re-offered when the same export is pasted again.
-  const upgradingRows = useMemo(() => {
-    if (!result || !player) return [];
-    const th = player.townHallLevel ?? 0;
-    const bh = player.builderHallLevel ?? 1;
-    const byKey = new Map<string, { storeName: string; displayName: string; level: number; remainingSec: number; copies: number }>();
-    for (const item of result.resolved) {
-      const builderBase = isBuilderName(item.storeName);
-      const cap = capLevelFor(item.storeName, th, bh);
-      const effectiveMax = getBuildingEffectiveMax(item.storeName, cap);
-      if (effectiveMax <= 0) continue;
-      const count = getCountAtTH(item.storeName, cap);
-      const copiesInfo = getBuildingCopies(item.storeName, player.buildingLevels, player.buildings, effectiveMax, count, player.lastMaxedTH, builderBase ? undefined : cap);
-      const currentArr = copiesInfo.levels
-        .map((l) => (l > 0 ? Math.min(l, effectiveMax) : 1))
-        .sort((a, b) => b - a);
-      for (const t of item.timerRows) {
-        const doneAt = Math.min(t.level + 1, effectiveMax);
-        const alreadyDone = currentArr.filter((l) => l >= doneAt).length;
-        const key = `${item.storeName}|${t.level}`;
-        const prev = byKey.get(key);
-        if (prev) {
-          prev.copies = Math.max(0, prev.copies + 1 - alreadyDone);
-          prev.remainingSec = Math.min(prev.remainingSec, t.remainingSec);
-        } else {
-          byKey.set(key, {
-            storeName: item.storeName,
-            displayName: item.displayName,
-            level: t.level,
-            remainingSec: t.remainingSec,
-            copies: Math.max(0, 1 - alreadyDone),
-          });
-        }
-      }
-    }
-    return [...byKey.values()]
-      .filter((u) => u.copies > 0)
-      .sort((a, b) => b.remainingSec - a.remainingSec);
-  }, [result, player]);
+  // Keep every ongoing timer separate from completed level imports.
+  const upgradingRows = useMemo(() => (result?.upgrades ?? []).map(row => ({
+    ...row,
+    storeName: row.storeName ?? row.name,
+    displayName: row.name,
+    remainingSec: Math.max(0, (row.completesAt - previewNow) / 1000),
+    copies: 1,
+  })), [result, previewNow]);
   const hasBuildingChanges = applyCount > 0 && totalChanged > 0;
-  // Crafted defenses ride along with the building changes rather than
-  // introducing their own. Listing them on their own made the row appear on a
-  // preview with nothing to apply, which read as an import that was not there.
-  const showCrafted = hasBuildingChanges && craftedPayloadCount > 0;
-  // Drives the button off showCrafted, not craftedPayloadCount, so it can never
-  // read "Nothing to apply" while still being live.
-  const canApply = (hasBuildingChanges || showCrafted) && !!player;
+  const showCrafted = craftedPayloadCount > 0;
+  const canApply = !!result && !!player;
 
   const doApply = async (tag: string) => {
     if (!result || !player) return;
@@ -471,13 +418,15 @@ export default function ImportExportScreen() {
     const levels: Record<string, number> = {};
     for (const row of upgradeRows) levels[row.storeName] = Math.max(...row.targetLevels);
     if (tag.toUpperCase() === player.tag.toUpperCase()) {
-      setBulkLevels(levels, perBuilding);
-      if (craftedPayloadCount > 0) setCraftedLevels(craftedPayload);
+      await setBulkLevels(levels, perBuilding);
+      if (craftedPayloadCount > 0) await setCraftedLevels(craftedPayload);
+      await importUpgradeSnapshot(tag, result);
       router.back();
       return;
     }
     const target = accounts.find((a) => a.tag.toUpperCase() === tag.toUpperCase());
     await applyLevelsToAccount(tag, levels, perBuilding);
+    await importUpgradeSnapshot(tag, result);
     if (craftedPayloadCount > 0) await setBulkCraftedLevels(craftedPayload, tag);
     show({
       title: 'Levels applied',
@@ -506,14 +455,14 @@ export default function ImportExportScreen() {
     const targetTag = targetAccount?.tag ?? player.tag;
     const forActive = targetAccount === null || targetIsActive;
     show({
-      title: 'Apply imported levels?',
+      title: 'Import snapshot?',
       subtitle: forActive
         ? `Updating ${player.name}`
         : `Updating ${targetAccount!.name || targetAccount!.tag}`,
       icon: 'download-outline',
       message: forActive
-        ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept.`
-        : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). This account is not active right now — the levels are saved to its cache.`,
+        ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept. Track ${upgradingRows.length} ongoing upgrade(s) separately with completion alerts.`
+        : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). Track ${upgradingRows.length} ongoing upgrade(s) for this account. Levels are saved to its cache.`,
       actions: [
         { label: 'Cancel', onPress: () => { } },
         { label: 'Apply', primary: true, onPress: () => doApply(targetTag) },
@@ -696,27 +645,11 @@ export default function ImportExportScreen() {
   };
 
   return (
-    <Screen style={styles.container} >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.header}>
-          <PressableRipple style={styles.backBtn} onPress={() => router.back()} hitSlop={12} accessibilityLabel="Go back" accessibilityRole="button">
-            <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
-          </PressableRipple>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>Import Levels</Text>
-            <Text style={styles.subtitle}>From a Clash of Clans JSON Export</Text>
-          </View>
-        </View>
+    <PageScreen title="Import Levels" subtitle="From a Clash of Clans JSON Export" tabBar={false} keyboardAvoiding actions={[<HeaderButton key="back" onPress={() => router.back()} accessibilityLabel="Go back"><Ionicons name="chevron-back" size={24} color={Colors.textPrimary} /></HeaderButton>]}>
+      <>
 
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          overScrollMode="never"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+
+        <View style={styles.scroll}>
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={{ flex: 1 }}>
@@ -910,11 +843,7 @@ export default function ImportExportScreen() {
                   disabled={!canApply}
                 >
                   <Text style={styles.applyBtnText} numberOfLines={1}>
-                    {!player
-                      ? 'Waiting for account…'
-                      : hasBuildingChanges
-                        ? `Apply ${applyCount} level${applyCount === 1 ? '' : 's'}`
-                        : 'Nothing to apply'}
+                    {!player ? 'Waiting for account…' : 'Import snapshot'}
                   </Text>
                 </PressableRipple>
               </View>
@@ -925,38 +854,30 @@ export default function ImportExportScreen() {
                   <View style={styles.upgradeList}>
                     {upgradingRows.map((u, i) => (
                       <View
-                        key={`${u.storeName}-${u.level}`}
+                        key={u.id}
                         style={[
                           styles.upgradeRow,
                           { backgroundColor: colors.bgCard },
                           i === 0 && styles.upgradeRowFirst,
                         ]}
                       >
-                        <BuildingRowIcon storeName={u.storeName} level={u.level + 1} />
+                        {u.kind === 'buildings' ? <BuildingRowIcon storeName={u.storeName} level={u.level} /> : <Image source={getArmyItemImage(u.name, null) ?? undefined} style={styles.levelIcon} resizeMode="contain" />}
                         <View style={styles.upgradeText}>
                           <Text style={styles.rowLabel} numberOfLines={1}>
                             {u.displayName}
                             {u.copies > 1 ? <Text style={styles.rowSub}>{`  ×${u.copies}`}</Text> : null}
                           </Text>
                           <Text style={styles.upgradeSub} numberOfLines={2}>
-                            Lv {u.level} › Lv {u.level + 1} · {formatTimeShort(u.remainingSec)} left
+                            Lv {u.level} › Lv {u.level + 1} · {u.remainingSec > 0 ? `${formatTimeShort(u.remainingSec)} left` : 'Ready to confirm'}
                           </Text>
                         </View>
                         <View style={styles.upgradeRight}>
-                          <Text style={[styles.upgradeTime, { color: Colors.warning }]}>in progress</Text>
+                          <Text style={[styles.upgradeTime, { color: Colors.warning }]}>{u.remainingSec > 0 ? 'in progress' : 'completed'}</Text>
                         </View>
                       </View>
                     ))}
                   </View>
-                  <PressableRipple
-                    style={[styles.doneRow, styles.upgradeRowLast, { backgroundColor: colors.bgCard }]}
-                    onPress={() => setMarkInProgressDone((v) => !v)}
-                  >
-                    <View style={[styles.doneCheck, { borderColor: colors.border }]}>
-                      {markInProgressDone ? <Ionicons name="checkmark" size={14} color={Colors.success} /> : null}
-                    </View>
-                    <Text style={styles.doneLabel}>Treat upgrades in progress as completed (Lv +1)</Text>
-                  </PressableRipple>
+                  <Text style={styles.rowSub}>Ongoing upgrades keep their current level and appear below Backlog with completion alerts.</Text>
                 </>
               ) : null}
 
@@ -1034,10 +955,10 @@ export default function ImportExportScreen() {
               ) : null}
             </View>
           ) : null}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </>
       <Dialog />
-    </Screen>
+    </PageScreen>
   );
 }
 
