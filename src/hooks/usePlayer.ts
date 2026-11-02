@@ -1,3 +1,4 @@
+import { clearImportedUpgrades } from '../utils/importedUpgrades';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ClashPlayer, StoredAccount, PlayerBuilding } from '../types/clash';
 import { toStoreName, toJsonName } from '../utils/buildingCopies';
@@ -83,6 +84,7 @@ export async function ensureAccountRegistered(
 }
 
 export async function removeAccount(tag: string): Promise<void> {
+  await clearImportedUpgrades(tag);
   const accounts = await getAccounts();
   await AsyncStorage.setItem(
     ACCOUNTS_KEY,
