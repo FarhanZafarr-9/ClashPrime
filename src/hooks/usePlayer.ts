@@ -1,3 +1,4 @@
+import { preserveCraftedLevels } from '../utils/importSafety';
 import { clearImportedUpgrades } from '../utils/importedUpgrades';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ClashPlayer, StoredAccount, PlayerBuilding } from '../types/clash';
@@ -290,10 +291,10 @@ export async function setBulkBuildingLevels(levels: Record<string, number>, acco
 }
 
 /** Merge crafted-defense module levels (defense name → module name → level) for one account. */
-export async function setBulkCraftedLevels(levels: Record<string, Record<string, number>>, accountTag?: string): Promise<void> {
+export async function setBulkCraftedLevels(levels: Record<string, Record<string, number>>, accountTag?: string, preserveHigher = false): Promise<void> {
   const player = await getCachedPlayer(accountTag);
   if (!player) return;
-  player.craftedLevels = { ...(player.craftedLevels || {}), ...levels };
+  player.craftedLevels = { ...(player.craftedLevels || {}), ...(preserveHigher ? preserveCraftedLevels(player.craftedLevels, levels) : levels) };
   await cachePlayer(player, accountTag);
 }
 
