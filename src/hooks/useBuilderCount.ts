@@ -89,7 +89,7 @@ export interface BuilderCount {
   /** Set the count by hand. Keeps the verified baseline as a floor. */
   setBuilderCount: (n: number, tag?: string) => Promise<void>;
   /** Record `n` as auto-detected from an import: sets it and marks it verified. */
-  verifyBuilderCount: (n: number, tag?: string) => Promise<void>;
+  verifyBuilderCount: (n: number, tag?: string, preserveHigher?: boolean) => Promise<void>;
   /** Drop the import baseline, e.g. after a full re-onboarding. */
   clearVerified: (tag?: string) => Promise<void>;
 }
@@ -188,8 +188,11 @@ export function useBuilderCount(): BuilderCount {
   );
 
   const verifyBuilderCount = useCallback(
-    async (n: number, tagOverride?: string) => {
-      const next = Math.min(Math.max(Math.round(n), MIN_COUNT), MAX_COUNT);
+    async (n: number, tagOverride?: string, preserveHigher = false) => {
+      const requested = Math.min(Math.max(Math.round(n), MIN_COUNT), MAX_COUNT);
+      const target = tagOverride ? normalize(tagOverride) : activeTag;
+      const saved = preserveHigher && target ? await readPair(target) : null;
+      const next = Math.max(requested, saved?.verified ?? requested);
       await persist(next, next, tagOverride);
     },
     [persist],
@@ -213,7 +216,7 @@ export function useBuilderCount(): BuilderCount {
   return useMemo(
     () => ({
       count: snapshot.count,
-      loaded: snapshot.loaded,
+      loaded: snapshot.loaded && loadedTag === tag && activeTag === tag,
       verified: snapshot.verified,
       isVerified: snapshot.verified !== null && snapshot.count === snapshot.verified,
       // Both steppers stay inert until this account's stored values are in, so
@@ -225,6 +228,6 @@ export function useBuilderCount(): BuilderCount {
       clearVerified,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [snapshot, setBuilderCount, verifyBuilderCount, clearVerified],
+    [snapshot, tag, setBuilderCount, verifyBuilderCount, clearVerified],
   );
 }
