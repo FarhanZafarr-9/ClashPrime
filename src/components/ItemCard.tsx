@@ -33,6 +33,7 @@ interface Props {
   iconSource?: ImageSourcePropType;
   /** Ionicons glyph for the icon slot, used when there is no artwork to show. */
   iconName?: keyof typeof Ionicons.glyphMap;
+  iconColor?: string;
   onPress?: () => void;
   locked?: boolean;
   isFirst?: boolean;
@@ -68,7 +69,7 @@ interface Props {
   dashed?: boolean;
 }
 
-export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progress', subtitle, subtitleColor, costLabel, costResources, timeLabel, rightValue, rightValueColor, icon, background, iconSource, iconName, onPress, locked, isFirst, isLast, actionIcon, actionText, onActionPress, actionPosition = 'after', actionColor, actionAccessibilityLabel, actionIcon2, actionText2, onActionPress2, actionPosition2 = 'after', actionColor2, actionAccessibilityLabel2, dimmed, hideLevelBadge, subtitleWithBar, footer, trailing, dashed }: Props) {
+export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progress', subtitle, subtitleColor, costLabel, costResources, timeLabel, rightValue, rightValueColor, icon, background, iconSource, iconName, iconColor, onPress, locked, isFirst, isLast, actionIcon, actionText, onActionPress, actionPosition = 'after', actionColor, actionAccessibilityLabel, actionIcon2, actionText2, onActionPress2, actionPosition2 = 'after', actionColor2, actionAccessibilityLabel2, dimmed, hideLevelBadge, subtitleWithBar, footer, trailing, dashed }: Props) {
   const { colors } = useTheme();
   const isPlain = variant === 'plain';
   const currentLevel = level ?? 0;
@@ -162,7 +163,7 @@ export function ItemCard({ name, level, maxLevel, thMaxLevel, variant = 'progres
               <Image source={{ uri: icon }} style={styles.iconImage} resizeMode="contain" />
             )
           ) : iconName ? (
-            <Ionicons name={iconName} size={18} color={colors.textSecondary} />
+            <Ionicons name={iconName} size={18} color={iconColor ?? colors.textSecondary} />
           ) : (
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           )}
