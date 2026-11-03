@@ -1,3 +1,4 @@
+import { preserveCraftedLevels } from '../utils/importSafety';
 import type { ImportedUpgrade } from '../types/importedUpgrade';
 import { applyImportedCompletion } from '../utils/importedUpgradeCompletion';
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
@@ -35,7 +36,7 @@ interface PlayerContextValue {
   tagVersion: number;
   setBuildingCopies: (name: string, levels: number[], maxLevel: number) => Promise<void>;
   setBulkLevels: (levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => Promise<void>;
-  setCraftedLevels: (levels: Record<string, Record<string, number>>) => Promise<void>;
+  setCraftedLevels: (levels: Record<string, Record<string, number>>, preserveHigher?: boolean) => Promise<void>;
   applyLevelsToAccount: (tag: string, levels: Record<string, number>, buildingCopies?: BuildingCopiesPayload[]) => Promise<void>;
   setLastMaxed: (th: number) => Promise<void>;
   activeAccount: StoredAccount | null;
@@ -330,10 +331,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const setCraftedLevels = useCallback(async (levels: Record<string, Record<string, number>>) => {
+  const setCraftedLevels = useCallback(async (levels: Record<string, Record<string, number>>, preserveHigher = false) => {
     setPlayer((prev) => {
       const base = prev || {} as ClashPlayer;
-      const updated = { ...base, craftedLevels: { ...(base.craftedLevels || {}), ...levels } };
+      const updated = { ...base, craftedLevels: { ...(base.craftedLevels || {}), ...(preserveHigher ? preserveCraftedLevels(base.craftedLevels, levels) : levels) } };
       if (base.tag) cachePlayer(updated, base.tag);
       return updated;
     });
