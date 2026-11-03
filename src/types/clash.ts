@@ -253,6 +253,7 @@ export interface ClashPlayer {
   leagueTier?: LeagueTier;
   builderBaseLeague?: BuilderBaseLeague;
   legendStatistics?: LegendStatistics;
+  currentLeagueGroupTag?: string;
   currentLeagueSeasonId?: number;
   previousLeagueGroupTag?: string;
   previousLeagueSeasonId?: number;
