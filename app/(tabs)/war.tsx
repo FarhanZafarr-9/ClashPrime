@@ -1045,7 +1045,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
               onPress={() => setShowMine((v) => !v)}
               compact
               isFirst
-              isLast={!showMine}
+              isLast
               expanded={showMine}
             >
               <Ionicons name={showMine ? 'chevron-up' : 'chevron-down'} size={16} color={showMine ? colors.bgCard : colors.textSecondary} />
@@ -1073,7 +1073,7 @@ function CurrentWarSection({ war, now, isCwl = false, myClanTag, myPlayerTag, pl
               onPress={() => setShowEnemy((v) => !v)}
               compact
               isFirst
-              isLast={!showEnemy}
+              isLast
               expanded={showEnemy}
             >
               <Ionicons name={showEnemy ? 'chevron-up' : 'chevron-down'} size={16} color={showEnemy ? colors.bgCard : colors.textSecondary} />
