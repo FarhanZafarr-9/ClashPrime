@@ -77,6 +77,8 @@ export interface CocCraftedDefense {
 export interface CocImportResult {
   upgrades: ImportedUpgrade[];
   snapshotAt: number;
+  /** Null when the export has no valid source timestamp. */
+  exportedAt: number | null;
   /** storeName → representative level, ready for setBulkLevels. */
   levels: Record<string, number>;
   /** Buildings the app tracks (Home Village + Builder Base buildings and traps). */
@@ -225,11 +227,14 @@ export function cocExportToBuildingLevels(data: CocExportData): CocImportResult 
   const levels: Record<string, number> = {};
   for (const item of resolved) levels[item.storeName] = item.level;
 
-  const snapshotAt = exportSnapshotAt(data.timestamp);
+  const sourceTimestamp = exportSnapshotAt(data.timestamp, NaN);
+  const exportedAt = Number.isFinite(sourceTimestamp) ? sourceTimestamp : null;
+  const snapshotAt = exportedAt ?? Date.now();
   const upgrades = decodeImportedUpgrades(data, snapshotAt);
   return {
     upgrades,
     snapshotAt,
+    exportedAt,
     levels,
     resolved,
     skipped: [...skipped.values()].sort((a, b) => a.storeName.localeCompare(b.storeName)),
