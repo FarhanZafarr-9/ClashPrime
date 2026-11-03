@@ -1,3 +1,8 @@
+import { tournamentStatus } from '../../src/utils/rankedTournamentView';
+import { useRankedLeagueStats, type RankedStatsState } from '../../src/hooks/useRankedLeagueStats';
+import { UpgradeAvailabilityStrip } from '../../src/components/UpgradeAvailabilityStrip';
+import { upgradeAvailability } from '../../src/utils/upgradeAvailability';
+import { formatCountdown } from '../../src/utils/formatCountdown';
 import { useImportedUpgrades } from '../../src/hooks/useImportedUpgrades';
 import { isImportedCompletionSynced } from '../../src/utils/importedUpgradeCompletion';
 import type { ImportedUpgrade } from '../../src/types/importedUpgrade';
@@ -47,7 +52,7 @@ import { ItemCard } from '../../src/components/ItemCard';
 import BottomSheet from '../../src/components/BottomSheet';
 import type { TroopDetail } from '../../src/api/troopDetail';
 import { getArmyTroopDetail, getArmyItemImage, getAllBuilderItemsAtBH } from '../../src/utils/armyData';
-import { getLeagueLootInfo } from '../../src/utils/leagueData';
+import { getLeagueLootInfo, type LeagueLootInfo } from '../../src/utils/leagueData';
 import { PACKAGE_RESOURCE_IMAGES } from '../../src/data/packageImages';
 import { useDialog } from '../../src/components/AlertDialog';
 import {
@@ -193,6 +198,7 @@ type HomeStatGroup = {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconUrl?: string;
+  iconSource?: ImageSourcePropType;
   desc: string;
   rows: HomeStatRow[];
 };
@@ -238,6 +244,108 @@ function StarBonusValue({ star }: { star: { gold: number | null; dark: number | 
       {star.shiny ? <ResourceAmountIcon resource="Shiny Ore" amount={star.shiny} /> : null}
       {star.glowy ? <ResourceAmountIcon resource="Glowing Ore" amount={star.glowy} /> : null}
       {star.starry ? <ResourceAmountIcon resource="Starry Ore" amount={star.starry} /> : null}
+    </View>
+  );
+}
+
+function QuickStatCard({ rows }: { rows: HomeStatRow[] }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.quickStatCard, { backgroundColor: colors.bgCard }]}>
+      {rows.map((row, index) => (
+        <View key={row.label} style={[styles.quickStatCell, index > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.border }]}>
+          <Text style={[styles.quickStatNumber, { color: row.accentColor ?? colors.textPrimary }]} adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1}>{typeof row.value === 'number' ? Number.isFinite(row.value) ? row.value.toLocaleString() : '—' : row.value ?? '—'}</Text>
+          <Text style={[styles.quickStatLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function RankedTournamentSummary({ state, leagueName, badgeUrl, onPress }: {
+  state: RankedStatsState; leagueName: string; badgeUrl?: string; onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const stats = state.stats;
+  return (
+    <View style={[styles.rankedCard, { backgroundColor: colors.bgCard }]}>
+      <View style={styles.tournamentHeading}>
+        {badgeUrl && <Image source={{ uri: badgeUrl }} style={styles.leagueBadge} resizeMode="contain" />}
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.leagueName, { color: colors.textPrimary }]}>{leagueName}</Text>
+          <Text style={[styles.leagueNote, { color: colors.textTertiary }]}>Ranked</Text>
+        </View>
+      </View>
+      <QuickStatCard rows={[
+        { label: 'Ranked trophies', value: stats?.trophies ?? '—', icon: 'trophy-outline' },
+        { label: stats?.positionIsOfficial ? 'Group rank' : 'Trophy place', value: stats?.position == null ? '—' : stats.position + ' / ' + stats.groupSize, icon: 'podium-outline' },
+      ]} />
+      <Text style={[styles.rankedStatus, { color: state.projection?.outlook === 'secured' ? '#34C759' : colors.textSecondary }]}>
+        {state.status === 'ready' ? tournamentStatus(state.projection) : state.message}
+        {state.projection?.attacksLeft != null ? ' · ' + state.projection.attacksLeft + ' attacks left' : ''}
+      </Text>
+      <PressableRipple onPress={onPress} style={[styles.tournamentLink, { borderTopColor: colors.border }]}>
+        <Text style={[styles.leagueName, { color: colors.textPrimary, fontSize: 12 }]}>View ranked</Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+      </PressableRipple>
+    </View>
+  );
+}
+
+function leagueFloorSubtitle(info: LeagueLootInfo, townHall: number): string {
+  return [
+    info.floor ? 'TH ' + townHall + ': ' + info.floor : null,
+    info.floorTownHall != null && (!info.floor || info.floorTownHall !== townHall) ? 'League floor: TH ' + info.floorTownHall : null,
+  ].filter(Boolean).join(' · ');
+}
+
+function LeagueStatsTable({ info, badgeUrl, townHall }: { info: LeagueLootInfo; badgeUrl?: string; townHall: number }) {
+  const { colors } = useTheme();
+  const resources = [
+    { name: 'Gold', bonus: info.bonus?.gold, loot: info.loot?.gold, star: info.star?.gold },
+    { name: 'Elixir', bonus: info.bonus?.gold, loot: info.loot?.gold, star: info.star?.gold },
+    { name: 'Dark Elixir', bonus: info.bonus?.dark, loot: info.loot?.dark, star: info.star?.dark },
+    { name: 'Shiny Ore', bonus: null, loot: null, star: info.star?.shiny },
+    { name: 'Glowing Ore', bonus: null, loot: null, star: info.star?.glowy },
+    { name: 'Starry Ore', bonus: null, loot: null, star: info.star?.starry },
+  ].filter(row => row.bonus != null || row.loot != null || row.star != null);
+  return (
+    <View style={[styles.leagueTable, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+      <View style={styles.leagueIdentity}>
+        {badgeUrl && <Image source={{ uri: badgeUrl }} style={styles.leagueBadge} resizeMode="contain" />}
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.leagueName, { color: colors.textPrimary }]}>{info.leagueName}</Text>
+          <Text style={[styles.leagueNote, { color: colors.textTertiary }]}>{leagueFloorSubtitle(info, townHall)}</Text>
+        </View>
+      </View>
+      {resources.length > 0 && (
+        <>
+          <View style={[styles.leagueTableRow, { backgroundColor: colors.bgCardHover }]}>
+            <Text style={[styles.leagueResourceCell, styles.leagueColumnHeading, { color: colors.textSecondary }]}>Resource</Text>
+            {['Win bonus', 'Attack loot', 'Star bonus'].map(label => <Text key={label} style={[styles.leagueValueCell, styles.leagueColumnHeading, { color: colors.textSecondary }]}>{label}</Text>)}
+          </View>
+          {resources.map(row => (
+            <View key={row.name} style={[styles.leagueTableRow, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
+              <View style={[styles.leagueResourceCell, styles.leagueResourceName]}>
+                <Image source={PACKAGE_RESOURCE_IMAGES[row.name]} style={styles.leagueResourceIcon} resizeMode="contain" />
+                <Text style={[styles.leagueResourceLabel, { color: colors.textSecondary }]}>{row.name}</Text>
+              </View>
+              {[row.bonus, row.loot, row.star].map((amount, index) => <Text key={index} style={[styles.leagueValueCell, { color: colors.textPrimary }]}>{amount == null ? '—' : formatCost(amount)}</Text>)}
+            </View>
+          ))}
+          <Text style={[styles.leagueFootnote, { color: colors.textTertiary }]}>Maximum rewards · Star bonus: weekly, 8 stars</Text>
+        </>
+      )}
+      {[
+        ...(info.attacksPerWeek != null ? [{ label: 'Attacks / week', value: String(info.attacksPerWeek) }] : []),
+        ...(info.next ? [{ label: 'Next league', value: info.next.name }] : []),
+      ].map(row => (
+        <View key={row.label} style={[styles.leagueMetaRow, { borderTopColor: colors.border }]}>
+          <Text style={[styles.leagueMetaLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+          <Text style={[styles.leagueMetaValue, { color: colors.textPrimary }]}>{row.value}</Text>
+        </View>
+      ))}
+      {info.next?.star && <View style={[styles.leagueMetaRow, { borderTopColor: colors.border }]}><Text style={[styles.leagueMetaLabel, { color: colors.textTertiary }]}>Next star bonus</Text><LeagueAmountValue amount={info.next.star} /></View>}
     </View>
   );
 }
@@ -405,6 +513,7 @@ function CollapsibleSection({
   icon,
   iconUrl,
   iconSource,
+  imageSize,
   description,
   count,
   totalLevel,
@@ -425,6 +534,7 @@ function CollapsibleSection({
   icon?: keyof typeof Ionicons.glyphMap;
   iconUrl?: string;
   iconSource?: ImageSourcePropType;
+  imageSize?: number;
   description: React.ReactNode;
   count: number;
   totalLevel: number;
@@ -581,10 +691,11 @@ function CollapsibleSection({
         icon={icon}
         iconUrl={iconUrl}
         iconSource={iconSource}
+        imageSize={imageSize}
         title={title}
         desc={description}
-        isFirst={isFirst || open}
-        isLast={isLast && !open}
+        isFirst={isFirst}
+        isLast={isLast}
         expanded={open}
         onPress={toggle}
         destructive={destructive}
@@ -654,17 +765,26 @@ function ProgressRow({
   );
 }
 
+function nextImportedCompletion(rows: ImportedUpgrade[], now: number): string {
+  const active = rows.filter(row => row.completesAt > now);
+  if (active.length === 0) return 'Completed — ready to confirm';
+  const earliest = Math.min(...active.map(row => row.completesAt));
+  return 'Next completion in ' + formatCountdown((earliest - now) / 1000);
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { player, loading, error, lastSync, refresh, switchAccount, activeAccount, accounts, syncingTag, completeImportedUpgrade } = usePlayer();
-  const { upgrades: importedUpgrades, confirm: confirmUpgrade } = useImportedUpgrades(player?.tag ?? '');
+  const rankedStats = useRankedLeagueStats(player, lastSync);
+  const { upgrades: importedUpgrades, hasSnapshot: hasUpgradeSnapshot, confirm: confirmUpgrade } = useImportedUpgrades(player?.tag ?? '');
   const pendingImported = importedUpgrades.filter(row => !row.confirmed);
   const confirmingUpgrade = useRef(false);
   const upgradeGroups = [
     { key: 'buildings', title: 'Buildings', rows: pendingImported.filter(r => r.kind === 'buildings') },
     { key: 'heroes', title: 'Heroes', rows: pendingImported.filter(r => r.kind === 'heroes') },
-    { key: 'research', title: 'Research & pets', rows: pendingImported.filter(r => ['troops', 'spells', 'pets'].includes(r.kind)) },
+    { key: 'research', title: 'Research', rows: pendingImported.filter(r => r.kind === 'troops' || r.kind === 'spells') },
+    { key: 'pets', title: 'Pets', rows: pendingImported.filter(r => r.kind === 'pets') },
     { key: 'other', title: 'Other upgrades', rows: pendingImported.filter(r => r.kind === 'other') },
   ].filter(group => group.rows.length > 0);
   useEffect(() => {
@@ -676,7 +796,7 @@ export default function HomeScreen() {
   }, [player, importedUpgrades, confirmUpgrade]);
   const { superTroopNames, petNames, siegeMachineNames } = useGameData();
   const { reminders, addTimer, updateTimer, dismissTimer, hasPermission } = useTimers();
-  const { count: builderCount } = useBuilderCount();
+  const { count: builderCount, loaded: buildersLoaded } = useBuilderCount();
   const { show: showDialog, Dialog } = useDialog();
   const handleConfirmUpgrade = async (row: ImportedUpgrade) => {
     if (confirmingUpgrade.current || nowTick < row.completesAt) return;
@@ -1609,7 +1729,7 @@ export default function HomeScreen() {
     );
   }
 
-  const playerLeague = player.league ?? player.leagueTier;
+  const playerLeague = player.leagueTier ?? player.league;
   const leagueInfo = playerLeague?.name
     ? getLeagueLootInfo(playerLeague.name, player.townHallLevel)
     : null;
@@ -1628,10 +1748,11 @@ export default function HomeScreen() {
     {
       title: 'PvP',
       icon: 'trophy-outline',
-      desc: 'Attack & defense record',
+      iconSource: require('../../assets/stats/war_stars.png'),
+      desc: rankedStats.message,
       rows: [
-        { label: 'Trophies', desc: 'Current trophy count', value: player.trophies, icon: 'trophy-outline' },
-        { label: 'Best Trophies', desc: 'All-time best', value: player.bestTrophies, icon: 'trophy', accentColor: Colors.warning },
+        { label: 'Trophies', desc: 'Current trophy count', value: rankedStats.stats?.trophies ?? '—', icon: 'trophy-outline' },
+        { label: 'Group position', desc: 'Current tournament standing', value: rankedStats.stats?.position ?? '—', icon: 'trophy', accentColor: Colors.warning },
         { label: 'War Stars', desc: 'Clan war stars', value: player.warStars, icon: 'star-outline' },
       ],
     },
@@ -1644,11 +1765,7 @@ export default function HomeScreen() {
         rows: [
           {
             label: 'League',
-            desc: leagueInfo.underfloor
-              ? `Below your TH floor (${leagueInfo.floor})`
-              : leagueInfo.floor
-                ? `League floor: ${leagueInfo.floor}`
-                : 'Ranked battles league',
+            desc: leagueFloorSubtitle(leagueInfo, player.townHallLevel) || 'Ranked battles league',
             value: leagueInfo.leagueName,
             icon: 'ribbon-outline' as const,
             iconUrl: playerLeague?.iconUrls?.small,
@@ -1668,7 +1785,8 @@ export default function HomeScreen() {
     {
       title: 'Clan',
       icon: 'people-outline',
-      desc: 'Clan participation',
+      iconUrl: player.clan?.badgeUrls?.small,
+      desc: player.clan?.name ?? 'Not in a clan',
       rows: [
         { label: 'Donations', desc: 'Troops donated', value: player.donations, icon: 'gift-outline' },
         { label: 'Received', desc: 'Troops received', value: player.donationsReceived, icon: 'arrow-down-outline', accentColor: player.donationsReceived > player.donations ? Colors.success : undefined },
@@ -1678,7 +1796,8 @@ export default function HomeScreen() {
     {
       title: 'Builder Base',
       icon: 'hammer-outline',
-      desc: 'Builder village record',
+      iconSource: getBuildingItemImage('Builder Hall', player.builderHallLevel ?? 1, true) ?? undefined,
+      desc: player.builderBaseLeague?.name ?? 'Builder village record',
       rows: [
         ...(player.builderBaseTrophies !== undefined ? [{ label: 'Builder Trophies', desc: 'Current trophy count', value: player.builderBaseTrophies, icon: 'hammer-outline' as const }] : []),
         ...(player.bestBuilderBaseTrophies !== undefined ? [{ label: 'Best Builder', desc: 'All-time best', value: player.bestBuilderBaseTrophies, icon: 'hammer' as const, accentColor: Colors.warning }] : []),
@@ -1722,9 +1841,9 @@ player && (
       scrollProps={{refreshControl: <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.textSecondary}
-              colors={[Colors.textSecondary]}
-              progressBackgroundColor={Colors.bgCard}
+              tintColor={Colors.textPrimary}
+              colors={[Colors.bgCard]}
+              progressBackgroundColor={Colors.textPrimary}
             />}}
       overlays={<><Dialog />
 <Modal visible={addTimerVisible} transparent animationType="fade" onRequestClose={() => { setEditingTimer(null); setAddTimerVisible(false); }} statusBarTranslucent>
@@ -2151,7 +2270,83 @@ player && (
             </View>
           </Card>
 
+          {hasUpgradeSnapshot && (() => {
+            const available = upgradeAvailability(importedUpgrades, buildersLoaded ? builderCount : null, nowTick);
+            const labOwned = (player.buildingLevels?.Lab ?? player.buildingLevels?.Laboratory ?? 0) > 0 || player.buildings?.some(building => /^(lab|laboratory)$/i.test(building.name) && building.level > 0);
+            const needsResearch = progressGroups.some(group => ['troops', 'spells', 'siege'].includes(group.key) && group.rows.some(row => row.level < row.maxLevel));
+            return <UpgradeAvailabilityStrip freeBuilders={available.freeBuilders} labIdle={!!labOwned && needsResearch && available.labIdle === true} builderImage={pipelineHeaderImage('Builder Hut')} labImage={pipelineHeaderImage('Lab')} />;
+          })()}
           <View style={styles.progressSections}>
+            {pendingImported.length > 0 ? (
+            <CollapsibleSection
+              title={nextImportedCompletion(pendingImported, nowTick).replace('Next completion in ', '')}
+              imageSize={24}
+              iconSource={require('../../assets/images/chiefs-journey/Builder.png')}
+              description="Upgrades in progress"
+              count={pendingImported.length}
+              totalLevel={0}
+              totalMax={0}
+              compact
+              isFirst
+            >
+              <View style={styles.backlogSections}>
+                {upgradeGroups.map((group, groupIndex) => (
+                  <CollapsibleSection
+                    key={group.key}
+                    title={group.title}
+                    imageSize={24}
+                    iconSource={group.key === 'buildings'
+                      ? pipelineHeaderImage('Builder Hut')
+                      : group.key === 'heroes'
+                        ? pipelineHeaderImage('Hero Hall')
+                        : group.key === 'research'
+                          ? pipelineHeaderImage('Lab')
+                          : group.key === 'pets'
+                            ? pipelineHeaderImage('Pet House')
+                            : require('../../assets/package-images/images/magic-items/potions/clock-tower-potion.webp')}
+                    description={nextImportedCompletion(group.rows, nowTick)}
+                    count={group.rows.length}
+                    totalLevel={0}
+                    totalMax={0}
+                    compact
+                    isFirst={groupIndex === 0}
+                    isLast={groupIndex === upgradeGroups.length - 1}
+                  >
+                    {group.rows.map((row, index) => {
+                      const done = row.completesAt <= nowTick;
+                      const image = row.kind === 'buildings' ? getBuildingLevelImageSource(toJsonName(row.storeName ?? row.name), row.level) : getArmyItemImage(row.name, null);
+                      const duplicateCount = group.rows.filter(r => r.dataId === row.dataId && r.level === row.level && r.village === row.village).length;
+                      return (
+                        <ItemCard
+                          key={row.id}
+                          name={row.name + (duplicateCount > 1 ? ` · copy ${row.copy + 1}` : '')}
+                          level={row.level}
+                          maxLevel={row.targetLevel}
+                          timeLabel={done ? (row.kind === 'other' ? 'Completed — dismiss' : 'Completed — confirm') : formatCountdown(Math.max(0, (row.completesAt - nowTick) / 1000))}
+                          iconSource={image ?? undefined}
+                          iconName="hammer-outline"
+                          actionIcon={done ? 'checkmark-outline' : undefined}
+                          actionAccessibilityLabel={row.kind === 'other' ? 'Dismiss completed upgrade' : 'Confirm completed upgrade'}
+                          onActionPress={done ? () => { void handleConfirmUpgrade(row); } : undefined}
+                          isLast={index === group.rows.length - 1}
+                        />
+                      );
+                    })}
+                  </CollapsibleSection>
+                ))}
+              </View>
+            </CollapsibleSection>
+          ) : (
+            <SettingRow
+              title="Upgrades in progress"
+              imageSize={24}
+              desc="No ongoing upgrades being tracked"
+              iconSource={require('../../assets/images/chiefs-journey/Builder.png')}
+              compact
+              isFirst
+            />
+          )}
+
             {/* ── Lab ── */}
             {(() => {
               // Siege belongs here: it is Workshop-built but still Lab-upgraded, so its
@@ -2171,8 +2366,7 @@ player && (
               if (labGroups.length === 0) return null;
               return (
                 <CollapsibleSection
-                  isFirst
-                  isLast={false}
+                                    isLast={false}
                   icon="flask-outline"
                   iconSource={pipelineHeaderImage('Lab')}
                   title="Laboratory"
@@ -2432,7 +2626,7 @@ player && (
 
             {(unlockableItems.length > 0 || rushedItems.length > 0) && (
               <CollapsibleSection
-                isLast={pendingImported.length === 0}
+                isLast
                 iconSource={require('../../assets/images/chiefs-journey/icon.png')}
                 title="Backlog"
                 compact
@@ -2580,57 +2774,7 @@ const groupDesc = group.pending
             )}
 
 
-          {pendingImported.length > 0 && (
-            <CollapsibleSection
-              title="Upgrades in progress"
-              icon="hammer-outline"
-              description={pendingImported.some(r => r.completesAt <= nowTick) ? 'Completed upgrades ready to confirm' : `Next completion in ${formatTimeShort(Math.max(0, (pendingImported[0].completesAt - nowTick) / 1000))}`}
-              count={pendingImported.length}
-              totalLevel={0}
-              totalMax={0}
-              compact
-              isLast
-            >
-              <View style={styles.backlogSections}>
-                {upgradeGroups.map((group, groupIndex) => (
-                  <CollapsibleSection
-                    key={group.key}
-                    title={group.title}
-                    icon={group.key === 'heroes' ? 'shield-half-outline' : group.key === 'research' ? 'flask-outline' : 'hammer-outline'}
-                    description={`${group.rows.length} upgrade${group.rows.length === 1 ? '' : 's'} tracked`}
-                    count={group.rows.length}
-                    totalLevel={0}
-                    totalMax={0}
-                    compact
-                    isLast={groupIndex === upgradeGroups.length - 1}
-                  >
-                    {group.rows.map((row, index) => {
-                      const done = row.completesAt <= nowTick;
-                      const image = row.kind === 'buildings' ? getBuildingLevelImageSource(toJsonName(row.storeName ?? row.name), row.level) : getArmyItemImage(row.name, null);
-                      const duplicateCount = group.rows.filter(r => r.dataId === row.dataId && r.level === row.level && r.village === row.village).length;
-                      return (
-                        <ItemCard
-                          key={row.id}
-                          name={row.name + (duplicateCount > 1 ? ` · copy ${row.copy + 1}` : '')}
-                          level={row.level}
-                          maxLevel={row.targetLevel}
-                          subtitle={`Lv ${row.level} › Lv ${row.targetLevel} · ${row.village === 'home' ? 'Home Village' : 'Builder Base'}`}
-                          subtitleWithBar
-                          timeLabel={done ? (row.kind === 'other' ? 'Completed — dismiss' : 'Completed — confirm') : formatTimeShort(Math.max(0, (row.completesAt - nowTick) / 1000))}
-                          iconSource={image ?? undefined}
-                          iconName="hammer-outline"
-                          actionIcon={done ? 'checkmark-outline' : undefined}
-                          actionAccessibilityLabel={row.kind === 'other' ? 'Dismiss completed upgrade' : 'Confirm completed upgrade'}
-                          onActionPress={done ? () => { void handleConfirmUpgrade(row); } : undefined}
-                          isLast={index === group.rows.length - 1}
-                        />
-                      );
-                    })}
-                  </CollapsibleSection>
-                ))}
-              </View>
-            </CollapsibleSection>
-          )}
+
 
           </View>
 
@@ -2676,13 +2820,17 @@ const groupDesc = group.pending
           </View>
 
           <View style={styles.statsCard}>
-            {homeStatGroups.filter((g) => g.rows.length > 0).map((group, gi, groups) => (
+            {homeStatGroups.filter((g) => g.rows.length > 0).map((group, gi, groups) => group.title === 'PvP' ? (
+              <RankedTournamentSummary key={group.title} state={rankedStats} leagueName={playerLeague?.name ?? 'Ranked'} badgeUrl={playerLeague?.iconUrls?.small} onPress={() => router.push('/ranked-tournament')} />
+            ) : (
               <CollapsibleSection
                 key={group.title}
-                isFirst={gi === 0}
+                isFirst={gi === 1}
                 isLast={gi === groups.length - 1}
                 icon={group.icon}
                 iconUrl={group.iconUrl}
+                iconSource={group.iconSource}
+                imageSize={24}
                 title={group.title}
                 description={group.desc}
                 compact
@@ -2691,20 +2839,7 @@ const groupDesc = group.pending
                 totalMax={0}
                 badges={[{ key: 'count', value: group.rows.length }]}
               >
-                {group.rows.map((row, ri) => (
-                  <ItemCard
-                    key={`${group.title}-${ri}`}
-                    variant="plain"
-                    name={row.label}
-                    subtitle={row.desc}
-                    iconSource={row.iconSource}
-                    icon={row.iconUrl}
-                    iconName={row.icon}
-                    rightValue={row.valueNode ?? (typeof row.value === 'number' ? row.value.toLocaleString() : row.value)}
-                    rightValueColor={row.accentColor}
-                    isLast={ri === group.rows.length - 1}
-                  />
-                ))}
+                {group.title === 'League' && leagueInfo ? <LeagueStatsTable info={leagueInfo} badgeUrl={playerLeague?.iconUrls?.small} townHall={player.townHallLevel} /> : <QuickStatCard rows={group.rows} />}
               </CollapsibleSection>
             ))}
           </View>
@@ -2814,11 +2949,37 @@ const groupDesc = group.pending
 }
 
 const styles = StyleSheet.create({
+  rankedCard: { borderRadius: Radius.md, overflow: 'hidden' },
+  tournamentHeading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingTop: Spacing.md },
+  tournamentLink: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
+  rankedStatus: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, fontSize: 11, lineHeight: 16 },
+  quickStatCard: { flexDirection: 'row', borderRadius: Radius.md, paddingVertical: Spacing.base },
+  quickStatCell: { flex: 1, minWidth: 0, paddingHorizontal: Spacing.sm, alignItems: 'center', justifyContent: 'center', gap: 5 },
+  quickStatNumber: { fontSize: 21, lineHeight: 26, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  quickStatLabel: { fontSize: 10, lineHeight: 14, textAlign: 'center' },
+  leagueTable: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.md, overflow: 'hidden' },
+  leagueIdentity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, padding: Spacing.md },
+  leagueBadge: { width: 34, height: 34 },
+  leagueName: { fontSize: 14, fontWeight: '700' },
+  leagueNote: { fontSize: 10, marginTop: 3 },
+  leagueTableRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.sm, paddingVertical: 8, gap: 4 },
+  leagueResourceCell: { flex: 1.45, minWidth: 0 },
+  leagueResourceName: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  leagueResourceIcon: { width: 13, height: 13 },
+  leagueResourceLabel: { fontSize: 10, flexShrink: 1 },
+  leagueValueCell: { flex: 1, minWidth: 0, fontSize: 11, fontWeight: '600', textAlign: 'right', fontVariant: ['tabular-nums'] },
+  leagueColumnHeading: { fontSize: 9, fontWeight: '600' },
+  leagueFootnote: { fontSize: 10, lineHeight: 14, padding: Spacing.sm },
+  leagueMetaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, gap: Spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  leagueMetaLabel: { fontSize: 11, flexShrink: 1 },
+  leagueMetaValue: { fontSize: 11, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
   container: {
     flex: 1,
     backgroundColor: Colors.bg,
   },
   scroll: {
+    // Leave room for the profile switch button above the first card.
+    paddingTop: Spacing.base,
     paddingBottom: 20,
   },
   center: {
