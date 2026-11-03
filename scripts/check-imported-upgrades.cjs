@@ -35,6 +35,30 @@ function load(file) {
   return module.exports;
 }
 async function main() {
+  const { upgradeAvailability } = load('src/utils/upgradeAvailability.ts');
+  const future = Date.now() + 60000;
+  const work = (kind, extra = {}) => ({ kind, village: 'home', name: kind, completesAt: future, ...extra });
+  assert.equal(upgradeAvailability([work('buildings'), work('heroes'), work('troops'), work('pets'), work('buildings', { village: 'builderBase' })], 6).freeBuilders, 4);
+  assert.equal(upgradeAvailability([work('troops')], 6).labIdle, false);
+  assert.equal(upgradeAvailability([work('spells', { completesAt: 1 })], 6).labIdle, true, 'Finished research releases the lab');
+  assert.equal(upgradeAvailability([work('buildings', { name: 'Laboratory' })], 6).labIdle, false, 'Do not prompt for research while the lab itself upgrades');
+  assert.equal(upgradeAvailability([work('buildings', { storeName: 'Lab' })], 6).labIdle, false);
+  assert.equal(upgradeAvailability([work('other')], 6).freeBuilders, null);
+  assert.equal(upgradeAvailability([work('other')], 6).labIdle, null);
+  assert.equal(upgradeAvailability([], null).freeBuilders, null);
+  assert.equal(upgradeAvailability([work('troops', { confirmed: true })], 6).labIdle, true);
+  assert.equal(upgradeAvailability([work('troops', { village: 'builderBase' })], 6).labIdle, true, 'Builder Base research does not occupy the Home lab');
+  const { formatCountdown } = load('src/utils/formatCountdown.ts');
+  const { formatTimeShort } = load('src/utils/buildingImages.ts');
+  assert.equal(formatTimeShort(9 * 3600), '9h', 'Hours must not be rounded into days');
+  assert.equal(formatTimeShort(9 * 60), '9m', 'Minutes must not be rounded into hours or days');
+  assert.equal(formatTimeShort(30), '<1m');
+  assert.equal(formatTimeShort(86400), '1d');
+  assert.equal(formatCountdown(9 * 3600), '9h 00m 00s');
+  assert.equal(formatCountdown(86400 + 3600 + 60 + 1), '1d 01h 01m 01s');
+  assert.equal(formatCountdown(61), '1m 01s');
+  assert.equal(formatCountdown(0.4), '1s', 'Subsecond remainder must not show completion early');
+  assert.equal(formatCountdown(-1), '0s');
   const { decodeImportedUpgrades: decode } = load('src/utils/importedUpgradeDecoder.ts');
   const { applyImportedCompletion: apply, isImportedCompletionSynced: synced } = load('src/utils/importedUpgradeCompletion.ts');
   const store = load('src/utils/importedUpgrades.ts');
@@ -43,6 +67,12 @@ async function main() {
   const rows = decode(data);
   const { cocExportToBuildingLevels: importLevels } = load('src/utils/cocExport.ts');
   const imported = importLevels(data);
+  assert.equal(imported.exportedAt, snapshot * 1000, 'Expose the source date independently of parse time');
+  assert.equal(importLevels({ buildings: [] }).exportedAt, null, 'Missing dates must not look fresh');
+  assert.equal(importLevels({ timestamp: 0, buildings: [] }).exportedAt, null);
+  const { preserveCraftedLevels, preservedImportLevels, preserveBuildingCopyLevels } = load('src/utils/importSafety.ts');
+  const protectedModules = preserveCraftedLevels({ Cannon: { Damage: 8, Health: 5 } }, { Cannon: { Damage: 3, Range: 2 } });
+  assert.deepEqual(protectedModules, { Cannon: { Damage: 8, Health: 5, Range: 2 } }, 'Older module levels cannot undo progress or erase omitted modules');
   assert.equal(imported.levels.Cannon, 12);
   assert.equal(imported.resolved[0].levels.filter(l => l === 11).length, 2, 'Building import preserves the two ongoing copies at their current level');
   assert.equal(imported.upgrades.length, 5, 'The building import exposes hero and unknown timers too');
@@ -61,6 +91,11 @@ async function main() {
   assert.notEqual(cannons[0].id, cannons[1].id, 'Same-level copies retain separate identities');
   assert.equal(cannons[0].baselineTargetCopies, 1);
   let player = { tag: '#A', townHallLevel: 15, buildings: [12,11,11].map(level => ({ name: cannons[0].name, level, maxLevel: 30 })), heroes: [{ name: 'Archer Queen', village: 'home', level: 79, maxLevel: 100 }], buildingLevels: {}, spells: [], troops: [], pets: [] };
+  const olderResult = { ...imported, crafted: [{ displayName: 'Hot Candle', modules: [{ name: 'Damage', level: 1 }] }] };
+  const newerPlayer = { ...player, craftedLevels: { 'Hot Candle': { Damage: 4 } }, buildings: [13, 12, 11].map(level => ({ name: cannons[0].name, level, maxLevel: 30 })) };
+  assert.deepEqual(preservedImportLevels(olderResult, newerPlayer), { buildings: 2, modules: 1 }, 'Warn about saved progress in the destination account');
+  const protectedCopies = preserveBuildingCopyLevels(newerPlayer, [{ name: cannons[0].name, levels: [12, 11, 11], maxLevel: 30 }]);
+  assert.deepEqual(protectedCopies[0].levels, [13, 12, 11], 'The final write preserves higher saved copies');
   player = apply(player, cannons[1], 2);
   assert.deepEqual(player.buildings.map(b => b.level), [12,12,11]);
   player = apply(player, cannons[0], 3);
@@ -82,6 +117,12 @@ async function main() {
   assert.equal(alerts.size, 9);
   await store.importUpgradeSnapshot('#A', result);
   assert.equal((await store.getImportedUpgrades('#A')).find(r => r.id === queen.id).confirmed, true, 'Reimport does not resurrect confirmed work');
+  await store.importUpgradeSnapshot('#A', { snapshotAt: result.snapshotAt + 500000, exportedAt: null, upgrades: [] });
+  assert.equal((await store.getImportedUpgrades('#A')).length, 5, 'An undated export cannot replace tracked upgrades');
+  assert.equal((await store.getImportedUpgradeSnapshotInfo('#A')).snapshotAt, result.snapshotAt, 'Rejected undated imports cannot overwrite freshness history');
+  await store.importUpgradeSnapshot('#UNDATED', { snapshotAt: result.snapshotAt, exportedAt: null, upgrades: [] });
+  assert.equal((await store.getImportedUpgradeSnapshotInfo('#UNDATED')).timestampKnown, false, 'Unknown source ages stay distinguishable in storage');
+  await store.clearImportedUpgrades('#UNDATED');
   await store.importUpgradeSnapshot('#A', { snapshotAt: result.snapshotAt - 1000, upgrades: [] });
   assert.equal((await store.getImportedUpgrades('#A')).length, 5, 'Stale snapshots cannot erase current timers');
   await store.importUpgradeSnapshot('#A', { snapshotAt: result.snapshotAt + 1000, upgrades: [] });
