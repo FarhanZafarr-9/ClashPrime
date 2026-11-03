@@ -49,6 +49,8 @@ interface SettingRowProps {
   icon?: string;
   iconUrl?: string;
   iconSource?: ImageSourcePropType;
+  /** Display cap for header artwork; leaves the source image unchanged. */
+  imageSize?: number;
   title: string;
   desc?: React.ReactNode;
   onPress?: () => void;
@@ -76,6 +78,7 @@ export function SettingRow({
   icon,
   iconUrl,
   iconSource,
+  imageSize,
   title,
   desc,
   onPress,
@@ -106,20 +109,22 @@ export function SettingRow({
   const progress = useSharedValue(expanded ? 1 : 0);
   React.useLayoutEffect(() => {
     progress.value = withTiming(expanded ? 1 : 0, {
-      duration: expanded ? 260 : 160,
-      easing: Easing.inOut(Easing.quad),
+      duration: expanded ? 260 : 220,
+      easing: expanded ? Easing.inOut(Easing.quad) : Easing.out(Easing.cubic),
       reduceMotion: ReduceMotion.System,
     });
   }, [expanded, progress]);
   const canInvert = !isExtra && !accent;
   const surfaceStyle = useAnimatedStyle(() => {
-    const inner = interpolate(progress.value, [0, 1], [Radius.sm, 0]);
+    const outer = Radius.xl * 1.25;
+    const top = interpolate(progress.value, [0, 1], [isFirst ? outer : Radius.sm, outer]);
+    const bottom = interpolate(progress.value, [0, 1], [isLast ? outer : Radius.sm, Radius.sm]);
     return {
       backgroundColor: accent ? `${accent}1a` : isExtra ? colors.accentGhost : fadeColor(progress.value, colors.bgCard, colors.textPrimary),
-      borderTopLeftRadius: isFirst ? Radius.xl * 1.25 : inner,
-      borderTopRightRadius: isFirst ? Radius.xl * 1.25 : inner,
-      borderBottomLeftRadius: isLast ? Radius.xl * 1.25 : inner,
-      borderBottomRightRadius: isLast ? Radius.xl * 1.25 : inner,
+      borderTopLeftRadius: top,
+      borderTopRightRadius: top,
+      borderBottomLeftRadius: bottom,
+      borderBottomRightRadius: bottom,
     };
   });
   const titleStyle = useAnimatedStyle(() => ({
@@ -130,6 +135,8 @@ export function SettingRow({
     opacity: canInvert ? interpolate(progress.value, [0, 1], [0.95, 0.7]) : 0.95,
   }));
   const chipStyle = useAnimatedStyle(() => ({
+    borderTopLeftRadius: interpolate(progress.value, [0, 1], [isFirst ? Radius.lg : Radius.md, Radius.lg]),
+    borderBottomLeftRadius: interpolate(progress.value, [0, 1], [isLast ? Radius.lg : Radius.md, Radius.md]),
     backgroundColor: accent ? `${accent}2e` : canInvert ? fadeColor(progress.value, colors.bgCardHover, colors.invertedChip) : colors.bgCardHover,
   }));
   const glyphStyle = useAnimatedStyle(() => ({
@@ -160,9 +167,7 @@ export function SettingRow({
         style={[
           styles.settingBlock,
           compact && styles.settingBlockCompact,
-          { backgroundColor: 'transparent', borderColor: accent ? `${accent}40` : colors.border },
-          isFirst && styles.settingBlockFirst,
-          isLast && styles.settingBlockLast,
+          { backgroundColor: 'transparent', borderColor: accent ? `${accent}40` : colors.border, borderRadius: 0 },
         ]}
       >
         {(icon || iconSource || iconUrl) && (
@@ -170,13 +175,11 @@ export function SettingRow({
             styles.settingRowIcon,
             // Chip and glyph invert together with the row surface.
             chipStyle,
-            isFirst && styles.settingRowIconFirst,
-            isLast && styles.settingRowIconLast,
           ]}>
             {iconSource ? (
-              <Image source={iconSource} style={styles.settingRowImage} resizeMode="contain" />
+              <Image source={iconSource} style={[styles.settingRowImage, imageSize != null && { width: Math.max(0, Math.min(imageSize, 28)), height: Math.max(0, Math.min(imageSize, 28)) }]} resizeMode="contain" />
             ) : iconUrl ? (
-              <Image source={{ uri: iconUrl }} style={styles.settingRowImage} resizeMode="contain" />
+              <Image source={{ uri: iconUrl }} style={[styles.settingRowImage, imageSize != null && { width: Math.max(0, Math.min(imageSize, 28)), height: Math.max(0, Math.min(imageSize, 28)) }]} resizeMode="contain" />
             ) : (
               <AnimatedIonicons
                 name={icon as any}
@@ -218,14 +221,6 @@ const styles = StyleSheet.create({
   settingBlockCompact: {
     paddingHorizontal: Spacing.md,
   },
-  settingBlockFirst: {
-    borderTopLeftRadius: Radius.xl * 1.25,
-    borderTopRightRadius: Radius.xl * 1.25,
-  },
-  settingBlockLast: {
-    borderBottomLeftRadius: Radius.xl * 1.25,
-    borderBottomRightRadius: Radius.xl * 1.25,
-  },
   settingRowIcon: {
     marginRight: 4,
     backgroundColor: Colors.bgCardHover,
@@ -234,12 +229,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  settingRowIconFirst: {
-    borderTopLeftRadius: Radius.lg,
-  },
-  settingRowIconLast: {
-    borderBottomLeftRadius: Radius.lg,
   },
   settingRowImage: {
     width: 28,
