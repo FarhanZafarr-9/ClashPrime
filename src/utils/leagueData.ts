@@ -1,3 +1,4 @@
+import { getRankedProjectionRules } from './rankedLeagueRules';
 // Ranked-battles league details (loot, star bonus, schedule, next league),
 // sourced exclusively from the clash-of-clans-data package.
 
@@ -17,6 +18,8 @@ export interface LeagueStarBonus extends LeagueAmount {
 export interface LeagueLootInfo {
   leagueId: string;
   leagueName: string;
+  /** Town Hall bracket corresponding to the current league floor. */
+  floorTownHall: number | null;
   attacksPerWeek: number | null;
   percentPromoted: number | null;
   percentDemoted: number | null;
@@ -45,11 +48,13 @@ export function getLeagueLootInfo(
   if (!all.length) return null;
 
   const target = norm(leagueName || '');
+  const rules = getRankedProjectionRules(leagueName);
   const league = (() => {
     if (target) {
       const hit = all.find((l) => norm(l.name) === target);
       if (hit) return hit;
     }
+    if (target.startsWith('legend')) return all.find(l => l.id === 'legend') ?? null;
     return all.find((l) => l.leagueGroup === leagueName) ?? null;
   })();
   if (!league) return null;
@@ -74,14 +79,21 @@ export function getLeagueLootInfo(
     };
   })();
 
-  const floorId = rankedBattles().floorForTownHall(th)?.leagueId ?? null;
+  const currentFloors = rankedBattles().leagueFloor().map(floor => ({ ...floor, leagueId: ({ 16: 'golem-20', 17: 'pekka-23', 18: 'titan-26' } as Record<number, string>)[floor.townHallLevel] ?? floor.leagueId }));
+  const floorId = currentFloors.find(floor => floor.townHallLevel === th)?.leagueId ?? null;
+  const floorForLeague = currentFloors
+    .map(floor => ({ ...floor, rank: all.findIndex(item => item.id === floor.leagueId) }))
+    .filter(floor => floor.rank >= 0 && floor.rank <= nextIdx)
+    .sort((a, b) => b.rank - a.rank || a.townHallLevel - b.townHallLevel)[0];
+
 
   return {
     leagueId: league.id,
-    leagueName: league.name,
-    attacksPerWeek: league.attacksPerWeek,
-    percentPromoted: league.percentPromoted,
-    percentDemoted: league.percentDemoted,
+    leagueName: league.id === 'legend' && leagueName ? leagueName : league.name,
+    floorTownHall: floorForLeague?.townHallLevel ?? null,
+    attacksPerWeek: rules?.mode === 'weekly' ? rules.battles : rules ? null : league.attacksPerWeek,
+    percentPromoted: rules?.promotion ? rules.promotion.min === rules.promotion.max ? rules.promotion.min : null : rules ? null : league.percentPromoted,
+    percentDemoted: rules?.demotion ? rules.demotion.min === rules.demotion.max ? rules.demotion.min : null : rules ? null : league.percentDemoted,
     underfloor: entry ? entry.underfloor : false,
     loot: entry
       ? { gold: entry.maxAvailableLoot.goldAndElixir, dark: entry.maxAvailableLoot.darkElixir }
