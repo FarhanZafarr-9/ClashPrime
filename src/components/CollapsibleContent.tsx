@@ -28,8 +28,8 @@ export default function CollapsibleContent({ expanded, children }: {
     // Wait for the first measurement so opening never starts with zero height.
     if (expanded && !measured) return;
     progress.value = withTiming(expanded ? 1 : 0, {
-      duration: expanded ? 260 : 160,
-      easing: Easing.inOut(Easing.quad),
+      duration: expanded ? 260 : 220,
+      easing: expanded ? Easing.inOut(Easing.quad) : Easing.out(Easing.cubic),
       reduceMotion: ReduceMotion.System,
     }, (finished) => {
       if (finished && !expanded) runOnJS(finishClosing)();
