@@ -1,3 +1,4 @@
+import { useStickyHeaders } from '../../src/hooks/useStickyHeaders';
 import { toJsonName } from '../../src/utils/buildingCopies';
 import { importUpgradeSnapshot } from '../../src/utils/importedUpgrades';
 import PageScreen from '../../src/components/PageScreen';
@@ -63,7 +64,7 @@ type SettingsSectionKey = 'account' | 'appearance' | 'discounts' | 'data' | 'app
 
 const SECTION_META: Record<SettingsSectionKey, { title: string; icon: string; desc: string }> = {
   account: { title: 'Account', icon: 'people-outline', desc: 'Player tag, API token & villages' },
-  appearance: { title: 'Appearance', icon: 'color-palette-outline', desc: 'Theme & Clash font' },
+  appearance: { title: 'Appearance', icon: 'color-palette-outline', desc: 'Theme, fonts & header behavior' },
   discounts: { title: 'Discounts', icon: 'pricetag-outline', desc: 'Building & army discounts' },
   data: { title: 'Data & Preferences', icon: 'construct-outline', desc: 'Cache, imports & builder counts' },
   app: { title: 'App Management', icon: 'settings-outline', desc: 'Updates, policies & credits' },
@@ -122,8 +123,8 @@ function SettingSection({
         title={meta.title}
         desc={meta.desc}
         compact
-        isFirst={isFirst || isOpen}
-        isLast={isLast && !isOpen}
+        isFirst={isFirst}
+        isLast={isLast}
         expanded={isOpen}
         onPress={onToggle}
       >
@@ -204,6 +205,7 @@ export default function SettingsScreen() {
   const [apiToken, setApiTokenState] = useState('');
   const { isDark, setThemeMode } = useTheme();
   const { pref: fontPref, setClashFontPref } = useClashFontPref();
+  const { enabled: stickyHeaders, setStickyHeaders } = useStickyHeaders();
   const { enabled: globalLevels, setShowGlobalLevels: setGlobalLevelsPref } = useGlobalLevels();
   const { pref: basePref, setPref: setBasePref } = useBaseSourcePref();
   const baseSourceDesc =
@@ -1342,7 +1344,7 @@ onboardingBuilderCount={onboardingBuilderCount}
             meta={SECTION_META.appearance}
             isOpen={expanded.appearance}
             onToggle={() => toggleSection('appearance')}
-            badge="3"
+            badge="5"
           >
             <SettingRow
               icon="moon-outline"
@@ -1378,6 +1380,14 @@ onboardingBuilderCount={onboardingBuilderCount}
                 value={globalLevels}
                 onValueChange={(v) => setGlobalLevelsPref(v)}
               />
+            </SettingRow>
+            <SettingRow
+              icon="browsers-outline"
+              title="Sticky Headers"
+              desc={stickyHeaders ? 'Keep titles and actions visible while scrolling' : 'Titles and actions scroll away with the page'}
+              compact
+            >
+              <Switch value={stickyHeaders} onValueChange={setStickyHeaders} />
             </SettingRow>
             <SettingRow
               icon="albums-outline"
