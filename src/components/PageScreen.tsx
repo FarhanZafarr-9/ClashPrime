@@ -1,3 +1,4 @@
+import { useStickyHeaders } from '../hooks/useStickyHeaders';
 import React, { type ReactNode, type Ref } from 'react';
 import { ScrollView, View, Text, StyleSheet, KeyboardAvoidingView, Platform, type ScrollViewProps, type StyleProp, type ViewStyle } from 'react-native';
 import Screen from './Screen';
@@ -20,7 +21,7 @@ export interface PageScreenProps {
   overlays?: ReactNode;
 }
 
-/** One fixed header and one vertical scroll owner per page. */
+/** One shared header and one vertical scroll owner per page. */
 export default function PageScreen({
   title,
   subtitle,
@@ -35,18 +36,36 @@ export default function PageScreen({
   overlays,
 }: PageScreenProps) {
   const { colors } = useTheme();
+  const { enabled: stickyHeaders } = useStickyHeaders();
+  const contentStyle = StyleSheet.flatten(contentContainerStyle) ?? {};
+  const numberOrZero = (value: unknown) => typeof value === 'number' ? value : 0;
+  // Match the fixed header's alignment when it lives inside padded content.
+  const leftPadding = numberOrZero(contentStyle.paddingLeft ?? contentStyle.paddingHorizontal ?? contentStyle.padding);
+  const rightPadding = numberOrZero(contentStyle.paddingRight ?? contentStyle.paddingHorizontal ?? contentStyle.padding);
+  const topPadding = numberOrZero(contentStyle.paddingTop ?? contentStyle.paddingVertical ?? contentStyle.padding);
+  const header = (
+    <View style={[
+      styles.header,
+      { backgroundColor: colors.bg },
+      !stickyHeaders && {
+        marginLeft: -leftPadding,
+        marginRight: -rightPadding,
+        marginTop: -topPadding,
+      },
+    ]}>
+      <View style={styles.heading}>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        {subtitle != null && <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
+      </View>
+      <View style={styles.actions}>
+        {actions.map((action, index) => <React.Fragment key={React.isValidElement(action) ? action.key ?? index : index}>{action}</React.Fragment>)}
+      </View>
+    </View>
+  );
   return (
     <Screen style={[styles.root, { backgroundColor: colors.bg }, style]}>
       <KeyboardAvoidingView style={styles.body} behavior={keyboardAvoiding && Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.header}>
-          <View style={styles.heading}>
-            <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-            {subtitle != null && <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
-          </View>
-          <View style={styles.actions}>
-            {actions.map((action, index) => <React.Fragment key={React.isValidElement(action) ? action.key ?? index : index}>{action}</React.Fragment>)}
-          </View>
-        </View>
+        {stickyHeaders && header}
         <ScrollView
           overScrollMode="never"
           showsVerticalScrollIndicator={false}
@@ -56,7 +75,8 @@ export default function PageScreen({
           style={[styles.body, scrollProps?.style]}
           contentContainerStyle={[styles.content, contentContainerStyle, { paddingBottom: tabBar ? 110 : Spacing.xl }]}
         >
-          {children}
+          {!stickyHeaders && header}
+          <React.Fragment key="page-content">{children}</React.Fragment>
         </ScrollView>
       </KeyboardAvoidingView>
       {overlays}
