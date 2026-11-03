@@ -14,6 +14,7 @@ import {
   syncOngoingTimerNotification,
 } from './useReminders';
 import { usePlayer } from './usePlayerContext';
+import { useOngoingUpgradeNotification } from './useOngoingUpgradeNotification';
 
 interface TimerContextValue {
   reminders: TimerReminder[];
@@ -43,6 +44,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const permRef = useRef(false);
 
   const tag = activeAccount?.tag || '';
+  useOngoingUpgradeNotification(tag, hasPermission, activeAccount?.name ?? '');
 
   useEffect(() => {
     tagRef.current = tag;
