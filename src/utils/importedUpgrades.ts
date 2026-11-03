@@ -3,7 +3,7 @@ import type { ImportedUpgrade } from '../types/importedUpgrade';
 import type { CocImportResult } from '../utils/cocExport';
 import { cancelUpgradeAlert, scheduleUpgradeAlert, requestPermission } from '../hooks/useReminders';
 
-interface Snapshot { snapshotAt: number; rows: ImportedUpgrade[] }
+interface Snapshot { snapshotAt: number; timestampKnown?: boolean; rows: ImportedUpgrade[] }
 const listeners = new Set<() => void>();
 let pending: Promise<unknown> = Promise.resolve();
 const keyFor = (tag: string) => `clashprime_imported_upgrades_${tag.replace(/[^a-z0-9]/gi, '').toUpperCase()}`;
@@ -18,6 +18,11 @@ function serialize<T>(fn: () => Promise<T>): Promise<T> {
 async function read(tag: string): Promise<Snapshot> {
   const raw = await AsyncStorage.getItem(keyFor(tag));
   return raw ? JSON.parse(raw) : { snapshotAt: 0, rows: [] };
+}
+export async function getImportedUpgradeSnapshotInfo(tag: string): Promise<{ snapshotAt: number; timestampKnown: boolean }> {
+  await pending;
+  const saved = await read(tag);
+  return { snapshotAt: saved.snapshotAt, timestampKnown: saved.timestampKnown !== false };
 }
 export async function getImportedUpgrades(tag: string): Promise<ImportedUpgrade[]> {
   return (await read(tag)).rows;
@@ -35,6 +40,8 @@ export async function importUpgradeSnapshot(tag: string, result: CocImportResult
   return serialize(async () => {
     const previous = await read(tag);
     if (result.snapshotAt < previous.snapshotAt) return;
+    // An undated snapshot cannot establish that its timer list is newer.
+    if (result.exportedAt === null && previous.snapshotAt > 0) return;
     // Exports do not identify individual building copies. Match their end times,
     // not array positions: when one finishes, the remaining rows shift slots.
     const used = new Set<string>();
@@ -47,7 +54,7 @@ export async function importUpgradeSnapshot(tag: string, result: CocImportResult
       used.add(id);
       return { ...row, id, confirmed: !!match?.confirmed };
     });
-    await AsyncStorage.setItem(keyFor(tag), JSON.stringify({ snapshotAt: result.snapshotAt, rows }));
+    await AsyncStorage.setItem(keyFor(tag), JSON.stringify({ snapshotAt: result.snapshotAt, timestampKnown: result.exportedAt !== null, rows }));
     emit();
     // Persistence remains useful when permission is denied or native scheduling is unavailable.
     try {
