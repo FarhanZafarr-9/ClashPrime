@@ -1,7 +1,7 @@
 {
   "name": "clashprime",
   "version": "7.2.0",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
