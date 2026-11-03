@@ -690,8 +690,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
           title={meta.title}
           desc={gate ? `${gate} excluded — left out of the maxing timeline` : meta.desc}
           compact
-          isFirst={isFirst || isOpen}
-          isLast={isLast && !isOpen}
+          isFirst={isFirst}
+          isLast={isLast}
           expanded={isOpen}
           onPress={() => setExpanded((prev) => ({ ...prev, [p.key]: !prev[p.key] }))}
         >
@@ -1075,7 +1075,7 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                 desc={readiness ? readiness.verdictLabel : ''}
                 compact
                 isFirst
-                isLast={!readinessOpen}
+                isLast
                 expanded={readinessOpen}
                 onPress={() => setReadinessOpen((o) => !o)}
               >
@@ -1128,8 +1128,8 @@ const hasPets = filterPets(player?.troops ?? []).length > 0;
                           title={PIPELINE_META[p.key].title}
                           desc={READINESS_PIPELINE_DESC[p.key]}
                           compact
-                          isFirst={i === 0 || isOpen}
-                          isLast={isOpen ? false : i === readiness.pipelines.length - 1}
+                          isFirst={i === 0}
+                          isLast={i === readiness.pipelines.length - 1}
                           expanded={isOpen}
                           onPress={isExpandable ? (isBuilders ? () => setBuildersExpanded((o) => !o) : () => setLabExpanded((o) => !o)) : undefined}
                         >
