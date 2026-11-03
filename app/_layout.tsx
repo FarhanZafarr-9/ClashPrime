@@ -1,3 +1,4 @@
+import { loadStickyHeadersPref } from '../src/hooks/useStickyHeaders';
 import { Stack, useRouter, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -33,6 +34,7 @@ export default function RootLayout() {
       await loadTheme();
       await loadClashFontPref();
       await loadGlobalLevelsPref();
+      await loadStickyHeadersPref();
       await loadBaseSourcePref();
       await loadDiscounts();
       const token = await getApiToken();
