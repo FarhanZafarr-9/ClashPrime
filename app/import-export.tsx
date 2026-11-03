@@ -1,4 +1,7 @@
-import { importUpgradeSnapshot } from '../src/utils/importedUpgrades';
+import { preservedImportLevels, preserveCraftedLevels, preserveBuildingCopyLevels } from '../src/utils/importSafety';
+import type { ClashPlayer } from '../src/types/clash';
+import { formatCountdown } from '../src/utils/formatCountdown';
+import { getImportedUpgradeSnapshotInfo, importUpgradeSnapshot } from '../src/utils/importedUpgrades';
 import { getArmyItemImage } from '../src/utils/armyData';
 import PageScreen from '../src/components/PageScreen';
 import HeaderButton from '../src/components/HeaderButton';
@@ -8,6 +11,7 @@ import {
   Text,
   StyleSheet,
   Image,
+  type ImageSourcePropType,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +19,7 @@ import * as Clipboard from 'expo-clipboard';
 import PressableRipple from '../src/components/PressableRipple';
 import { useDialog } from '../src/components/AlertDialog';
 import { usePlayer } from '../src/hooks/usePlayerContext';
-import { setBulkCraftedLevels } from '../src/hooks/usePlayer';
+import { getCachedPlayer, setBulkCraftedLevels } from '../src/hooks/usePlayer';
 import { useBuilderCount } from '../src/hooks/useBuilderCount';
 import { useBuilderBaseCount } from '../src/hooks/useBuilderBaseCount';
 import { parseCocExport, cocExportToBuildingLevels, detectBuilderHutCount, normalizeTag, CocImportResult } from '../src/utils/cocExport';
@@ -27,10 +31,6 @@ import { BUILDING_RESOURCE_META, isBuilderName, type BuildingCostResource } from
 import {
   getCraftedDefense,
   normalizeModuleLevels,
-  effectiveLevel,
-  statFor,
-  nextUpgrade,
-  moduleMaxLevel,
 } from '../src/utils/craftedDefenses';
 import { Colors, Typography, Spacing, Radius, useTheme } from '../src/theme';
 
@@ -58,15 +58,28 @@ function capLevelFor(storeName: string, th: number, bh: number): number {
   return isBuilderName(storeName) ? bh : th;
 }
 
-function BuildingRowIcon({ storeName, level }: { storeName: string; level: number }) {
-  const src = getBuildingLevelImageSource(toJsonName(storeName), level);
-  return src ? (
-    <Image source={src} style={styles.levelIcon} resizeMode="contain" />
-  ) : (
-    <View style={styles.levelIconBox}>
-      <Ionicons name="business-outline" size={16} color={Colors.textTertiary} />
+interface ImportRowIconProps {
+  source?: ImageSourcePropType;
+  isFirst?: boolean;
+  isLast?: boolean;
+}
+
+function ImportRowIcon({ source, isFirst, isLast }: ImportRowIconProps) {
+  const { colors } = useTheme();
+  return (
+    <View style={[
+      styles.levelIconBox,
+      { backgroundColor: colors.bgCardHover },
+      isFirst && { borderTopLeftRadius: Radius.lg },
+      isLast && { borderBottomLeftRadius: Radius.lg },
+    ]}>
+      {source ? <Image source={source} style={styles.levelIcon} resizeMode="contain" /> : <Ionicons name="business-outline" size={16} color={colors.textTertiary} />}
     </View>
   );
+}
+
+function BuildingRowIcon({ storeName, level, isFirst, isLast }: { storeName: string; level: number; isFirst?: boolean; isLast?: boolean }) {
+  return <ImportRowIcon source={getBuildingLevelImageSource(toJsonName(storeName), level) ?? undefined} isFirst={isFirst} isLast={isLast} />;
 }
 
 export default function ImportExportScreen() {
@@ -183,15 +196,32 @@ export default function ImportExportScreen() {
   const targetIsActive = targetAccount !== null && exportTag !== null
     && targetAccount.tag.toUpperCase() === player?.tag?.toUpperCase();
   const tagUnattached = exportTag !== null && targetAccount === null;
+  const importTargetTag = targetAccount?.tag ?? player?.tag ?? '';
+  const [savedTarget, setSavedTarget] = useState<{ tag: string; player: ClashPlayer | null; snapshotAt: number; timestampKnown: boolean; error?: boolean } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    if (!importTargetTag || !result) return;
+    Promise.all([getCachedPlayer(importTargetTag), getImportedUpgradeSnapshotInfo(importTargetTag)])
+      .then(([cached, history]) => { if (alive) setSavedTarget({ tag: importTargetTag, player: cached, ...history }); })
+      .catch(() => { if (alive) setSavedTarget({ tag: importTargetTag, player: null, snapshotAt: 0, timestampKnown: false, error: true }); });
+    return () => { alive = false; };
+  }, [importTargetTag, result]);
+  const targetLoaded = savedTarget?.tag === importTargetTag && !savedTarget.error;
+  const comparisonPlayer = importTargetTag.toUpperCase() === player?.tag.toUpperCase() ? player : savedTarget?.tag === importTargetTag ? savedTarget.player : null;
+  const summaryAccount = targetAccount ?? player;
+  const summaryProfile = comparisonPlayer;
+  const summaryTh = summaryAccount?.townHallLevel;
+  const summaryThImage = getTownHallImageSource(summaryTh);
+
 
   // Actual upgrades the import would perform. Each building keeps its per-copy
   // imported levels — a copy is only "upgraded" when its imported level is higher
   // than the current level of the same copy slot — so mixed-level buildings
   // (e.g. 2× Lv12 + 2× Lv13 cannons) upgrade only the lagging copies.
   const upgradeRows = useMemo(() => {
-    if (!player || !result) return [];
-    const th = player.townHallLevel ?? 0;
-    const bh = player.builderHallLevel ?? 1;
+    if (!comparisonPlayer || !result) return [];
+    const th = comparisonPlayer.townHallLevel ?? 0;
+    const bh = comparisonPlayer.builderHallLevel ?? 1;
     const rows: {
       storeName: string;
       displayName: string;
@@ -217,11 +247,11 @@ export default function ImportExportScreen() {
       const importedLevels = [...item.levels].map((l) => Math.min(l, effectiveMax)).sort((a, b) => b - a);
       const copiesInfo = getBuildingCopies(
         item.storeName,
-        player.buildingLevels,
-        player.buildings,
+        comparisonPlayer.buildingLevels,
+        comparisonPlayer.buildings,
         effectiveMax,
         count,
-        player.lastMaxedTH,
+        comparisonPlayer.lastMaxedTH,
         builderBase ? undefined : cap,
       );
       const current = copiesInfo.levels.map((l) => (l > 0 ? Math.min(l, effectiveMax) : 1));
@@ -266,7 +296,7 @@ export default function ImportExportScreen() {
       });
     }
     return rows.sort((a, b) => b.timeSec - a.timeSec);
-  }, [player, result]);
+  }, [comparisonPlayer, result]);
 
   // Builders pipeline for the upgrades. Home Village and Builder Base upgrades
   // are scheduled independently against their own builder counts — the two
@@ -303,54 +333,17 @@ export default function ImportExportScreen() {
   const applyCount = upgradeRows.length;
   const totalChanged = upgradeRows.reduce((s, r) => s + r.changed, 0);
 
-  // A result parsed before `crafted` existed (Fast Refresh keeps the old state) has
-  // no such field, so read it defensively rather than trusting the shape.
-  const craftedDefs = useMemo(() => result?.crafted ?? [], [result]);
-
-  // Crafted defenses report one level per module rather than a single level, so
-  // normalize them against the package's module lists. That fills in any module the
-  // export omitted, clamps out-of-range values, and yields the stat each module has
-  // reached — plus the effective level (the module sum) the sprites are tiered by.
-  const craftedRows = useMemo(
-    () =>
-      craftedDefs.map((c) => {
-        const raw = Object.fromEntries(c.modules.map((m) => [m.name, m.level]));
-        const defense = getCraftedDefense(c.displayName);
-        const levels = defense ? normalizeModuleLevels(defense, raw) : null;
-        const eff = defense && levels ? effectiveLevel(defense, levels) : c.effectiveLevel;
-        return {
-          name: c.displayName,
-          defense,
-          // The export already reports every module the game knows, so the raw
-          // levels are persisted even when the package does not know this defense
-          // yet. Dropping them here would show "detected" and then save nothing.
-          levels: levels ?? { ...raw },
-          known: !!defense,
-          effectiveLevel: eff,
-          modules: defense && levels
-            ? defense.modules.map((m) => ({
-              name: m.name,
-              level: levels[m.name],
-              max: moduleMaxLevel(m),
-              stat: statFor(m, levels[m.name]),
-              next: nextUpgrade(defense, m.name, levels[m.name]),
-            }))
-            : c.modules.map((m) => ({ name: m.name, level: m.level, max: 0, stat: null, next: null })),
-        };
-      }),
-    [craftedDefs],
-  );
-
-  /** defense name → module name → level, ready to persist. */
+  // Crafted module levels are included in the import without a separate preview section.
   const craftedPayload = useMemo(() => {
     const out: Record<string, Record<string, number>> = {};
-    for (const row of craftedRows) if (Object.keys(row.levels).length) out[row.name] = row.levels;
-    return out;
-  }, [craftedRows]);
-
-  // What an apply would actually write. The section below is driven off this
-  // rather than craftedDefs, so an export that mentions crafted defenses but
-  // carries no levels for them shows nothing instead of an empty block.
+    for (const item of result?.crafted ?? []) {
+      const raw = Object.fromEntries(item.modules.map(module => [module.name, module.level]));
+      const defense = getCraftedDefense(item.displayName);
+      const levels = defense ? normalizeModuleLevels(defense, raw) : raw;
+      if (Object.keys(levels).length) out[item.displayName] = levels;
+    }
+    return preserveCraftedLevels(comparisonPlayer?.craftedLevels, out);
+  }, [result, comparisonPlayer]);
   const craftedPayloadCount = Object.keys(craftedPayload).length;
 
   // Flatten each building into one row per distinct level transition so the list
@@ -400,26 +393,39 @@ export default function ImportExportScreen() {
     copies: 1,
   })), [result, previewNow]);
   const hasBuildingChanges = applyCount > 0 && totalChanged > 0;
-  const showCrafted = craftedPayloadCount > 0;
-  const canApply = !!result && !!player;
+  const preserved = result && comparisonPlayer ? preservedImportLevels(result, comparisonPlayer) : { buildings: 0, modules: 0 };
+  const preservedCount = preserved.buildings + preserved.modules;
+  const olderThanSaved = !!result && result.exportedAt != null && targetLoaded && savedTarget.snapshotAt > result.exportedAt;
+  const unknownAge = !!result && result.exportedAt == null;
+  const keepSavedTimers = targetLoaded && savedTarget.snapshotAt > 0 && (olderThanSaved || unknownAge);
+  const importWarning = [
+    olderThanSaved ? 'This export is older than the last import for this account.' : preservedCount > 0 ? 'This export contains levels below your saved progress.' : '',
+    unknownAge ? 'Export age unavailable: the snapshot has no valid timestamp.' : '',
+    preservedCount > 0 ? preservedCount + ' higher saved level' + (preservedCount === 1 ? ' will' : 's will') + ' be preserved.' : '',
+    keepSavedTimers ? 'Existing tracked upgrades and completion alerts will be kept.' : unknownAge ? 'New countdowns use the time this export was pasted.' : '',
+  ].filter(Boolean).join(' ');
+  const timerImportDescription = keepSavedTimers ? 'Existing tracked upgrades and alerts are kept.' : 'Track ' + upgradingRows.length + ' ongoing upgrade(s) with completion alerts.';
+  const exportAge = result?.exportedAt == null ? 'Export age unavailable' : (() => {
+    const elapsed = Math.max(0, Math.floor((previewNow - result.exportedAt) / 1000));
+    return 'Exported ' + (elapsed < 60 ? 'just now' : elapsed < 3600 ? Math.floor(elapsed / 60) + 'm ago' : elapsed < 86400 ? Math.floor(elapsed / 3600) + 'h ago' : Math.floor(elapsed / 86400) + 'd ago');
+  })();
+  const canApply = !!result && !!player && !!comparisonPlayer && targetLoaded;
 
   const doApply = async (tag: string) => {
-    if (!result || !player) return;
-    // The export knows the real hut count, so record it as verified against the
-    // account being written to - which is not always the active one.
-    if (detectedHuts) await verifyBuilderCount(detectedHuts, tag);
-    const th = player.townHallLevel ?? 12;
-    const bh = player.builderHallLevel ?? 1;
-    const perBuilding = upgradeRows.map((row) => ({
+    if (!result || !player || !comparisonPlayer || !targetLoaded) return;
+    const destination = tag.toUpperCase() === player.tag.toUpperCase() ? player : await getCachedPlayer(tag);
+    if (!destination) return;
+    if (detectedHuts) await verifyBuilderCount(detectedHuts, tag, true);
+    const perBuilding = preserveBuildingCopyLevels(destination, upgradeRows.map(row => ({
       name: row.storeName,
       levels: [...row.targetLevels],
-      maxLevel: getBuildingEffectiveMax(row.storeName, capLevelFor(row.storeName, th, bh)),
-    }));
+      maxLevel: getBuildingEffectiveMax(row.storeName, capLevelFor(row.storeName, destination.townHallLevel, destination.builderHallLevel ?? 1)),
+    })));
     const levels: Record<string, number> = {};
-    for (const row of upgradeRows) levels[row.storeName] = Math.max(...row.targetLevels);
+    for (const item of perBuilding) if (item.levels.length) levels[item.name] = Math.max(...item.levels);
     if (tag.toUpperCase() === player.tag.toUpperCase()) {
       await setBulkLevels(levels, perBuilding);
-      if (craftedPayloadCount > 0) await setCraftedLevels(craftedPayload);
+      if (craftedPayloadCount > 0) await setCraftedLevels(craftedPayload, true);
       await importUpgradeSnapshot(tag, result);
       router.back();
       return;
@@ -427,7 +433,7 @@ export default function ImportExportScreen() {
     const target = accounts.find((a) => a.tag.toUpperCase() === tag.toUpperCase());
     await applyLevelsToAccount(tag, levels, perBuilding);
     await importUpgradeSnapshot(tag, result);
-    if (craftedPayloadCount > 0) await setBulkCraftedLevels(craftedPayload, tag);
+    if (craftedPayloadCount > 0) await setBulkCraftedLevels(craftedPayload, tag, true);
     show({
       title: 'Levels applied',
       subtitle: `Saved to ${target?.name || tag}`,
@@ -438,13 +444,13 @@ export default function ImportExportScreen() {
   };
 
   const handleApply = () => {
-    if (!result || !player) return;
+    if (!result || !player || !canApply) return;
     if (tagUnattached) {
       show({
         title: 'Account not attached',
         subtitle: 'This export is for a different account',
         icon: 'alert-circle-outline',
-        message: `This export is for ${exportTag}, which isn't one of your attached accounts. Levels will be applied to ${player.name} (${player.tag}) instead. Continue?`,
+        message: `This export is for ${exportTag}, which isn't one of your attached accounts. Levels will be applied to ${player.name} (${player.tag}) instead. ${importWarning} Continue?`,
         actions: [
           { label: 'Cancel', onPress: () => { } },
           { label: 'Import to active', primary: true, onPress: () => doApply(player.tag) },
@@ -461,8 +467,8 @@ export default function ImportExportScreen() {
         : `Updating ${targetAccount!.name || targetAccount!.tag}`,
       icon: 'download-outline',
       message: forActive
-        ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept. Track ${upgradingRows.length} ongoing upgrade(s) separately with completion alerts.`
-        : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). Track ${upgradingRows.length} ongoing upgrade(s) for this account. Levels are saved to its cache.`,
+        ? `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${player.name}. Existing levels you did not import are kept. ${timerImportDescription} ${importWarning}`
+        : `Set ${totalChanged} building level${totalChanged === 1 ? '' : 's'} for ${targetAccount!.name || targetAccount!.tag} (${targetAccount!.tag}). ${timerImportDescription} Levels are saved to its cache. ${importWarning}`,
       actions: [
         { label: 'Cancel', onPress: () => { } },
         { label: 'Apply', primary: true, onPress: () => doApply(targetTag) },
@@ -513,7 +519,7 @@ export default function ImportExportScreen() {
             i === rows.length - 1 && styles.upgradeRowLast,
           ]}
         >
-          <BuildingRowIcon storeName={u.storeName} level={u.t} />
+          <BuildingRowIcon storeName={u.storeName} level={u.t} isFirst={i === 0} isLast={i === rows.length - 1} />
           <View style={styles.upgradeText}>
             <Text style={styles.rowLabel} numberOfLines={1}>
               {u.displayName}
@@ -704,121 +710,58 @@ export default function ImportExportScreen() {
 
           {result ? (
             <View style={styles.resultSection}>
-              {hasBuildingChanges ? (
-                <>
-                  <Text style={styles.sectionTitle}>Import Summary</Text>
-                  <View style={styles.rows}>
-                {(() => {
-                  const summaryRows = [
-                    { key: 'tag', icon: 'pricetag-outline' as const, label: 'Export tag', value: exportTag ?? '—', warning: !!exportTag && tagUnattached },
-                    {
-                      key: 'target',
-                      icon: 'person-outline' as const,
-                      label: 'Importing to',
-                      value: tagUnattached
-                        ? `${player?.name ?? 'active account'} (not attached)`
-                        : targetAccount
-                          ? (targetAccount.name || targetAccount.tag) + (targetIsActive ? ' (active)' : '')
-                          : `${player?.name ?? 'active account'} (active)`,
-                      warning: tagUnattached,
-                    },
-                    { key: 'matched', icon: 'checkmark-done-outline' as const, label: 'Copies to upgrade', value: `${totalChanged} in ${upgradeRows.length} building${upgradeRows.length === 1 ? '' : 's'}` },
-                    {
-                      key: 'huts',
-                      icon: 'hammer-outline' as const,
-                      label: 'Builder huts',
-                      value: detectedHuts === null
-                        ? 'Not in export'
-                        : detectedHuts === builderCount
-                          ? buildersVerified
-                            ? `${detectedHuts} (verified)`
-                            : `${detectedHuts} (verifies on apply)`
-                          : `${detectedHuts} — sets builders to ${detectedHuts}`,
-                      warning: detectedHuts !== null && detectedHuts !== builderCount,
-                    },
-                    ...(showCrafted
-                      ? [{
-                        key: 'crafted',
-                        icon: 'shield-half-outline' as const,
-                        label: 'Crafted defenses',
-                        // Counts what an apply would actually save, so the number here
-                        // always matches the rows below it.
-                        value: `${craftedPayloadCount} detected`,
-                        warning: craftedPayloadCount < craftedDefs.length,
-                      }]
-                      : []),
-                    { key: 'skipped', icon: 'eye-off-outline' as const, label: 'Skipped (not tracked)', value: String(result.skipped.length) },
-                    { key: 'unknown', icon: 'help-circle-outline' as const, label: 'Unknown IDs', value: String(result.unresolved.length), warning: result.unresolved.length > 0 },
-                  ];
-                  return summaryRows.map((r, i) => (
-                    <View
-                      key={r.key}
-                      style={[
-                        styles.row,
-                        i === 0 && styles.rowFirst,
-                        i === summaryRows.length - 1 && styles.rowLast,
-                        i < summaryRows.length - 1 && styles.rowBorder,
-                      ]}
-                    >
-                      <Ionicons name={r.icon} size={15} color={Colors.textSecondary} />
-                      <Text style={styles.rowLabel}>{r.label}</Text>
-                      <Text style={[styles.rowAfter, r.warning && { color: Colors.warning }]} numberOfLines={1}>
-                        {r.value}
-                      </Text>
+              <View style={[styles.summaryCard, { backgroundColor: colors.bgCard }]}>
+                <View style={styles.summaryColumns}>
+                  <View style={styles.summaryProfile}>
+                    <View style={styles.summaryIdentity}>
+                      <View style={[styles.summaryAvatar, { backgroundColor: colors.bgCardHover }]}>
+                        {summaryThImage ? <Image source={summaryThImage} style={styles.summaryAvatarImage} resizeMode="contain" /> : <Ionicons name="person-outline" size={26} color={colors.textSecondary} />}
+                      </View>
+                      {summaryTh != null && <View style={[styles.summaryHall, { backgroundColor: colors.textPrimary }]}><Text style={[styles.summaryHallText, { color: colors.bgCard }]}>{'TH' + summaryTh}</Text></View>}
                     </View>
-                  ));
-                })()}
+                    <Text style={[styles.summaryEyebrow, { color: colors.textTertiary }]}>Importing to</Text>
+                    <Text style={[styles.summaryName, { color: colors.textPrimary }]} numberOfLines={2}>{summaryAccount?.name || 'Your village'}</Text>
+                    <Text style={[styles.summaryTag, { color: colors.textSecondary }]} numberOfLines={1}>{summaryAccount?.tag ?? exportTag ?? 'No account'}</Text>
+                    <PressableRipple onPress={result.exportedAt == null ? undefined : () => show({ title: 'Export timestamp', message: new Date(result.exportedAt!).toLocaleString() + (targetLoaded && savedTarget.snapshotAt > 0 && savedTarget.timestampKnown ? '\nLast import: ' + new Date(savedTarget.snapshotAt).toLocaleString() : ''), actions: [{ label: 'OK', primary: true, onPress: () => {} }] })}>
+                      <Text style={[styles.summaryAge, { color: colors.textTertiary }]}>{exportAge}</Text>
+                    </PressableRipple>
+                    {summaryProfile?.clan && (
+                      <View style={styles.summaryClan}>
+                        {summaryProfile.clan.badgeUrls?.small && <Image source={{ uri: summaryProfile.clan.badgeUrls.small }} style={styles.summaryClanBadge} resizeMode="contain" />}
+                        <Text style={[styles.summaryClanName, { color: colors.textTertiary }]} numberOfLines={1}>{summaryProfile.clan.name}</Text>
+                      </View>
+                    )}
                   </View>
-                </>
-              ) : (
-                <View style={styles.upToDateCard}>
-                  <Ionicons name="checkmark-circle-outline" size={22} color={Colors.textTertiary} />
-                  <Text style={styles.upToDateTitle}>Already up to date</Text>
-                  <Text style={styles.upToDateText}>
-                    Every building in this export already matches {player?.name ?? 'this account'}, so
-                    there is nothing to apply.
-                  </Text>
-                </View>
-              )}
-
-              {showCrafted ? (
-                <>
-                  <Text style={styles.sectionTitle}>Crafted defenses in export</Text>
-                  <View style={styles.rows}>
-                    {craftedRows.map((row, ri) => (
-                      <View
-                        key={row.name}
-                        style={[
-                          styles.row,
-                          ri === 0 && styles.rowFirst,
-                          ri === craftedRows.length - 1 && styles.rowLast,
-                          ri < craftedRows.length - 1 && styles.rowBorder,
-                        ]}
-                      >
-                        <Ionicons name="shield-half-outline" size={15} color={Colors.textSecondary} />
-                        <Text style={styles.rowLabel} numberOfLines={1}>
-                          {row.name}
-                          <Text style={styles.rowSub}>{`  ·  Lv ${row.effectiveLevel}`}</Text>
-                        </Text>
-                        <Text
-                          style={[styles.rowAfter, !row.known && { color: Colors.textMuted }]}
-                          numberOfLines={1}
-                        >
-                          {row.known
-                            ? row.modules
-                                .map((m) => (m.max ? `${m.level}/${m.max}` : String(m.level)))
-                                .join('  ·  ')
-                            : 'unknown data'}
-                        </Text>
+                  <View style={[styles.summaryTable, { borderLeftColor: colors.border }]}>
+                    {[
+                      { label: 'Buildings', value: String(result.resolved.reduce((sum, item) => sum + item.copies, 0)) },
+                      { label: 'Level changes', value: String(totalChanged) },
+                      { label: 'In progress', value: String(upgradingRows.length) },
+                      { label: 'Builders', value: detectedHuts == null ? '—' : String(detectedHuts), verified: detectedHuts != null && buildersVerified && detectedHuts === builderCount, warning: detectedHuts != null && detectedHuts !== builderCount },
+                      { label: 'Skipped', value: String(result.skipped.length) },
+                      { label: 'Unknown', value: String(result.unresolved.length), warning: result.unresolved.length > 0 },
+                    ].map((row, index) => (
+                      <View key={row.label} style={[styles.summaryTableRow, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}>
+                        <Text style={[styles.summaryTableLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                        <Text style={[styles.summaryTableValue, { color: row.warning ? colors.warning : row.verified ? '#34C759' : colors.textPrimary }]}>{row.value}</Text>
                       </View>
                     ))}
                   </View>
-                  <Text style={styles.sectionHint}>
-                    Each module is upgraded on its own; the level shown is their sum, which is what the
-                    game displays.
-                  </Text>
-                </>
-              ) : null}
+                </View>
+                {tagUnattached && (
+                  <View style={[styles.summaryNotice, { borderTopColor: colors.border }]}>
+                    <Ionicons name="alert-circle-outline" size={14} color={colors.warning} />
+                    <Text style={[styles.summaryNoticeText, { color: colors.warning }]}>{'Export ' + exportTag + ' is not attached. Importing to ' + (player?.tag ?? 'the active account') + '.'}</Text>
+                  </View>
+                )}
+              </View>
+
+              {(importWarning || (savedTarget?.tag === importTargetTag && savedTarget.error)) && (
+                <View style={[styles.freshnessWarning, { backgroundColor: colors.warningGhost }]}>
+                  <Ionicons name="alert-circle-outline" size={16} color={colors.warningText} />
+                  <Text style={[styles.freshnessWarningText, { color: colors.warningText }]}>{savedTarget?.tag === importTargetTag && savedTarget.error ? 'Could not check saved progress. Paste again to retry before importing.' : importWarning}</Text>
+                </View>
+              )}
 
               <View style={styles.actionRow}>
                 {hasBuildingChanges ? (
@@ -843,7 +786,7 @@ export default function ImportExportScreen() {
                   disabled={!canApply}
                 >
                   <Text style={styles.applyBtnText} numberOfLines={1}>
-                    {!player ? 'Waiting for account…' : 'Import snapshot'}
+                    {!player ? 'Waiting for account…' : !targetLoaded ? 'Checking saved progress…' : !comparisonPlayer ? 'Sync this account first' : 'Import snapshot'}
                   </Text>
                 </PressableRipple>
               </View>
@@ -859,16 +802,17 @@ export default function ImportExportScreen() {
                           styles.upgradeRow,
                           { backgroundColor: colors.bgCard },
                           i === 0 && styles.upgradeRowFirst,
+                          i === upgradingRows.length - 1 && styles.upgradeRowLast,
                         ]}
                       >
-                        {u.kind === 'buildings' ? <BuildingRowIcon storeName={u.storeName} level={u.level} /> : <Image source={getArmyItemImage(u.name, null) ?? undefined} style={styles.levelIcon} resizeMode="contain" />}
+                        {u.kind === 'buildings' ? <BuildingRowIcon storeName={u.storeName} level={u.level} isFirst={i === 0} isLast={i === upgradingRows.length - 1} /> : <ImportRowIcon source={getArmyItemImage(u.name, null) ?? undefined} isFirst={i === 0} isLast={i === upgradingRows.length - 1} />}
                         <View style={styles.upgradeText}>
                           <Text style={styles.rowLabel} numberOfLines={1}>
                             {u.displayName}
                             {u.copies > 1 ? <Text style={styles.rowSub}>{`  ×${u.copies}`}</Text> : null}
                           </Text>
                           <Text style={styles.upgradeSub} numberOfLines={2}>
-                            Lv {u.level} › Lv {u.level + 1} · {u.remainingSec > 0 ? `${formatTimeShort(u.remainingSec)} left` : 'Ready to confirm'}
+                            Lv {u.level} › Lv {u.level + 1} · {u.remainingSec > 0 ? `${formatCountdown(u.remainingSec)} left` : 'Ready to confirm'}
                           </Text>
                         </View>
                         <View style={styles.upgradeRight}>
@@ -936,14 +880,8 @@ export default function ImportExportScreen() {
                         ]}
                       >
                         {item.storeName === 'Town Hall' && player
-                          ? (playerThImage ? (
-                            <Image source={playerThImage} style={styles.levelIcon} resizeMode="contain" />
-                          ) : (
-                            <View style={styles.levelIconBox}>
-                              <Ionicons name="business-outline" size={16} color={Colors.textTertiary} />
-                            </View>
-                          ))
-                          : <BuildingRowIcon storeName={item.storeName} level={item.level} />}
+                          ? <ImportRowIcon source={playerThImage ?? undefined} isFirst={i === 0} isLast={i === result.skipped.length - 1} />
+                          : <BuildingRowIcon storeName={item.storeName} level={item.level} isFirst={i === 0} isLast={i === result.skipped.length - 1} />}
                         <View style={styles.upgradeText}>
                           <Text style={styles.rowLabel} numberOfLines={1}>{item.displayName}</Text>
                           <Text style={styles.upgradeSub}>Lv {item.level} · ×{item.copies}</Text>
@@ -963,6 +901,29 @@ export default function ImportExportScreen() {
 }
 
 const styles = StyleSheet.create({
+  summaryAge: { fontSize: 10, marginTop: 4 },
+  freshnessWarning: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm, borderRadius: Radius.md, padding: Spacing.md },
+  freshnessWarningText: { flex: 1, fontSize: 12, lineHeight: 17 },
+  summaryCard: { borderRadius: Radius.lg, padding: Spacing.md },
+  summaryColumns: { flexDirection: 'row', alignItems: 'stretch', gap: Spacing.md },
+  summaryProfile: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 3 },
+  summaryIdentity: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
+  summaryAvatar: { width: 48, height: 48, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
+  summaryAvatarImage: { width: 44, height: 44 },
+  summaryHall: { paddingHorizontal: 6, paddingVertical: 4, borderRadius: Radius.sm },
+  summaryHallText: { fontSize: 10, fontWeight: '800' },
+  summaryEyebrow: { fontSize: 9, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.7 },
+  summaryName: { fontSize: 17, fontWeight: '700', lineHeight: 21 },
+  summaryTag: { fontSize: 11 },
+  summaryClan: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  summaryClanBadge: { width: 14, height: 14 },
+  summaryClanName: { fontSize: 10, flexShrink: 1 },
+  summaryTable: { flex: 1.1, minWidth: 0, borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: Spacing.md },
+  summaryTableRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm, paddingVertical: 6 },
+  summaryTableLabel: { fontSize: 11, flexShrink: 1 },
+  summaryTableValue: { fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  summaryNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, borderTopWidth: StyleSheet.hairlineWidth, marginTop: Spacing.sm, paddingTop: Spacing.sm },
+  summaryNoticeText: { fontSize: 11, lineHeight: 15, flex: 1 },
   container: {
     flex: 1,
     backgroundColor: Colors.bg,
@@ -1370,6 +1331,7 @@ parseBtnText: {
     gap: Spacing.sm,
     paddingVertical: 10,
     paddingHorizontal: Spacing.base,
+    paddingLeft: Spacing.md,
     borderRadius: Radius.sm,
   },
   upgradeRowFirst: {
@@ -1455,8 +1417,9 @@ parseBtnText: {
     height: 24,
   },
   levelIconBox: {
-    width: 24,
-    height: 24,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
