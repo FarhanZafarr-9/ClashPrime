@@ -73,13 +73,11 @@ export function formatTime(totalSec: number): string {
 
 /** Concise representation: single largest unit, rounded up, e.g. "65d", "12h". */
 export function formatTimeShort(totalSec: number): string {
-  if (totalSec <= 0) return '—';
-  const days = Math.ceil(totalSec / 86400);
-  if (days >= 1) return `${days}d`;
-  const hours = Math.ceil(totalSec / 3600);
-  if (hours >= 1) return `${hours}h`;
-  const minutes = Math.ceil(totalSec / 60);
-  return minutes > 0 ? `${minutes}m` : '<1m';
+  if (!Number.isFinite(totalSec) || totalSec <= 0) return '—';
+  if (totalSec >= 86400) return Math.ceil(totalSec / 86400) + 'd';
+  if (totalSec >= 3600) return Math.ceil(totalSec / 3600) + 'h';
+  if (totalSec >= 60) return Math.ceil(totalSec / 60) + 'm';
+  return '<1m';
 }
 
 /**
