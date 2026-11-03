@@ -1,3 +1,4 @@
+import type { RankedLeagueGroup } from '../types/rankedLeague';
 import { ClashPlayer, Clan, ClanWar, WarLogEntry } from '../types/clash';
 
 const BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
@@ -93,7 +94,12 @@ export class ClashAPI {
   }
 
   async getPlayer(tag: string): Promise<ClashPlayer> {
-    return this.fetch<ClashPlayer>(`/players/${encodeURIComponent(tag)}`);
+    const player = await this.fetch<ClashPlayer>(`/players/${encodeURIComponent(tag)}`);
+    return player;
+  }
+
+  async getPlayerLeagueGroup(groupTag: string, seasonId: number | string, playerTag: string): Promise<RankedLeagueGroup> {
+    return this.fetch<RankedLeagueGroup>('/leaguegroup/' + encodeURIComponent(groupTag) + '/' + encodeURIComponent(String(seasonId)) + '?playerTag=' + encodeURIComponent(playerTag));
   }
 
   async searchClans(query: string): Promise<any> {
