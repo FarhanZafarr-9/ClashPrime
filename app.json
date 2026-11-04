@@ -2,7 +2,7 @@
   "expo": {
     "name": "ClashPrime",
     "slug": "ClashPrime",
-    "version": "7.2.0",
+    "version": "7.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "clashprime",
