@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ImportedUpgrade } from '../types/importedUpgrade';
 import type { CocImportResult } from '../utils/cocExport';
 import { cancelUpgradeAlert, scheduleUpgradeAlert, requestPermission } from '../hooks/useReminders';
+import { notificationAccountName } from './notificationAccountName';
 
 interface Snapshot { snapshotAt: number; timestampKnown?: boolean; rows: ImportedUpgrade[] }
 const listeners = new Set<() => void>();
@@ -33,7 +34,8 @@ async function syncAlerts(tag: string, before: ImportedUpgrade[], after: Importe
     const next = wanted.get(row.id);
     if (!next || next.completesAt !== row.completesAt) await cancelUpgradeAlert(alertId(tag, row)).catch(() => {});
   }
-  for (const row of wanted.values()) await scheduleUpgradeAlert(alertId(tag, row), `${row.name} Lv ${row.targetLevel}`, row.completesAt, tag).catch(() => {});
+  const name = wanted.size > 0 ? await notificationAccountName(tag) : null;
+  for (const row of wanted.values()) await scheduleUpgradeAlert(alertId(tag, row), `${row.name} Lv ${row.targetLevel}`, row.completesAt, tag, name).catch(() => {});
 }
 export async function importUpgradeSnapshot(tag: string, result: CocImportResult): Promise<void> {
   if (!tag) return;
