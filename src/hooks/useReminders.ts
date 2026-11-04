@@ -3,6 +3,7 @@ import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
 import notifee, { AndroidCategory, AndroidImportance, AuthorizationStatus, TriggerType } from 'react-native-notify-kit';
 import Constants from 'expo-constants';
 import { TimerReminder } from '../types/clash';
+import { notificationAccountName, upgradeCompletionBody } from '../utils/notificationAccountName';
 
 const LEGACY_KEY = 'clashprime_reminders';
 const CHANNEL_ID = 'timer-expiry';
@@ -341,14 +342,15 @@ export async function markExpiredReminders(accountTag: string): Promise<TimerRem
 }
 
 /** Independent completion alerts for imported work; manual timers keep their pinned card. */
-export async function scheduleUpgradeAlert(id: string, label: string, completesAt: number, accountTag: string): Promise<void> {
+export async function scheduleUpgradeAlert(id: string, label: string, completesAt: number, accountTag: string, accountName?: string | null): Promise<void> {
   if (completesAt <= Date.now()) return;
+  const body = upgradeCompletionBody(accountName === undefined ? await notificationAccountName(accountTag) : accountName);
   if (notifeeLinked && Platform.OS === 'android') {
     await notifee.createChannel({ id: CHANNEL_ID, name: 'Timer Expiry', importance: AndroidImportance.HIGH });
     await notifee.createTriggerNotification({
       id,
       title: `${label} — finished!`,
-      body: `Upgrade complete for ${accountTag}. Open ClashPrime to confirm the level.`,
+      body,
       data: { type: 'imported-upgrade', accountTag },
       android: { channelId: CHANNEL_ID, smallIcon: 'notification_icon', autoCancel: true, pressAction: { id: 'default' } },
     }, { type: TriggerType.TIMESTAMP, timestamp: completesAt, alarmManager: { allowWhileIdle: true } } as any);
@@ -359,7 +361,7 @@ export async function scheduleUpgradeAlert(id: string, label: string, completesA
   await ensureChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: id,
-    content: { title: `${label} — finished!`, body: `Upgrade complete for ${accountTag}. Open ClashPrime to confirm the level.`, sound: 'default', data: { type: 'imported-upgrade', accountTag } },
+    content: { title: `${label} — finished!`, body, sound: 'default', data: { type: 'imported-upgrade', accountTag } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(completesAt), channelId: CHANNEL_ID },
   });
 }
