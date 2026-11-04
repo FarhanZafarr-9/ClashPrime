@@ -1,7 +1,7 @@
 import type { RankedLeagueMember, RankedLeagueStats } from '../types/rankedLeague';
 import type { CountRange, RankedProjection } from './rankedLeagueProjection';
 
-export const rankedNumber = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? '—' : value.toLocaleString([], { maximumFractionDigits: 1 });
+export const rankedNumber = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? '—' : value.toLocaleString([], { maximumFractionDigits: 2 });
 export const rankedRange = (range: CountRange | null | undefined) => range == null ? '—' : range.min === range.max ? rankedNumber(range.min) : rankedNumber(range.min) + '–' + rankedNumber(range.max);
 const tagKey = (tag: string) => tag.replace(/^#/, '').toUpperCase();
 const valid = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
