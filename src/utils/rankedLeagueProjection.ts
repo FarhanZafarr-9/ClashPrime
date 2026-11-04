@@ -76,8 +76,8 @@ export function projectRankedLeague(stats: RankedLeagueStats, rules: RankedProje
   const consistentScore = completeLogs && scoreValid && Math.abs(stats.trophies! - attackTotal - defenseTotal) < 1.01;
   if (scoreValid && result.attacksLeft != null && result.defensesLeft != null) result.maximumTotal = stats.trophies! + 40 * (result.attacksLeft + result.defensesLeft);
   if (consistentScore && result.defensesLeft != null) {
-    result.expectedDefenseGain = result.defensesLeft === 0 ? 0 : result.defenseAverage == null ? null : result.defenseAverage * result.defensesLeft;
-    const attackGain = result.attacksLeft === 0 ? 0 : result.attacksLeft == null || result.attackAverage == null ? null : result.attackAverage * result.attacksLeft;
+    result.expectedDefenseGain = result.defensesLeft === 0 ? 0 : result.defenseAverage == null ? null : Math.round(result.defenseAverage * result.defensesLeft);
+    const attackGain = result.attacksLeft === 0 ? 0 : result.attacksLeft == null || result.attackAverage == null ? null : Math.round(result.attackAverage * result.attacksLeft);
     if (result.expectedDefenseGain != null && attackGain != null) result.projectedTotal = stats.trophies! + attackGain + result.expectedDefenseGain;
     if (result.expectedDefenseGain != null && result.attacksLeft != null) result.threeStarTotal = stats.trophies! + 40 * result.attacksLeft + result.expectedDefenseGain;
   }
