@@ -8,12 +8,13 @@ export function rankedMatchupScenario(projection: RankedProjection, trophies: nu
   const count = Math.min(left, toughAttacks);
   // A tough matchup cannot improve an already lower observed average.
   const score = average == null ? null : Math.min(average, toughScore);
-  const gain = left === 0 ? 0 : average == null || score == null ? null : (left - count) * average + count * score;
-  const defense = projection.expectedDefenseGain;
-  const total = gain == null || defense == null ? null : trophies + gain + defense;
+  const rawGain = left === 0 ? 0 : average == null || score == null ? null : (left - count) * average + count * score;
+  const gain = rawGain == null ? null : Math.round(rawGain);
+  const defense = projection.expectedDefenseGain == null ? null : Math.round(projection.expectedDefenseGain);
+  const total = gain == null || defense == null ? null : Math.round(trophies + gain + defense);
   return {
     toughAttacks: count, toughScore: score, attackGain: gain,
-    average: gain == null || left === 0 ? null : gain / left,
+    average: rawGain == null || left === 0 ? null : rawGain / left,
     total,
     cutoffMargin: total == null || projection.cutoff == null ? null : total - (projection.cutoff.max + 1),
   };
