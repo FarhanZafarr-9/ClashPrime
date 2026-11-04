@@ -1,4 +1,4 @@
-import { tournamentStatus } from '../../src/utils/rankedTournamentView';
+import { rankedRange, tournamentStatus } from '../../src/utils/rankedTournamentView';
 import { useRankedLeagueStats, type RankedStatsState } from '../../src/hooks/useRankedLeagueStats';
 import { UpgradeAvailabilityStrip } from '../../src/components/UpgradeAvailabilityStrip';
 import { upgradeAvailability } from '../../src/utils/upgradeAvailability';
@@ -254,7 +254,7 @@ function QuickStatCard({ rows }: { rows: HomeStatRow[] }) {
     <View style={[styles.quickStatCard, { backgroundColor: colors.bgCard }]}>
       {rows.map((row, index) => (
         <View key={row.label} style={[styles.quickStatCell, index > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.border }]}>
-          <Text style={[styles.quickStatNumber, { color: row.accentColor ?? colors.textPrimary }]} adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1}>{typeof row.value === 'number' ? Number.isFinite(row.value) ? row.value.toLocaleString() : '—' : row.value ?? '—'}</Text>
+          <Text style={[styles.quickStatNumber, { color: row.accentColor ?? colors.textPrimary }]} adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1}>{typeof row.value === 'number' ? Number.isFinite(row.value) ? row.value.toLocaleString([], { maximumFractionDigits: 2 }) : '—' : row.value ?? '—'}</Text>
           <Text style={[styles.quickStatLabel, { color: colors.textSecondary }]}>{row.label}</Text>
         </View>
       ))}
@@ -265,8 +265,11 @@ function QuickStatCard({ rows }: { rows: HomeStatRow[] }) {
 function RankedTournamentSummary({ state, leagueName, badgeUrl, onPress }: {
   state: RankedStatsState; leagueName: string; badgeUrl?: string; onPress: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const stats = state.stats;
+  const safe = state.projection?.outlook === 'secured' || state.projection?.currentZone === 'above-band';
+  const previewBg = state.status !== 'ready' ? colors.bgCardHover : safe ? (isDark ? '#1B3430' : '#E7F3EC') : (isDark ? 'rgba(212,163,89,0.09)' : 'rgba(138,100,32,0.07)');
+  const previewColor = state.status !== 'ready' ? colors.textSecondary : safe ? (isDark ? '#72C9A7' : '#257356') : (isDark ? colors.warning : colors.warningText);
   return (
     <View style={[styles.rankedCard, { backgroundColor: colors.bgCard }]}>
       <View style={styles.tournamentHeading}>
@@ -280,10 +283,15 @@ function RankedTournamentSummary({ state, leagueName, badgeUrl, onPress }: {
         { label: 'Ranked trophies', value: stats?.trophies ?? '—', icon: 'trophy-outline' },
         { label: stats?.positionIsOfficial ? 'Group rank' : 'Trophy place', value: stats?.position == null ? '—' : stats.position + ' / ' + stats.groupSize, icon: 'podium-outline' },
       ]} />
-      <Text style={[styles.rankedStatus, { color: state.projection?.outlook === 'secured' ? '#34C759' : colors.textSecondary }]}>
-        {state.status === 'ready' ? tournamentStatus(state.projection) : state.message}
-        {state.projection?.attacksLeft != null ? ' · ' + state.projection.attacksLeft + ' attacks left' : ''}
-      </Text>
+      <View style={[styles.rankedPreview, { backgroundColor: previewBg }]}>
+        <Text style={[styles.rankedStatus, { color: previewColor }]}>
+          {state.status === 'ready' ? tournamentStatus(state.projection) : state.message}
+          {state.projection?.attacksLeft != null ? ' · ' + state.projection.attacksLeft + ' attacks left' : ''}
+        </Text>
+        {state.projection?.cutoff && <Text style={[styles.rankedCutoff, { color: previewColor }]}>
+          Promotion line {rankedRange(state.projection.cutoff)} trophies · top {rankedRange(state.projection.promotionSlots)}
+        </Text>}
+      </View>
       <PressableRipple onPress={onPress} style={[styles.tournamentLink, { borderTopColor: colors.border }]}>
         <Text style={[styles.leagueName, { color: colors.textPrimary, fontSize: 12 }]}>View ranked</Text>
         <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
@@ -2952,7 +2960,9 @@ const styles = StyleSheet.create({
   rankedCard: { borderRadius: Radius.md, overflow: 'hidden' },
   tournamentHeading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingTop: Spacing.md },
   tournamentLink: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
-  rankedStatus: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, fontSize: 11, lineHeight: 16 },
+  rankedPreview: { marginHorizontal: Spacing.md, marginTop: Spacing.sm, marginBottom: Spacing.md, paddingHorizontal: Spacing.sm, paddingVertical: 8, borderRadius: Radius.sm },
+  rankedStatus: { fontSize: 11, lineHeight: 16, fontWeight: '600' },
+  rankedCutoff: { marginTop: 3, fontSize: 10, lineHeight: 14 },
   quickStatCard: { flexDirection: 'row', borderRadius: Radius.md, paddingVertical: Spacing.base },
   quickStatCell: { flex: 1, minWidth: 0, paddingHorizontal: Spacing.sm, alignItems: 'center', justifyContent: 'center', gap: 5 },
   quickStatNumber: { fontSize: 21, lineHeight: 26, fontWeight: '700', fontVariant: ['tabular-nums'] },
