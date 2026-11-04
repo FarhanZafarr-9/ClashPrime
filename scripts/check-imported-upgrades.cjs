@@ -35,6 +35,17 @@ function load(file) {
   return module.exports;
 }
 async function main() {
+  const { notificationAccountName, upgradeCompletionBody } = load('src/utils/notificationAccountName.ts');
+  values.set('clashprime_accounts', JSON.stringify([{ tag: '#A', name: 'Chief' }, { tag: '#B', name: 'Other chief' }]));
+  assert.equal(await notificationAccountName('a'), 'Chief', 'Resolve the destination account by normalized tag');
+  values.set('clashprime_player_cache_#A', JSON.stringify({ name: 'Renamed chief' }));
+  assert.equal(await notificationAccountName('#A'), 'Renamed chief');
+  assert.equal(await notificationAccountName('#B'), 'Other chief');
+  assert.equal(await notificationAccountName('#MISSING'), null);
+  assert.equal(upgradeCompletionBody('Chief'), 'Upgrade complete for Chief. Open ClashPrime to confirm the level.');
+  assert.equal(upgradeCompletionBody(null), 'Upgrade complete. Open ClashPrime to confirm the level.', 'Unknown names never fall back to displaying a tag');
+  values.delete('clashprime_accounts');
+  values.delete('clashprime_player_cache_#A');
   const { upgradeAvailability } = load('src/utils/upgradeAvailability.ts');
   const future = Date.now() + 60000;
   const work = (kind, extra = {}) => ({ kind, village: 'home', name: kind, completesAt: future, ...extra });
