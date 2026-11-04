@@ -22,8 +22,9 @@ import { Skeleton } from '../src/components/Skeleton';
 function useRankedPalette() {
   const { isDark, colors } = useTheme();
   return {
-    green: isDark ? '#72C9A7' : '#257356',
+    green: isDark ? '#4FC99A' : '#257356',
     greenBg: isDark ? '#1B3430' : '#E7F3EC',
+    perfect: isDark ? '#FFD166' : '#946B00',
     amber: isDark ? colors.warning : colors.warningText,
     amberBg: isDark ? 'rgba(212,163,89,0.09)' : 'rgba(138,100,32,0.07)',
     red: colors.dangerText,
@@ -99,12 +100,14 @@ function BattleLogs({ attacks, defenses }: { attacks: RankedBattleLog[] | null; 
   const outcomeColor = (battle: RankedBattleLog) => {
     if (battle.trophies != null && battle.trophies < 0) return palette.red;
     if (attack) {
-      if (battle.stars === 3 || battle.trophies === 40) return palette.green;
+      if (battle.stars === 3 || battle.trophies === 40) return palette.perfect;
       if (battle.stars === 0 || battle.trophies === 0) return palette.red;
+      if ((battle.stars != null && battle.stars > 0) || (battle.trophies != null && battle.trophies > 0)) return palette.green;
     } else {
       // Defense stars describe the attacker: a triple is a poor defense.
       if (battle.stars === 3 || battle.destructionPercentage === 100 || battle.trophies === 0) return palette.red;
-      if (battle.stars === 0 || battle.trophies === 40) return palette.green;
+      if (battle.stars === 0 || battle.destructionPercentage === 0 || battle.trophies === 40) return palette.perfect;
+      if ((battle.stars != null && battle.stars < 3) || (battle.trophies != null && battle.trophies > 0)) return palette.green;
     }
     return colors.textSecondary;
   };
@@ -160,6 +163,11 @@ export default function RankedTournamentScreen() {
   const positive = projection?.outlook === 'secured' || projection?.currentZone === 'above-band';
   const status = ranked.status !== 'ready' ? ranked.message : tournamentStatus(projection);
   const winsLosses = (wins: number | null | undefined, losses: number | null | undefined) => number(wins) + 'W · ' + number(losses) + 'L';
+  const gainFromCurrent = (finish: number | null | undefined) => {
+    if (finish == null || stats?.trophies == null) return '—';
+    const gain = finish - stats.trophies;
+    return (gain > 0 ? '+' : '') + number(gain);
+  };
 
   return <PageScreen title="Ranked" subtitle={[league?.name, player?.name].filter(Boolean).join(' · ') || 'Your ranked standings'} tabBar={false}
     contentContainerStyle={styles.content}
@@ -249,14 +257,16 @@ export default function RankedTournamentScreen() {
         </View>
         {projection?.promotionSlots && projection.promotionSlots.min !== projection.promotionSlots.max && <Text style={[styles.note, { color: colors.textTertiary }]}>Amber marks the cutoff band and demotion places.</Text>}
       </Section>
-      <Section title="Forecast" description={supported ? 'Scenarios against the current group scores' : 'Projection data unavailable'} icon="analytics-outline">
+      <Section title="Forecast" description={supported ? 'Current score, expected gain and estimated finish' : 'Projection data unavailable'} icon="analytics-outline">
         {supported && projection ? <>
           <View style={styles.metrics}>
-            <Metric label="Cautious scenario" value={number(matchup?.total)} />
-            <Metric label="Current pace" value={number(projection.projectedTotal)} />
-            <Metric label="All 3★" value={number(projection.threeStarTotal)} />
+            <Metric label="Current score" value={number(stats.trophies)} />
+            <Metric label="Expected gain" value={gainFromCurrent(projection.projectedTotal)} />
+            <Metric label="Pace finish" value={number(projection.projectedTotal)} />
           </View>
           <DetailRows rows={[
+            { label: 'Cautious finish', value: number(matchup?.total) + (matchup?.total == null ? '' : ' total · ' + gainFromCurrent(matchup.total)) },
+            { label: 'All 3★ finish', value: number(projection.threeStarTotal) + (projection.threeStarTotal == null ? '' : ' total · ' + gainFromCurrent(projection.threeStarTotal)) },
             { label: 'Town Hall / league bracket', value: 'TH ' + (player?.townHallLevel ?? '—') + ' / ' + (floorTH == null ? '—' : 'TH ' + floorTH) },
             { label: 'Defense fill', value: projection.expectedDefenseGain == null ? '—' : '+' + number(projection.expectedDefenseGain) },
             { label: 'To clear current line', value: number(projection.trophiesToClear) + (projection.trophiesToClear == null ? '' : ' trophies') },
@@ -275,7 +285,8 @@ export default function RankedTournamentScreen() {
             { label: 'Cautious scenario', value: Math.min(toughCount, projection?.attacksLeft ?? toughCount) + ' tougher attacks · ≤20 each' },
             { label: 'TH adjustment', value: belowFloor ? 'Below bracket · allow 2 tough attacks' : 'Allow 1 tough attack' },
             { label: 'Other attacks', value: 'Your observed average' },
-            { label: 'Defense fill', value: 'Observed average × defenses left' },
+            { label: 'Defense fill', value: 'Observed average × defenses left, rounded to whole trophies' },
+            { label: 'Attack gains', value: 'Aggregate averages rounded to whole trophies' },
             { label: 'Theoretical ceiling', value: number(projection?.maximumTotal) + ' · 40 per remaining battle' },
             { label: 'Possible finish', value: projection?.bestPlace == null ? '—' : number(projection.bestPlace) + '–' + number(projection.worstPlace) },
           ] : []),
@@ -339,7 +350,7 @@ const styles = StyleSheet.create({
   emptyAction: { minHeight: 44, justifyContent: 'center', marginTop: Spacing.sm },
   button: { borderWidth: 1, borderStyle: 'dashed', borderRadius: Radius.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, alignItems: 'center' },
   buttonText: { fontSize: 12, fontWeight: '600' },
-  logBody: { gap: Spacing.sm },
-  logSwitch: { alignSelf: 'center' },
+  logBody: { gap: 0 },
+  logSwitch: { alignSelf: 'center', marginBottom: Spacing.sm },
   sourceButton: { minHeight: 48, justifyContent: 'center', paddingVertical: Spacing.md },
 });
